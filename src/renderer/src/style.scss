@@ -1,0 +1,53 @@
+* {
+  margin: 0;
+  padding: 0;
+}
+
+.stack {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.stackItem {
+  position: absolute;
+  height: 100%;
+  width: 100%;
+}
+
+.b-stackItem { // 架空型b 不要绑定事件
+  pointer-events: none;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+
+  > * {
+    pointer-events: auto;
+  }
+}
+
+.p-stackItem { // 点状架空型 不要绑定事件
+  position: absolute;
+  width: 0;
+  height: 0;
+  overflow: visible;
+
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.justify-center {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.items-center {
+  height: 100%;
+  display: flex;
+  align-items: center;
+}
