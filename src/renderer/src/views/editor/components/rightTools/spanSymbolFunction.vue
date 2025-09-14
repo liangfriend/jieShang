@@ -2,23 +2,17 @@
 
 import {PropType, ref, UnwrapRef} from "vue";
 import {
-  Measure,
   MusicScore,
-  MusicScoreRef,
   SpanSymbol
-} from "@/applications/ChuangKeApplication/components/musicScore/types";
+} from "deciphony-core/types";
 import {
-  addBindingEndId,
-  addBindingStartId,
-  addSpanSymbol, removeSpanSymbol
-} from "@/applications/ChuangKeApplication/components/musicScore/utils/changeStructureUtil.ts";
-import {spanSymbolTemplate} from "@/applications/ChuangKeApplication/components/musicScore/utils/objectTemplateUtil.ts";
+   removeSpanSymbol
+} from "deciphony-core/utils/changeStructureUtil";
 import {
   BarLineTypeEnum,
   ClefEnum, KeySignatureEnum,
-  SpanSymbolTypeEnum
-} from "@/applications/ChuangKeApplication/components/musicScore/musicScoreEnum.ts";
-
+} from "deciphony-core/musicScoreEnum";
+import type {MusicScoreRef}  from "deciphony-render";
 
 const props = defineProps({
   spanSymbol: {

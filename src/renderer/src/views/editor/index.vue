@@ -1,37 +1,37 @@
 <script setup lang="ts">
 import prefabWb from '../../views/prefabWhiteBoard/addedMusicScore.vue';
-import {computed, onMounted, ref, Ref, UnwrapRef, watch} from 'vue';
+import {computed, onMounted, ref, Ref, UnwrapRef} from 'vue';
 
-// import mockData from "@/applications/ChuangKeApplication/components/musicScore/musicScoreData/happyBirthdayToYou.ts";
-import mockData from "@/applications/ChuangKeApplication/components/musicScore/musicScoreData/test.ts";
-import BottomMenu from "@/applications/ChuangKeApplication/views/editor/components/bottomMenu.vue";
-import {msPlayUtils} from "@/applications/ChuangKeApplication/utils/msPlayUtils/ms-playUtils.ts";
-import {MusicMapKey} from "@/applications/ChuangKeApplication/views/editor/constant.ts";
+// import mockData from "deciphony-core/musicScoreData/happyBirthdayToYou";
+import BottomMenu from "./components/bottomMenu.vue";
+import {MusicMapKey} from "./constant";
 import {useRouter} from "vue-router";
 import {
   MsMode,
   MsSymbolTypeEnum,
   MsTypeNameEnum, ReserveMsSymbolType
-} from "@/applications/ChuangKeApplication/components/musicScore/musicScoreEnum.ts";
-import RightTools from "@/applications/ChuangKeApplication/views/editor/components/rightTools/rightTools.vue";
-import {MusicScoreRef} from "@/applications/ChuangKeApplication/components/musicScore/types";
-import MeasureFunction from "@/applications/ChuangKeApplication/views/editor/components/rightTools/measureFunction.vue";
-import BasicFunction from "@/applications/ChuangKeApplication/views/editor/components/rightTools/basicFunction.vue";
+} from "deciphony-core/musicScoreEnum";
+import RightTools from "@renderer/views/editor/components/rightTools/rightTools.vue";
+import type {MusicScoreRef}  from "deciphony-render";
+import MeasureFunction from "./components/rightTools/measureFunction.vue";
+import BasicFunction from "./components/rightTools/basicFunction.vue";
 import SingleStaffFunction
-  from "@/applications/ChuangKeApplication/views/editor/components/rightTools/singleStaffFunction.vue";
+  from "./components/rightTools/singleStaffFunction.vue";
 import MultipleStavesFunction
-  from "@/applications/ChuangKeApplication/views/editor/components/rightTools/multipleStavesFunction.vue";
+  from "./components/rightTools/multipleStavesFunction.vue";
 import NoteHeadFunction
-  from "@/applications/ChuangKeApplication/views/editor/components/rightTools/noteHeadFunction.vue";
+  from "./components/rightTools/noteHeadFunction.vue";
 import SpanSymbolFunction
-  from "@/applications/ChuangKeApplication/views/editor/components/rightTools/spanSymbolFunction.vue";
-import ClefFunction from "@/applications/ChuangKeApplication/views/editor/components/rightTools/clefFunction.vue";
+  from "./components/rightTools/spanSymbolFunction.vue";
+import ClefFunction from "./components/rightTools/clefFunction.vue";
 import KeySignatureFunction
-  from "@/applications/ChuangKeApplication/views/editor/components/rightTools/keySignatureFunction.vue";
+  from "./components/rightTools/keySignatureFunction.vue";
 import TimeSignatureFunction
-  from "@/applications/ChuangKeApplication/views/editor/components/rightTools/timeSignatureFunction.vue";
-import BarLineFunction from "@/applications/ChuangKeApplication/views/editor/components/rightTools/barLineFunction.vue";
-import RestFunction from "@/applications/ChuangKeApplication/views/editor/components/rightTools/restFunction.vue";
+  from "./components/rightTools/timeSignatureFunction.vue";
+import BarLineFunction from "./components/rightTools/barLineFunction.vue";
+import RestFunction from "./components/rightTools/restFunction.vue";
+import  msPlayUtils from 'deciphony-player'
+import mockData from '../musicScoreData/test'
 
 const router = useRouter()
 type addedWb = {

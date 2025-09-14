@@ -3,28 +3,24 @@
 
 import {PropType, ref, UnwrapRef} from "vue";
 import {
-  ClefMsSymbol,
   Measure,
   MusicScore,
-  MusicScoreRef,
   TimeSignature, Volta
-} from "@/applications/ChuangKeApplication/components/musicScore/types";
+} from "deciphony-core/types";
 import {
-  addBindingEndId,
-  addBindingStartId, addClefToMeasure, addMeasure,
-  addSpanSymbol, addVolta, changeBarLine, changeClef, changeKeySignature, changeTimeSignature, removeMeasure
-} from "@/applications/ChuangKeApplication/components/musicScore/utils/changeStructureUtil.ts";
+  addMeasure,
+  addSpanSymbol,changeBarLine, changeClef, changeKeySignature, changeTimeSignature, removeMeasure
+} from "deciphony-core/utils/changeStructureUtil";
 import {
-  measureTemplate, msSymbolContainerTemplate, msSymbolTemplate,
+  measureTemplate,
   spanSymbolTemplate
-} from "@/applications/ChuangKeApplication/components/musicScore/utils/objectTemplateUtil.ts";
+} from "deciphony-core/utils/objectTemplateUtil";
 import {
   BarLineTypeEnum,
-  ClefEnum, KeySignatureEnum, MsSymbolContainerTypeEnum, MsSymbolTypeEnum,
+  ClefEnum, KeySignatureEnum,
   SpanSymbolTypeEnum
-} from "@/applications/ChuangKeApplication/components/musicScore/musicScoreEnum.ts";
-import Clef from "@/applications/ChuangKeApplication/components/musicScore/musicSymbols/clef.vue";
-import {getDataWithIndex} from "@/applications/ChuangKeApplication/components/musicScore/utils/musicScoreDataUtil.ts";
+} from "deciphony-core/musicScoreEnum";
+import type {MusicScoreRef}  from "deciphony-render";
 
 
 const props = defineProps({

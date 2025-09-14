@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import {getDataWithIndex} from "@/applications/ChuangKeApplication/components/musicScore/utils/musicScoreDataUtil.ts";
+import {getDataWithIndex} from "deciphony-core/utils/musicScoreDataUtil";
 import {
   removeMsSymbolContainer
-} from "@/applications/ChuangKeApplication/components/musicScore/utils/changeStructureUtil.ts";
+} from "deciphony-core/utils/changeStructureUtil";
 import {PropType, UnwrapRef} from "vue";
-import {
+import type {
   BarLine,
-  ClefMsSymbol,
   MusicScore,
-  MusicScoreRef,
-  NoteHead
-} from "@/applications/ChuangKeApplication/components/musicScore/types";
-import {MsSymbolTypeEnum} from "@/applications/ChuangKeApplication/components/musicScore/musicScoreEnum.ts";
+} from "deciphony-core/types";
+import type {MusicScoreRef}  from "deciphony-render";
 
 const props = defineProps({
   musicScore: {

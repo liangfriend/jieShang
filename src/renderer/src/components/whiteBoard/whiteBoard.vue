@@ -8,12 +8,11 @@
   </div>
 </template>
 <script setup lang="ts">
-import {computed, onMounted, onUnmounted, PropType, Ref, ref, StyleValue} from 'vue';
-import {parseAndFormatDimension} from '../../utils/stringUtils.ts';
+import {computed, onMounted, onUnmounted, Ref, ref, StyleValue} from 'vue';
 import vDrag from './directives/drag';
-import MusicScore from '@/applications/ChuangKeApplication/components/musicScore/musicScore.vue';
-import {AddElementOptions} from "@/applications/ChuangKeApplication/components/whiteBoard/types";
-import {whiteBoardState} from "@/applications/ChuangKeApplication/components/whiteBoard/enum.ts";
+import {AddElementOptions} from "./types";
+import {whiteBoardState} from "./enum";
+import { parseAndFormatDimension } from './utils'
 
 
 //展示板实例

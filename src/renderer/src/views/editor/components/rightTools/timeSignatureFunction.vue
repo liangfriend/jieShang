@@ -1,15 +1,15 @@
 <script setup lang="ts">
-import {getDataWithIndex} from "@/applications/ChuangKeApplication/components/musicScore/utils/musicScoreDataUtil.ts";
+import {getDataWithIndex} from "deciphony-core/utils/musicScoreDataUtil";
 import {
   removeMsSymbolContainer
-} from "@/applications/ChuangKeApplication/components/musicScore/utils/changeStructureUtil.ts";
+} from "deciphony-core/utils/changeStructureUtil";
 import {PropType, UnwrapRef} from "vue";
 import {
-  ClefMsSymbol,
   MusicScore,
-  MusicScoreRef,
-  NoteHead, TimeSignatureMsSymbol
-} from "@/applications/ChuangKeApplication/components/musicScore/types";
+  TimeSignatureMsSymbol
+} from "deciphony-core/types";
+import type {MusicScoreRef}  from "deciphony-render";
+
 
 const props = defineProps({
   musicScore: {

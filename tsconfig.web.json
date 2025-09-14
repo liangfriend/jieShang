@@ -8,10 +8,13 @@
   ],
   "compilerOptions": {
     "composite": true,
+    "target": "ES2023",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "@renderer/*": [
-        "src/renderer/src/*"
+      "@renderer": [
+        "src/renderer/src"
       ]
     }
   }

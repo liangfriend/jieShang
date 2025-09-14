@@ -3,20 +3,18 @@
 
 import {PropType, UnwrapRef} from "vue";
 import {
-  Measure,
-  MsType,
+
   MusicScore,
-  MusicScoreRef,
   SingleStaff
-} from "@/applications/ChuangKeApplication/components/musicScore/types";
+} from "deciphony-core/types";
 import {
   singleStaffTemplate
-} from "@/applications/ChuangKeApplication/components/musicScore/utils/objectTemplateUtil.ts";
+} from "deciphony-core/utils/objectTemplateUtil";
 import {
   addSingleStaff,
   removeSingleStaff
-} from "@/applications/ChuangKeApplication/components/musicScore/utils/changeStructureUtil.ts";
-
+} from "deciphony-core/utils/changeStructureUtil";
+import type {MusicScoreRef}  from "deciphony-render";
 
 const props = defineProps({
   singleStaff: {

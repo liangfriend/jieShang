@@ -1,14 +1,14 @@
 <script setup lang="ts">
 
 import {computed, PropType, ref, UnwrapRef} from "vue";
-import {MusicScore, MusicScoreRef} from "@/applications/ChuangKeApplication/components/musicScore/types";
+import {MusicScore} from "deciphony-core/types";
 import {
   ChronaxieEnum,
   MsSymbolTypeEnum,
   ReserveMsSymbolType
-} from "@/applications/ChuangKeApplication/components/musicScore/musicScoreEnum.ts";
-import {msSymbolTemplate} from "@/applications/ChuangKeApplication/components/musicScore/utils/objectTemplateUtil.ts";
-
+} from "deciphony-core/musicScoreEnum";
+import {msSymbolTemplate} from "deciphony-core/utils/objectTemplateUtil";
+import type {MusicScoreRef}  from "deciphony-render";
 
 const props = defineProps({
 

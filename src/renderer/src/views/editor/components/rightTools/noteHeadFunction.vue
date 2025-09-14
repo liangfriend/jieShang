@@ -4,29 +4,26 @@ import {computed, onMounted, PropType, ref, UnwrapRef, watch} from "vue";
 import {
   MsSymbolContainer,
   MusicScore,
-  MusicScoreRef,
   NoteHead,
-  NoteTail
-} from "@/applications/ChuangKeApplication/components/musicScore/types";
+} from "deciphony-core/types";
 import {
   AccidentalEnum,
   ChronaxieEnum, MsSymbolTypeEnum,
-  ReserveMsSymbolType, SpanSymbolTypeEnum
-} from "@/applications/ChuangKeApplication/components/musicScore/musicScoreEnum.ts";
+  SpanSymbolTypeEnum
+} from "deciphony-core/musicScoreEnum";
 import {
-  msSymbolTemplate,
   spanSymbolTemplate
-} from "@/applications/ChuangKeApplication/components/musicScore/utils/objectTemplateUtil.ts";
+} from "deciphony-core/utils/objectTemplateUtil";
 import {
   addSpanSymbol, changeAccidental,
   changeBeamId,
   changeNoteChronaxie, removeMsSymbolContainer
-} from "@/applications/ChuangKeApplication/components/musicScore/utils/changeStructureUtil.ts";
+} from "deciphony-core/utils/changeStructureUtil";
 import {
   getDataWithIndex,
   getNext
-} from "@/applications/ChuangKeApplication/components/musicScore/utils/musicScoreDataUtil.ts";
-
+} from "deciphony-core/utils/musicScoreDataUtil";
+import type {MusicScoreRef}  from "deciphony-render";
 
 const props = defineProps({
 

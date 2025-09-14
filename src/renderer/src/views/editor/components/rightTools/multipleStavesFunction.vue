@@ -2,19 +2,18 @@
 
 import {PropType, UnwrapRef} from "vue";
 import {
-  Measure,
-  MsType,
+
   MultipleStaves,
-  MusicScore, MusicScoreRef
-} from "@/applications/ChuangKeApplication/components/musicScore/types";
+  MusicScore,
+} from "deciphony-core/types";
 import {
   multipleStavesTemplate
-} from "@/applications/ChuangKeApplication/components/musicScore/utils/objectTemplateUtil.ts";
+} from "deciphony-core/utils/objectTemplateUtil";
 import {
   addMultipleStaves,
   removeMultipleStaves
-} from "@/applications/ChuangKeApplication/components/musicScore/utils/changeStructureUtil.ts";
-
+} from "deciphony-core/utils/changeStructureUtil";
+import type {MusicScoreRef}  from "deciphony-render";
 
 const props = defineProps({
   multipleStaves: {
