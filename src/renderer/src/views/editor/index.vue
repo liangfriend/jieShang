@@ -37,7 +37,9 @@ sessionStorage.setItem('editorNodeListType', 'editor')
 // 编辑器功能
 const { editorInfo, resetEditorInfo } = useEditor()
 const { gameData } = useGameData()
+// 是否启动网格层移动
 const isPanning = ref(false)
+const isFrameSelecting = ref(false)
 const lastMouse = ref({ x: 0, y: 0 })
 
 const worktopStyle = computed(
@@ -53,23 +55,67 @@ const worktopStyle = computed(
 )
 
 function onMouseDown(e: MouseEvent) {
-  isPanning.value = true
-  lastMouse.value = { x: e.clientX, y: e.clientY }
+  const scale = editorInfo.value.scale
+  // 框选
+  if (e.button === 0) {
+    dragSelectedNodes.value.clear()
+    isFrameSelecting.value = true
+    // 容器视口宽高
+    const containerRect = document.querySelector('.ds-ec-left')?.getBoundingClientRect()!
+    dragRectLayout.value.show = true
+    // 需要减去容器相对视口的left,top
+    dragRectLayout.value.left = (e.clientX - containerRect.left) / scale + -editorInfo.value.left
+    dragRectLayout.value.top = (e.clientY - containerRect.top) / scale + -editorInfo.value.top
+    dragRectLayout.value.width = 0
+    dragRectLayout.value.height = 0
+    dragRectLayout.value.startX = e.clientX
+    dragRectLayout.value.startY = e.clientY
+  }
+  if (e.button === 1) {
+    isPanning.value = true
+    lastMouse.value = { x: e.clientX, y: e.clientY }
+  }
 }
 
 function onMouseMove(e: MouseEvent) {
-  if (!isPanning.value) return
-  console.log('chicken', editorInfo.value)
   const scale = editorInfo.value.scale
-  const dx = (e.clientX - lastMouse.value.x) / scale
-  const dy = (e.clientY - lastMouse.value.y) / scale
-  editorInfo.value.left += dx
-  editorInfo.value.top += dy
-  lastMouse.value = { x: e.clientX, y: e.clientY }
+  // 框选
+  if (isFrameSelecting.value) {
+    dragRectLayout.value.width = (e.clientX - dragRectLayout.value.startX) / scale
+    dragRectLayout.value.height = (e.clientY - dragRectLayout.value.startY) / scale
+    // 在范围内的节点添加到选中列表
+    editorNodeMap.value.forEach((node) => {
+      if (
+        dragRectLayout.value.left < node.layout.left &&
+        dragRectLayout.value.top < node.layout.top &&
+        dragRectLayout.value.left + dragRectLayout.value.width >
+          node.layout.left + node.layout.width &&
+        dragRectLayout.value.top + dragRectLayout.value.height >
+          node.layout.top + node.layout.height
+      ) {
+        dragSelectedNodes.value.add(node)
+      } else {
+        if (dragSelectedNodes.value.has(node)) {
+          dragSelectedNodes.value.delete(node)
+        }
+      }
+    })
+  }
+
+  // 网格层移动
+  if (isPanning.value) {
+    const dx = (e.clientX - lastMouse.value.x) / scale
+    const dy = (e.clientY - lastMouse.value.y) / scale
+    editorInfo.value.left += dx
+    editorInfo.value.top += dy
+    lastMouse.value = { x: e.clientX, y: e.clientY }
+  }
 }
 
 function onMouseUp() {
+  isFrameSelecting.value = false
   isPanning.value = false
+  dragRectLayout.value.show = false
 }
 
 function onWheel(e: WheelEvent) {
@@ -77,6 +123,119 @@ function onWheel(e: WheelEvent) {
   const delta = e.deltaY > 0 ? -0.1 : 0.1
   const newScale = Math.min(3, Math.max(0.2, editorInfo.value.scale + delta))
   editorInfo.value.scale = newScale
+}
+
+// 左键拖拽框
+const dragRectLayout = ref({
+  show: false,
+  left: 0,
+  top: 0,
+  width: 0,
+  height: 0,
+  startX: 0,
+  startY: 0
+})
+// 拖拽框选中节点列表
+const dragSelectedNodes = ref<Set<EditorNode>>(new Set())
+
+function handleRectBoxClick(item: EditorNode) {
+  curSelectedNode.value = item
+  dragSelectedNodes.value.clear()
+  dragSelectedNodes.value.add(item)
+}
+
+const frameSelectedNodeStyle = computed((): CSSProperties => {
+  const res: CSSProperties = {
+    position: 'absolute',
+    left: dragRectLayout.value.left + 'px',
+    top: dragRectLayout.value.top + 'px',
+    width: dragRectLayout.value.width + 'px',
+    height: dragRectLayout.value.height + 'px',
+    outline: '5px dashed red',
+    pointerEvents: 'none'
+  }
+  return res
+})
+const dragRectStyle = computed((): CSSProperties => {
+  let left = Infinity,
+    top = Infinity,
+    width = -Infinity,
+    height = -Infinity
+  let MaxLeft = -Infinity
+  let MaxTop = -Infinity
+  dragSelectedNodes.value.forEach((node) => {
+    left = Math.min(left, node.layout.left)
+    top = Math.min(top, node.layout.top)
+    MaxLeft = Math.max(MaxLeft, node.layout.left + node.layout.width)
+    MaxTop = Math.max(MaxTop, node.layout.top + node.layout.height)
+    width = MaxLeft - left
+    height = MaxTop - top
+  })
+  const res: CSSProperties = {
+    position: 'absolute',
+    left: left + 'px',
+    top: top + 'px',
+    width: width + 'px',
+    height: height + 'px',
+    outline: '5px solid #555',
+    pointerEvents: 'none'
+  }
+  return res
+})
+const dragRectBtnStyle = computed((): CSSProperties => {
+  let left = Infinity,
+    top = Infinity,
+    width = -Infinity,
+    height = -Infinity
+  let MaxLeft = -Infinity
+  let MaxTop = -Infinity
+  dragSelectedNodes.value.forEach((node) => {
+    left = Math.min(left, node.layout.left)
+    top = Math.min(top, node.layout.top)
+    MaxLeft = Math.max(MaxLeft, node.layout.left + node.layout.width)
+    MaxTop = Math.max(MaxTop, node.layout.top + node.layout.height)
+    width = MaxLeft - left
+    height = MaxTop - top
+  })
+  const size = 50
+  const res: CSSProperties = {
+    position: 'absolute',
+    left: left - size / 2 + 'px',
+    top: top - size / 2 + 'px',
+    width: size + 'px',
+    height: size + 'px',
+    outline: '5px solid #555',
+    backgroundColor: 'white',
+    cursor: 'pointer'
+  }
+  return res
+})
+
+// 批量拖拽
+const isBatchDragging = ref(false)
+const batchStartPos = ref({ x: 0, y: 0 })
+
+function batchMouseDown(e: MouseEvent) {
+  isBatchDragging.value = true
+  batchStartPos.value = { x: e.clientX, y: e.clientY }
+  document.addEventListener('mousemove', batchMouseMove)
+  document.addEventListener('mouseup', batchMouseUp)
+}
+
+function batchMouseMove(e: MouseEvent) {
+  if (!isBatchDragging.value) return
+  const scale = editorInfo.value.scale
+  const dx = (e.clientX - batchStartPos.value.x) / (scale ?? 1)
+  const dy = (e.clientY - batchStartPos.value.y) / (scale ?? 1)
+  batchStartPos.value = { x: e.clientX, y: e.clientY }
+  dragSelectedNodes.value.forEach((node) => {
+    node.layout.left += dx
+    node.layout.top += dy
+  })
+}
+
+function batchMouseUp(e: MouseEvent) {
+  isBatchDragging.value = false
 }
 
 // 节点功能
@@ -491,26 +650,39 @@ provide('curSelectedNode', curSelectedNode)
         <!-- 节点层 -->
         <div class="stackItem nodeLayer">
           <div v-for="item in editorNodeList">
-            {{ item }}
             <normal-rect-box
               v-if="item.boxType === EditorBoxEnum.NormalRect"
               :boxType="item.boxType"
               :layout="item.layout"
+              :selected="dragSelectedNodes.has(item)"
               :node="item.node"
               :scale="editorInfo.scale"
               fontSize="2rem"
-              @click="curSelectedNode = item"
+              @mousedown="dragSelectedNodes.clear()"
+              @click="handleRectBoxClick(item)"
             ></normal-rect-box>
             <rounded-rect-box
               v-if="item.boxType === EditorBoxEnum.RoundedRect"
               :boxType="item.boxType"
               :layout="item.layout"
+              :selected="dragSelectedNodes.has(item)"
               :node="item.node"
               :scale="editorInfo.scale"
               fontSize="2rem"
-              @click="curSelectedNode = item"
+              @mousedown="dragSelectedNodes.clear()"
+              @click="handleRectBoxClick(item)"
             ></rounded-rect-box>
           </div>
+          <!--    框选框     -->
+          <div :style="frameSelectedNodeStyle" v-show="dragRectLayout.show"></div>
+          <!--    拖拽框     -->
+          <div :style="dragRectStyle" v-show="dragSelectedNodes.size > 1"></div>
+          <!--    拖拽按钮     -->
+          <div
+            @mousedown.stop="batchMouseDown"
+            :style="dragRectBtnStyle"
+            v-show="dragSelectedNodes.size > 1"
+          ></div>
         </div>
       </div>
     </div>

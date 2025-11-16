@@ -10,6 +10,7 @@ interface Props {
     width: number
     height: number
   }
+  selected: boolean
   scale: number
   boxType: EditorBoxEnum
   node: EngineNode
@@ -27,7 +28,7 @@ const boxStyle = computed(
     left: '0',
     top: '0',
     transform: `translate(${props.layout.left}px, ${props.layout.top}px)`,
-    border: '2px solid #409eff',
+    border: '2px solid ' + (props.selected ? 'red' : '#409eff'),
     borderRadius: '8px',
     background: 'rgba(255,255,255,0.9)',
     boxShadow: '0 2px 6px rgba(0,0,0,0.1)',
