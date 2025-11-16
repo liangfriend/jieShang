@@ -1,0 +1,47 @@
+export {}
+
+declare global {
+  interface Window {
+    api: {
+      game: {
+        create(payload: any): Promise<any>
+        delete(id: any): Promise<any>
+        update(id: any, payload: any): Promise<any>
+        query(filters: any): Promise<any>
+        list(): Promise<any>
+      }
+      file: {
+        upload(buffer: any, name: any, type: any): Promise<any>
+        delete(id: any): Promise<any>
+        query(query: any): Promise<any>
+      }
+      resource: {
+        create(payload: any): Promise<any>
+        delete(id: any): Promise<any>
+        update(id: any, payload: any): Promise<any>
+        query(filters: any): Promise<any>
+        list(): Promise<any>
+      }
+      save: {
+        create(payload: any): Promise<any>
+        delete(id: any): Promise<any>
+        update(id: any, payload: any): Promise<any>
+        query(filters: any): Promise<any>
+        list(): Promise<any>
+      }
+      work: {
+        create(payload: any): Promise<any>
+        delete(id: any): Promise<any>
+        update(id: any, payload: any): Promise<any>
+        query(filters: any): Promise<any>
+        list(): Promise<any>
+      }
+      window: {
+        open(name: string, route: string, options = {}): void
+        close(name: string): void
+        focus(name: string): void
+        get(name: string): void
+      }
+    }
+  }
+}
