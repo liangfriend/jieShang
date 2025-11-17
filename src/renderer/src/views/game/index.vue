@@ -8,13 +8,13 @@ const route = useRoute()
 
 onBeforeMount(async () => {
   const type = route.query.type
-
+  console.log('chicken', 'onBeforeMount')
   if (type === 'test') {
     // 游戏测试
-    const workId = +route.query.workId!
+    const gameId = +route.query.gameId!
     const data = (
       await window.api.work.query({
-        id: workId
+        id: gameId
       })
     )?.[0]
     if (data) {
@@ -25,6 +25,19 @@ onBeforeMount(async () => {
     }
   } else if (type === 'game') {
     // 正式游戏
+    const gameId = +route.query.gameId!
+    const data = (
+      await window.api.game.query({
+        id: gameId
+      })
+    )?.[0]
+    if (data) {
+      const gameData = JSON.parse(data.data).gameData
+      updateLoadedGameData(gameData)
+      const editorNodeList = JSON.parse(data.data).editorNodeList
+      console.log('chicken', JSON.parse(data.data))
+      updateLoadedEditorNodeList(editorNodeList)
+    }
   }
 })
 </script>

@@ -8,7 +8,7 @@ const props = defineProps({
   modelValue: { type: Boolean, required: true }
 })
 
-const emit = defineEmits(['update:modelValue', 'select'])
+const emit = defineEmits(['update:modelValue', 'created', 'deleted'])
 
 const visible = ref(props.modelValue)
 watch(
@@ -35,7 +35,6 @@ async function loadWorks() {
   loading.value = true
   try {
     workList.value = await window.api.work.list()
-    console.log('chicken', workList.value)
   } finally {
     loading.value = false
   }
@@ -62,7 +61,7 @@ async function createWork() {
     })
   }
   await window.api.work.create(payload)
-
+  emit('created')
   ElMessage.success('创建成功')
 
   // 清空表单
@@ -90,6 +89,7 @@ function deleteWork(work) {
     .then(async () => {
       await window.api.work.delete(work.id)
       await loadWorks()
+      emit('deleted')
       ElMessage({
         type: 'success',
         message: '删除成功'
@@ -98,8 +98,10 @@ function deleteWork(work) {
     .catch(() => {})
 }
 
-onMounted(() => {
-  loadWorks()
+watch(visible, (v) => {
+  if (v) {
+    loadWorks()
+  }
 })
 </script>
 

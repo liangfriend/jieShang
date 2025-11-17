@@ -5,14 +5,6 @@ import WorkDialog from '@renderer/views/home/components/workDialog.vue'
 import bg from '@renderer/assets/images/home/bg.png'
 import SearchInput from '@renderer/views/home/components/searchInput.vue'
 
-async function getGameList() {
-  // gameList.value = await window.api.game.list()
-}
-
-onMounted(async () => {
-  await getGameList()
-})
-
 const router = useRouter()
 const workDialogVisible = ref(false)
 
@@ -30,19 +22,50 @@ import HomeMenu from '@renderer/views/home/components/homeMenu.vue'
 import RecommendationCard from '@renderer/views/home/components/recommendationCard.vue'
 import ChampionCard from '@renderer/views/home/components/championCard.vue'
 import GameCard from '@renderer/views/home/components/gameCard.vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
 const menu = [
-  { label: '我的作品', icon: House, value: 'home' },
-  { label: '我的游戏', icon: Tickets, value: 'card' },
-  { label: '本地游戏', icon: List, value: 'local' },
-  { label: '线上游戏', icon: User, value: 'user' },
-  { label: '图片资源', icon: Folder, value: 'folder' },
-  { label: '音频资源', icon: Grid, value: 'grid' },
-  { label: '视频资源', icon: Grid, value: 'list2' }
+  { label: '我的作品', icon: House, value: 'work' },
+  { label: '我的游戏', icon: Tickets, value: 'my_game' },
+  { label: '本地游戏', icon: List, value: 'local_game' },
+  { label: '线上游戏', icon: User, value: 'online_game' },
+  { label: '图片资源', icon: Folder, value: 'image' },
+  { label: '音频资源', icon: Grid, value: 'audio' },
+  { label: '视频资源', icon: Grid, value: 'video' }
 ]
-const active = ref('home')
-const onSelect = (item: any) => {
-  console.log('点击菜单：', item)
+const active = ref('work')
+
+async function selectMenu(item: any) {
+  switch (item.value) {
+    case 'work': {
+      await getWorkList()
+    }
+    case 'my_game': {
+      await getGameList()
+    }
+  }
 }
+
+// 作品列表
+const workList = ref([])
+
+async function getWorkList() {
+  console.log('chicken')
+  workList.value = await window.api.work.list()
+}
+
+// 游戏列表
+const gameList = ref([])
+
+async function getGameList() {
+  gameList.value = await window.api.game.list()
+}
+
+// 初始化
+onMounted(async () => {
+  await getWorkList()
+})
+
 // 推荐列表
 const recommendationList = ref([
   {
@@ -88,66 +111,59 @@ const recommendationList = ref([
     ranting: 3
   }
 ])
-// 游戏列表
-const gameList = ref([
-  {
-    avatar: '',
-    title: '金刚星',
-    subTitle: '解放的力量',
-    ranting: 3
-  },
-  {
-    avatar: '',
-    title: '般若-鬼心',
-    subTitle: '日式恐怖',
-    ranting: 3
-  },
-  {
-    avatar: '',
-    title: '吃过番茄之后可以大胆表白',
-    subTitle: '青春文学',
-    ranting: 4
-  },
-  {
-    avatar: '',
-    title: '名侦探柯北',
-    subTitle: '这并不是搞笑类',
-    ranting: 3
-  },
-  {
-    avatar: '',
-    title: '擦亮我们的双眼',
-    subTitle: '某一个夏日的午后，做出了最后的决定',
-    ranting: 3
-  },
-  {
-    avatar: '',
-    title: '疯子',
-    subTitle: '人吃人的社会现象',
-    ranting: 3
-  },
-  {
-    avatar: '',
-    title: '恒星时代',
-    subTitle: '感受赛博纪元的繁华',
-    ranting: 3
-  }
-])
+
+// 选择作品
+function selectWork(work) {
+  router.replace({ path: '/editor', query: { workId: work.id } })
+}
+
+//删除作品
+async function deleteWork(item) {
+  ElMessageBox.confirm('确认删除?', 'Warning', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+    .then(async () => {
+      window.api.work.delete(item.id)
+      await getWorkList()
+      ElMessage({
+        type: 'success',
+        message: '删除成功'
+      })
+    })
+    .catch(() => {})
+}
+
+// 进入游戏
+function playGame(item) {
+  //
+  router.replace({ path: '/game/entry', query: { gameId: item.id, type: 'game' } })
+}
+
+//删除游戏
+async function deleteGame(item) {
+  ElMessageBox.confirm('确认删除?', 'Warning', {
+    confirmButtonText: '确定',
+    cancelButtonText: '取消',
+    type: 'warning'
+  })
+    .then(async () => {
+      window.api.game.delete(item.id)
+      await getGameList()
+      ElMessage({
+        type: 'success',
+        message: '删除成功'
+      })
+    })
+    .catch(() => {})
+}
 </script>
 
 <template>
-  <div class="stack">
+  <div class="stack no-user-select">
     <div class="stack-item main-layer" :style="mainLayerStyle">
-      <!--      <div class="top">-->
-      <!--        <el-button @click="workDialogVisible = true">打开编辑器</el-button>-->
-      <!--      </div>-->
-      <!--      <div class="left">筛选区</div>-->
-      <!--      <div class="right">-->
-      <!--        <game-card v-for="item in gameList" :game="item"></game-card>-->
-      <!--      </div>-->
-      <!--    </div>-->
-      <!--    <work-dialog v-model="workDialogVisible" />-->
-      <div class="logo">解熵视觉小说</div>
+      <div class="logo" @click="workDialogVisible = true">创建作品</div>
       <div class="search">
         <search-input height="50px" btnWidth="100px" size="1.5rem" v-model="search"></search-input>
       </div>
@@ -166,29 +182,60 @@ const gameList = ref([
           height="100%"
           :items="menu"
           v-model="active"
-          @select="onSelect"
+          @select="selectMenu"
         ></home-menu>
       </div>
       <div class="list overflow-auto hidden-scrollbar">
-        <GameCard
-          class="mb-[20px]"
-          img="girl.jpg"
-          name="崩坏：星穹铁道"
-          width="100%"
-          height="300px"
-          @select="(game) => console.log('点击了：', game)"
-        />
-        <div class="gap-[20px] flex flex-wrap">
+        <template v-if="active === 'work'">
           <GameCard
-            class="shrink-0"
-            v-for="item in gameList"
-            img="girl.jpg"
-            :name="item.title"
-            width="calc(50% - 10px)"
-            height="200px"
-            @select="(game) => console.log('点击了：', game)"
+            deleteable
+            v-if="workList[0]"
+            class="mb-[20px]"
+            :name="workList[0].name"
+            width="100%"
+            height="300px"
+            @select="selectWork(workList[0])"
+            @delete="deleteWork(workList[0])"
           />
-        </div>
+          <div class="gap-[20px] flex flex-wrap">
+            <GameCard
+              deleteable
+              class="shrink-0"
+              v-for="item in workList"
+              :name="item.name"
+              width="calc(50% - 10px)"
+              height="200px"
+              @select="selectWork(item)"
+              @delete="deleteWork(item)"
+            />
+          </div>
+        </template>
+        <template v-else-if="active === 'my_game'">
+          <GameCard
+            deleteable
+            v-if="gameList[0]"
+            class="mb-[20px]"
+            :name="gameList[0].name"
+            :img="gameList[0].front_cover"
+            width="100%"
+            height="300px"
+            @select="playGame(gameList[0])"
+            @delete="deleteGame(gameList[0])"
+          />
+          <div class="gap-[20px] flex flex-wrap">
+            <GameCard
+              deleteable
+              class="shrink-0"
+              v-for="item in gameList"
+              :name="item.name"
+              :img="item.front_cover"
+              width="calc(50% - 10px)"
+              height="200px"
+              @select="playGame(item)"
+              @delete="deleteGame(item)"
+            />
+          </div>
+        </template>
       </div>
       <div class="recommendation overflow-auto hidden-scrollbar">
         <ChampionCard
@@ -224,6 +271,7 @@ const gameList = ref([
       </div>
     </div>
   </div>
+  <work-dialog @deleted="getWorkList" @created="getWorkList" v-model="workDialogVisible" />
 </template>
 <style>
 .main-layer {
@@ -244,6 +292,14 @@ const gameList = ref([
   font-weight: 400;
   display: flex;
   align-items: center;
+  transition-duration: 0.5s;
+  transform-origin: 0 50%;
+  cursor: pointer;
+  user-select: none;
+}
+
+.logo:hover {
+  transform: scale(1.1);
 }
 
 .search {
@@ -261,19 +317,24 @@ const gameList = ref([
   color: #977955;
   gap: 20px;
 }
+
 .menu {
   grid-area: menu;
 }
+
 .list {
   grid-area: list;
 }
+
 .recommendation {
   grid-area: recommendation;
 }
+
 .recommendation-list {
   background-color: rgba(255, 255, 245, 0.8);
   border-radius: 12px;
 }
+
 .recommendation-title {
   background: rgba(240, 208, 192, 0.2);
   height: 30px;
@@ -283,5 +344,6 @@ const gameList = ref([
   padding-left: 20px;
   border-top-left-radius: 12px;
   border-top-right-radius: 12px;
+  user-select: none;
 }
 </style>

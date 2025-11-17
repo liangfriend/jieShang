@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, CSSProperties, onBeforeMount, provide, ref } from 'vue'
+import { computed, CSSProperties, onBeforeMount, onMounted, provide, ref } from 'vue'
 import {
   ActionNode,
   CaptionNode,
@@ -382,7 +382,7 @@ async function save() {
 }
 
 // 初始化数据
-onBeforeMount(async () => {
+onMounted(async () => {
   // 初始化资源列表
   const resourceList = await window.api.resource.list()
   updateStaticResource(resourceList)
@@ -401,7 +401,7 @@ onBeforeMount(async () => {
 
 // 游戏预览
 function startGame() {
-  const route = `/game/entry?type=test&workId=${workId.value}`
+  const route = `/game/entry?type=test&gameId=${workId.value}&sceneId=-1`
   // window.open(url, '_blank')
   console.log('chicken', route, window.location.href)
   window.api.window.open('game', route, {})

@@ -10,18 +10,38 @@ const router = useRouter()
 const route = useRoute()
 
 // 查询参数判断是否为测试模式
-const isTestMode = computed(() => route.query.test === 'true')
 const { nodeMap } = useNodeManager()
 // 故事节点（标题）
 const storyNode = computed(() => {
-  console.log('chicken', nodeMap.value)
   return nodeMap.value.get(1) as StoryNode
 })
 // test game
 const type = computed(() => {
   return route.query.type
 })
-
+const gameId = computed((): number => {
+  const id = +route.query.gameId!
+  return id as number
+})
+const sceneId = computed((): number => {
+  if (route.query.sceneId) {
+    return +route.query.sceneId
+  }
+  if (gameData.value) {
+    return +JSON.parse(gameData.value).sceneId
+  }
+  return -1
+})
+const gameData = ref('')
+onMounted(async () => {
+  if (type.value === 'test') {
+    const data = (await window.api.work.query({ id: gameId.value }))[0]
+    gameData.value = JSON.parse(data.data).gameData
+  } else if (type.value === 'game') {
+    const data = (await window.api.game.query({ id: gameId.value }))[0]
+    gameData.value = JSON.parse(data.data).gameData
+  }
+})
 // ------------------- 菜单 -------------------
 const menuList = computed(() => {
   if (type.value === 'test') {
@@ -45,56 +65,56 @@ const newSaveName = ref('')
 const loadDialog = ref(false)
 
 // 存档列表（后台接口）
-const saveList = ref([
-  { id: 1001, name: '初次存档', time: '2025-01-01 12:00' },
-  { id: 1002, name: '章节2', time: '2025-01-02 18:12' }
-])
+const saveList = ref([])
 
-// 提交新建存档
+// 提交新建存档并进入游戏
 const createNewSave = async () => {
   if (!newSaveName.value) {
     ElMessage.warning('请输入存档名')
     return
   }
-
-  // 🚀TODO 调用后端接口，如：
-  // const res = await api.createSave({ name: newSaveName.value });
-
-  // 用存档数据更新useNodeManager
-  // updateLoadedGameData()
-  const newId = Date.now() // 模拟存档id
-
+  const saveId = await window.api.save.create({
+    game_id: gameId.value,
+    name: newSaveName.value,
+    data: JSON.stringify({ sceneId: -1, gameData: gameData.value })
+  })
   ElMessage.success('存档创建成功！')
   newSaveDialog.value = false
-
   router.replace({
-    path: '/jieShang/game/game',
-    query: { saveId: newId }
+    path: '/game/game',
+    query: { saveId: saveId, gameId: gameId.value }
   })
+}
+
+async function getSaveList(gameId: number) {
+  saveList.value = await window.api.save.query({ game_id: gameId })
 }
 
 // 点击加载某个存档
 const loadSave = async (saveId: number) => {
-  ElMessage.success('正在载入存档...')
   router.replace({
-    path: '/jieShang/game/game',
-    query: { saveId }
+    path: '/game/game',
+    query: { saveId, gameId: gameId.value, sceneId: sceneId.value }
   })
 }
 
 // ------------------- 菜单点击 -------------------
-const onMenuClick = (key: string) => {
+async function onMenuClick(key: string) {
   switch (key) {
     case 'start':
       newSaveDialog.value = true
       break
 
-    case 'loadSave':
+    case 'loadSave': {
+      await getSaveList(gameId.value)
       loadDialog.value = true
       break
-
+    }
     case 'test':
-      router.replace({ path: '/game/game', query: route.query })
+      router.replace({
+        path: '/game/game',
+        query: { gameId: gameId.value, sceneId: sceneId.value }
+      })
       break
 
     case 'exit':
@@ -132,7 +152,7 @@ const onMenuClick = (key: string) => {
 
       <template #footer>
         <el-button @click="newSaveDialog = false">取消</el-button>
-        <el-button type="primary" @click="createNewSave">确认创建</el-button>
+        <el-button type="primary" @click="createNewSave">进入游戏</el-button>
       </template>
     </el-dialog>
 

@@ -36,6 +36,7 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'select'])
 
 const selectItem = (item: any) => {
+  if (item.value === props.modelValue) return
   emit('update:modelValue', item.value)
   emit('select', item)
 }
@@ -104,6 +105,7 @@ const menuTextStyle = computed(() => ({
 
 .menu-text {
   margin-left: 8px;
+  user-select: none;
 }
 
 .menu-item.active {

@@ -59,7 +59,7 @@ const btnStyle = computed(() => ({
 
     <!-- 输入框 -->
     <input
-      class="search-input"
+      class="search-input no-user-select"
       :placeholder="placeholder"
       :style="{ fontSize: size }"
       :value="modelValue"

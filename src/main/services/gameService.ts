@@ -8,7 +8,12 @@ export class GameService {
   }
 
   /** 创建 */
-  async createGame(payload: { name: string; data: string }) {
+  async createGame(payload: {
+    name: string
+    data: string
+    front_cover: string
+    description: string
+  }) {
     return await this.gameRepository.create(payload)
   }
 
@@ -18,12 +23,28 @@ export class GameService {
   }
 
   /** 更新 */
-  async updateGame(id: string, payload: Partial<{ name: string; data: string }>) {
+  async updateGame(
+    id: string,
+    payload: Partial<{
+      name: string
+      data: string
+      front_cover: string
+      description: string
+    }>
+  ) {
     return await this.gameRepository.update(id, payload)
   }
 
   /** 条件查询 */
-  async queryGames(filters: Partial<{ id: string; name: string; data: string }>) {
+  async queryGames(
+    filters: Partial<{
+      id: string
+      name: string
+      data: string
+      front_cover: string
+      description: string
+    }>
+  ) {
     return await this.gameRepository.query(filters)
   }
 

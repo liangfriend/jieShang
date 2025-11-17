@@ -50,3 +50,7 @@ body {
 .hidden-scrollbar::-webkit-scrollbar {
   display: none;
 }
+
+.no-user-select {
+  user-select: none;
+}

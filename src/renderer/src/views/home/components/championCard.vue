@@ -33,7 +33,7 @@ const cardStyle = computed(() => ({
 </script>
 
 <template>
-  <div class="champion-card" :style="cardStyle">
+  <div class="champion-card no-user-select" :style="cardStyle">
     <!-- 顶部标题 -->
     <div class="top-title" :style="{ fontSize: topTitleSize }">
       {{ title }}

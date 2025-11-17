@@ -7,6 +7,9 @@ export interface GameAttributes {
   id: number
   name: string
   data: string
+  front_cover: string
+  description: string
+
   created_at?: Date
   updated_at?: Date
   deleted_at?: Date | null
@@ -25,6 +28,8 @@ export class GameModel
   declare id: number
   declare name: string
   declare data: string
+  declare front_cover: string
+  declare description: string
 
   declare created_at: Date
   declare updated_at: Date
@@ -46,6 +51,14 @@ GameModel.init(
 
     data: {
       type: DataTypes.TEXT,
+      allowNull: false
+    },
+    front_cover: {
+      type: DataTypes.STRING,
+      allowNull: false
+    },
+    description: {
+      type: DataTypes.STRING,
       allowNull: false
     },
 

@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 // 节点功能
 import { useRoute, useRouter } from 'vue-router'
-import { computed, CSSProperties, onMounted } from 'vue'
+import { computed, CSSProperties, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { StoryNode } from '@renderer/types'
 import { LayerEnum, NodeEnum } from '@renderer/enum'
 import ImageNodeBox from '@renderer/views/game/components/imageNodeBox.vue'
@@ -12,6 +12,7 @@ import { useGame } from '@renderer/composables/useGame'
 import FilterNodeBox from '@renderer/views/game/components/filterNodeBox.vue'
 import CurtainNodeBox from '@renderer/views/game/components/curtainNodeBox.vue'
 import CustomNodeBox from '@renderer/views/game/components/customNodeBox.vue'
+import { types } from 'sass'
 
 const router = useRouter()
 const { editorNodeList, nodeMap, editorNodeMap, groupedNodes, clearNodeManager } = useNodeManager()
@@ -28,8 +29,19 @@ const {
   startScene,
   viewerCurtainNodeMap
 } = useGame()
+// test game
+const type = computed(() => {
+  return route.query.type
+})
+const gameId = computed((): number => {
+  const id = +route.query.gameId!
+  return id as number
+})
+const sceneId = computed((): number => {
+  return +route.query.sceneId
+})
 const storyNode = computed((): StoryNode => {
-  return groupedNodes.value[NodeEnum.Story][0].node as StoryNode
+  return groupedNodes.value?.[NodeEnum.Story]?.[0]?.node as StoryNode
 })
 
 // 点击字幕
@@ -41,23 +53,51 @@ const svgStyle = computed((): CSSProperties => {
     pointerEvents: 'none'
   }
 })
-onMounted(() => {
+watch(storyNode.value, () => {
   // 如果路由有sceneId，则从此场景开始
-  if (route.query.sceneId) {
-    startScene(+route.query.sceneId)
+  if (sceneId.value !== -1) {
+    startScene(sceneId.value)
   } else {
     startScene(storyNode.value.entrySceneId)
   }
 })
+const exitDialogVisible = ref(false)
+
+function esc(e: KeyboardEvent) {
+  if (e.key === 'Escape') {
+    console.log('chicken', e)
+
+    exitDialogVisible.value = !exitDialogVisible.value
+  }
+}
+
+function exit() {
+  console.log('chicken', type.value)
+  if (type.value === 'test') {
+    router.replace({
+      path: '/game/entry',
+      query: { gameId: gameId.value, type: type.value }
+    })
+  } else if (type.value === 'game') {
+    router.replace({
+      path: '/game/entry',
+      query: { gameId: gameId.value, type: type.value }
+    })
+  }
+}
 
 onMounted(() => {
+  document.addEventListener('keyup', esc)
   if (!storyNode.value) {
     throw new Error('请添加一个唯一的故事节点')
   }
 })
+onBeforeUnmount(() => {
+  document.removeEventListener('keyup', esc)
+})
 </script>
 <template>
-  <div class="stack">
+  <div class="stack" v-if="storyNode">
     <div :key="curSceneId" class="stack-item background-layer">
       <svg
         :style="svgStyle"
@@ -284,6 +324,14 @@ onMounted(() => {
       </svg>
     </div>
   </div>
+  <el-dialog v-model="exitDialogVisible" title="提示">
+    <div>退出游戏？</div>
+
+    <template #footer>
+      <el-button @click="exitDialogVisible = false">取消</el-button>
+      <el-button type="primary" @click="exit">确认</el-button>
+    </template>
+  </el-dialog>
 </template>
 <style scoped>
 .caption-text {

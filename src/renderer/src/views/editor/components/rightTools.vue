@@ -31,9 +31,10 @@ const route = useRoute()
 const workId = computed(() => {
   return route.query.workId
 })
+
 // 游戏预览
 function startGame(sceneId: number = -1) {
-  const route = `/game/game?type=test&workId=${workId.value}&sceneId=${sceneId}`
+  const route = `/game/game?type=test&gameId=${workId.value}&sceneId=${sceneId}`
   console.log('chicken', route, window.location.href)
   window.api.window.open('game', route, {})
 }

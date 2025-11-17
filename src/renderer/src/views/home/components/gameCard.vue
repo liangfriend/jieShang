@@ -5,37 +5,49 @@ const props = defineProps({
   img: { type: String, default: '' },
   name: { type: String, default: '' },
   width: { type: String, default: '180px' },
-  height: { type: String, default: '110px' }
+  height: { type: String, default: '110px' },
+  deleteable: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['select'])
+const emit = defineEmits(['select', 'delete'])
 
 const cardStyle = computed(() => ({
   width: props.width,
   height: props.height
 }))
 
-// 控制悬浮时提示显示
+// 控制悬浮
 const hover = ref(false)
 
+// 点击卡片
 const onClick = () => emit('select', props.name)
+
+// 删除按钮点击
+const onDelete = (e: MouseEvent) => {
+  e.stopPropagation()
+  emit('delete', props.name)
+}
 </script>
 
 <template>
   <div
-    class="game-card"
+    class="game-card no-user-select"
     :style="cardStyle"
     @mouseenter="hover = true"
     @mouseleave="hover = false"
     @click="onClick"
   >
     <!-- 图片 -->
-    <img class="thumb" :src="img" :alt="name" />
+    <img v-if="img" class="thumb" :src="img" :alt="name" />
+    <div v-else class="center h-full text-[50px] bg-[rgba(255,255,255,0.7)]">{{ name }}</div>
 
-    <!-- 悬浮显示名称 -->
+    <!-- 悬浮提示：名称 -->
     <div v-if="hover" class="name-tip">
       {{ name }}
     </div>
+
+    <!-- ❌ 右上角删除按钮 -->
+    <button v-if="hover && deleteable" class="delete-btn" @click="onDelete">✕</button>
   </div>
 </template>
 
@@ -47,20 +59,16 @@ const onClick = () => emit('select', props.name)
   cursor: pointer;
   transition: transform 0.2s ease;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-/* 鼠标放大 */
-.game-card:hover {
-  transform: scale(1.04);
+  user-select: none;
 }
 
 .thumb {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: fill;
 }
 
-/* 悬浮提示 */
+/* 名称浮层 */
 .name-tip {
   position: absolute;
   bottom: 6px;
@@ -76,6 +84,30 @@ const onClick = () => emit('select', props.name)
   animation: fadeIn 0.15s ease;
 }
 
+/* ❌ 删除按钮 */
+.delete-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 26px;
+  text-align: center;
+  padding: 0;
+  transition: background 0.15s ease;
+}
+
+.delete-btn:hover {
+  background: rgba(255, 77, 79, 0.9);
+}
+
+/* 动画 */
 @keyframes fadeIn {
   from {
     opacity: 0;

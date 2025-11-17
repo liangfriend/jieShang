@@ -4,7 +4,7 @@ export class GameRepository {
   /**
    * 创建游戏
    */
-  async create(gameData: { name: string; data: string }) {
+  async create(gameData: { name: string; data: string; front_cover: string; description: string }) {
     return await GameModel.create(gameData)
   }
 
@@ -20,7 +20,15 @@ export class GameRepository {
   /**
    * 更新游戏
    */
-  async update(id: string, updateData: Partial<{ name: string; data: string }>) {
+  async update(
+    id: string,
+    updateData: Partial<{
+      name: string
+      data: string
+      front_cover: string
+      description: string
+    }>
+  ) {
     return await GameModel.update(updateData, {
       where: { id }
     })
@@ -31,7 +39,15 @@ export class GameRepository {
    * 例：query({ name: "xxx" }) → WHERE name='xxx'
    *     query({}) → 查全部
    */
-  async query(filters: Partial<{ id: string; name: string; data: string }> = {}) {
+  async query(
+    filters: Partial<{
+      id: string
+      name: string
+      data: string
+      front_cover: string
+      description: string
+    }> = {}
+  ) {
     const where: any = {}
 
     for (const key of Object.keys(filters)) {

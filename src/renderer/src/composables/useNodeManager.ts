@@ -1,4 +1,4 @@
-import { computed, ComputedRef, Ref, ref, watchEffect } from 'vue'
+import { computed, ComputedRef, Ref, ref, watch, watchEffect } from 'vue'
 import { NodeEnum } from '@renderer/enum'
 import { EditorNode, EngineNode } from '@renderer/types'
 
@@ -26,6 +26,7 @@ export function setup(data: Array<EditorNode>): NodeManager {
       nodeMap.value.set(id, item.node)
     })
   })
+
   // 进行分组
   // 🔹 分组逻辑（根据 NodeEnum 的类型名分组）
   const groupedNodes = computed((): Record<NodeEnum, EditorNode[]> => {
@@ -98,6 +99,15 @@ export function updateLoadedEditorNodeList(editorNodeList: Array<EditorNode>) {
   if (!res) {
     res = setup(editorNodeList)
   } else {
+    // 重新进入的时候，要再初始化watchEffect, effectScope试了不管用
+    watchEffect(() => {
+      res!.nodeMap.value.clear()
+      res!.editorNodeList.value?.forEach((item) => {
+        const { id, nodeType } = item.node // 显式读取关键字段
+        res!.editorNodeMap.value.set(id, item)
+        res!.nodeMap.value.set(id, item.node)
+      })
+    })
     res.editorNodeList.value = editorNodeList
   }
 }
