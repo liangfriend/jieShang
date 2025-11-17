@@ -29,7 +29,6 @@ const {
   viewerCurtainNodeMap
 } = useGame()
 const storyNode = computed((): StoryNode => {
-  console.log('chicken', groupedNodes.value)
   return groupedNodes.value[NodeEnum.Story][0].node as StoryNode
 })
 
@@ -58,9 +57,8 @@ onMounted(() => {
 })
 </script>
 <template>
-  <el-button @click="router.replace('/jieShang/game')">退出游戏</el-button>
   <div class="stack">
-    <div :key="curSceneId" class="stackItem background-layer">
+    <div :key="curSceneId" class="stack-item background-layer">
       <svg
         :style="svgStyle"
         :viewBox="`0 0 ${+storyNode.width} ${+storyNode.height}`"
@@ -89,7 +87,7 @@ onMounted(() => {
         ></custom-node-box>
       </svg>
     </div>
-    <div :key="curSceneId" class="stackItem behind-object-layer">
+    <div :key="curSceneId" class="stack-item behind-object-layer">
       <svg
         :style="svgStyle"
         :viewBox="`0 0 ${+storyNode.width} ${+storyNode.height}`"
@@ -118,7 +116,7 @@ onMounted(() => {
         ></custom-node-box>
       </svg>
     </div>
-    <div :key="curSceneId" class="stackItem character-layer">
+    <div :key="curSceneId" class="stack-item character-layer">
       <svg
         :style="svgStyle"
         :viewBox="`0 0 ${+storyNode.width} ${+storyNode.height}`"
@@ -147,7 +145,7 @@ onMounted(() => {
         ></custom-node-box>
       </svg>
     </div>
-    <div :key="curSceneId" class="stackItem front-object-layer">
+    <div :key="curSceneId" class="stack-item front-object-layer">
       <svg
         :style="svgStyle"
         :viewBox="`0 0 ${+storyNode.width} ${+storyNode.height}`"
@@ -177,7 +175,7 @@ onMounted(() => {
         ></custom-node-box>
       </svg>
     </div>
-    <div :key="curSceneId" class="stackItem effect-layer">
+    <div :key="curSceneId" class="stack-item effect-layer">
       <svg
         :style="svgStyle"
         :viewBox="`0 0 ${+storyNode.width} ${+storyNode.height}`"
@@ -212,7 +210,7 @@ onMounted(() => {
         ></custom-node-box>
       </svg>
     </div>
-    <div :key="curSceneId" class="stackItem operation-layer">
+    <div :key="curSceneId" class="stack-item operation-layer">
       <svg
         :style="svgStyle"
         :viewBox="`0 0 ${+storyNode.width} ${+storyNode.height}`"
@@ -250,7 +248,7 @@ onMounted(() => {
         ></custom-node-box>
       </svg>
     </div>
-    <div class="stackItem curtain-layer" comment="幕布层不跟随场景刷新，所以不加key">
+    <div class="stack-item curtain-layer" comment="幕布层不跟随场景刷新，所以不加key">
       <svg
         :style="svgStyle"
         :viewBox="`0 0 ${+storyNode.width} ${+storyNode.height}`"

@@ -3,9 +3,9 @@
 import { NodeEnum } from '@renderer/enum'
 import DynamicSelectGroup from '@renderer/components/dynamicSelectGroup.vue'
 import { captionBoxList, nodeNameMap } from '@renderer/constant'
-import { useRouter } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 import { useNodeManager } from '@renderer/composables/useNodeManager'
-import { inject, Ref } from 'vue'
+import { computed, inject, ref, Ref } from 'vue'
 import { EditorNode } from '@renderer/types'
 import MonacoEditor from '@renderer/components/monacoEditor.vue'
 
@@ -27,11 +27,15 @@ function deleteNode() {
 }
 
 const router = useRouter()
-
+const route = useRoute()
+const workId = computed(() => {
+  return route.query.workId
+})
 // 游戏预览
 function startGame(sceneId: number = -1) {
-  const url = router.resolve({ path: '/jieShang/game/game', query: { sceneId } }).href
-  window.open(url, '_blank')
+  const route = `/game/game?type=test&workId=${workId.value}&sceneId=${sceneId}`
+  console.log('chicken', route, window.location.href)
+  window.api.window.open('game', route, {})
 }
 </script>
 

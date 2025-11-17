@@ -180,7 +180,7 @@ export type EditorNode = {
   node: EngineNode
 }
 // 编辑器视图信息
-export type ViewInfo = {
+export type EditorInfo = {
   left: number
   top: number
   width: number

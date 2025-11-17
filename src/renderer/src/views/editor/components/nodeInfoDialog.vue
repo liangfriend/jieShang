@@ -787,6 +787,7 @@ onMounted(() => {})
       </div>
       <div class="flex mt-2">
         <div class="w-24 shrink-0">资源:</div>
+        {{ imageList[0].url }}
         <el-select v-model="editorNode.node.url" :style="{ width: '16rem' }">
           <el-option v-for="item in imageList" :label="item.name" :value="item.url"></el-option>
         </el-select>

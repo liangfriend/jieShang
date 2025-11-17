@@ -10,7 +10,10 @@ An Electron application with Vue and TypeScript
 
 ### Install
 
+恢复npm官方镜像
+npm config delete registry
 ```bash
+$ npm i cnpm -g
 $ cnpm install
 ```
 

@@ -51,7 +51,7 @@ async function createWork() {
     name: form.name,
     data: JSON.stringify({
       editorNodeList: [],
-      gameData: {},
+      gameData: '{}',
       editorInfo: {
         left: -5000,
         top: -5000,
