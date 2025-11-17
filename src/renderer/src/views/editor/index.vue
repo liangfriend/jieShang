@@ -32,6 +32,7 @@ import RoundedRectBox from './components/roundedRectBox.vue'
 import MonacoEditor from '@renderer/components/monacoEditor.vue'
 import { updateLoadedGameData, useGameData } from '@renderer/composables/useGameData'
 import { updateStaticResource } from '@renderer/composables/useStaticResource'
+import PublishDialog from '@renderer/views/editor/components/publishDialog.vue'
 // 设置窗口类型
 sessionStorage.setItem('editorNodeListType', 'editor')
 // 编辑器功能
@@ -364,7 +365,6 @@ function reset() {
 
 const router = useRouter()
 const route = useRoute()
-const viewKey = ref(Symbol())
 const workId = computed(() => {
   return route.query.workId
 })
@@ -395,7 +395,6 @@ onBeforeMount(async () => {
       updateLoadedGameData(gameData)
       const editorInfo = JSON.parse(data.data).editorInfo
       updateLoadedEditorInfo(editorInfo)
-      viewKey.value = Symbol()
     }
   }
 })
@@ -530,12 +529,13 @@ const leftDrawerVisible = ref(false)
 const staticResourcesVisible = ref(false)
 // 数据卡展示
 const dataCardVisible = ref(false)
-
+// 发布游戏弹窗
+const publishDialogvisible = ref(false)
 provide('curSelectedNode', curSelectedNode)
 </script>
 
 <template>
-  <div class="engineContainer" :key="viewKey">
+  <div class="engineContainer">
     <div class="ds-ec-up" comment="上方">
       <div>
         <el-button @click="router.replace({ path: '/home' })">返回首页</el-button>
@@ -561,6 +561,7 @@ provide('curSelectedNode', curSelectedNode)
           <el-button @click="staticResourcesVisible = true">静态资源总览</el-button>
           <el-button @click="reset">重置数据</el-button>
           <el-button :disabled="!nodeMap.has(1)" @click="startGame">游戏预览</el-button>
+          <el-button @click="publishDialogvisible = true">发布</el-button>
         </div>
       </div>
     </div>
@@ -576,9 +577,9 @@ provide('curSelectedNode', curSelectedNode)
     >
       <div :style="worktopStyle" class="stack absolute" comment="超大可拖动画布">
         <!-- 网格层 -->
-        <div class="stackItem gridLayer"></div>
+        <div class="stack-item gridLayer"></div>
         <!-- 节点连线层 -->
-        <div class="stackItem nodeLinkLayer">
+        <div class="stack-item nodeLinkLayer">
           <svg style="width: 100%; height: 100%; pointer-events: none">
             <defs>
               <!-- 箭头定义 -->
@@ -648,7 +649,7 @@ provide('curSelectedNode', curSelectedNode)
         </div>
 
         <!-- 节点层 -->
-        <div class="stackItem nodeLayer">
+        <div class="stack-item nodeLayer">
           <div v-for="item in editorNodeList">
             <normal-rect-box
               v-if="item.boxType === EditorBoxEnum.NormalRect"
@@ -696,6 +697,12 @@ provide('curSelectedNode', curSelectedNode)
   <el-dialog v-model="dataCardVisible">
     <monaco-editor v-model="gameData"></monaco-editor>
   </el-dialog>
+  <publish-dialog
+    :editor-info="editorInfo"
+    :game-data="gameData"
+    :editor-node-list="editorNodeList"
+    v-model="publishDialogvisible"
+  ></publish-dialog>
 </template>
 
 <style scoped>
@@ -743,7 +750,7 @@ provide('curSelectedNode', curSelectedNode)
 }
 
 /* 层叠系统 */
-.stackItem {
+.stack-item {
   position: absolute;
   inset: 0;
 }

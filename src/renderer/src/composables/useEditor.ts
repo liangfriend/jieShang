@@ -1,13 +1,13 @@
 import { Ref, ref } from 'vue'
-import { ViewInfo } from '@renderer/types'
+import { EditorInfo } from '@renderer/types'
 
 type UseEditor = {
-  editorInfo: Ref<ViewInfo>
+  editorInfo: Ref<EditorInfo>
   resetEditorInfo: () => void
 }
 
 function setup(data) {
-  let editorInfo = ref<ViewInfo>(
+  let editorInfo = ref<EditorInfo>(
     data || {
       left: -5000,
       top: -5000,
@@ -35,7 +35,7 @@ function setup(data) {
 
 let res: UseEditor | null = null
 
-export function updateLoadedEditorInfo(editorInfo: ViewInfo) {
+export function updateLoadedEditorInfo(editorInfo: EditorInfo) {
   if (!res) {
     res = setup(editorInfo)
   } else {
