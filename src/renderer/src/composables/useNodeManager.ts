@@ -1,6 +1,7 @@
 import { computed, ComputedRef, Ref, ref, watch, watchEffect } from 'vue'
 import { NodeEnum } from '@renderer/enum'
 import { EditorNode, EngineNode } from '@renderer/types'
+import { Resolve } from 'element-plus'
 
 export type NodeManager = {
   nodeMap: Ref<Map<number, EngineNode>>
@@ -13,7 +14,10 @@ export type NodeManager = {
   clearNodeManager: () => void
 }
 
-export function setup(data: Array<EditorNode>, resolve = null): NodeManager {
+export function setup(
+  data: Array<EditorNode>,
+  resolve: ((value: boolean) => void) | null = null
+): NodeManager {
   const nodeMap = ref(new Map<number, EngineNode>())
   const editorNodeMap = ref(new Map<number, EditorNode>()) // 空间换时间
   const editorNodeList = ref<EditorNode[]>(data ?? [])

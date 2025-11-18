@@ -46,20 +46,21 @@ const workId = computed(() => {
   return route.query.workId
 })
 onMounted(async () => {
-  const work = (await window.api.work.query({ id: workId.value }))[0]
+  const work = (await window.api.work.query({ id: workId.value })).data[0]
   const data = JSON.parse(work.data)
   if (data) {
     await updateLoadedEditorNodeList(data.editorNodeList)
     updateLoadedGameData(data.gameData)
     updateLoadedEditorInfo(data.editorInfo)
   }
-  const resourceList = await window.api.resource.list()
+  const resourceList = (await window.api.resource.list()).data
   updateStaticResource(resourceList)
 })
 // =====================================拖拽/移动功能================================
 const isPanning = ref(false)
 const isFrameSelecting = ref(false)
 const lastMouse = ref({ x: 0, y: 0 })
+
 function onMouseDown(e: MouseEvent) {
   const scale = editorInfo.value.scale
   // 框选
@@ -82,6 +83,7 @@ function onMouseDown(e: MouseEvent) {
     lastMouse.value = { x: e.clientX, y: e.clientY }
   }
 }
+
 function onMouseMove(e: MouseEvent) {
   const scale = editorInfo.value.scale
   // 框选
@@ -115,17 +117,20 @@ function onMouseMove(e: MouseEvent) {
     lastMouse.value = { x: e.clientX, y: e.clientY }
   }
 }
+
 function onMouseUp() {
   isFrameSelecting.value = false
   isPanning.value = false
   dragRectLayout.value.show = false
 }
+
 function onWheel(e: WheelEvent) {
   e.preventDefault()
   const delta = e.deltaY > 0 ? -0.1 : 0.1
   const newScale = Math.min(3, Math.max(0.2, editorInfo.value.scale + delta))
   editorInfo.value.scale = newScale
 }
+
 // 左键拖拽框
 const dragRectLayout = ref({
   show: false,
@@ -144,6 +149,7 @@ function handleRectBoxClick(item: EditorNode) {
   dragSelectedNodes.value.clear()
   dragSelectedNodes.value.add(item)
 }
+
 // 批量拖拽
 const isBatchDragging = ref(false)
 const batchStartPos = ref({ x: 0, y: 0 })
@@ -170,6 +176,7 @@ function batchMouseMove(e: MouseEvent) {
 function batchMouseUp(e: MouseEvent) {
   isBatchDragging.value = false
 }
+
 // ============================ 样式===============================
 const worktopStyle = computed(
   (): CSSProperties => ({
@@ -327,6 +334,7 @@ const nodeLinkList = computed(
     return lineList
   }
 )
+
 // 添加节点
 function addEditorNode(nodeType: NodeEnum) {
   const node: EditorNode = editorNodeTemplate(nodeType)
@@ -364,6 +372,7 @@ function addEditorNode(nodeType: NodeEnum) {
   }
   addNode(node)
 }
+
 // 重置数据
 function reset() {
   resetEditorInfo()
@@ -382,9 +391,11 @@ async function save() {
   await window.api.work.update(workId.value, { data: JSON.stringify(data) })
   ElMessage.success('保存成功')
 }
+
 const storyNode = computed((): StoryNode => {
   return groupedNodes.value?.[NodeEnum.Story]?.[0]?.node as StoryNode
 })
+
 // 游戏预览
 function startGame() {
   const route = `/game/entry?type=test&gameId=${workId.value}`

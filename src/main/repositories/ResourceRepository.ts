@@ -6,16 +6,18 @@ export class ResourceRepository {
    * 创建资源
    */
   async create(resourceData: { name: string; type: 'image' | 'audio' | 'video'; url: string }) {
-    return await ResourceModel.create(resourceData)
+    const result = await ResourceModel.create(resourceData)
+    return result.toJSON()
   }
 
   /**
    * 删除资源
    */
   async delete(id: string) {
-    return await ResourceModel.destroy({
+    const count = await ResourceModel.destroy({
       where: { id }
     })
+    return count
   }
 
   /**
@@ -25,9 +27,14 @@ export class ResourceRepository {
     id: string,
     updateData: Partial<{ name: string; type: 'image' | 'audio' | 'video'; url: string }>
   ) {
-    return await ResourceModel.update(updateData, {
+    const [count] = await ResourceModel.update(updateData, {
       where: { id }
     })
+    if (count === 0) return null
+
+    // 取更新后的记录并返回 JSON
+    const updated = await ResourceModel.findByPk(id)
+    return updated ? updated.toJSON() : null
   }
 
   /**

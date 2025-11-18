@@ -11,26 +11,31 @@ export class WorkService {
 
   /** 创建 */
   async createWork(payload: { name: string; data: string }) {
-    return await this.workRepository.create(payload)
+    const data = await this.workRepository.create(payload)
+    return { success: true, data }
   }
 
   /** 删除 */
   async deleteWork(id: string) {
-    return await this.workRepository.delete(id)
+    const data = await this.workRepository.delete(id)
+    return { success: true, data }
   }
 
   /** 更新 */
   async updateWork(id: string, payload: Partial<{ name: string; data: string }>) {
-    return await this.workRepository.update(id, payload)
+    const data = await this.workRepository.update(id, payload)
+    return { success: true, data }
   }
 
   /** 条件查询 */
   async queryWorks(filters: Partial<{ id: string; name: string; data: string }>) {
-    return await this.workRepository.query(filters)
+    const data = await this.workRepository.query(filters)
+    return { success: true, data }
   }
 
   /** 查询全部 */
   async listWorks() {
-    return await this.workRepository.query({})
+    const data = await this.workRepository.query({})
+    return { success: true, data }
   }
 }

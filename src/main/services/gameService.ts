@@ -14,12 +14,20 @@ export class GameService {
     front_cover: string
     description: string
   }) {
-    return await this.gameRepository.create(payload)
+    const result = await this.gameRepository.create(payload)
+    return {
+      success: true,
+      data: result
+    }
   }
 
   /** 删除 */
   async deleteGame(id: string) {
-    return await this.gameRepository.delete(id)
+    const result = await this.gameRepository.delete(id)
+    return {
+      success: true,
+      data: result
+    }
   }
 
   /** 更新 */
@@ -32,7 +40,11 @@ export class GameService {
       description: string
     }>
   ) {
-    return await this.gameRepository.update(id, payload)
+    const result = await this.gameRepository.update(id, payload)
+    return {
+      success: true,
+      data: result
+    }
   }
 
   /** 条件查询 */
@@ -45,11 +57,19 @@ export class GameService {
       description: string
     }>
   ) {
-    return await this.gameRepository.query(filters)
+    const result = await this.gameRepository.query(filters)
+    return {
+      success: true,
+      data: result
+    }
   }
 
   /** 查询全部 */
   async listGames() {
-    return await this.gameRepository.query({})
+    const result = await this.gameRepository.query({})
+    return {
+      success: true,
+      data: result
+    }
   }
 }

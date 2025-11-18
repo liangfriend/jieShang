@@ -1,20 +1,11 @@
-# deciphony-engine
-
-An Electron application with Vue and TypeScript
-
-## Recommended IDE Setup
-
-- [VSCode](https://code.visualstudio.com/) + [ESLint](https://marketplace.visualstudio.com/items?itemName=dbaeumer.vscode-eslint) + [Prettier](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar)
-
-## Project Setup
-
-### Install
-
 恢复npm官方镜像
 npm config delete registry
+
 ```bash
 $ npm i cnpm -g
-$ cnpm install
+删除script中postinstall:"electron-builder install-app-deps"
+$ cnpm i
+
 ```
 
 ### Development

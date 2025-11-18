@@ -107,7 +107,7 @@ const editorNodeListFilted = computed(() => {
 function changeTab(item: { value: string; label: string }) {
   activeTab.value = item.value
   if (item.value !== 'all') {
-    addTarget.value = item.value
+    addTarget.value = item.value as NodeEnum
   }
 }
 
@@ -124,7 +124,7 @@ const addTarget = ref(NodeEnum.Story)
 
 // 节点详情弹窗功能
 const infoDialogVisible = ref(false)
-const { editorInfo, saveEditorInfo, resetEditorInfo } = useEditor()
+const { editorInfo, resetEditorInfo } = useEditor()
 
 // 添加新节点
 function addNewNode() {

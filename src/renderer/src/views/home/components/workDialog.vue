@@ -34,7 +34,7 @@ const form = reactive({
 async function loadWorks() {
   loading.value = true
   try {
-    workList.value = await window.api.work.list()
+    workList.value = (await window.api.work.list()).data
   } finally {
     loading.value = false
   }

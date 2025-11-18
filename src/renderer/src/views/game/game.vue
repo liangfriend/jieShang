@@ -14,6 +14,7 @@ import CurtainNodeBox from '@renderer/views/game/components/curtainNodeBox.vue'
 import CustomNodeBox from '@renderer/views/game/components/customNodeBox.vue'
 import { types } from 'sass'
 import { updateLoadedGameData, useGameData } from '@renderer/composables/useGameData'
+
 const router = useRouter()
 const route = useRoute()
 // ====================数据初始化======================
@@ -50,9 +51,10 @@ const sceneId = computed((): number => {
 const storyNode = computed((): StoryNode => {
   return groupedNodes.value?.[NodeEnum.Story]?.[0]?.node as StoryNode
 })
+
 async function initData() {
   if (type.value === 'test') {
-    const data = (await window.api.work.query({ id: gameId.value }))?.[0]
+    const data = (await window.api.work.query({ id: gameId.value })).data?.[0]
     if (data) {
       const editorNodeList = JSON.parse(data.data).editorNodeList
       await updateLoadedEditorNodeList(editorNodeList)
@@ -60,8 +62,8 @@ async function initData() {
       updateLoadedGameData(gameData)
     }
   } else if (type.value === 'game') {
-    const data = (await window.api.game.query({ id: gameId.value }))?.[0]
-    const save = await window.api.save.query({ id: saveId.value })[0]
+    const data = (await window.api.game.query({ id: gameId.value })).data?.[0]
+    const save = (await window.api.save.query({ id: saveId.value })).data?.[0]
     if (data) {
       const editorNodeList = JSON.parse(data.data).editorNodeList
       await updateLoadedEditorNodeList(editorNodeList)
@@ -83,6 +85,7 @@ async function initData() {
     await startScene(storyNode.value.entrySceneId)
   }
 }
+
 onMounted(async () => {
   await initData()
 })
@@ -101,19 +104,21 @@ onMounted(() => {
 onBeforeUnmount(() => {
   document.removeEventListener('keyup', esc)
 })
+
 function esc(e: KeyboardEvent) {
   if (e.key === 'Escape') {
     exitDialogVisible.value = !exitDialogVisible.value
   }
 }
+
 function exit() {
-  console.log('chicken', type.value, route.query)
   if (type.value === 'test') {
     router.replace({
       path: '/game/entry',
       query: { gameId: gameId.value, type: type.value }
     })
   } else if (type.value === 'game') {
+    console.log('chicken')
     router.replace({
       path: '/game/entry',
       query: { gameId: gameId.value, type: type.value }
@@ -304,7 +309,6 @@ function exit() {
           :canvas-width="+storyNode.width"
           :captionNode="item.node"
           :layout="item.layout"
-          @status-change="captionStatusChange"
         ></caption-node-box>
         <custom-node-box
           v-for="item in viewerNodeGroups.customs[LayerEnum.Operation]"
@@ -366,7 +370,7 @@ function exit() {
     <div>退出游戏？</div>
 
     <template #footer>
-      <el-button @click="exitDialogVisible = false">取消</el-button>
+      <el-button @click.stop="exitDialogVisible = false">取消</el-button>
       <el-button type="primary" @click="exit">确认</el-button>
     </template>
   </el-dialog>
@@ -388,6 +392,7 @@ function exit() {
   font-weight: 500;
   font-family: 'Microsoft YaHei', sans-serif;
 }
+
 .data-box {
   width: fit-content;
 

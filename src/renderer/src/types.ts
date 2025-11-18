@@ -240,3 +240,34 @@ export type SaveData = {
   data: any
   editorNodeList: EditorNode[]
 }
+
+// model定义
+type baseModel = {
+  created_at: number
+  updated_at: number
+  deleted_at: number
+}
+export type GameModel = baseModel & {
+  id: number
+  name: string
+  data: string
+  front_cover: string
+  description: string
+}
+export type SaveModel = baseModel & {
+  id: number
+  game_id: string
+  data: string
+  name: string
+}
+export type WorkModel = baseModel & {
+  id: number
+  name: string
+  data: string
+}
+export type ResourceModel = baseModel & {
+  id: number
+  name: string
+  type: string
+  url: string
+}

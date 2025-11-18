@@ -5,16 +5,18 @@ export class GameRepository {
    * 创建游戏
    */
   async create(gameData: { name: string; data: string; front_cover: string; description: string }) {
-    return await GameModel.create(gameData)
+    const result = await GameModel.create(gameData)
+    return result.toJSON()
   }
 
   /**
    * 删除游戏
    */
   async delete(id: string) {
-    return await GameModel.destroy({
+    const count = await GameModel.destroy({
       where: { id }
     })
+    return count
   }
 
   /**
@@ -29,9 +31,13 @@ export class GameRepository {
       description: string
     }>
   ) {
-    return await GameModel.update(updateData, {
+    const [count] = await GameModel.update(updateData, {
       where: { id }
     })
+    if (count === 0) return null
+
+    const updated = await GameModel.findByPk(id)
+    return updated ? updated.toJSON() : null
   }
 
   /**

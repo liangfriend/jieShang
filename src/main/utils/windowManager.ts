@@ -1,6 +1,6 @@
 import { BrowserWindow } from 'electron'
 import path from 'path'
-import { initShortcut } from '../shortcutManager'
+import { initShortcut } from './shortcutManager'
 
 export class WindowManager {
   private windows: Map<string, BrowserWindow> = new Map()
@@ -35,7 +35,6 @@ export class WindowManager {
       },
       ...options
     })
-    initShortcut(win)
     // dev / build 两种模式
     const routeNormalized = route.startsWith('#') ? route.slice(1) : route
 

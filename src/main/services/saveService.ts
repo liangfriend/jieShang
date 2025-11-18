@@ -9,26 +9,31 @@ export class SaveService {
 
   /** 创建 */
   async createSave(payload: { game_id: number; name: string; data: string }) {
-    return await this.saveRepository.create(payload)
+    const data = await this.saveRepository.create(payload)
+    return { success: true, data }
   }
 
   /** 删除 */
   async deleteSave(id: string) {
-    return await this.saveRepository.delete(id)
+    const data = await this.saveRepository.delete(id)
+    return { success: true, data }
   }
 
   /** 更新 */
   async updateSave(id: string, payload: Partial<{ game_id: number; name: string; data: string }>) {
-    return await this.saveRepository.update(id, payload)
+    const data = await this.saveRepository.update(id, payload)
+    return { success: true, data }
   }
 
   /** 条件查询 */
   async querySaves(filters: Partial<{ id: string; game_id: number; name: string; data: string }>) {
-    return await this.saveRepository.query(filters)
+    const data = await this.saveRepository.query(filters)
+    return { success: true, data }
   }
 
   /** 查询全部 */
   async listSaves() {
-    return await this.saveRepository.query({})
+    const data = await this.saveRepository.query({})
+    return { success: true, data }
   }
 }

@@ -2,7 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { updateLoadedEditorNodeList, useNodeManager } from '@renderer/composables/useNodeManager'
-import type { StoryNode } from '@renderer/types'
+import type { SaveModel, StoryNode } from '@renderer/types'
 import { ElMessage } from 'element-plus'
 import { updateStaticResource } from '@renderer/composables/useStaticResource'
 import { updateLoadedEditorInfo } from '@renderer/composables/useEditor'
@@ -33,9 +33,10 @@ const sceneId = computed((): number => {
 const storyNode = computed(() => {
   return nodeMap.value.get(1) as StoryNode
 })
+
 async function initData() {
   if (type.value === 'test') {
-    const data = (await window.api.work.query({ id: gameId.value }))?.[0]
+    const data = (await window.api.work.query({ id: gameId.value })).data?.[0]
     if (data) {
       const editorNodeList = JSON.parse(data.data).editorNodeList
       await updateLoadedEditorNodeList(editorNodeList)
@@ -43,7 +44,7 @@ async function initData() {
       updateLoadedGameData(gameData)
     }
   } else if (type.value === 'game') {
-    const data = (await window.api.game.query({ id: gameId.value }))?.[0]
+    const data = (await window.api.game.query({ id: gameId.value })).data?.[0]
     if (data) {
       const editorNodeList = JSON.parse(data.data).editorNodeList
       await updateLoadedEditorNodeList(editorNodeList)
@@ -52,6 +53,7 @@ async function initData() {
     }
   }
 }
+
 onMounted(async () => {
   await initData()
 })
@@ -79,7 +81,7 @@ const newSaveName = ref('')
 const loadDialog = ref(false)
 
 // 存档列表（后台接口）
-const saveList = ref([])
+const saveList = ref<SaveModel[]>([])
 
 // 提交新建存档并进入游戏
 const createNewSave = async () => {
@@ -87,26 +89,26 @@ const createNewSave = async () => {
     ElMessage.warning('请输入存档名')
     return
   }
-  const saveId = await window.api.save.create({
-    game_id: gameId.value,
-    name: newSaveName.value,
-    data: JSON.stringify({ sceneId: -1, gameData: gameData })
-  })
-  ElMessage.success('存档创建成功！')
+  const save = (
+    await window.api.save.create({
+      game_id: gameId.value,
+      name: newSaveName.value,
+      data: JSON.stringify({ sceneId: -1, gameData: gameData })
+    })
+  ).data
   newSaveDialog.value = false
   router.replace({
     path: '/game/game',
-    query: { saveId: saveId, gameId: gameId.value, sceneId: -1 }
+    query: { saveId: save.id, gameId: gameId.value, sceneId: -1, type: type.value }
   })
 }
 
 async function getSaveList(gameId: number) {
-  saveList.value = await window.api.save.query({ game_id: gameId })
+  saveList.value = (await window.api.save.query({ game_id: gameId })).data
 }
 
 // 点击加载某个存档
 const loadSave = async (save) => {
-  console.log('chicken', save)
   const data = JSON.parse(save.data)
 
   router.replace({
@@ -135,7 +137,9 @@ async function onMenuClick(key: string) {
       break
 
     case 'exit':
-      window.close()
+      router.replace({
+        path: '/home'
+      })
       break
   }
 }
@@ -183,7 +187,6 @@ async function onMenuClick(key: string) {
           @click="loadSave(save)"
         >
           <div class="text-xl font-bold mb-2">{{ save.name }}</div>
-          <div class="text-gray-400 text-sm">{{ save.time }}</div>
         </div>
       </div>
 

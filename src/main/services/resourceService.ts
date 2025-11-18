@@ -1,19 +1,23 @@
 // src/main/services/resourceService.ts
+import { ResourceRepository } from '../repositories/ResourceRepository'
+
 export class ResourceService {
   private resourceRepository
 
-  constructor({ resourceRepository }) {
+  constructor({ resourceRepository }: { resourceRepository: ResourceRepository }) {
     this.resourceRepository = resourceRepository
   }
 
   /** 创建 */
   async createResource(payload: { name: string; type: 'image' | 'audio' | 'video'; url: string }) {
-    return await this.resourceRepository.create(payload)
+    const data = await this.resourceRepository.create(payload)
+    return { success: true, data }
   }
 
   /** 删除 */
   async deleteResource(id: string) {
-    return await this.resourceRepository.delete(id)
+    const data = await this.resourceRepository.delete(id)
+    return { success: true, data }
   }
 
   /** 更新 */
@@ -21,18 +25,21 @@ export class ResourceService {
     id: string,
     payload: Partial<{ name: string; type: 'image' | 'audio' | 'video'; url: string }>
   ) {
-    return await this.resourceRepository.update(id, payload)
+    const data = await this.resourceRepository.update(id, payload)
+    return { success: true, data }
   }
 
   /** 条件查询 */
   async queryResources(
     filters: Partial<{ id: string; name: string; type: 'image' | 'audio' | 'video'; url: string }>
   ) {
-    return await this.resourceRepository.query(filters)
+    const data = await this.resourceRepository.query(filters)
+    return { success: true, data }
   }
 
   /** 查询全部 */
   async listResources() {
-    return await this.resourceRepository.query({})
+    const data = await this.resourceRepository.query({})
+    return { success: true, data }
   }
 }

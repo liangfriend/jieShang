@@ -119,6 +119,7 @@ onMounted(() => {
   <g ref="gRef">
     <foreignObject :height="layoutStyle.height" :width="layoutStyle.width">
       <img
+        class="no-user-select"
         :height="layoutStyle.height"
         :src="imageNode.url"
         :style="imageStyle"

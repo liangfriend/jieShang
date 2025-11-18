@@ -6,7 +6,7 @@ import {
   LayoutNode,
   SceneNode
 } from '@renderer/types'
-import { computed, CSSProperties, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, CSSProperties, onBeforeUnmount, onMounted, Ref, ref, watch } from 'vue'
 import { LayoutPositionEnum } from '@renderer/enum'
 import { useRouter } from 'vue-router'
 import { useNodeManager } from '@renderer/composables/useNodeManager'
@@ -36,7 +36,8 @@ export function useCaption(
     canvasWidth: number
     canvasHeight: number
   },
-  emit: (type: string, ...data: any) => void
+  emit: (type: string, ...data: any) => void,
+  captionRef: Ref<SVGAElement>
 ) {
   const status = ref<CaptionStatus>('idle')
   const displayText = ref('')
@@ -95,7 +96,8 @@ export function useCaption(
     displayText.value = props.captionNode.content
   }
   // 交互事件处理
-  const handleUserAction = async () => {
+  const handleUserAction = () => {
+    console.log('chicken')
     if (status.value === 'done') {
       return
     }
@@ -114,27 +116,14 @@ export function useCaption(
       finishNow()
     }
   }
-  // 监听键盘 / 鼠标
-  const setupEvents = () => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.code === 'Space' || e.code === 'Enter') handleUserAction()
-    }
-    const onClick = () => handleUserAction()
 
-    window.addEventListener('keydown', onKey)
-    window.addEventListener('click', onClick)
-
-    return () => {
-      window.removeEventListener('keydown', onKey)
-      window.removeEventListener('click', onClick)
-    }
-  }
   // 重新触发打字机
   watch(() => props.captionNode, init, { immediate: false, deep: true })
 
-  async function init() {
+  function init() {
     // 展示字幕框，这个visible应该没有必要
     visible.value = true
+    console.log('chicken', visible.value)
     // 执行初始化行为
     props.captionNode.initActionIds.forEach((actionId) => {
       doAction(actionId)
@@ -179,14 +168,22 @@ export function useCaption(
     })
   }
 
-  // 生命周期
-  let cleanupEvents: (() => void) | null = null
-  onMounted(() => {
-    init()
-    cleanupEvents = setupEvents()
+  const onKey = (e: KeyboardEvent) => {
+    if (e.code === 'Space' || e.code === 'Enter') handleUserAction()
+  }
+  watch(captionRef, () => {
+    if (captionRef) {
+      captionRef.value.addEventListener('keydown', onKey)
+      captionRef.value.addEventListener('click', handleUserAction)
+    }
   })
   onBeforeUnmount(() => {
-    cleanupEvents?.()
+    console.log('chicken', captionRef.value)
+    captionRef.value.removeEventListener('keydown', onKey)
+    captionRef.value.removeEventListener('click', handleUserAction)
+  })
+  onMounted(() => {
+    init()
   })
 
   // 计算位置

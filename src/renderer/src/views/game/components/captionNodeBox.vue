@@ -30,6 +30,7 @@ const { editorNodeList, nodeMap, editorNodeMap, groupedNodes, clearNodeManager }
 const emit = defineEmits<{
   (e: 'statusChange', status: CaptionStatus, captionNode: CaptionNode): void
 }>()
+const captionRef = ref<SVGAElement>(null!)
 const {
   visible,
   x,
@@ -41,7 +42,7 @@ const {
   layout,
   status,
   executingAction
-} = useCaption(props, emit as (type: string, ...data: any) => void)
+} = useCaption(props, emit as (type: string, ...data: any) => void, captionRef)
 
 const optionNodes = computed((): OptionNode[] => {
   const nodes: OptionNode[] = []
@@ -51,6 +52,7 @@ const optionNodes = computed((): OptionNode[] => {
     for (let id of optionNode?.visibleConditionIds) {
       const conditionNode = nodeMap.value.get(id) as ConditionNode
       const res = runCode(conditionNode.func)
+
       if (!res) visible = false
     }
     if (optionNode && visible) {
@@ -123,6 +125,8 @@ const customOptionStyle = computed((): ((node: OptionNode) => CSSProperties) => 
 <template>
   <g
     v-if="visible"
+    class="pointer-events-auto"
+    ref="captionRef"
     :transform="`
         translate(${x}, ${y})
         scale(${layout.scale})

@@ -6,25 +6,32 @@ export class WorkRepository {
    * 创建作品
    */
   async create(workData: { name: string; data: string }) {
-    return await WorkModel.create(workData)
+    const result = await WorkModel.create(workData)
+    return result.toJSON()
   }
 
   /**
    * 删除作品
    */
   async delete(id: string) {
-    return await WorkModel.destroy({
+    const count = await WorkModel.destroy({
       where: { id }
     })
+    return count
   }
 
   /**
    * 更新作品
    */
   async update(id: string, updateData: Partial<{ name: string; data: string }>) {
-    return await WorkModel.update(updateData, {
+    const [count] = await WorkModel.update(updateData, {
       where: { id }
     })
+    if (count === 0) return null
+
+    // 取更新后的记录并返回 JSON
+    const updated = await WorkModel.findByPk(id)
+    return updated ? updated.toJSON() : null
   }
 
   /**

@@ -14,7 +14,7 @@ const emit = defineEmits(['update:modelValue'])
 const { imageList, audioList, videoList } = useStaticResource()
 
 async function updateResource() {
-  const resourceList = await window.api.resource.list()
+  const resourceList = (await window.api.resource.list()).data
   updateStaticResource(resourceList)
 }
 
@@ -27,7 +27,12 @@ const form = ref({
   name: '',
   file: null as File | null
 })
+const onFileChange = (e: Event) => {
+  const target = e.target as HTMLInputElement
+  if (!target.files || target.files.length === 0) return
 
+  form.value.file = target.files[0]
+}
 // -------------------------------
 // 工具函数
 // -------------------------------
@@ -166,7 +171,7 @@ async function deleteResource(item: any) {
       </el-form-item>
 
       <el-form-item label="文件">
-        <input type="file" @change="(e: Event) => (form.file = e.target!.files[0])" />
+        <input type="file" @change="onFileChange" />
       </el-form-item>
     </el-form>
 

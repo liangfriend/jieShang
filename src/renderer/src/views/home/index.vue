@@ -23,6 +23,7 @@ import RecommendationCard from '@renderer/views/home/components/recommendationCa
 import ChampionCard from '@renderer/views/home/components/championCard.vue'
 import GameCard from '@renderer/views/home/components/gameCard.vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import { GameModel, WorkModel } from '@renderer/types'
 
 const menu = [
   { label: '我的作品', icon: House, value: 'work' },
@@ -47,18 +48,18 @@ async function selectMenu(item: any) {
 }
 
 // 作品列表
-const workList = ref([])
+const workList = ref<WorkModel[]>([])
 
 async function getWorkList() {
   console.log('chicken')
-  workList.value = await window.api.work.list()
+  workList.value = (await window.api.work.list()).data
 }
 
 // 游戏列表
-const gameList = ref([])
+const gameList = ref<GameModel[]>([])
 
 async function getGameList() {
-  gameList.value = await window.api.game.list()
+  gameList.value = (await window.api.game.list()).data
 }
 
 // 初始化

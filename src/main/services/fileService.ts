@@ -34,11 +34,13 @@ export class FileService {
     const url = `file://${finalPath}`
 
     // 写入数据库使用展示名
-    const record = await this.resourceService.createResource({
-      name: displayName,
-      type,
-      url
-    })
+    const record = (
+      await this.resourceService.createResource({
+        name: displayName,
+        type,
+        url
+      })
+    ).data
 
     return {
       id: record.id,
@@ -65,22 +67,24 @@ export class FileService {
     }
 
     // 删除数据库记录
-    await this.resourceService.deleteResource(String(id))
+    const res = await this.resourceService.deleteResource(String(id))
 
-    return true
+    return { success: true, data: res }
   }
 
   /**
    * 仅查询资源（调用 ResourceService）
    */
   async queryResources(condition: any) {
-    return await this.resourceService.queryResources(condition)
+    const res = await this.resourceService.queryResources(condition)
+    return { success: true, data: res }
   }
 
   /**
    * 更新资源记录（不修改文件）
    */
   async updateResource(id: number, data: any) {
-    return await this.resourceService.updateResource(String(id), data)
+    const res = await this.resourceService.updateResource(String(id), data)
+    return { success: true, data: res }
   }
 }

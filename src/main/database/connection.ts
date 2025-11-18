@@ -7,5 +7,4 @@ const sequelize = new Sequelize({
   storage: pathManager.getDatabasePath(),
   logging: false
 })
-console.log('chicken', pathManager.getDatabasePath())
 export default sequelize

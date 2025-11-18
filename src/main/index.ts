@@ -5,7 +5,7 @@ const path = require('node:path')
 const url = require('node:url')
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
-import { initShortcut } from './shortcutManager'
+import { initShortcut } from './utils/shortcutManager'
 import { setupContainer } from './container'
 import { registerController } from './register'
 

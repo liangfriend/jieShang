@@ -2,6 +2,7 @@
   "extends": "@electron-toolkit/tsconfig/tsconfig.web.json",
   "include": [
     "src/renderer/src/env.d.ts",
+    "src/renderer/deciphony-player.d.ts",
     "src/renderer/src/**/*",
     "src/renderer/src/**/*.vue",
     "src/preload/*.d.ts"
@@ -9,6 +10,10 @@
   "compilerOptions": {
     "composite": true,
     "noImplicitReturns": false,
+    "noUnusedLocals": false,
+    /* 检查未使用的变量 */
+    "noUnusedParameters": false,
+    /* 检查未使用的函数参数 */
     "baseUrl": ".",
     "paths": {
       "@renderer/*": [

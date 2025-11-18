@@ -4,7 +4,6 @@ import { Ref, ref } from 'vue'
 
 export interface GameDataManager {
   gameData: Ref<string>
-  saveGameData: () => void
 }
 
 // 因为gameData要直接放进monacoEditor,所以这里直接保存字符串

@@ -27,8 +27,8 @@ import { useVideoManager } from '@renderer/composables/useVideoManager'
 import { useAnimateion } from '@renderer/composables/useAnimateion'
 import { parseJS, runCode } from '@renderer/utils/execJS'
 import { useGameData } from '@renderer/composables/useGameData'
-import { useRoute } from 'vue-router'
 import { ElMessage } from 'element-plus'
+import { getQuery } from '@renderer/utils/url'
 
 const { editorNodeList, nodeMap, editorNodeMap, groupedNodes, clearNodeManager } = useNodeManager()
 const { videoNodePLayerMap, removeVideoNodePlayer, addVideoNodePlayer } = useVideoManager()
@@ -36,15 +36,7 @@ const { audioNodePlayerMap, play, stop } = useAudioManager()
 // 动画
 const { animationMap, executeAnimation } = useAnimateion()
 const { gameData } = useGameData()
-const route = useRoute()
-const type = computed(() => {
-  return route?.query?.type
-})
-// saveId只有在真实游戏模式才有值
-const saveId = computed((): number => {
-  const id = +(route.query.saveId! || -1)
-  return id as number
-})
+
 function setup() {
   // 当前场景id
   const curSceneId = ref(-1)
@@ -143,6 +135,7 @@ function setup() {
   })
   // 幕布不能被场景切换清除，所以单独出一个数据
   const viewerCurtainNodeMap = ref(new ReactiveMap<number, CurtainNode>())
+
   // 往当前视图上添加节点
   function addViewerNodeMap(id: number, node: EngineNode) {
     viewerNodeMap.value.set(id, node)
@@ -152,6 +145,7 @@ function setup() {
       player?.play()
     }
   }
+
   // 移除当前视图上的节点
   function removeViewerNodeMap(id: number) {
     const node = nodeMap.value.get(id) as EngineNode
@@ -169,16 +163,16 @@ function setup() {
       removeVideoNodePlayer(id)
     }
   }
+
   // 自动保存
   async function autoSave(saveId, newSceneId, newGameData) {
     const data = {
       sceneId: newSceneId,
       gameData: newGameData
     }
-    const res = await window.api.save.update(saveId, { data: JSON.stringify(data) })
-    console.log('chicken', res)
-    ElMessage.success('自动保存成功')
+    await window.api.save.update(saveId, { data: JSON.stringify(data) })
   }
+
   // 开始场景
   async function startScene(scenedId: number) {
     if (!scenedId || scenedId === -1) return
@@ -195,10 +189,11 @@ function setup() {
     }
     // 清空已存在资源
     viewerNodeMap.value.clear()
-    console.log('chicken', type.value, route)
+    const type = getQuery().type
+    const saveId = +getQuery().saveId
     // 自动保存存档
-    if (type.value === 'game') {
-      await autoSave(saveId.value, curSceneId.value, gameData.value)
+    if (type === 'game') {
+      await autoSave(saveId, scenedId, gameData.value)
     }
     // ================场景更替=======================
     curSceneId.value = scenedId

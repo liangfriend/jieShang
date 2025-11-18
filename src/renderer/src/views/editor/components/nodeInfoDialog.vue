@@ -908,12 +908,6 @@ onMounted(() => {})
         <monaco-editor v-model="editorNode.node.func"></monaco-editor>
       </div>
     </template>
-    <template v-if="editorNode && editorNode.node.nodeType === NodeEnum.Data">
-      <div class="flex mt-2">
-        <div class="w-24 shrink-0">数据:</div>
-        <moraco-editor v-model="editorNode.node.data"></moraco-editor>
-      </div>
-    </template>
   </el-dialog>
 </template>
 
