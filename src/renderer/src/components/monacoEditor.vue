@@ -73,7 +73,6 @@ function runCode() {
   if (!monacoEditor) return
 
   const code = monacoEditor.getValue()
-  console.log('chicken', code)
   try {
     // 提供一个沙盒逻辑，避免污染全局
     const fn = new Function(

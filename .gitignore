@@ -1,7 +1,10 @@
 node_modules
 dist
 .dev-data
+.idea
+.vscode
 out
 .DS_Store
 .eslintcache
 *.log*
+

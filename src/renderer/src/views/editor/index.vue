@@ -33,28 +33,33 @@ import MonacoEditor from '@renderer/components/monacoEditor.vue'
 import { updateLoadedGameData, useGameData } from '@renderer/composables/useGameData'
 import { updateStaticResource } from '@renderer/composables/useStaticResource'
 import PublishDialog from '@renderer/views/editor/components/publishDialog.vue'
-// 设置窗口类型
-sessionStorage.setItem('editorNodeListType', 'editor')
-// 编辑器功能
+
+const router = useRouter()
+const route = useRoute()
+// =====================================数据初始化==================================
 const { editorInfo, resetEditorInfo } = useEditor()
 const { gameData } = useGameData()
-// 是否启动网格层移动
+const { editorNodeList, nodeMap, editorNodeMap, addNode, groupedNodes, clearNodeManager } =
+  useNodeManager()
+
+const workId = computed(() => {
+  return route.query.workId
+})
+onMounted(async () => {
+  const work = (await window.api.work.query({ id: workId.value }))[0]
+  const data = JSON.parse(work.data)
+  if (data) {
+    await updateLoadedEditorNodeList(data.editorNodeList)
+    updateLoadedGameData(data.gameData)
+    updateLoadedEditorInfo(data.editorInfo)
+  }
+  const resourceList = await window.api.resource.list()
+  updateStaticResource(resourceList)
+})
+// =====================================拖拽/移动功能================================
 const isPanning = ref(false)
 const isFrameSelecting = ref(false)
 const lastMouse = ref({ x: 0, y: 0 })
-
-const worktopStyle = computed(
-  (): CSSProperties => ({
-    position: 'absolute',
-    width: `${editorInfo.value.width}px`,
-    height: `${editorInfo.value.height}px`, // transformOrigin默认坐标是50% 50%
-    transformOrigin: '0 0 ',
-    transform: `scale(${editorInfo.value.scale}) translate(${editorInfo.value.left}px,${editorInfo.value.top}px) `, // 为了跟子组件保持一致，scale放在translate之前
-    backgroundColor: '#fafafa',
-    transition: isPanning.value ? 'none' : 'transform 0.1s ease'
-  })
-)
-
 function onMouseDown(e: MouseEvent) {
   const scale = editorInfo.value.scale
   // 框选
@@ -77,7 +82,6 @@ function onMouseDown(e: MouseEvent) {
     lastMouse.value = { x: e.clientX, y: e.clientY }
   }
 }
-
 function onMouseMove(e: MouseEvent) {
   const scale = editorInfo.value.scale
   // 框选
@@ -102,7 +106,6 @@ function onMouseMove(e: MouseEvent) {
       }
     })
   }
-
   // 网格层移动
   if (isPanning.value) {
     const dx = (e.clientX - lastMouse.value.x) / scale
@@ -112,20 +115,17 @@ function onMouseMove(e: MouseEvent) {
     lastMouse.value = { x: e.clientX, y: e.clientY }
   }
 }
-
 function onMouseUp() {
   isFrameSelecting.value = false
   isPanning.value = false
   dragRectLayout.value.show = false
 }
-
 function onWheel(e: WheelEvent) {
   e.preventDefault()
   const delta = e.deltaY > 0 ? -0.1 : 0.1
   const newScale = Math.min(3, Math.max(0.2, editorInfo.value.scale + delta))
   editorInfo.value.scale = newScale
 }
-
 // 左键拖拽框
 const dragRectLayout = ref({
   show: false,
@@ -144,7 +144,44 @@ function handleRectBoxClick(item: EditorNode) {
   dragSelectedNodes.value.clear()
   dragSelectedNodes.value.add(item)
 }
+// 批量拖拽
+const isBatchDragging = ref(false)
+const batchStartPos = ref({ x: 0, y: 0 })
 
+function batchMouseDown(e: MouseEvent) {
+  isBatchDragging.value = true
+  batchStartPos.value = { x: e.clientX, y: e.clientY }
+  document.addEventListener('mousemove', batchMouseMove)
+  document.addEventListener('mouseup', batchMouseUp)
+}
+
+function batchMouseMove(e: MouseEvent) {
+  if (!isBatchDragging.value) return
+  const scale = editorInfo.value.scale
+  const dx = (e.clientX - batchStartPos.value.x) / (scale ?? 1)
+  const dy = (e.clientY - batchStartPos.value.y) / (scale ?? 1)
+  batchStartPos.value = { x: e.clientX, y: e.clientY }
+  dragSelectedNodes.value.forEach((node) => {
+    node.layout.left += dx
+    node.layout.top += dy
+  })
+}
+
+function batchMouseUp(e: MouseEvent) {
+  isBatchDragging.value = false
+}
+// ============================ 样式===============================
+const worktopStyle = computed(
+  (): CSSProperties => ({
+    position: 'absolute',
+    width: `${editorInfo.value.width}px`,
+    height: `${editorInfo.value.height}px`, // transformOrigin默认坐标是50% 50%
+    transformOrigin: '0 0 ',
+    transform: `scale(${editorInfo.value.scale}) translate(${editorInfo.value.left}px,${editorInfo.value.top}px) `, // 为了跟子组件保持一致，scale放在translate之前
+    backgroundColor: '#fafafa',
+    transition: isPanning.value ? 'none' : 'transform 0.1s ease'
+  })
+)
 const frameSelectedNodeStyle = computed((): CSSProperties => {
   const res: CSSProperties = {
     position: 'absolute',
@@ -212,36 +249,7 @@ const dragRectBtnStyle = computed((): CSSProperties => {
   return res
 })
 
-// 批量拖拽
-const isBatchDragging = ref(false)
-const batchStartPos = ref({ x: 0, y: 0 })
-
-function batchMouseDown(e: MouseEvent) {
-  isBatchDragging.value = true
-  batchStartPos.value = { x: e.clientX, y: e.clientY }
-  document.addEventListener('mousemove', batchMouseMove)
-  document.addEventListener('mouseup', batchMouseUp)
-}
-
-function batchMouseMove(e: MouseEvent) {
-  if (!isBatchDragging.value) return
-  const scale = editorInfo.value.scale
-  const dx = (e.clientX - batchStartPos.value.x) / (scale ?? 1)
-  const dy = (e.clientY - batchStartPos.value.y) / (scale ?? 1)
-  batchStartPos.value = { x: e.clientX, y: e.clientY }
-  dragSelectedNodes.value.forEach((node) => {
-    node.layout.left += dx
-    node.layout.top += dy
-  })
-}
-
-function batchMouseUp(e: MouseEvent) {
-  isBatchDragging.value = false
-}
-
-// 节点功能
-const { editorNodeList, nodeMap, editorNodeMap, addNode, groupedNodes, clearNodeManager } =
-  useNodeManager()
+// ===================节点功能==========================
 
 // 当前选中节点
 const curSelectedNode = ref<EditorNode | null>(null)
@@ -319,7 +327,7 @@ const nodeLinkList = computed(
     return lineList
   }
 )
-
+// 添加节点
 function addEditorNode(nodeType: NodeEnum) {
   const node: EditorNode = editorNodeTemplate(nodeType)
   const scale = editorInfo.value.scale
@@ -356,18 +364,12 @@ function addEditorNode(nodeType: NodeEnum) {
   }
   addNode(node)
 }
-
+// 重置数据
 function reset() {
   resetEditorInfo()
   clearNodeManager()
   ElMessage.success('重置成功')
 }
-
-const router = useRouter()
-const route = useRoute()
-const workId = computed(() => {
-  return route.query.workId
-})
 
 // 保存编辑器和节点信息
 async function save() {
@@ -380,31 +382,18 @@ async function save() {
   await window.api.work.update(workId.value, { data: JSON.stringify(data) })
   ElMessage.success('保存成功')
 }
-
-// 初始化数据
-onMounted(async () => {
-  // 初始化资源列表
-  const resourceList = await window.api.resource.list()
-  updateStaticResource(resourceList)
-  if (workId.value) {
-    const data = (await window.api.work.query({ id: workId.value }))?.[0]
-    if (data) {
-      const editorNodeList = JSON.parse(data.data).editorNodeList
-      updateLoadedEditorNodeList(editorNodeList)
-      const gameData = JSON.parse(data.data).gameData
-      updateLoadedGameData(gameData)
-      const editorInfo = JSON.parse(data.data).editorInfo
-      updateLoadedEditorInfo(editorInfo)
-    }
-  }
+const storyNode = computed((): StoryNode => {
+  return groupedNodes.value?.[NodeEnum.Story]?.[0]?.node as StoryNode
 })
-
 // 游戏预览
 function startGame() {
-  const route = `/game/entry?type=test&gameId=${workId.value}&sceneId=-1`
+  const route = `/game/entry?type=test&gameId=${workId.value}`
   // window.open(url, '_blank')
   console.log('chicken', route, window.location.href)
-  window.api.window.open('game', route, {})
+  window.api.window.open('game', route, {
+    width: storyNode.value.width,
+    height: storyNode.value.height
+  })
 }
 
 // 生成常用节点

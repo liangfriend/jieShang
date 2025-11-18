@@ -37,6 +37,12 @@ declare global {
         query(filters: any): Promise<any>
         list(): Promise<any>
       }
+      window: {
+        open: (name: string, route: string, options: any) => void
+        close: (name: string) => void
+        focus: (name: string) => void
+        get: (name: string) => void
+      }
     }
   }
 }

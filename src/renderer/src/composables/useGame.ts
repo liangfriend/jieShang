@@ -25,13 +25,15 @@ import { ReactiveMap } from '@renderer/dataStructures/relativeMap'
 import { useAudioManager } from '@renderer/composables/useAudioManager'
 import { useVideoManager } from '@renderer/composables/useVideoManager'
 import { useAnimateion } from '@renderer/composables/useAnimateion'
-import { runCode } from '@renderer/utils/execJS'
+import { parseJS, runCode } from '@renderer/utils/execJS'
+import { useGameData } from '@renderer/composables/useGameData'
 
 const { editorNodeList, nodeMap, editorNodeMap, groupedNodes, clearNodeManager } = useNodeManager()
 const { videoNodePLayerMap, removeVideoNodePlayer, addVideoNodePlayer } = useVideoManager()
 const { audioNodePlayerMap, play, stop } = useAudioManager()
 // 动画
 const { animationMap, executeAnimation } = useAnimateion()
+const { gameData } = useGameData()
 
 function setup() {
   // 当前场景id
@@ -163,7 +165,7 @@ function setup() {
 
     // 启动结束幕布
     const preSceneNoode = nodeMap.value.get(curSceneId.value) as SceneNode
-    if (preSceneNoode && preSceneNoode.endCurationId) {
+    if (preSceneNoode && preSceneNoode.endCurationId && preSceneNoode.endCurationId !== -1) {
       const endCurtain = nodeMap.value.get(preSceneNoode.endCurationId) as CurtainNode
       viewerCurtainNodeMap.value.set(preSceneNoode.endCurationId, endCurtain)
       // 幕布执行到一半的时间会进行场景切换
@@ -394,6 +396,29 @@ function setup() {
             const targetNode = nodeMap.value.get(actionNode.targetId)
             if (targetNode?.nodeType === NodeEnum.Scene) {
               startScene(actionNode.targetId)
+            }
+            break
+          }
+          case ActionTypeEnum.DataChange: {
+            // gameData
+            try {
+              // 首先将gameData字符串转换为对象
+              const data = parseJS(gameData.value)
+              // 提供一个沙盒逻辑，避免污染全局
+              const fn = new Function(
+                'gameData',
+                `
+                  try {
+                    ${actionNode.dataChangeFunc}
+                  } catch(e) {
+                    return { error: e.message };
+                  }
+                `
+              )
+              fn(data)
+              gameData.value = JSON.stringify(data)
+            } catch (e: any) {
+              console.error('数据修改行为函数语法错误', e)
             }
             break
           }

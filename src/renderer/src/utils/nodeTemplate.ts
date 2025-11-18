@@ -140,7 +140,7 @@ export function actionNodeTemplate(): ActionNode {
     actionIds: [], // 组合行为专用
     data: null,
     executeConditionIds: [],
-    dataChangeFunc: `const storyNode = editorNodeMap.get(1).node`
+    dataChangeFunc: `const data = gameData`
   }
 }
 
@@ -237,6 +237,7 @@ export function conditionNodeTemplate(): ConditionNode {
     nodeName: '条件节点',
     nodeType: NodeEnum.Condition,
     func: `const storyNode = editorNodeMap.get(1).node
+const data = gameData
 return true`
   }
 }

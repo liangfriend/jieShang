@@ -6,7 +6,7 @@ import { captionBoxList, nodeNameMap } from '@renderer/constant'
 import { useRoute, useRouter } from 'vue-router'
 import { useNodeManager } from '@renderer/composables/useNodeManager'
 import { computed, inject, ref, Ref } from 'vue'
-import { EditorNode } from '@renderer/types'
+import { EditorNode, StoryNode } from '@renderer/types'
 import MonacoEditor from '@renderer/components/monacoEditor.vue'
 
 const {
@@ -31,12 +31,18 @@ const route = useRoute()
 const workId = computed(() => {
   return route.query.workId
 })
-
+const storyNode = computed((): StoryNode => {
+  return groupedNodes.value?.[NodeEnum.Story]?.[0]?.node as StoryNode
+})
 // 游戏预览
 function startGame(sceneId: number = -1) {
   const route = `/game/game?type=test&gameId=${workId.value}&sceneId=${sceneId}`
   console.log('chicken', route, window.location.href)
-  window.api.window.open('game', route, {})
+  // router.replace({ path: route, query: { type: 'test', gameId: workId.value, sceneId: sceneId } })
+  window.api.window.open('game', route, {
+    width: storyNode.value.width,
+    height: storyNode.value.height
+  })
 }
 </script>
 

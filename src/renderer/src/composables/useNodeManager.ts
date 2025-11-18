@@ -13,7 +13,7 @@ export type NodeManager = {
   clearNodeManager: () => void
 }
 
-export function setup(data: Array<EditorNode>): NodeManager {
+export function setup(data: Array<EditorNode>, resolve = null): NodeManager {
   const nodeMap = ref(new Map<number, EngineNode>())
   const editorNodeMap = ref(new Map<number, EditorNode>()) // 空间换时间
   const editorNodeList = ref<EditorNode[]>(data ?? [])
@@ -25,6 +25,9 @@ export function setup(data: Array<EditorNode>): NodeManager {
       editorNodeMap.value.set(id, item)
       nodeMap.value.set(id, item.node)
     })
+    if (resolve) {
+      resolve(true)
+    }
   })
 
   // 进行分组
@@ -95,27 +98,31 @@ export function setup(data: Array<EditorNode>): NodeManager {
 let res: NodeManager | null = null
 
 // 废弃localStorage， 每次进入测试游戏界面和编辑器界面和游戏界面都调用这个从数据库拿值
-export function updateLoadedEditorNodeList(editorNodeList: Array<EditorNode>) {
-  if (!res) {
-    res = setup(editorNodeList)
-  } else {
-    // 重新进入的时候，要再初始化watchEffect, effectScope试了不管用
-    watchEffect(() => {
-      res!.nodeMap.value.clear()
-      res!.editorNodeList.value?.forEach((item) => {
-        const { id, nodeType } = item.node // 显式读取关键字段
-        res!.editorNodeMap.value.set(id, item)
-        res!.nodeMap.value.set(id, item.node)
+export async function updateLoadedEditorNodeList(editorNodeList: Array<EditorNode>) {
+  return new Promise((resolve) => {
+    if (!res) {
+      res = setup(editorNodeList, resolve)
+    } else {
+      // 重新进入的时候，要再初始化watchEffect, effectScope试了不管用
+      watchEffect(() => {
+        res!.nodeMap.value.clear()
+        res!.editorNodeList.value?.forEach((item) => {
+          const { id, nodeType } = item.node // 显式读取关键字段
+          res!.editorNodeMap.value.set(id, item)
+          res!.nodeMap.value.set(id, item.node)
+        })
+        resolve(true)
       })
-    })
-    res.editorNodeList.value = editorNodeList
-  }
+      res.editorNodeList.value = editorNodeList
+    }
+  })
 }
 
 // 为了保证游戏数据和编辑器数据隔离，初始化两次
 export function useNodeManager(): NodeManager {
   if (!res) {
-    updateLoadedEditorNodeList([])
+    // 这里不让它异步，这里只是返回一些空数据保证不报错
+    res = setup([])
   }
   return res!
 }

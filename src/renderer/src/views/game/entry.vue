@@ -1,20 +1,20 @@
 <script lang="ts" setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { useNodeManager } from '@renderer/composables/useNodeManager'
+import { updateLoadedEditorNodeList, useNodeManager } from '@renderer/composables/useNodeManager'
 import type { StoryNode } from '@renderer/types'
 import { ElMessage } from 'element-plus'
+import { updateStaticResource } from '@renderer/composables/useStaticResource'
+import { updateLoadedEditorInfo } from '@renderer/composables/useEditor'
+import { updateLoadedGameData, useGameData } from '@renderer/composables/useGameData'
 
 // ------------------- 数据 & 路由 -------------------
 const router = useRouter()
 const route = useRoute()
 
-// 查询参数判断是否为测试模式
+// ====================数据初始化======================
 const { nodeMap } = useNodeManager()
-// 故事节点（标题）
-const storyNode = computed(() => {
-  return nodeMap.value.get(1) as StoryNode
-})
+const { gameData } = useGameData()
 // test game
 const type = computed(() => {
   return route.query.type
@@ -27,21 +27,35 @@ const sceneId = computed((): number => {
   if (route.query.sceneId) {
     return +route.query.sceneId
   }
-  if (gameData.value) {
-    return +JSON.parse(gameData.value).sceneId
-  }
   return -1
 })
-const gameData = ref('')
-onMounted(async () => {
-  if (type.value === 'test') {
-    const data = (await window.api.work.query({ id: gameId.value }))[0]
-    gameData.value = JSON.parse(data.data).gameData
-  } else if (type.value === 'game') {
-    const data = (await window.api.game.query({ id: gameId.value }))[0]
-    gameData.value = JSON.parse(data.data).gameData
-  }
+// 故事节点（标题）
+const storyNode = computed(() => {
+  return nodeMap.value.get(1) as StoryNode
 })
+async function initData() {
+  if (type.value === 'test') {
+    const data = (await window.api.work.query({ id: gameId.value }))?.[0]
+    if (data) {
+      const editorNodeList = JSON.parse(data.data).editorNodeList
+      await updateLoadedEditorNodeList(editorNodeList)
+      const gameData = JSON.parse(data.data).gameData
+      updateLoadedGameData(gameData)
+    }
+  } else if (type.value === 'game') {
+    const data = (await window.api.game.query({ id: gameId.value }))?.[0]
+    if (data) {
+      const editorNodeList = JSON.parse(data.data).editorNodeList
+      await updateLoadedEditorNodeList(editorNodeList)
+      const gameData = JSON.parse(data.data).gameData
+      updateLoadedGameData(gameData)
+    }
+  }
+}
+onMounted(async () => {
+  await initData()
+})
+
 // ------------------- 菜单 -------------------
 const menuList = computed(() => {
   if (type.value === 'test') {
@@ -76,13 +90,13 @@ const createNewSave = async () => {
   const saveId = await window.api.save.create({
     game_id: gameId.value,
     name: newSaveName.value,
-    data: JSON.stringify({ sceneId: -1, gameData: gameData.value })
+    data: JSON.stringify({ sceneId: -1, gameData: gameData })
   })
   ElMessage.success('存档创建成功！')
   newSaveDialog.value = false
   router.replace({
     path: '/game/game',
-    query: { saveId: saveId, gameId: gameId.value }
+    query: { saveId: saveId, gameId: gameId.value, sceneId: -1 }
   })
 }
 
@@ -92,9 +106,11 @@ async function getSaveList(gameId: number) {
 
 // 点击加载某个存档
 const loadSave = async (saveId: number) => {
+  const save = await window.api.save.query({ id: saveId })[0]
+  const data = JSON.parse(save.data)
   router.replace({
     path: '/game/game',
-    query: { saveId, gameId: gameId.value, sceneId: sceneId.value }
+    query: { saveId, gameId: gameId.value, sceneId: data.sceneId }
   })
 }
 
@@ -113,7 +129,7 @@ async function onMenuClick(key: string) {
     case 'test':
       router.replace({
         path: '/game/game',
-        query: { gameId: gameId.value, sceneId: sceneId.value }
+        query: { gameId: gameId.value, sceneId: sceneId.value, type: type.value }
       })
       break
 
