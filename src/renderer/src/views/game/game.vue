@@ -39,6 +39,11 @@ const gameId = computed((): number => {
   const id = +route.query.gameId!
   return id as number
 })
+// saveId只有在真实游戏模式才有值
+const saveId = computed((): number => {
+  const id = +(route.query.saveId! || -1)
+  return id as number
+})
 const sceneId = computed((): number => {
   return +route.query.sceneId!
 })
@@ -46,10 +51,8 @@ const storyNode = computed((): StoryNode => {
   return groupedNodes.value?.[NodeEnum.Story]?.[0]?.node as StoryNode
 })
 async function initData() {
-  console.log('chicken', type.value)
   if (type.value === 'test') {
     const data = (await window.api.work.query({ id: gameId.value }))?.[0]
-    console.log('chicken', data)
     if (data) {
       const editorNodeList = JSON.parse(data.data).editorNodeList
       await updateLoadedEditorNodeList(editorNodeList)
@@ -57,28 +60,30 @@ async function initData() {
       updateLoadedGameData(gameData)
     }
   } else if (type.value === 'game') {
-    console.log('chicken')
     const data = (await window.api.game.query({ id: gameId.value }))?.[0]
-
+    const save = await window.api.save.query({ id: saveId.value })[0]
     if (data) {
       const editorNodeList = JSON.parse(data.data).editorNodeList
       await updateLoadedEditorNodeList(editorNodeList)
-      // TODO 这里后续使用了存档，要用存档的gameData
-      const gameData = JSON.parse(data.data).gameData
-      updateLoadedGameData(gameData)
+      if (save) {
+        // 游戏模式
+        const gameData = JSON.parse(save.data).gameData
+        updateLoadedGameData(gameData)
+      } else {
+        // 测试模式
+        const gameData = JSON.parse(data.data).gameData
+        updateLoadedGameData(gameData)
+      }
     }
   }
-  console.log('chicken', sceneId.value)
-  // 如果路由有sceneId，则从此场景开始
+  // 如果路由有sceneId，则从此场景开始，如果是game模式，sceneId在entry就被赋值为save的sceneId了，所以不用替换为save.data.sceneId
   if (sceneId.value !== -1) {
-    console.log('chickenstartScene')
     await startScene(sceneId.value)
   } else {
     await startScene(storyNode.value.entrySceneId)
   }
 }
 onMounted(async () => {
-  console.log('chicken')
   await initData()
 })
 
@@ -98,13 +103,11 @@ onBeforeUnmount(() => {
 })
 function esc(e: KeyboardEvent) {
   if (e.key === 'Escape') {
-    console.log('chicken', e)
-
     exitDialogVisible.value = !exitDialogVisible.value
   }
 }
 function exit() {
-  console.log('chicken', type.value)
+  console.log('chicken', type.value, route.query)
   if (type.value === 'test') {
     router.replace({
       path: '/game/entry',

@@ -105,12 +105,13 @@ async function getSaveList(gameId: number) {
 }
 
 // 点击加载某个存档
-const loadSave = async (saveId: number) => {
-  const save = await window.api.save.query({ id: saveId })[0]
+const loadSave = async (save) => {
+  console.log('chicken', save)
   const data = JSON.parse(save.data)
+
   router.replace({
     path: '/game/game',
-    query: { saveId, gameId: gameId.value, sceneId: data.sceneId }
+    query: { type: type.value, saveId: save.id, gameId: gameId.value, sceneId: data.sceneId }
   })
 }
 
@@ -179,7 +180,7 @@ async function onMenuClick(key: string) {
           v-for="save in saveList"
           :key="save.id"
           class="p-4 rounded bg-gray-800 hover:bg-gray-700 cursor-pointer transition"
-          @click="loadSave(save.id)"
+          @click="loadSave(save)"
         >
           <div class="text-xl font-bold mb-2">{{ save.name }}</div>
           <div class="text-gray-400 text-sm">{{ save.time }}</div>
