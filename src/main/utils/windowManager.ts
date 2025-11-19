@@ -1,6 +1,10 @@
-import { BrowserWindow } from 'electron'
+import { app, BrowserWindow, globalShortcut } from 'electron'
 import path from 'path'
 import { initShortcut } from './shortcutManager'
+import { getLogger } from './log'
+import { is } from '@electron-toolkit/utils'
+
+const logger = getLogger('game-window')
 
 export class WindowManager {
   private windows: Map<string, BrowserWindow> = new Map()
@@ -23,7 +27,7 @@ export class WindowManager {
       exist.focus()
       return exist
     }
-
+    logger.info('start')
     const win = new BrowserWindow({
       width: 1000,
       height: 700,
@@ -35,15 +39,18 @@ export class WindowManager {
       },
       ...options
     })
+    logger.info('start')
     // dev / build 两种模式
     const routeNormalized = route.startsWith('#') ? route.slice(1) : route
 
-    const baseUrl = process.env.VITE_DEV_SERVER_URL
-      ? `${process.env.VITE_DEV_SERVER_URL}#${routeNormalized}`
-      : `file://${path.join(__dirname, '../renderer/index.html')}#${routeNormalized}`
+    const isDev = is.dev
+    const basePath = isDev
+      ? process.env.ELECTRON_RENDERER_URL // electron-vite 自动提供
+      : `file://${path.join(__dirname, '..', 'renderer', 'index.html')}`
 
-    win.loadURL(baseUrl)
+    win.loadURL(`${basePath}#${routeNormalized}`)
 
+    logger.info(`path:${basePath}#${routeNormalized}`)
     // 窗口关闭时删除引用
     win.on('closed', () => {
       this.windows.delete(name)

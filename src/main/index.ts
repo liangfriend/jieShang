@@ -39,7 +39,6 @@ function createWindow(): void {
   }
 }
 
-// TODO 这些东西放在index里有些混乱，后续可以考虑提出去
 const isDev = process.env.NODE_ENV === 'development'
 const VITE_DEV_SERVER_URL = isDev ? 'http://localhost:5173/' : undefined
 process.env.VITE_DEV_SERVER_URL = VITE_DEV_SERVER_URL
