@@ -12,7 +12,6 @@ import { useGame } from '@renderer/composables/useGame'
 import FilterNodeBox from '@renderer/views/game/components/filterNodeBox.vue'
 import CurtainNodeBox from '@renderer/views/game/components/curtainNodeBox.vue'
 import CustomNodeBox from '@renderer/views/game/components/customNodeBox.vue'
-import { types } from 'sass'
 import { updateLoadedGameData, useGameData } from '@renderer/composables/useGameData'
 
 const router = useRouter()
