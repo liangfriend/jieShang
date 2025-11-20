@@ -2,7 +2,7 @@
 // 流程节点信息 story scene dialogue，
 import { NodeEnum } from '@renderer/enum'
 import DynamicSelectGroup from '@renderer/components/dynamicSelectGroup.vue'
-import { captionBoxList, nodeNameMap } from '@renderer/constant'
+import { nodeNameMap } from '@renderer/constant'
 import { useRoute, useRouter } from 'vue-router'
 import { useNodeManager } from '@renderer/composables/useNodeManager'
 import { computed, inject, ref, Ref } from 'vue'
@@ -283,13 +283,7 @@ function startGame(sceneId: number = -1) {
     </div>
     <div class="flex mt-2">
       <div class="w-24 shrink-0">字幕框样式:</div>
-      <el-select v-model="curSelectedNode.node.boxType" :style="{ width: '16rem' }">
-        <el-option
-          v-for="item in captionBoxList"
-          :label="item.label"
-          :value="item.value"
-        ></el-option>
-      </el-select>
+      <monaco-editor v-model="curSelectedNode.node.boxStyle"></monaco-editor>
     </div>
     <div class="flex mt-2">
       <div class="w-24 shrink-0">自动播放:</div>
@@ -298,14 +292,6 @@ function startGame(sceneId: number = -1) {
     <div class="flex mt-2">
       <div class="w-24 shrink-0">自动跳转下一条字幕/对话:</div>
       <el-switch v-model="curSelectedNode.node.autoNext"></el-switch>
-    </div>
-    <div class="flex mt-2">
-      <div class="w-24 shrink-0">字幕大小:</div>
-      <el-input v-model="curSelectedNode.node.fontSize" type="number"></el-input>
-    </div>
-    <div class="flex mt-2">
-      <div class="w-24 shrink-0">字幕颜色:</div>
-      <el-input v-model="curSelectedNode.node.fontColor"></el-input>
     </div>
     <div class="flex mt-2">
       <div class="w-24 shrink-0">字幕播放速度:</div>
@@ -384,6 +370,10 @@ function startGame(sceneId: number = -1) {
         labelField="node.nodeName"
         value-field="node.id"
       />
+    </div>
+    <div class="flex mt-2">
+      <div class="w-24 shrink-0">选项容器样式:</div>
+      <monaco-editor v-model="curSelectedNode.node.optionContainerStyle"></monaco-editor>
     </div>
   </template>
   <template v-if="curSelectedNode && curSelectedNode.node.nodeType === NodeEnum.Option">

@@ -1,8 +1,6 @@
 import {
   ActionTypeEnum,
-  CaptionBoxEnum,
   CurtainTypeEnum,
-  FilterTypeEnum,
   LayerEnum,
   LayoutPositionEnum,
   NodeEnum,
@@ -26,18 +24,6 @@ export const nodeNameMap = {
   [NodeEnum.Condition]: '条件节点',
   [NodeEnum.Data]: '数据节点'
 }
-
-// 字幕框样式列表
-export const captionBoxList: { value: CaptionBoxEnum; label: string }[] = [
-  {
-    value: CaptionBoxEnum.Origin,
-    label: '原始'
-  },
-  {
-    value: CaptionBoxEnum.Transparent,
-    label: '透明'
-  }
-]
 
 // 行为类型列表
 export const actionTypeList: { value: ActionTypeEnum; label: string }[] = [
@@ -93,21 +79,6 @@ export const curtainList: { value: CurtainTypeEnum; label: string }[] = [
   { value: CurtainTypeEnum.SlideUpInUpOut, label: '上移入/出' },
   { value: CurtainTypeEnum.FadeInOut, label: '渐显/渐隐' },
   { value: CurtainTypeEnum.Door, label: '双开门入/出' }
-]
-// 滤镜类型列表
-export const filterList: { value: FilterTypeEnum; label: string }[] = [
-  { value: FilterTypeEnum.Normal, label: '正常' },
-  { value: FilterTypeEnum.Happy, label: '开心' },
-  { value: FilterTypeEnum.Sad, label: '低落' },
-  { value: FilterTypeEnum.Lonely, label: '孤独' },
-  { value: FilterTypeEnum.Angry, label: '生气' },
-  { value: FilterTypeEnum.Shocked, label: '震惊' },
-  { value: FilterTypeEnum.Nervous, label: '紧张' },
-  { value: FilterTypeEnum.Embarrassed, label: '害羞' },
-  { value: FilterTypeEnum.Crying, label: '哭泣' },
-  { value: FilterTypeEnum.Fear, label: '害怕' },
-  { value: FilterTypeEnum.Inspired, label: '灵光一现' },
-  { value: FilterTypeEnum.Speechless, label: '无语' }
 ]
 
 // 图片，视频展示策略列表

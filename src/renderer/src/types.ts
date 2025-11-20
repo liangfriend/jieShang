@@ -1,9 +1,7 @@
 import {
   ActionTypeEnum,
-  CaptionBoxEnum,
   CurtainTypeEnum,
   EditorBoxEnum,
-  FilterTypeEnum,
   LayerEnum,
   LayoutPositionEnum,
   NodeEnum,
@@ -52,14 +50,12 @@ export type OptionNode = Node & {
   normalStyle: string
   hoverStyle: string
 }
-// 状态  未播放 播放中 完成
+// TODO 后续可能需要加多种类型字幕打字效果，暂时先不做
 export type CaptionNode = Node & {
   nodeType: NodeEnum.Caption
   content: string // 字幕内容
   speed: number // 打字机效果速度
-  fontSize: number // 字幕大小
-  fontColor: string // 字幕颜色
-  boxType: CaptionBoxEnum //字幕框类型，选择内置类型
+  boxStyle: string // 字幕框样式
   autoPlay: boolean // 自动播放
   autoNext: boolean // done事件会自动切换下一条字幕/对话
   audioId: number // 字幕配套语音
@@ -69,6 +65,7 @@ export type CaptionNode = Node & {
   optionIds: number[] // 有选项的节点，建议设置autoNext为false,否则即使有选项，也会被点击触发下一条略过
   finishActionIds: number[] //进入完成态后的行为
   doneActionIds: number[] // 在完成态再次触发字幕后的行为
+  optionContainerStyle: string // 选项容器样式
 }
 export type Animateion = {
   // 动画类型专用,动画行为，作用于imageNode customNode
@@ -145,7 +142,8 @@ export type CurtainNode = Node & {
 // 滤镜节点
 export type FilterNode = Node & {
   nodeType: NodeEnum.Filter
-  filterType: FilterTypeEnum //  滤镜类型
+  filterCanvasScript: string
+  filterStyle: string
 }
 
 // 条件节点

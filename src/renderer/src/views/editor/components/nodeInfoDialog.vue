@@ -1,13 +1,11 @@
 <script lang="ts" setup>
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { EditorNode } from '@renderer/types'
 import { ActionTypeEnum, EditorBoxEnum, NodeEnum } from '@renderer/enum'
 import DynamicSelectGroup from '@renderer/components/dynamicSelectGroup.vue'
 import {
   actionTypeList,
-  captionBoxList,
   curtainList,
-  filterList,
   layerList,
   layoutPositionTypeList,
   nodeNameMap,
@@ -44,15 +42,26 @@ const emit = defineEmits(['update:modelValue'])
 watch(
   () => props.nodeId,
   () => {
-    console.log('chicken', props.nodeId)
     if (editorNodeMap.value.has(props.nodeId)) {
       editorNode.value = editorNodeMap.value.get(props.nodeId) as EditorNode
     }
   }
 )
 const editorNode = ref<EditorNode>(null!)
-
-onMounted(() => {})
+const actionType = computed(() => {
+  if (editorNode.value?.node && 'actionType' in editorNode.value?.node) {
+    return editorNode.value.node.actionType
+  }
+  return null
+})
+// 行为节点行为类型变化时，清空目标id
+watch(actionType, (value, oldValue) => {
+  // oldvalue不存在说明是初始化
+  if (!oldValue) return
+  if (editorNode.value.node && 'targetId' in editorNode.value.node) {
+    editorNode.value.node.targetId = -1
+  }
+})
 </script>
 
 <template>
@@ -335,26 +344,12 @@ onMounted(() => {})
         <el-switch v-model="editorNode.node.autoNext"></el-switch>
       </div>
       <div class="flex mt-2">
-        <div class="w-24 shrink-0">字幕大小:</div>
-        <el-input v-model="editorNode.node.fontSize" type="number"></el-input>
-      </div>
-      <div class="flex mt-2">
-        <div class="w-24 shrink-0">字幕颜色:</div>
-        <el-input v-model="editorNode.node.fontColor"></el-input>
-      </div>
-      <div class="flex mt-2">
         <div class="w-24 shrink-0">打字机效果速度:</div>
         <el-input v-model="editorNode.node.speed" type="number"></el-input>
       </div>
       <div class="flex mt-2">
         <div class="w-24 shrink-0">字幕框样式:</div>
-        <el-select v-model="editorNode.node.boxType">
-          <el-option
-            v-for="item in captionBoxList"
-            :label="item.label"
-            :value="item.value"
-          ></el-option>
-        </el-select>
+        <monaco-editor v-model="editorNode.node.boxStyle"></monaco-editor>
       </div>
       <div class="flex mt-2">
         <div class="w-24 shrink-0">字幕语音:</div>
@@ -430,6 +425,10 @@ onMounted(() => {})
           value-field="node.id"
         />
       </div>
+      <div class="flex mt-2">
+        <div class="w-24 shrink-0">选项容器样式:</div>
+        <monaco-editor v-model="editorNode.node.optionContainerStyle"></monaco-editor>
+      </div>
     </template>
     <template v-if="editorNode && editorNode.node.nodeType === NodeEnum.Action">
       <div class="flex mt-2">
@@ -449,8 +448,9 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
-            v-for="item in [...groupedNodes[NodeEnum.Scene], ...groupedNodes[NodeEnum.Dialogue]]"
+            v-for="item in [...groupedNodes[NodeEnum.Scene]]"
             :label="item.node.nodeName"
             :value="item.node.id"
           ></el-option>
@@ -460,6 +460,7 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
             v-for="item in groupedNodes[NodeEnum.Image]"
             :label="item.node.nodeName"
@@ -471,6 +472,7 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
             v-for="item in groupedNodes[NodeEnum.Image]"
             :label="item.node.nodeName"
@@ -482,6 +484,7 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
             v-for="item in groupedNodes[NodeEnum.Video]"
             :label="item.node.nodeName"
@@ -493,6 +496,7 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
             v-for="item in groupedNodes[NodeEnum.Video]"
             :label="item.node.nodeName"
@@ -504,6 +508,7 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
             v-for="item in groupedNodes[NodeEnum.Video]"
             :label="item.node.nodeName"
@@ -515,6 +520,7 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
             v-for="item in groupedNodes[NodeEnum.Video]"
             :label="item.node.nodeName"
@@ -526,6 +532,7 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
             v-for="item in groupedNodes[NodeEnum.Audio]"
             :label="item.node.nodeName"
@@ -537,6 +544,7 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
             v-for="item in groupedNodes[NodeEnum.Audio]"
             :label="item.node.nodeName"
@@ -548,6 +556,7 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
             v-for="item in groupedNodes[NodeEnum.Filter]"
             :label="item.node.nodeName"
@@ -559,6 +568,7 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
             v-for="item in groupedNodes[NodeEnum.Filter]"
             :label="item.node.nodeName"
@@ -570,6 +580,7 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
             v-for="item in groupedNodes[NodeEnum.Curtain]"
             :label="item.node.nodeName"
@@ -582,6 +593,7 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
             v-for="item in editorNodeList"
             :label="item.node.nodeName"
@@ -593,6 +605,7 @@ onMounted(() => {})
           v-model="editorNode.node.targetId"
           :style="{ width: '16rem' }"
         >
+          <el-option :value="-1" label="无"></el-option>
           <el-option
             v-for="item in editorNodeList"
             :label="item.node.nodeName"
@@ -896,10 +909,12 @@ onMounted(() => {})
     </template>
     <template v-if="editorNode && editorNode.node.nodeType === NodeEnum.Filter">
       <div class="flex mt-2">
-        <div class="w-24 shrink-0">滤镜类型:</div>
-        <el-select v-model="editorNode.node.filterType" :style="{ width: '16rem' }">
-          <el-option v-for="item in filterList" :label="item.label" :value="item.value"></el-option>
-        </el-select>
+        <div class="w-24 shrink-0">滤镜样式:</div>
+        <monaco-editor v-model="editorNode.node.filterStyle"></monaco-editor>
+      </div>
+      <div class="flex mt-2">
+        <div class="w-24 shrink-0">滤镜自定义canvas脚本:</div>
+        <monaco-editor v-model="editorNode.node.filterCanvasScript"></monaco-editor>
       </div>
     </template>
     <template v-if="editorNode && editorNode.node.nodeType === NodeEnum.Condition">

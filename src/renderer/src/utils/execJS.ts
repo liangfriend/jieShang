@@ -26,14 +26,11 @@ export function runCode(code: string) {
   }
 }
 
-export function parseStyle(str: string): CSSProperties {
+export function parseJS(str: string) {
   try {
     return new Function(`return (${str})`)()
   } catch (e) {
-    console.error('解析样式失败', e)
+    console.error('解析js失败', e)
     return {}
   }
-}
-export function parseJS(str: string) {
-  return new Function(`return (${str})`)()
 }

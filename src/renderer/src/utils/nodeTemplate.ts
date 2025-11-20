@@ -1,9 +1,7 @@
 import {
   ActionTypeEnum,
-  CaptionBoxEnum,
   CurtainTypeEnum,
   EditorBoxEnum,
-  FilterTypeEnum,
   LayerEnum,
   LayoutPositionEnum,
   NodeEnum,
@@ -78,6 +76,11 @@ export function optionNodeTemplate(): OptionNode {
     activeActionIds: [],
     visibleConditionIds: [],
     normalStyle: `{
+    pointerEvents: 'auto',
+    cursor: 'pointer',
+    position: 'relative',
+    width: '30%',
+    left: '70%',
     backgroundColor: '#555',
     display: 'flex',
     justifyContent: 'center',
@@ -85,9 +88,7 @@ export function optionNodeTemplate(): OptionNode {
     borderRadius: '10px',
     fontSize: '2rem',
     color: 'white',
-    width: '100%',
-    height: '50%',
-    transform: 'translateY(50%)',
+    height: '100%'
 }`,
     hoverStyle: `{
   backgroundColor: '#4096ff',
@@ -103,17 +104,31 @@ export function captionNodeTemplate(): CaptionNode {
     content: '',
     autoPlay: true,
     autoNext: true,
-    fontSize: 50,
-    fontColor: '#ffffff',
     speed: 50,
-    boxType: CaptionBoxEnum.Origin,
+    boxStyle: `{
+    backgroundColor: 'rgba(100,100,100,0.5)',
+  width: '100%',
+  height: '100%',
+  fontSize: '50px',
+  color:'white',
+}`,
     audioId: -1,
     autoPlayDelay: 0,
     layoutId: -1,
     initActionIds: [],
     optionIds: [],
     finishActionIds: [],
-    doneActionIds: []
+    doneActionIds: [],
+    optionContainerStyle: `{
+    display: 'flex',
+  flexDirection: 'column',
+  justifyContent: 'space-evenly',
+  width: '100%',
+  height: '100%',
+  position: 'relative',
+  overflow: 'hidden',
+  gap: '10%'
+}`
   }
 }
 
@@ -227,7 +242,34 @@ export function filterNodeTemplate(): FilterNode {
     id: Date.now(),
     nodeName: '滤镜节点',
     nodeType: NodeEnum.Filter,
-    filterType: FilterTypeEnum.Normal
+    filterCanvasScript: `// 清屏（可选）
+ctx.clearRect(0, 0, width, height)
+
+const hearts = []
+for (let i = 0; i < 20; i++) {
+  hearts.push({
+    x: Math.random() * width,
+    y: Math.random() * height,
+    size: 20 + Math.random() * 30
+  })
+}
+
+function draw() {
+  ctx.clearRect(0, 0, width, height)
+
+  hearts.forEach(h => {
+    ctx.globalAlpha = 0.3 + Math.random() * 0.7
+    ctx.font = \`100px serif\`
+    ctx.fillText("💗", h.x, h.y)
+  })
+
+  requestAnimationFrame(draw)
+}
+
+draw()`,
+    filterStyle: `{
+    backgroundColor: 'rgba(100,100,100,0.2)',
+}`
   }
 }
 

@@ -13,7 +13,6 @@ import {
 import {
   ActionTypeEnum,
   EditorBoxEnum,
-  FilterTypeEnum,
   LayerEnum,
   LayoutPositionEnum,
   NodeEnum,
@@ -512,15 +511,7 @@ function generateNormalNode() {
   fullScreenLayoutNodeE.node = fullScreenLayoutNode
   addNode(fullScreenLayoutNodeE)
   // 害羞滤镜
-  const embarassedFilterNode = {
-    id: 7,
-    nodeName: '滤镜节点',
-    nodeType: NodeEnum.Filter,
-    filterType: FilterTypeEnum.Embarrassed
-  } as EngineNode
-  const embarassedFilterNodeE = editorNodeTemplate(NodeEnum.Custom)
-  embarassedFilterNodeE.node = embarassedFilterNode
-  addNode(embarassedFilterNodeE)
+  //
 }
 
 // 右侧抽屉
