@@ -51,8 +51,7 @@ export function setup(
       [NodeEnum.Audio]: [],
       [NodeEnum.Custom]: [],
       [NodeEnum.Filter]: [],
-      [NodeEnum.Condition]: [],
-      [NodeEnum.Data]: []
+      [NodeEnum.Condition]: []
     }
     editorNodeList.value.forEach((item) => {
       const type = item.node.nodeType as NodeEnum

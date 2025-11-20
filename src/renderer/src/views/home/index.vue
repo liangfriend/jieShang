@@ -27,12 +27,11 @@ import { GameModel, WorkModel } from '@renderer/types'
 
 const menu = [
   { label: '我的作品', icon: House, value: 'work' },
-  { label: '我的游戏', icon: Tickets, value: 'my_game' },
-  { label: '本地游戏', icon: List, value: 'local_game' },
-  { label: '线上游戏', icon: User, value: 'online_game' },
-  { label: '图片资源', icon: Folder, value: 'image' },
-  { label: '音频资源', icon: Grid, value: 'audio' },
-  { label: '视频资源', icon: Grid, value: 'video' }
+  { label: '我的游戏', icon: Tickets, value: 'my_game' }
+  // { label: '线上游戏', icon: User, value: 'online_game' },
+  // { label: '图片资源', icon: Folder, value: 'image' },
+  // { label: '音频资源', icon: Grid, value: 'audio' },
+  // { label: '视频资源', icon: Grid, value: 'video' }
 ]
 const active = ref('work')
 
@@ -168,7 +167,7 @@ async function deleteGame(item) {
       <div class="search">
         <search-input height="50px" btnWidth="100px" size="1.5rem" v-model="search"></search-input>
       </div>
-      <div class="profile">
+      <div class="profile" v-mask>
         <el-avatar
           :size="50"
           src="https://cube.elemecdn.com/0/88/03b0d39583f48206768a7534e55bcpng.png"
@@ -240,8 +239,9 @@ async function deleteGame(item) {
       </div>
       <div class="recommendation overflow-auto hidden-scrollbar">
         <ChampionCard
+          v-mask
           class="mb-[20px]"
-          title="线上片状"
+          title="本周榜首"
           avatar="girl.jpg"
           name="初战崭露锋芒"
           tag="强"
@@ -255,7 +255,7 @@ async function deleteGame(item) {
           btnWidth="84px"
           buttonText="本地"
         />
-        <div class="recommendation-list">
+        <div class="recommendation-list" v-mask>
           <div class="recommendation-title">本周推荐</div>
           <recommendation-card
             class="mx-[8px]"

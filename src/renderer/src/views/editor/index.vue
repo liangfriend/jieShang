@@ -424,12 +424,14 @@ provide('curSelectedNode', curSelectedNode)
 <template>
   <div class="engineContainer">
     <div class="ds-ec-up" comment="上方">
-      <div>
-        <el-button @click="router.replace({ path: '/home' })">返回首页</el-button>
-      </div>
-      <div>x：{{ editorInfo.left }},y：{{ editorInfo.top }} 倍数：{{ editorInfo.scale }}</div>
       <div class="flex justify-between">
         <div>
+          <div>
+            <el-button @click="router.replace({ path: '/home' })">返回首页</el-button>
+            x：{{ editorInfo.left.toFixed(2) }},y：{{ editorInfo.top.toFixed(2) }} 倍数：{{
+              editorInfo.scale.toFixed(2)
+            }}
+          </div>
           <el-button :disabled="nodeMap.has(1)" @click="addEditorNode(NodeEnum.Story)"
             >新增故事
           </el-button>

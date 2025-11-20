@@ -12,7 +12,6 @@ export enum NodeEnum {
   Custom = 'Custom', // 自定义节点
   Curtain = 'Curtain', // 幕布节点
   Filter = 'Filter', // 滤镜节点
-  Data = 'Data', // 数据节点
   Condition = 'Condition' // 条件节点
 }
 

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { EditorNode } from '@renderer/types'
+import { EditorNode, ImageNode } from '@renderer/types'
 import { ActionTypeEnum, EditorBoxEnum, NodeEnum } from '@renderer/enum'
 import DynamicSelectGroup from '@renderer/components/dynamicSelectGroup.vue'
 import {
@@ -109,6 +109,18 @@ watch(actionType, (value, oldValue) => {
             :value="item.node.id"
           ></el-option>
         </el-select>
+      </div>
+      <el-select v-model="editorNode.node.bgUrl" :style="{ width: '16rem' }">
+        <el-option value="" label="无" />
+        <el-option
+          v-for="item in groupedNodes[NodeEnum.Image]"
+          :label="item.node.nodeName"
+          :value="(item.node as ImageNode).url"
+        ></el-option>
+      </el-select>
+      <div class="flex mt-2">
+        <div class="w-24 shrink-0">选项文字颜色:</div>
+        <el-input v-model="editorNode.node.fontColor" :style="{ width: '16rem' }"></el-input>
       </div>
     </template>
     <template v-if="editorNode && editorNode.node.nodeType === NodeEnum.Scene">

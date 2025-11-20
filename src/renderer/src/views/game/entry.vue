@@ -146,54 +146,65 @@ async function onMenuClick(key: string) {
 </script>
 
 <template>
-  <div class="w-screen h-screen bg-black text-white relative overflow-hidden" v-if="storyNode">
-    <!-- 游戏标题 -->
-    <div
-      class="absolute top-[10%] left-1/2 -translate-x-1/2 text-6xl font-bold tracking-widest drop-shadow-lg"
-    >
-      {{ storyNode.nodeName }}
-    </div>
-
-    <!-- 菜单 -->
-    <div class="absolute top-[35%] left-[12%] flex flex-col gap-6">
+  <div class="stack w-screen h-screen bg-black text-white" v-if="storyNode">
+    <!-- ================== 背景层 ================== -->
+    <div class="stack-item">
+      <div class="game-bg w-full h-full">
+        <!-- 这里你可以放背景图、粒子动画、视频背景等 -->
+        <img class="bg-url" v-if="storyNode.bgUrl" :src="storyNode.bgUrl"></img>
+      </div>
+      <!-- 游戏标题 -->
       <div
-        v-for="item in menuList"
-        :key="item.key"
-        class="text-3xl cursor-pointer opacity-80 pl-4 relative transition-all duration-200"
-        @click="onMenuClick(item.key)"
+        class="absolute top-[10%] left-1/2 -translate-x-1/2 text-6xl font-bold tracking-widest drop-shadow-lg"
+        :style="{color:storyNode.fontColor || 'white'}"
       >
-        <!-- hover效果 -->
-        <span class="menu-text">{{ item.label }}</span>
+        {{ storyNode.nodeName }}
       </div>
     </div>
-
-    <!-- 开始游戏弹窗 -->
-    <el-dialog v-model="newSaveDialog" title="新建存档" width="400px">
-      <el-input v-model="newSaveName" placeholder="请输入存档名" />
-
-      <template #footer>
-        <el-button @click="newSaveDialog = false">取消</el-button>
-        <el-button type="primary" @click="createNewSave">进入游戏</el-button>
-      </template>
-    </el-dialog>
-
-    <!-- 加载存档弹窗 -->
-    <el-dialog v-model="loadDialog" title="选择存档" width="600px">
-      <div class="grid grid-cols-2 gap-4">
-        <div
-          v-for="save in saveList"
-          :key="save.id"
-          class="p-4 rounded bg-gray-800 hover:bg-gray-700 cursor-pointer transition"
-          @click="loadSave(save)"
-        >
-          <div class="text-xl font-bold mb-2">{{ save.name }}</div>
+    <!-- ================== 功能层（UI 层）================== -->
+    <div class="stack-item">
+      <div>
+        <!-- 菜单 -->
+        <div class="absolute top-[35%] left-[12%] flex flex-col gap-6" :style="{color:storyNode.fontColor || 'white'}">
+          <div
+            v-for="item in menuList"
+            :key="item.key"
+            class="text-3xl cursor-pointer opacity-80 pl-4 relative transition-all duration-200"
+            @click="onMenuClick(item.key)"
+          >
+            <span class="menu-text">{{ item.label }}</span>
+          </div>
         </div>
-      </div>
 
-      <template #footer>
-        <el-button @click="loadDialog = false">关闭</el-button>
-      </template>
-    </el-dialog>
+        <!-- 开始游戏弹窗 -->
+        <el-dialog v-model="newSaveDialog" title="新建存档" width="400px">
+          <el-input v-model="newSaveName" placeholder="请输入存档名" />
+
+          <template #footer>
+            <el-button @click="newSaveDialog = false">取消</el-button>
+            <el-button type="primary" @click="createNewSave">进入游戏</el-button>
+          </template>
+        </el-dialog>
+
+        <!-- 加载存档弹窗 -->
+        <el-dialog v-model="loadDialog" title="选择存档" width="600px">
+          <div class="grid grid-cols-2 gap-4">
+            <div
+              v-for="save in saveList"
+              :key="save.id"
+              class="p-4 rounded bg-gray-800 hover:bg-gray-700 cursor-pointer transition"
+              @click="loadSave(save)"
+            >
+              <div class="text-xl font-bold mb-2">{{ save.name }}</div>
+            </div>
+          </div>
+
+          <template #footer>
+            <el-button @click="loadDialog = false">关闭</el-button>
+          </template>
+        </el-dialog>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -225,5 +236,11 @@ async function onMenuClick(key: string) {
 .menu-text:hover::before {
   height: 100%;
   background: #fff;
+}
+
+.bg-url {
+  width: 100%;
+  height: 100%;
+  object-fit: fill;
 }
 </style>

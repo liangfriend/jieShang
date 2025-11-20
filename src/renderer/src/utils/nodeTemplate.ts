@@ -32,7 +32,9 @@ export function storyNodeTemplate(): StoryNode {
     nodeType: NodeEnum.Story,
     width: 1920,
     height: 1680,
-    entrySceneId: -1
+    entrySceneId: -1,
+    bgUrl: '',
+    fontColor: 'white'
   }
 }
 

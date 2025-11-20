@@ -1,6 +1,7 @@
 恢复npm官方镜像
 npm config delete registry
 .npmrc加上以下内容
+
 ```
 registry=https://registry.npmmirror.com
 electron_mirror=https://cdn.npmmirror.com/binaries/electron/
@@ -9,11 +10,8 @@ electron_builder_binaries_mirror=https://npmmirror.com/mirrors/electron-builder-
 
 ```bash
 以下皆不需要开启代理
-$ npm i cnpm -g
-$ cnpm i 
-或者
-$npm i  cnpm更快一点
-
+$ npm i
+cnpm更快一点
 ```
 
 ### Development
@@ -36,6 +34,6 @@ $ npm run build:mac
 $ npm run build:linux
 ```
 
-
 坑
+
 + 之前在dependencies安装sass,结果npm i 报错。

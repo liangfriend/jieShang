@@ -18,6 +18,8 @@ export type StoryNode = Node & {
   width: number //svg的viewBox
   height: number //svg的viewBox
   entrySceneId: number // 以后要加上各种配置，比如字幕打字机音效是否开启
+  bgUrl: string // 背景图url
+  fontColor: string // 选项，标题文字颜色
 }
 
 export type SceneNode = Node & {
@@ -177,6 +179,23 @@ export type EditorNode = {
   boxType: EditorBoxEnum
   node: EngineNode
 }
+type NodeTypeMap = {
+  [NodeEnum.Story]: StoryNode
+  [NodeEnum.Scene]: SceneNode
+  [NodeEnum.Dialogue]: DialogueNode
+  [NodeEnum.Caption]: CaptionNode
+  [NodeEnum.Action]: ActionNode
+  [NodeEnum.Option]: OptionNode
+  [NodeEnum.Layout]: LayoutNode
+  [NodeEnum.Curtain]: CurtainNode
+  [NodeEnum.Image]: ImageNode
+  [NodeEnum.Video]: VideoNode
+  [NodeEnum.Audio]: AudioNode
+  [NodeEnum.Custom]: CustomNode
+  [NodeEnum.Filter]: FilterNode
+  [NodeEnum.Condition]: ConditionNode
+}
+export type EditorNodeOf<T extends NodeEnum> = Omit<EditorNode, 'node'> & { node: NodeTypeMap[T] }
 // 编辑器视图信息
 export type EditorInfo = {
   left: number

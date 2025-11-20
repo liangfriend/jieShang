@@ -6,7 +6,7 @@ import { nodeNameMap } from '@renderer/constant'
 import { useRoute, useRouter } from 'vue-router'
 import { useNodeManager } from '@renderer/composables/useNodeManager'
 import { computed, inject, ref, Ref } from 'vue'
-import { EditorNode, StoryNode } from '@renderer/types'
+import { EditorNode, ImageNode, StoryNode } from '@renderer/types'
 import MonacoEditor from '@renderer/components/monacoEditor.vue'
 
 const {
@@ -34,6 +34,7 @@ const workId = computed(() => {
 const storyNode = computed((): StoryNode => {
   return groupedNodes.value?.[NodeEnum.Story]?.[0]?.node as StoryNode
 })
+
 // 游戏预览
 function startGame(sceneId: number = -1) {
   const route = `/game/game?type=test&gameId=${workId.value}&sceneId=${sceneId}`
@@ -94,6 +95,21 @@ function startGame(sceneId: number = -1) {
           :value="item.node.id"
         ></el-option>
       </el-select>
+    </div>
+    <div class="flex mt-2">
+      <div class="w-24 shrink-0">背景图片:</div>
+      <el-select v-model="curSelectedNode.node.bgUrl" :style="{ width: '16rem' }">
+        <el-option value="" label="无" />
+        <el-option
+          v-for="item in groupedNodes[NodeEnum.Image]"
+          :label="item.node.nodeName"
+          :value="(item.node as ImageNode).url"
+        ></el-option>
+      </el-select>
+    </div>
+    <div class="flex mt-2">
+      <div class="w-24 shrink-0">选项文字颜色:</div>
+      <el-input v-model="curSelectedNode.node.fontColor" :style="{ width: '16rem' }"></el-input>
     </div>
   </template>
 
