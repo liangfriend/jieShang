@@ -280,7 +280,7 @@ function setup() {
   function removeRelatedResources(nodeId: number) {
     if (nodeId === -1) return
     const node = nodeMap.value.get(nodeId) as EngineNode
-
+    console.log('chicken', node)
     if (node.nodeType === NodeEnum.Dialogue) {
       // 需要保留的资源列表
       const keepIds = node.keepIds

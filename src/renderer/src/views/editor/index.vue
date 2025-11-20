@@ -32,6 +32,8 @@ import MonacoEditor from '@renderer/components/monacoEditor.vue'
 import { updateLoadedGameData, useGameData } from '@renderer/composables/useGameData'
 import { updateStaticResource } from '@renderer/composables/useStaticResource'
 import PublishDialog from '@renderer/views/editor/components/publishDialog.vue'
+import updateGameDialog from '@renderer/views/editor/components/updateGmaeDialog.vue'
+import { generateNormalNode } from '@renderer/utils/usefulNode'
 
 const router = useRouter()
 const route = useRoute()
@@ -406,114 +408,6 @@ function startGame() {
   })
 }
 
-// 生成常用节点
-function generateNormalNode() {
-  const storyNode = nodeMap.value.get(1) as StoryNode
-  //底部字幕布局
-  const bottomCaptionLayoutNode = {
-    id: 2,
-    nodeName: '底部字幕布局',
-    nodeType: NodeEnum.Layout,
-    layer: LayerEnum.FrontObject,
-    applyPosition: LayoutPositionEnum.LB,
-    objectFit: ObjectFitEnum.Fill,
-    left: 0.1 * storyNode.width,
-    right: 0,
-    top: 0,
-    bottom: 0.1 * storyNode.width,
-    width: 0.8 * storyNode.width,
-    height: 0.3 * storyNode.width,
-    rotation: 0,
-    scale: 1
-  } as EngineNode
-  const bottomCaptionLayoutNodeE = editorNodeTemplate(NodeEnum.Custom)
-  bottomCaptionLayoutNodeE.node = bottomCaptionLayoutNode
-  addNode(bottomCaptionLayoutNodeE)
-
-  // 左侧人物布局
-  const leftCharacterLayoutNode = {
-    id: 3,
-    nodeName: '左侧人物布局',
-    nodeType: NodeEnum.Layout,
-    layer: LayerEnum.FrontObject,
-    applyPosition: LayoutPositionEnum.LB,
-    objectFit: ObjectFitEnum.Fill,
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 0.25 * storyNode.width,
-    height: 0.5 * storyNode.width,
-    rotation: 0,
-    scale: 1
-  } as EngineNode
-  const leftCharacterLayoutNodeE = editorNodeTemplate(NodeEnum.Custom)
-  leftCharacterLayoutNodeE.node = leftCharacterLayoutNode
-  addNode(leftCharacterLayoutNodeE)
-  // 右侧人物布局
-  const rightCharacterLayoutNode = {
-    id: 4,
-    nodeName: '右侧人物布局',
-    nodeType: NodeEnum.Layout,
-    layer: LayerEnum.FrontObject,
-    applyPosition: LayoutPositionEnum.RB,
-    objectFit: ObjectFitEnum.Fill,
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: 0.25 * storyNode.width,
-    height: 0.5 * storyNode.width,
-    rotation: 0,
-    scale: 1
-  } as EngineNode
-  const rightCharacterLayoutNodeE = editorNodeTemplate(NodeEnum.Custom)
-  rightCharacterLayoutNodeE.node = rightCharacterLayoutNode
-  addNode(rightCharacterLayoutNodeE)
-  // 居中字幕布局
-  const centerCaptionLayoutNode = {
-    id: 5,
-    nodeName: '居中字幕布局',
-    nodeType: NodeEnum.Layout,
-    layer: LayerEnum.FrontObject,
-    applyPosition: LayoutPositionEnum.LT,
-    objectFit: ObjectFitEnum.Fill,
-    left: 0.3 * storyNode.width,
-    right: 0,
-    top: 0.3 * storyNode.height,
-    bottom: 0,
-    width: 0.4 * storyNode.width,
-    height: 0.4 * storyNode.height,
-    rotation: 0,
-    scale: 1
-  } as EngineNode
-  const centerCaptionLayoutNodeE = editorNodeTemplate(NodeEnum.Custom)
-  centerCaptionLayoutNodeE.node = centerCaptionLayoutNode
-  addNode(centerCaptionLayoutNodeE)
-  // 全屏背景布局
-  const fullScreenLayoutNode = {
-    id: 6,
-    nodeName: '全屏背景布局',
-    nodeType: NodeEnum.Layout,
-    layer: LayerEnum.Background,
-    applyPosition: LayoutPositionEnum.LT,
-    objectFit: ObjectFitEnum.Fill,
-    left: 0,
-    right: 0,
-    top: 0,
-    bottom: 0,
-    width: storyNode.width,
-    height: storyNode.height,
-    rotation: 0,
-    scale: 1
-  } as EngineNode
-  const fullScreenLayoutNodeE = editorNodeTemplate(NodeEnum.Custom)
-  fullScreenLayoutNodeE.node = fullScreenLayoutNode
-  addNode(fullScreenLayoutNodeE)
-  // 害羞滤镜
-  //
-}
-
 // 右侧抽屉
 const leftDrawerVisible = ref(false)
 // 资源总览弹窗
@@ -521,7 +415,9 @@ const staticResourcesVisible = ref(false)
 // 数据卡展示
 const dataCardVisible = ref(false)
 // 发布游戏弹窗
-const publishDialogvisible = ref(false)
+const publishDialogVisible = ref(false)
+// 更新到游戏弹窗
+const updateGameVisible = ref(false)
 provide('curSelectedNode', curSelectedNode)
 </script>
 
@@ -552,7 +448,8 @@ provide('curSelectedNode', curSelectedNode)
           <el-button @click="staticResourcesVisible = true">静态资源总览</el-button>
           <el-button @click="reset">重置数据</el-button>
           <el-button :disabled="!nodeMap.has(1)" @click="startGame">游戏预览</el-button>
-          <el-button @click="publishDialogvisible = true">发布</el-button>
+          <el-button @click="publishDialogVisible = true">发布</el-button>
+          <el-button @click="updateGameVisible = true">更新数据到游戏</el-button>
         </div>
       </div>
     </div>
@@ -692,8 +589,15 @@ provide('curSelectedNode', curSelectedNode)
     :editor-info="editorInfo"
     :game-data="gameData"
     :editor-node-list="editorNodeList"
-    v-model="publishDialogvisible"
+    v-model="publishDialogVisible"
   ></publish-dialog>
+  <update-game-dialog
+    :editor-info="editorInfo"
+    :game-data="gameData"
+    :editor-node-list="editorNodeList"
+    v-model="updateGameVisible"
+  >
+  </update-game-dialog>
 </template>
 
 <style scoped>

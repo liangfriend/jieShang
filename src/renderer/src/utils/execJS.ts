@@ -28,6 +28,7 @@ export function runCode(code: string) {
 
 export function parseJS(str: string) {
   try {
+    console.trace('chicken', str)
     return new Function(`return (${str})`)()
   } catch (e) {
     console.error('解析js失败', e)
