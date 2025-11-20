@@ -1,7 +1,6 @@
 <script lang="ts" setup>
 import { computed, PropType, ref, watchEffect } from 'vue'
 import { FilterNode } from '@renderer/types'
-import { FilterTypeEnum } from '@renderer/enum'
 import { parseJS } from '@renderer/utils/execJS'
 
 const props = defineProps({
