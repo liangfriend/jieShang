@@ -34,6 +34,7 @@ import { updateStaticResource } from '@renderer/composables/useStaticResource'
 import PublishDialog from '@renderer/views/editor/components/publishDialog.vue'
 import updateGameDialog from '@renderer/views/editor/components/updateGmaeDialog.vue'
 import { generateNormalNode } from '@renderer/utils/usefulNode'
+import ContextMenu from '@renderer/components/contextMenu.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -57,7 +58,7 @@ onMounted(async () => {
   const resourceList = (await window.api.resource.list()).data
   updateStaticResource(resourceList)
 })
-// =====================================拖拽/移动功能================================
+// =====================================拖拽/移动/右键菜单功能================================
 const isPanning = ref(false)
 const isFrameSelecting = ref(false)
 const lastMouse = ref({ x: 0, y: 0 })
@@ -177,7 +178,87 @@ function batchMouseMove(e: MouseEvent) {
 function batchMouseUp(e: MouseEvent) {
   isBatchDragging.value = false
 }
+// ===================================== 右键菜单 ==================================
+const showMenu = ref(false)
+// 菜单坐标
+const menuPos = ref({ x: 0, y: 0 })
+// 菜单起始位置相对网格的坐标
+const menuGridPos = ref({ x: 0, y: 0 })
+function onRightClick(e: MouseEvent) {
+  e.preventDefault()
+  menuPos.value = { x: e.clientX, y: e.clientY }
+  showMenu.value = true
+  // 保存菜单相对网格的坐标
+  const scale = editorInfo.value.scale
+  const containerRect = document.querySelector('.ds-ec-left')?.getBoundingClientRect()!
+  menuGridPos.value.x = -editorInfo.value.left + (e.clientX - containerRect.left) / scale
+  menuGridPos.value.y = -editorInfo.value.top + (e.clientY - containerRect.top) / scale
+}
+function closeMenu() {
+  showMenu.value = false
+}
 
+const contextMenuType = ref('grid') // 右键菜单类型  grid node frame  网格 节点 框选框
+/*
+ * 预制体类型
+ * 预制体中每个节点的坐标会变为相对预制体节点列表中最靠左上角节点的坐标点相对坐标。除此之外和普通节点没区别
+ * */
+type Prefab = EditorNode[]
+// 预制体列表，TODO 这个要变成数据库返回
+const prefabList = ref<Prefab[]>([])
+// 临时预制体
+const tempPrefab = ref<Prefab>([])
+// 更新右键菜单类型
+function changeMenuType(type) {
+  contextMenuType.value = type
+}
+// 复制
+function copyTempPrefab() {
+  // 深拷贝 dragSelectedNodes
+  const copy = JSON.parse(JSON.stringify([...dragSelectedNodes.value])) as EditorNode[]
+
+  if (copy.length === 0) return
+
+  // 找出最小 left / top
+  let minLeft = Infinity
+  let minTop = Infinity
+
+  let uniqueId = 1
+  for (const n of copy) {
+    if (n.layout.left < minLeft) minLeft = n.layout.left
+    if (n.layout.top < minTop) minTop = n.layout.top
+    // 保证唯一id
+    n.node.id = Date.now() + uniqueId++
+  }
+
+  // 将所有节点位置转换为相对坐标
+  copy.forEach((n) => {
+    n.layout.left = n.layout.left - minLeft
+    n.layout.top = n.layout.top - minTop
+  })
+
+  tempPrefab.value = copy
+  closeMenu()
+}
+// 粘贴
+function pasteTempPrefab() {
+  //
+  const newCopy = JSON.parse(JSON.stringify(tempPrefab.value)) as EditorNode[]
+  for (const n of newCopy) {
+    n.layout.left = n.layout.left + menuGridPos.value.x
+    n.layout.top = n.layout.top + menuGridPos.value.y
+    addNode(n)
+  }
+  closeMenu()
+}
+// 删除
+function deleteTempPrefab() {
+  //
+}
+// 保存为预制体
+function saveAsPrefab() {
+  //
+}
 // ============================ 样式===============================
 const worktopStyle = computed(
   (): CSSProperties => ({
@@ -259,7 +340,7 @@ const dragRectBtnStyle = computed((): CSSProperties => {
 
 // ===================节点功能==========================
 
-// 当前选中节点
+// 当前选中节点, 这个主要是用于展示右侧菜单，真正的标红高亮节点列表应该是dragSelectedNodes
 const curSelectedNode = ref<EditorNode | null>(null)
 // 节点连接线数据
 const nodeLinkList = computed(
@@ -361,7 +442,7 @@ function addEditorNode(nodeType: NodeEnum) {
   } else if ([NodeEnum.Option].includes(nodeType)) {
     node.layout.width = 200 // 宽高传入后已经展示为缩放后的效果，所以不用除scale
     node.layout.height = 50
-    node.boxType = EditorBoxEnum.RoundedRect
+    node.boxType = EditorBoxEnum.NormalRect
     node.layout.left = -editorInfo.value.left + containerWidth / 2 - node.layout.width / 2
     node.layout.top = -editorInfo.value.top + containerHeight / 2 - node.layout.height / 2
   } else {
@@ -459,11 +540,17 @@ provide('curSelectedNode', curSelectedNode)
     <div
       class="ds-ec-left"
       comment="左侧"
-      @mousedown="onMouseDown"
+      @mousedown="
+        (e) => {
+          onMouseDown(e)
+          changeMenuType('grid')
+        }
+      "
       @mouseleave="onMouseUp"
       @mousemove="onMouseMove"
       @mouseup="onMouseUp"
       @wheel="onWheel"
+      @contextmenu="onRightClick($event)"
     >
       <div :style="worktopStyle" class="stack absolute" comment="超大可拖动画布">
         <!-- 网格层 -->
@@ -549,20 +636,14 @@ provide('curSelectedNode', curSelectedNode)
               :node="item.node"
               :scale="editorInfo.scale"
               fontSize="2rem"
-              @mousedown="dragSelectedNodes.clear()"
-              @click="handleRectBoxClick(item)"
+              @mousedown="
+                (e) => {
+                  handleRectBoxClick(item)
+                  closeMenu()
+                }
+              "
+              @contextmenu="changeMenuType('node')"
             ></normal-rect-box>
-            <rounded-rect-box
-              v-if="item.boxType === EditorBoxEnum.RoundedRect"
-              :boxType="item.boxType"
-              :layout="item.layout"
-              :selected="dragSelectedNodes.has(item)"
-              :node="item.node"
-              :scale="editorInfo.scale"
-              fontSize="2rem"
-              @mousedown="dragSelectedNodes.clear()"
-              @click="handleRectBoxClick(item)"
-            ></rounded-rect-box>
           </div>
           <!--    框选框     -->
           <div :style="frameSelectedNodeStyle" v-show="dragRectLayout.show"></div>
@@ -570,9 +651,15 @@ provide('curSelectedNode', curSelectedNode)
           <div :style="dragRectStyle" v-show="dragSelectedNodes.size > 1"></div>
           <!--    拖拽按钮     -->
           <div
-            @mousedown.stop="batchMouseDown"
+            @mousedown.stop="
+              (e) => {
+                batchMouseDown(e)
+                closeMenu()
+              }
+            "
             :style="dragRectBtnStyle"
             v-show="dragSelectedNodes.size > 1"
+            @mousedown="changeMenuType('frame')"
           ></div>
         </div>
       </div>
@@ -600,6 +687,12 @@ provide('curSelectedNode', curSelectedNode)
     v-model="updateGameVisible"
   >
   </update-game-dialog>
+  <context-menu :x="menuPos.x" :y="menuPos.y" :show="showMenu" @close="closeMenu">
+    <div class="menu-item" @click="copyTempPrefab">复制</div>
+    <div class="menu-item" @click="pasteTempPrefab">粘贴</div>
+    <div class="menu-item" @click="deleteTempPrefab">删除</div>
+    <div class="menu-item" @click="saveAsPrefab">保存为预制体</div>
+  </context-menu>
 </template>
 
 <style scoped>
@@ -663,5 +756,14 @@ provide('curSelectedNode', curSelectedNode)
 /* === 节点层（未来可以放节点组件）=== */
 .nodeLayer {
   pointer-events: none;
+}
+/*右键菜单样式*/
+.menu-item {
+  padding: 8px 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.menu-item:hover {
+  background: #f0f0f0;
 }
 </style>

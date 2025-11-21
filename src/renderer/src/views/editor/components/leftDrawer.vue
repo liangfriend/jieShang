@@ -151,7 +151,7 @@ function addNewNode() {
   } else if ([NodeEnum.Option].includes(addTarget.value)) {
     node.layout.width = 200 // 宽高传入后已经展示为缩放后的效果，所以不用除scale
     node.layout.height = 50
-    node.boxType = EditorBoxEnum.RoundedRect
+    node.boxType = EditorBoxEnum.NormalRect
     node.layout.left = -editorInfo.value.left + containerWidth / 2 - node.layout.width / 2
     node.layout.top = -editorInfo.value.top + containerHeight / 2 - node.layout.height / 2
   } else {

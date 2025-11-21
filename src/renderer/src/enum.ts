@@ -87,7 +87,6 @@ export enum CurtainTypeEnum {
 // 编辑器节点盒类型
 export enum EditorBoxEnum {
   NormalRect = 'NormalRect', // 普通盒（场景，对话）
-  RoundedRect = 'RoundedRect',
 
   None = 'None' // 无盒
 }
