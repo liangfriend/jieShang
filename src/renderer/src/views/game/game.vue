@@ -56,7 +56,8 @@ async function initData() {
     const data = (await window.api.work.query({ id: gameId.value })).data?.[0]
     if (data) {
       const editorNodeList = JSON.parse(data.data).editorNodeList
-      await updateLoadedEditorNodeList(editorNodeList)
+      const prefabList = JSON.parse(data.data).prefabList
+      await updateLoadedEditorNodeList(editorNodeList, prefabList)
       const gameData = JSON.parse(data.data).gameData
       updateLoadedGameData(gameData)
     }
@@ -65,7 +66,8 @@ async function initData() {
     const save = (await window.api.save.query({ id: saveId.value })).data?.[0]
     if (data) {
       const editorNodeList = JSON.parse(data.data).editorNodeList
-      await updateLoadedEditorNodeList(editorNodeList)
+      const prefabList = JSON.parse(data.data).prefabList
+      await updateLoadedEditorNodeList(editorNodeList, prefabList)
       if (save) {
         // 游戏模式
         const gameData = JSON.parse(save.data).gameData

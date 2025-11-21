@@ -39,7 +39,8 @@ async function initData() {
     const data = (await window.api.work.query({ id: gameId.value })).data?.[0]
     if (data) {
       const editorNodeList = JSON.parse(data.data).editorNodeList
-      await updateLoadedEditorNodeList(editorNodeList)
+      const prefabList = JSON.parse(data.data).prefabList
+      await updateLoadedEditorNodeList(editorNodeList,prefabList)
       const gameData = JSON.parse(data.data).gameData
       updateLoadedGameData(gameData)
     }
@@ -47,7 +48,8 @@ async function initData() {
     const data = (await window.api.game.query({ id: gameId.value })).data?.[0]
     if (data) {
       const editorNodeList = JSON.parse(data.data).editorNodeList
-      await updateLoadedEditorNodeList(editorNodeList)
+      const prefabList = JSON.parse(data.data).prefabList
+      await updateLoadedEditorNodeList(editorNodeList,prefabList)
       const gameData = JSON.parse(data.data).gameData
       updateLoadedGameData(gameData)
     }

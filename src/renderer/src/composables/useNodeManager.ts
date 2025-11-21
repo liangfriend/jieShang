@@ -1,6 +1,6 @@
 import { computed, ComputedRef, Ref, ref, watch, watchEffect } from 'vue'
 import { NodeEnum } from '@renderer/enum'
-import { EditorNode, EngineNode } from '@renderer/types'
+import { EditorNode, EngineNode, Prefab } from '@renderer/types'
 import { Resolve } from 'element-plus'
 
 export type NodeManager = {
@@ -12,15 +12,20 @@ export type NodeManager = {
   removeNode: (id: string | number) => void
   addNodes: (nodes: EditorNode[]) => void
   clearNodeManager: () => void
+  prefabList: Ref<Prefab[]>
+  addPrefab: (prefab: Prefab) => void
+  deletePrefab: (id: number) => void
+  clearPrefab: () => void
 }
 
 export function setup(
-  data: Array<EditorNode>,
+  data: { editorNodeList: Array<EditorNode>; prefabList: Array<Prefab> },
   resolve: ((value: boolean) => void) | null = null
 ): NodeManager {
   const nodeMap = ref(new Map<number, EngineNode>())
   const editorNodeMap = ref(new Map<number, EditorNode>()) // 空间换时间
-  const editorNodeList = ref<EditorNode[]>(data ?? [])
+  const editorNodeList = ref<EditorNode[]>(data.editorNodeList ?? [])
+  const prefabList = ref<Prefab[]>(data.prefabList ?? [])
   // 监听editorNodeList的变化, 不使用shallowRef,会导致拖拽元素坐标不更新
   watchEffect(() => {
     nodeMap.value.clear()
@@ -85,6 +90,22 @@ export function setup(
     editorNodeList.value = []
   }
 
+  const addPrefab = (prefab: Prefab) => {
+    prefabList.value.push(prefab)
+  }
+
+  const deletePrefab = (id: number) => {
+    const index = prefabList.value.findIndex((item) => item.id === id)
+    if (index !== -1) {
+      prefabList.value.splice(index, 1)
+    }
+  }
+
+  // 重置数据
+  const clearPrefab = () => {
+    prefabList.value = []
+  }
+
   return {
     nodeMap,
     editorNodeMap,
@@ -93,7 +114,11 @@ export function setup(
     addNode,
     removeNode,
     addNodes,
-    clearNodeManager
+    clearNodeManager,
+    prefabList,
+    addPrefab,
+    deletePrefab,
+    clearPrefab
   }
 }
 
@@ -101,10 +126,13 @@ export function setup(
 let res: NodeManager | null = null
 
 // 废弃localStorage， 每次进入测试游戏界面和编辑器界面和游戏界面都调用这个从数据库拿值
-export async function updateLoadedEditorNodeList(editorNodeList: Array<EditorNode>) {
+export async function updateLoadedEditorNodeList(
+  editorNodeList: Array<EditorNode>,
+  prefabList: Array<Prefab>
+) {
   return new Promise((resolve) => {
     if (!res) {
-      res = setup(editorNodeList, resolve)
+      res = setup({ editorNodeList, prefabList }, resolve)
     } else {
       // 重新进入的时候，要再初始化watchEffect, effectScope试了不管用
       watchEffect(() => {
@@ -117,6 +145,7 @@ export async function updateLoadedEditorNodeList(editorNodeList: Array<EditorNod
         resolve(true)
       })
       res.editorNodeList.value = editorNodeList
+      res.prefabList.value = prefabList
     }
   })
 }
@@ -125,7 +154,7 @@ export async function updateLoadedEditorNodeList(editorNodeList: Array<EditorNod
 export function useNodeManager(): NodeManager {
   if (!res) {
     // 这里不让它异步，这里只是返回一些空数据保证不报错
-    res = setup([])
+    res = setup({ editorNodeList: [], prefabList: [] })
   }
   return res!
 }

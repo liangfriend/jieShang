@@ -51,6 +51,7 @@ async function createWork() {
     data: JSON.stringify({
       editorNodeList: [],
       gameData: '{}',
+      prefabList: [],
       editorInfo: {
         left: -5000,
         top: -5000,

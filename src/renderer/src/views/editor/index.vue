@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, CSSProperties, onBeforeMount, onMounted, provide, ref } from 'vue'
+import { computed, CSSProperties, onMounted, provide, ref, watch } from 'vue'
 import {
   ActionNode,
   CaptionNode,
@@ -7,6 +7,7 @@ import {
   EditorNode,
   EngineNode,
   OptionNode,
+  Prefab,
   SceneNode,
   StoryNode
 } from '@renderer/types'
@@ -25,7 +26,7 @@ import LeftDrawer from './components/leftDrawer.vue'
 import StaticResourcesDialog from './components/staticResourcesDialog.vue'
 import { editorNodeTemplate } from '@renderer/utils/nodeTemplate'
 import { updateLoadedEditorInfo, useEditor } from '@renderer/composables/useEditor'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
 import RoundedRectBox from './components/roundedRectBox.vue'
 import MonacoEditor from '@renderer/components/monacoEditor.vue'
@@ -35,14 +36,23 @@ import PublishDialog from '@renderer/views/editor/components/publishDialog.vue'
 import updateGameDialog from '@renderer/views/editor/components/updateGmaeDialog.vue'
 import { generateNormalNode } from '@renderer/utils/usefulNode'
 import ContextMenu from '@renderer/components/contextMenu.vue'
+import { getNumericUUID } from '@renderer/utils/crypto'
 
 const router = useRouter()
 const route = useRoute()
 // =====================================数据初始化==================================
 const { editorInfo, resetEditorInfo } = useEditor()
 const { gameData } = useGameData()
-const { editorNodeList, nodeMap, editorNodeMap, addNode, groupedNodes, clearNodeManager } =
-  useNodeManager()
+const {
+  editorNodeList,
+  nodeMap,
+  editorNodeMap,
+  addNode,
+  groupedNodes,
+  clearNodeManager,
+  prefabList,
+  addPrefab: registerPrefab
+} = useNodeManager()
 
 const workId = computed(() => {
   return route.query.workId
@@ -51,7 +61,7 @@ onMounted(async () => {
   const work = (await window.api.work.query({ id: workId.value })).data[0]
   const data = JSON.parse(work.data)
   if (data) {
-    await updateLoadedEditorNodeList(data.editorNodeList)
+    await updateLoadedEditorNodeList(data.editorNodeList, data.prefabList)
     updateLoadedGameData(data.gameData)
     updateLoadedEditorInfo(data.editorInfo)
   }
@@ -203,17 +213,187 @@ const contextMenuType = ref('grid') // 右键菜单类型  grid node frame  网�
  * 预制体类型
  * 预制体中每个节点的坐标会变为相对预制体节点列表中最靠左上角节点的坐标点相对坐标。除此之外和普通节点没区别
  * */
-type Prefab = EditorNode[]
-// 预制体列表，TODO 这个要变成数据库返回
-const prefabList = ref<Prefab[]>([])
 // 临时预制体
-const tempPrefab = ref<Prefab>([])
+const tempPrefab = ref<Prefab>({ id: -1, name: '临时', editorNodeList: [] })
+const selectedPrefabId = ref<number | null>(null)
+const selectedPrefab = computed(() => {
+  if (!prefabList.value.length || selectedPrefabId.value == null) return null
+  return prefabList.value.find((item) => item.id === selectedPrefabId.value) ?? null
+})
+
+watch(
+  prefabList,
+  (list) => {
+    if (!list.length) {
+      selectedPrefabId.value = null
+      return
+    }
+    if (!list.find((prefab) => prefab.id === selectedPrefabId.value)) {
+      selectedPrefabId.value = list[0].id
+    }
+  },
+  { deep: true }
+)
 // 更新右键菜单类型
 function changeMenuType(type) {
   contextMenuType.value = type
 }
 // 复制
 function copyTempPrefab() {
+  const selectedNodes = Array.from(dragSelectedNodes.value)
+  if (selectedNodes.some((e) => e.node.nodeType === NodeEnum.Story)) {
+    ElMessage.error('不可以复制故事节点')
+    return
+  }
+  // 深拷贝 dragSelectedNodes
+  const copy = JSON.parse(JSON.stringify(selectedNodes)) as EditorNode[]
+
+  if (copy.length === 0) return
+
+  // 找出最小 left / top
+  let minLeft = Infinity
+  let minTop = Infinity
+
+  let uniqueId = 1
+  for (const n of copy) {
+    if (n.layout.left < minLeft) minLeft = n.layout.left
+    if (n.layout.top < minTop) minTop = n.layout.top
+  }
+
+  // 将所有节点位置转换为相对坐标
+  copy.forEach((n) => {
+    n.layout.left = n.layout.left - minLeft
+    n.layout.top = n.layout.top - minTop
+  })
+
+  tempPrefab.value.editorNodeList = copy
+  closeMenu()
+}
+
+function getCanvasCenter() {
+  const scale = editorInfo.value.scale
+  const containerRect = document.querySelector('.ds-ec-left')?.getBoundingClientRect()
+  if (!containerRect) return { x: 0, y: 0 }
+  const containerWidth = containerRect.width / scale
+  const containerHeight = containerRect.height / scale
+  return {
+    x: -editorInfo.value.left + containerWidth / 2,
+    y: -editorInfo.value.top + containerHeight / 2
+  }
+}
+
+function getPrefabBoundingBox(prefab: Prefab) {
+  let width = 0
+  let height = 0
+  prefab.editorNodeList.forEach((node) => {
+    width = Math.max(width, node.layout.left + node.layout.width)
+    height = Math.max(height, node.layout.top + node.layout.height)
+  })
+  return { width, height }
+}
+
+function handleAddPrefabToCenter() {
+  if (!selectedPrefab.value) return
+  const { width, height } = getPrefabBoundingBox(selectedPrefab.value)
+  const { x, y } = getCanvasCenter()
+  const left = x - width / 2
+  const top = y - height / 2
+  spawnPrefab(selectedPrefab.value, left, top)
+}
+
+async function handleSavePrefab() {
+  if (dragSelectedNodes.value.size === 0) {
+    ElMessage.warning('请选择要保存为预制体的节点')
+    return
+  }
+  if (Array.from(dragSelectedNodes.value).some((node) => node.node.nodeType === NodeEnum.Story)) {
+    ElMessage.error('预制体中不能包含故事节点')
+    return
+  }
+  try {
+    const { value } = await ElMessageBox.prompt('请输入预制体名称', '保存预制体', {
+      confirmButtonText: '保存',
+      cancelButtonText: '取消',
+      inputPattern: /\S+/,
+      inputErrorMessage: '请输入预制体名称'
+    })
+    saveAsPrefab(value.trim())
+    ElMessage.success('预制体已保存')
+  } catch (error) {
+    // 用户取消
+  }
+}
+
+// 添加预制体
+function spawnPrefab(prefab: Prefab, left: number, top: number) {
+  //
+  const newCopy = JSON.parse(JSON.stringify(prefab.editorNodeList)) as EditorNode[]
+  // 对newCopy的id进行收集,然后对此id进行映射
+  const idMap = new Map()
+  for (const n of newCopy) {
+    // 更新坐标
+    n.layout.left = n.layout.left + left
+    n.layout.top = n.layout.top + top
+    // 存储id
+    if (!idMap.has(n.node.id)) {
+      idMap.set(n.node.id, getNumericUUID())
+    }
+  }
+  const mapId = (id: number) => (idMap.has(id) ? idMap.get(id) : id)
+  const mapIds = (ids: number[]) => ids.map(mapId)
+
+  for (const n of newCopy) {
+    // 更新id
+    n.node.id = idMap.get(n.node.id)
+    const type = n.node.nodeType
+    // 对预制体内引用的id进行更新
+    if (type === NodeEnum.Story) {
+      if (idMap.has(n.node.entrySceneId)) {
+        n.node.entrySceneId = idMap.get(n.node.entrySceneId)
+      }
+    } else if (type === NodeEnum.Scene) {
+      const node = n.node as SceneNode
+      node.initDialogueIds = mapIds(node.initDialogueIds)
+      node.initActionIds = mapIds(node.initActionIds)
+      node.initImageIds = mapIds(node.initImageIds)
+      node.initCustomIds = mapIds(node.initCustomIds)
+      node.initAudioIds = mapIds(node.initAudioIds)
+      node.initVideoIds = mapIds(node.initVideoIds)
+      if (idMap.has(node.endCurationId)) {
+        node.endCurationId = idMap.get(node.endCurationId)
+      }
+    } else if (type === NodeEnum.Dialogue) {
+      const node = n.node as DialogueNode
+      node.keepIds = mapIds(node.keepIds)
+      node.initImageIds = mapIds(node.initImageIds)
+      node.initCustomIds = mapIds(node.initCustomIds)
+      node.initAudioIds = mapIds(node.initAudioIds)
+      node.initVideoIds = mapIds(node.initVideoIds)
+      node.initCaptionIds = mapIds(node.initCaptionIds)
+      node.initActionIds = mapIds(node.initActionIds)
+    } else if (type === NodeEnum.Caption) {
+      const node = n.node as CaptionNode
+      node.layoutId = mapId(node.layoutId)
+      node.initActionIds = mapIds(node.initActionIds)
+      node.finishActionIds = mapIds(node.finishActionIds)
+      node.doneActionIds = mapIds(node.doneActionIds)
+      node.optionIds = mapIds(node.optionIds)
+    } else if (type === NodeEnum.Option) {
+      const node = n.node as OptionNode
+      node.activeActionIds = mapIds(node.activeActionIds)
+      node.visibleConditionIds = mapIds(node.visibleConditionIds)
+    }
+    addNode(n)
+  }
+  closeMenu()
+}
+// 删除
+function deleteTempPrefab() {
+  tempPrefab.value.editorNodeList = []
+}
+// 保存为预制体
+function saveAsPrefab(name: string) {
+  if (!name) return
   // 深拷贝 dragSelectedNodes
   const copy = JSON.parse(JSON.stringify([...dragSelectedNodes.value])) as EditorNode[]
 
@@ -227,8 +407,6 @@ function copyTempPrefab() {
   for (const n of copy) {
     if (n.layout.left < minLeft) minLeft = n.layout.left
     if (n.layout.top < minTop) minTop = n.layout.top
-    // 保证唯一id
-    n.node.id = Date.now() + uniqueId++
   }
 
   // 将所有节点位置转换为相对坐标
@@ -237,27 +415,13 @@ function copyTempPrefab() {
     n.layout.top = n.layout.top - minTop
   })
 
-  tempPrefab.value = copy
-  closeMenu()
-}
-// 粘贴
-function pasteTempPrefab() {
-  //
-  const newCopy = JSON.parse(JSON.stringify(tempPrefab.value)) as EditorNode[]
-  for (const n of newCopy) {
-    n.layout.left = n.layout.left + menuGridPos.value.x
-    n.layout.top = n.layout.top + menuGridPos.value.y
-    addNode(n)
+  const newPrefab = {
+    id: getNumericUUID(),
+    name: name,
+    editorNodeList: copy
   }
-  closeMenu()
-}
-// 删除
-function deleteTempPrefab() {
-  //
-}
-// 保存为预制体
-function saveAsPrefab() {
-  //
+  registerPrefab(newPrefab)
+  selectedPrefabId.value = newPrefab.id
 }
 // ============================ 样式===============================
 const worktopStyle = computed(
@@ -468,7 +632,8 @@ async function save() {
   const data = {
     editorInfo: editorInfo.value,
     editorNodeList: editorNodeList.value,
-    gameData: gameData.value
+    gameData: gameData.value,
+    prefabList: prefabList.value
   }
   await window.api.work.update(workId.value, { data: JSON.stringify(data) })
   ElMessage.success('保存成功')
@@ -523,6 +688,27 @@ provide('curSelectedNode', curSelectedNode)
           <el-button :disabled="!nodeMap.has(1)" @click="generateNormalNode"
             >生成常用节点
           </el-button>
+          <div class="flex items-center gap-2 mt-2">
+            <el-select
+              v-model="selectedPrefabId"
+              class="prefab-select"
+              placeholder="选择预制体"
+              style="width: 220px"
+            >
+              <el-option
+                v-for="prefab in prefabList"
+                :key="prefab.id"
+                :label="prefab.name"
+                :value="prefab.id"
+              />
+            </el-select>
+            <el-button :disabled="!selectedPrefab" @click="handleAddPrefabToCenter"
+              >添加预制体
+            </el-button>
+            <el-button :disabled="dragSelectedNodes.size === 0" @click="handleSavePrefab"
+              >保存为预制体
+            </el-button>
+          </div>
         </div>
         <div>
           <el-button @click="save">保存</el-button>
@@ -689,9 +875,9 @@ provide('curSelectedNode', curSelectedNode)
   </update-game-dialog>
   <context-menu :x="menuPos.x" :y="menuPos.y" :show="showMenu" @close="closeMenu">
     <div class="menu-item" @click="copyTempPrefab">复制</div>
-    <div class="menu-item" @click="pasteTempPrefab">粘贴</div>
+    <div class="menu-item" @click="spawnPrefab(tempPrefab, menuGridPos.x, menuGridPos.y)">粘贴</div>
     <div class="menu-item" @click="deleteTempPrefab">删除</div>
-    <div class="menu-item" @click="saveAsPrefab">保存为预制体</div>
+    <div class="menu-item" @click="handleSavePrefab">保存为预制体</div>
   </context-menu>
 </template>
 

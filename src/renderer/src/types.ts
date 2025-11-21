@@ -179,6 +179,12 @@ export type EditorNode = {
   boxType: EditorBoxEnum
   node: EngineNode
 }
+
+export type Prefab = {
+  id: number
+  name: string
+  editorNodeList: EditorNode[]
+}
 type NodeTypeMap = {
   [NodeEnum.Story]: StoryNode
   [NodeEnum.Scene]: SceneNode
