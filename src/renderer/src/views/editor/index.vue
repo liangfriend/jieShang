@@ -38,6 +38,7 @@ import updateGameDialog from '@renderer/views/editor/components/updateGmaeDialog
 import { generateNormalNode } from '@renderer/utils/usefulNode'
 import ContextMenu from '@renderer/components/contextMenu.vue'
 import { getNumericUUID } from '@renderer/utils/crypto'
+import GroupDialog from '@renderer/views/editor/components/groupDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -697,6 +698,8 @@ const dataCardVisible = ref(false)
 const publishDialogVisible = ref(false)
 // 更新到游戏弹窗
 const updateGameVisible = ref(false)
+// 组管理弹窗
+const groupDialogVisible = ref(false)
 provide('curSelectedNode', curSelectedNode)
 </script>
 
@@ -747,6 +750,7 @@ provide('curSelectedNode', curSelectedNode)
           <el-button @click="save">保存</el-button>
           <el-button @click="dataCardVisible = true">数据卡</el-button>
           <el-button @click="leftDrawerVisible = true">节点管理</el-button>
+          <el-button @click="groupDialogVisible = true">组管理</el-button>
           <el-button @click="staticResourcesVisible = true">静态资源总览</el-button>
           <el-button @click="reset">重置数据</el-button>
           <el-button :disabled="!nodeMap.has(1)" @click="startGame">游戏预览</el-button>
@@ -906,6 +910,7 @@ provide('curSelectedNode', curSelectedNode)
     v-model="updateGameVisible"
   >
   </update-game-dialog>
+  <group-dialog v-model="groupDialogVisible"></group-dialog>
   <context-menu :x="menuPos.x" :y="menuPos.y" :show="showMenu" @close="closeMenu">
     <div class="menu-item" @click="copyTempPrefab">复制</div>
     <div class="menu-item" @click="spawnPrefab(tempPrefab, menuGridPos.x, menuGridPos.y)">粘贴</div>

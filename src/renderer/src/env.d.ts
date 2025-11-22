@@ -37,6 +37,13 @@ declare global {
         query(filters: any): Promise<any>
         list(): Promise<any>
       }
+      group: {
+        create(payload: any): Promise<any>
+        delete(id: any): Promise<any>
+        update(id: any, payload: any): Promise<any>
+        query(filters: any): Promise<any>
+        list(): Promise<any>
+      }
       window: {
         open: (name: string, route: string, options: any) => void
         close: (name: string) => void

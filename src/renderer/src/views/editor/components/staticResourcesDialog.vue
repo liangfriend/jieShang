@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onBeforeMount } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { updateStaticResource, useStaticResource } from '@renderer/composables/useStaticResource'
 
@@ -9,14 +9,39 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue'])
 
 // -------------------------------
-// 列表数据
+// 列表数据 (仍用 composable 来维护 imageList/audioList/videoList)
 // -------------------------------
 const { imageList, audioList, videoList } = useStaticResource()
 
+// -------------------------------
+// group 筛选
+// -------------------------------
+const groupList = ref<Array<{ id: number; name: string }>>([])
+const groupFilter = ref<number>(0) // 0 表示全部
+
+async function getGroupList() {
+  groupList.value = (await window.api.group.list()).data || []
+}
+
+// -------------------------------
+// 从后端按筛选拉取资源并更新 composable
+// 使用 query({}) 或 query({ group_id })：
+// -------------------------------
 async function updateResource() {
-  const resourceList = (await window.api.resource.list()).data
+  const filters: any = {}
+  if (groupFilter.value && groupFilter.value !== 0) {
+    filters.group_id = groupFilter.value
+  }
+  // 当 filters 为空对象时，query({}) 与 list() 行为一致（按你所述）
+  const res = await window.api.resource.query(filters)
+  const resourceList = res.data || []
   updateStaticResource(resourceList)
 }
+
+// 监听 groupFilter 变化，触发服务端筛选请求
+watch(groupFilter, async () => {
+  await updateResource()
+})
 
 // -------------------------------
 // 上传弹窗
@@ -25,7 +50,8 @@ const formVisible = ref(false)
 
 const form = ref({
   name: '',
-  file: null as File | null
+  file: null as File | null,
+  group_id: null as number | null
 })
 const onFileChange = (e: Event) => {
   const target = e.target as HTMLInputElement
@@ -45,11 +71,11 @@ function getFileType(file: File): 'image' | 'audio' | 'video' {
 
 function openUpload() {
   formVisible.value = true
-  form.value = { name: '', file: null }
+  form.value = { name: '', file: null, group_id: null }
 }
 
 // -------------------------------
-// 创建资源
+// 创建资源（上传并尝试关联 group）
 // -------------------------------
 async function createResource() {
   if (!form.value.name) return ElMessage.error('请填写名称')
@@ -62,16 +88,31 @@ async function createResource() {
   const arrayBuffer = await file.arrayBuffer()
 
   // 上传时要传 file.name（带后缀）
-  await window.api.file.upload(
+  // 假设 window.api.file.upload 返回创建好的资源信息或至少返回 id 在 data 中
+  const uploadRes = await window.api.file.upload(
     arrayBuffer,
     file.name, // ← 包含扩展名，例如 "test.png"
     type,
     form.value.name // ← 用户界面上的展示名称
   )
 
+  // 如果后端的 upload 返回了资源 id（常见：upload 返回 { data: { id, ... } }）
+  const uploadedId = (uploadRes && (uploadRes.data?.id ?? uploadRes.id)) ?? null
+
+  // 如果上传后需要单独关联 group（有些实现不支持直接在 upload 中传 group_id）
+  if (uploadedId && form.value.group_id) {
+    try {
+      await window.api.resource.update(uploadedId, { group_id: form.value.group_id })
+    } catch (err) {
+      // 若更新失败也不用完全中断上传流程，只告知用户
+      console.warn('关联 group 失败：', err)
+    }
+  }
+
   ElMessage.success('上传成功！')
   formVisible.value = false
 
+  // 根据当前筛选重新拉取（如果当前筛选到了某个 group，上传的资源若属于该 group 会在结果中出现）
   await updateResource()
   return
 }
@@ -85,13 +126,15 @@ async function deleteResource(item: any) {
       type: 'warning'
     })
 
-    // 1. 删除文件
+    // 1. 删除文件（如果 file.delete 接受 id）
     await window.api.file.delete(item.id)
 
     // 2. 删除 resource 表记录
     await window.api.resource.delete(item.id)
 
     ElMessage.success('删除成功')
+
+    // 删除后依据当前筛选重新拉取
     await updateResource()
   } catch {
     /* 用户取消 */
@@ -99,18 +142,28 @@ async function deleteResource(item: any) {
 }
 
 // -------------------------------
-// 加载资源列表
+// 初始化
 // -------------------------------
+onMounted(async () => {
+  await getGroupList()
+  await updateResource()
+})
 </script>
+
 <template>
   <el-dialog
     v-model="props.modelValue"
     width="900px"
     @update:modelValue="emit('update:modelValue', $event)"
   >
-    <!-- 顶部功能区 -->
-    <div style="margin-bottom: 10px">
+    <!-- 顶部功能区：上传 + 分组筛选 -->
+    <div style="margin-bottom: 10px; display: flex; gap: 12px; align-items: center">
       <el-button type="primary" @click="openUpload">上传资源</el-button>
+
+      <el-select v-model="groupFilter" placeholder="筛选分组" clearable style="width: 240px">
+        <el-option :value="0" label="全部分组" />
+        <el-option v-for="g in groupList" :key="g.id" :label="g.name" :value="g.id" />
+      </el-select>
     </div>
 
     <!-- 三列展示区（可滚动） -->
@@ -168,6 +221,12 @@ async function deleteResource(item: any) {
     <el-form label-width="80px">
       <el-form-item label="名称">
         <el-input v-model="form.name" placeholder="输入资源名称" />
+      </el-form-item>
+
+      <el-form-item label="分组">
+        <el-select v-model="form.group_id" placeholder="选择分组">
+          <el-option v-for="g in groupList" :key="g.id" :label="g.name" :value="g.id" />
+        </el-select>
       </el-form-item>
 
       <el-form-item label="文件">

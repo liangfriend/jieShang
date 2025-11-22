@@ -9,6 +9,7 @@ export interface ResourceAttributes {
   name: string
   type: 'image' | 'audio' | 'video'
   url: string
+  group_id: number | null
 
   created_at?: Date
   updated_at?: Date
@@ -28,6 +29,7 @@ export class ResourceModel
   declare name: string
   declare type: 'image' | 'audio' | 'video'
   declare url: string
+  declare group_id: number | null
 
   declare created_at: Date
   declare updated_at: Date
@@ -55,6 +57,15 @@ ResourceModel.init(
     url: {
       type: DataTypes.STRING,
       allowNull: false
+    },
+
+    group_id: {
+      type: DataTypes.INTEGER,
+      allowNull: true,
+      references: {
+        model: 'group',
+        key: 'id'
+      }
     },
 
     created_at: {

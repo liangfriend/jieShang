@@ -1,5 +1,5 @@
 // src/main/services/resourceService.ts
-import { ResourceRepository } from '../repositories/ResourceRepository'
+import { ResourceRepository } from '../repositories/resourceRepository'
 
 export class ResourceService {
   private resourceRepository

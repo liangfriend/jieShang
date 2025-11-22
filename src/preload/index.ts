@@ -6,6 +6,7 @@ import { resourceInvoke } from './invoke/resource'
 import { workInvoke } from './invoke/work'
 import { fileInvoke } from './invoke/file'
 import { windowInvoke } from './invoke/window'
+import { groupInvoke } from './invoke/group'
 
 const api = {}
 
@@ -17,7 +18,8 @@ if (process.contextIsolated) {
       resource: resourceInvoke,
       save: saveInvoke,
       work: workInvoke,
-      window: windowInvoke
+      window: windowInvoke,
+      group: groupInvoke
     })
   } catch (error) {
     console.error(error)

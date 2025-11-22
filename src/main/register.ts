@@ -11,6 +11,8 @@ export async function registerController() {
   resourceController.register()
   const saveController = container.resolve('saveController')
   saveController.register()
+  const groupController = container.resolve('groupController')
+  groupController.register()
   const fileController = container.resolve('fileController')
   fileController.register()
   const windowController = container.resolve('windowController')
