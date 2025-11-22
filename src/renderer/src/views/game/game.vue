@@ -119,7 +119,6 @@ function exit() {
       query: { gameId: gameId.value, type: type.value }
     })
   } else if (type.value === 'game') {
-    console.log('chicken')
     router.replace({
       path: '/game/entry',
       query: { gameId: gameId.value, type: type.value }

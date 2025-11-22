@@ -42,7 +42,6 @@ onMounted(() => {
   // 监听编辑器内部变化 → emit 给父组件
   monacoEditor.onDidChangeModelContent(() => {
     const newVal = monacoEditor!.getValue()
-    console.log('chicken', newVal)
     emit('update:modelValue', newVal)
   })
 })
@@ -90,7 +89,6 @@ function runCode() {
     const result = fn(clonedData)
     emit('run', result)
   } catch (e: any) {
-    console.log('chicken', e)
     emit('run', { error: e.message, msg: '某个代码编辑器里的代码语法有误' })
   }
 }

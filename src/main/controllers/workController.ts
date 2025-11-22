@@ -19,7 +19,6 @@ export class WorkController {
   }
 
   async createWork(payload) {
-    console.log('chicken')
     return await this.workService.createWork(payload)
   }
 

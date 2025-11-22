@@ -82,7 +82,6 @@ watch(
     } = anim
 
     gsap.killTweensOf(gRef.value)
-    console.log('chicken', layoutStyle.value.y)
     gsap.to(gRef.value, {
       duration: duration / 1000,
       scale,

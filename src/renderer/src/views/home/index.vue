@@ -50,7 +50,6 @@ async function selectMenu(item: any) {
 const workList = ref<WorkModel[]>([])
 
 async function getWorkList() {
-  console.log('chicken')
   workList.value = (await window.api.work.list()).data
 }
 

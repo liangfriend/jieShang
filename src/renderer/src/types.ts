@@ -294,3 +294,10 @@ export type ResourceModel = baseModel & {
   type: string
   url: string
 }
+// 历史栈
+export type OperationHistory = {
+  editorInfo: EditorInfo
+  editorNodeList: EditorNode[]
+  gameData: string
+  prefabList: Array<Prefab>
+}

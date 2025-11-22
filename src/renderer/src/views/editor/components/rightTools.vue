@@ -38,7 +38,6 @@ const storyNode = computed((): StoryNode => {
 // 游戏预览
 function startGame(sceneId: number = -1) {
   const route = `/game/game?type=test&gameId=${workId.value}&sceneId=${sceneId}`
-  console.log('chicken', route, window.location.href)
   // router.replace({ path: route, query: { type: 'test', gameId: workId.value, sceneId: sceneId } })
   window.api.window.open('game', route, {
     width: storyNode.value.width,

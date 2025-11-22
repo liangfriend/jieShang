@@ -1,7 +1,9 @@
 import { computed, ComputedRef, Ref, ref, watch, watchEffect } from 'vue'
 import { NodeEnum } from '@renderer/enum'
-import { EditorNode, EngineNode, Prefab } from '@renderer/types'
+import { EditorInfo, EditorNode, EngineNode, OperationHistory, Prefab } from '@renderer/types'
 import { Resolve } from 'element-plus'
+import { editor } from 'monaco-editor'
+import { useOperationHistory } from '@renderer/composables/useOperationHistory'
 
 export type NodeManager = {
   nodeMap: Ref<Map<number, EngineNode>>
@@ -66,8 +68,11 @@ export function setup(
     })
     return groups
   })
+
+  const { pushHistory } = useOperationHistory({ editorNodeList, prefabList })
   // ✅ 添加节点
   const addNode = (node: EditorNode) => {
+    pushHistory({ editorNodeList: editorNodeList.value })
     editorNodeList.value.push(node)
     // 不需要手动 trigger，watchEffect 会自动响应数组内容变化
   }
@@ -76,33 +81,39 @@ export function setup(
   const removeNode = (id: string | number) => {
     const index = editorNodeList.value.findIndex((item) => item.node.id === id)
     if (index !== -1) {
+      pushHistory({ editorNodeList: editorNodeList.value })
       editorNodeList.value.splice(index, 1) // 使用 splice 确保响应式更新
     }
   }
 
   // ✅ 批量添加节点（可选增强）
   const addNodes = (nodes: EditorNode[]) => {
+    pushHistory({ editorNodeList: editorNodeList.value })
     editorNodeList.value.push(...nodes)
   }
 
   // 重置数据
   const clearNodeManager = () => {
+    pushHistory({ editorNodeList: editorNodeList.value })
     editorNodeList.value = []
   }
 
   const addPrefab = (prefab: Prefab) => {
+    pushHistory({ prefabList: prefabList.value })
     prefabList.value.push(prefab)
   }
 
   const deletePrefab = (id: number) => {
     const index = prefabList.value.findIndex((item) => item.id === id)
     if (index !== -1) {
+      pushHistory({ prefabList: prefabList.value })
       prefabList.value.splice(index, 1)
     }
   }
 
   // 重置数据
   const clearPrefab = () => {
+    pushHistory({ prefabList: prefabList.value })
     prefabList.value = []
   }
 

@@ -27,7 +27,6 @@ const targetGameId = ref(-1)
 const gameList = ref<GameModel[]>([])
 async function getGameList() {
   gameList.value = (await window.api.game.list()).data
-  console.log('chicken', gameList.value)
 }
 function updateGame() {
   ElMessageBox.confirm('确认更新? 此操作会覆盖掉现在的游戏数据', 'Warning', {
@@ -36,14 +35,6 @@ function updateGame() {
     type: 'warning'
   })
     .then(async () => {
-      console.log(
-        'chicken',
-        JSON.stringify({
-          editorNodeList: props.editorNodeList,
-          gameData: props.gameData,
-          editorInfo: props.editorInfo
-        })
-      )
       await window.api.game.update(targetGameId.value, {
         data: JSON.stringify({
           editorNodeList: props.editorNodeList,
@@ -58,7 +49,7 @@ function updateGame() {
       visible.value = false
     })
     .catch((e) => {
-      console.log('chicken', e)
+      console.log( e)
     })
 }
 </script>

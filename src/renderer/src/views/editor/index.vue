@@ -32,6 +32,7 @@ import RoundedRectBox from './components/roundedRectBox.vue'
 import MonacoEditor from '@renderer/components/monacoEditor.vue'
 import { updateLoadedGameData, useGameData } from '@renderer/composables/useGameData'
 import { updateStaticResource } from '@renderer/composables/useStaticResource'
+import { useOperationHistory } from '@renderer/composables/useOperationHistory'
 import PublishDialog from '@renderer/views/editor/components/publishDialog.vue'
 import updateGameDialog from '@renderer/views/editor/components/updateGmaeDialog.vue'
 import { generateNormalNode } from '@renderer/utils/usefulNode'
@@ -53,6 +54,7 @@ const {
   prefabList,
   addPrefab: registerPrefab
 } = useNodeManager()
+const { undo, redo } = useOperationHistory({ editorNodeList, editorInfo, gameData, prefabList })
 
 const workId = computed(() => {
   return route.query.workId
@@ -67,6 +69,30 @@ onMounted(async () => {
   }
   const resourceList = (await window.api.resource.list()).data
   updateStaticResource(resourceList)
+  // 绑定撤销/恢复事件
+  const editor = document.querySelector('.workCanvas')
+  document?.addEventListener('keydown', (e) => {
+    // Ctrl+Z 撤销
+    if (e.ctrlKey && (e.key === 'z' || e.key === 'Z') && !e.shiftKey) {
+      e.preventDefault()
+      undo({
+        editorNodeList: editorNodeList.value,
+        editorInfo: editorInfo.value,
+        gameData: gameData.value,
+        prefabList: prefabList.value
+      })
+    }
+    // Ctrl+Shift+Z 重做
+    if (e.ctrlKey && e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
+      e.preventDefault()
+      redo({
+        editorNodeList: editorNodeList.value,
+        editorInfo: editorInfo.value,
+        gameData: gameData.value,
+        prefabList: prefabList.value
+      })
+    }
+  })
 })
 // =====================================拖拽/移动/右键菜单功能================================
 const isPanning = ref(false)
@@ -188,12 +214,14 @@ function batchMouseMove(e: MouseEvent) {
 function batchMouseUp(e: MouseEvent) {
   isBatchDragging.value = false
 }
+
 // ===================================== 右键菜单 ==================================
 const showMenu = ref(false)
 // 菜单坐标
 const menuPos = ref({ x: 0, y: 0 })
 // 菜单起始位置相对网格的坐标
 const menuGridPos = ref({ x: 0, y: 0 })
+
 function onRightClick(e: MouseEvent) {
   e.preventDefault()
   menuPos.value = { x: e.clientX, y: e.clientY }
@@ -204,6 +232,7 @@ function onRightClick(e: MouseEvent) {
   menuGridPos.value.x = -editorInfo.value.left + (e.clientX - containerRect.left) / scale
   menuGridPos.value.y = -editorInfo.value.top + (e.clientY - containerRect.top) / scale
 }
+
 function closeMenu() {
   showMenu.value = false
 }
@@ -234,10 +263,12 @@ watch(
   },
   { deep: true }
 )
+
 // 更新右键菜单类型
 function changeMenuType(type) {
   contextMenuType.value = type
 }
+
 // 复制
 function copyTempPrefab() {
   const selectedNodes = Array.from(dragSelectedNodes.value)
@@ -387,10 +418,12 @@ function spawnPrefab(prefab: Prefab, left: number, top: number) {
   }
   closeMenu()
 }
+
 // 删除
 function deleteTempPrefab() {
   tempPrefab.value.editorNodeList = []
 }
+
 // 保存为预制体
 function saveAsPrefab(name: string) {
   if (!name) return
@@ -423,6 +456,7 @@ function saveAsPrefab(name: string) {
   registerPrefab(newPrefab)
   selectedPrefabId.value = newPrefab.id
 }
+
 // ============================ 样式===============================
 const worktopStyle = computed(
   (): CSSProperties => ({
@@ -647,7 +681,6 @@ const storyNode = computed((): StoryNode => {
 function startGame() {
   const route = `/game/entry?type=test&gameId=${workId.value}`
   // window.open(url, '_blank')
-  console.log('chicken', route, window.location.href)
   window.api.window.open('game', route, {
     width: storyNode.value.width,
     height: storyNode.value.height
@@ -738,7 +771,7 @@ provide('curSelectedNode', curSelectedNode)
       @wheel="onWheel"
       @contextmenu="onRightClick($event)"
     >
-      <div :style="worktopStyle" class="stack absolute" comment="超大可拖动画布">
+      <div :style="worktopStyle" class="stack absolute workCanvas" comment="超大可拖动画布">
         <!-- 网格层 -->
         <div class="stack-item gridLayer"></div>
         <!-- 节点连线层 -->
@@ -943,12 +976,14 @@ provide('curSelectedNode', curSelectedNode)
 .nodeLayer {
   pointer-events: none;
 }
+
 /*右键菜单样式*/
 .menu-item {
   padding: 8px 14px;
   cursor: pointer;
   transition: background 0.15s;
 }
+
 .menu-item:hover {
   background: #f0f0f0;
 }

@@ -21,14 +21,12 @@ export function runCode(code: string) {
     const data = parseJS(gameData.value)
     return fn(editorNodeMap.value, data)
   } catch (e: any) {
-    console.log('chicken', e)
     return e
   }
 }
 
 export function parseJS(str: string) {
   try {
-    console.trace('chicken', str)
     return new Function(`return (${str})`)()
   } catch (e) {
     console.error('解析js失败', e)

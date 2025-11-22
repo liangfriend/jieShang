@@ -1,6 +1,6 @@
 // 游戏数据
 
-import { Ref, ref } from 'vue'
+import { Ref, ref, watch } from 'vue'
 
 export interface GameDataManager {
   gameData: Ref<string>
@@ -10,7 +10,6 @@ export interface GameDataManager {
 function setup(data: string): GameDataManager {
   // 因为要保持游戏预览和编辑器两个页面的游戏数据是一样的，使用localStorage
   const gameData = ref(data)
-
   return { gameData }
 }
 

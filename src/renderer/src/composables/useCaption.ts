@@ -97,7 +97,6 @@ export function useCaption(
   }
   // 交互事件处理
   const handleUserAction = () => {
-    console.log('chicken')
     if (status.value === 'done') {
       return
     }
@@ -123,7 +122,6 @@ export function useCaption(
   function init() {
     // 展示字幕框，这个visible应该没有必要
     visible.value = true
-    console.log('chicken', visible.value)
     // 执行初始化行为
     props.captionNode.initActionIds.forEach((actionId) => {
       doAction(actionId)
@@ -178,7 +176,6 @@ export function useCaption(
     }
   })
   onBeforeUnmount(() => {
-    console.log('chicken', captionRef.value)
     captionRef.value.removeEventListener('keydown', onKey)
     captionRef.value.removeEventListener('click', handleUserAction)
   })

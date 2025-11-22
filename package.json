@@ -35,6 +35,7 @@
     "@tailwindcss/vite": "^4.1.17",
     "@vue/compiler-sfc": "^3.5.24",
     "awilix": "^12.0.5",
+    "axios": "^1.13.2",
     "deciphony-core": "^0.0.32",
     "deciphony-player": "^1.0.49",
     "electron-updater": "^6.3.9",
