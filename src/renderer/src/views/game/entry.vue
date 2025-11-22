@@ -4,8 +4,6 @@ import { useRoute, useRouter } from 'vue-router'
 import { updateLoadedEditorNodeList, useNodeManager } from '@renderer/composables/useNodeManager'
 import type { SaveModel, StoryNode } from '@renderer/types'
 import { ElMessage } from 'element-plus'
-import { updateStaticResource } from '@renderer/composables/useStaticResource'
-import { updateLoadedEditorInfo } from '@renderer/composables/useEditor'
 import { updateLoadedGameData, useGameData } from '@renderer/composables/useGameData'
 
 // ------------------- 数据 & 路由 -------------------
@@ -40,7 +38,7 @@ async function initData() {
     if (data) {
       const editorNodeList = JSON.parse(data.data).editorNodeList
       const prefabList = JSON.parse(data.data).prefabList
-      await updateLoadedEditorNodeList(editorNodeList,prefabList)
+      await updateLoadedEditorNodeList(editorNodeList, prefabList)
       const gameData = JSON.parse(data.data).gameData
       updateLoadedGameData(gameData)
     }
@@ -49,7 +47,7 @@ async function initData() {
     if (data) {
       const editorNodeList = JSON.parse(data.data).editorNodeList
       const prefabList = JSON.parse(data.data).prefabList
-      await updateLoadedEditorNodeList(editorNodeList,prefabList)
+      await updateLoadedEditorNodeList(editorNodeList, prefabList)
       const gameData = JSON.parse(data.data).gameData
       updateLoadedGameData(gameData)
     }

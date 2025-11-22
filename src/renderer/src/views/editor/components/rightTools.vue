@@ -5,7 +5,7 @@ import DynamicSelectGroup from '@renderer/components/dynamicSelectGroup.vue'
 import { nodeNameMap } from '@renderer/constant'
 import { useRoute, useRouter } from 'vue-router'
 import { useNodeManager } from '@renderer/composables/useNodeManager'
-import { computed, inject, ref, Ref } from 'vue'
+import { computed, inject, onMounted, ref, Ref } from 'vue'
 import { EditorNode, ImageNode, StoryNode } from '@renderer/types'
 import MonacoEditor from '@renderer/components/monacoEditor.vue'
 
@@ -44,6 +44,19 @@ function startGame(sceneId: number = -1) {
     height: storyNode.value.height
   })
 }
+
+// ===================== 分组数据 ======================
+const groupList = ref([])
+const curSelectedGroup = ref(-1)
+
+async function loadGroupList() {
+  const res = await window.api.group.list()
+  groupList.value = res.data || []
+}
+
+onMounted(async () => {
+  await loadGroupList()
+})
 </script>
 
 <template>

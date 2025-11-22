@@ -2,7 +2,6 @@
 import { ref, reactive, watch, PropType, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { EditorInfo, EditorNode, GameModel } from '@renderer/types'
-import { useStaticResource } from '@renderer/composables/useStaticResource'
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
@@ -25,9 +24,11 @@ watch(visible, (v) => emit('update:modelValue', v))
 
 const targetGameId = ref(-1)
 const gameList = ref<GameModel[]>([])
+
 async function getGameList() {
   gameList.value = (await window.api.game.list()).data
 }
+
 function updateGame() {
   ElMessageBox.confirm('确认更新? 此操作会覆盖掉现在的游戏数据', 'Warning', {
     confirmButtonText: '确定',
@@ -49,7 +50,7 @@ function updateGame() {
       visible.value = false
     })
     .catch((e) => {
-      console.log( e)
+      console.log(e)
     })
 }
 </script>
