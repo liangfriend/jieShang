@@ -14,9 +14,8 @@ import {
 import { useNodeManager } from '@renderer/composables/useNodeManager'
 import monacoEditor from '@renderer/components/monacoEditor.vue'
 import MonacoEditor from '@renderer/components/monacoEditor.vue'
-import { useStaticResource } from '@renderer/composables/useStaticResource'
+import ResourceSelect from '@renderer/views/editor/components/resourceSelect.vue'
 
-const { imageList, audioList, videoList } = useStaticResource()
 const props = defineProps({
   modelValue: {
     type: Boolean,
@@ -812,9 +811,7 @@ watch(actionType, (value, oldValue) => {
       </div>
       <div class="flex mt-2">
         <div class="w-24 shrink-0">资源:</div>
-        <el-select v-model="editorNode.node.url" :style="{ width: '16rem' }">
-          <el-option v-for="item in imageList" :label="item.name" :value="item.url"></el-option>
-        </el-select>
+        <resource-select v-model="editorNode.node.url" resourceType="image"></resource-select>
       </div>
       <div class="flex mt-2">
         <div class="w-24 shrink-0">行为节点:</div>
@@ -832,9 +829,7 @@ watch(actionType, (value, oldValue) => {
     <template v-if="editorNode && editorNode.node.nodeType === NodeEnum.Audio">
       <div class="flex mt-2">
         <div class="w-24 shrink-0">资源:</div>
-        <el-select v-model="editorNode.node.url" :style="{ width: '16rem' }">
-          <el-option v-for="item in audioList" :label="item.name" :value="item.url"></el-option>
-        </el-select>
+        <resource-select v-model="editorNode.node.url" resourceType="audio"></resource-select>
       </div>
       <div class="flex mt-2">
         <div class="w-24 shrink-0">循环播放:</div>
@@ -874,9 +869,7 @@ watch(actionType, (value, oldValue) => {
       </div>
       <div class="flex mt-2">
         <div class="w-24 shrink-0">资源:</div>
-        <el-select v-model="editorNode.node.url" :style="{ width: '16rem' }">
-          <el-option v-for="item in videoList" :label="item.name" :value="item.url"></el-option>
-        </el-select>
+        <resource-select v-model="editorNode.node.url" resourceType="video"></resource-select>
       </div>
       <div class="flex mt-2">
         <div class="w-24 shrink-0">行为节点:</div>

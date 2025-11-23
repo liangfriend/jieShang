@@ -1,20 +1,18 @@
 import { computed, ComputedRef, Ref, ref } from 'vue'
+import { ResourceModel } from '@renderer/types'
 
-type Resource = {
-  id: number
-  name: string
-  type: string
-  url: string
-}
 export type StaticResource = {
-  resourceList: Ref<Resource[]>
-  imageList: ComputedRef<Resource[]>
-  audioList: ComputedRef<Resource[]>
-  videoList: ComputedRef<Resource[]>
+  resourceList: Ref<ResourceModel[]>
+  imageList: ComputedRef<ResourceModel[]>
+  audioList: ComputedRef<ResourceModel[]>
+  videoList: ComputedRef<ResourceModel[]>
 }
 
-function setup(data: Resource[]): StaticResource {
-  const resourceList = ref(data || [])
+export async function useStaticResource(groupId: number = -1): Promise<StaticResource> {
+  const resourceList = ref([])
+  resourceList.value = (
+    await window.api.resource.query(groupId !== -1 ? { group: groupId } : {})
+  ).data
   const imageList = computed(() => {
     return resourceList.value.filter((r: any) => r.type === 'image')
   })
@@ -26,20 +24,4 @@ function setup(data: Resource[]): StaticResource {
   })
 
   return { resourceList, imageList, audioList, videoList }
-}
-
-let res: StaticResource | null = null
-
-export function updateStaticResource(resrourceList: Resource[]) {
-  if (!res) {
-    res = setup(resrourceList)
-  } else {
-    res.resourceList.value = resrourceList
-  }
-}
-
-export function useStaticResource() {
-  if (!res) updateStaticResource([])
-
-  return res!
 }

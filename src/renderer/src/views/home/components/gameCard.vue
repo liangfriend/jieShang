@@ -1,15 +1,17 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, PropType, ref } from 'vue'
 
 const props = defineProps({
   img: { type: String, default: '' },
   name: { type: String, default: '' },
   width: { type: String, default: '180px' },
   height: { type: String, default: '110px' },
-  deleteable: { type: Boolean, default: false }
+  deleteable: { type: Boolean, default: false },
+  type: { type: String as PropType<'work' | 'game'>, required: true },
+  editable: { type: Boolean, default: false }
 })
 
-const emit = defineEmits(['select', 'delete'])
+const emit = defineEmits(['select', 'delete', 'edit'])
 
 const cardStyle = computed(() => ({
   width: props.width,
@@ -26,6 +28,11 @@ const onClick = () => emit('select', props.name)
 const onDelete = (e: MouseEvent) => {
   e.stopPropagation()
   emit('delete', props.name)
+}
+// 编辑按钮点击
+const onEdit = (e: MouseEvent) => {
+  e.stopPropagation()
+  emit('edit', props.name)
 }
 </script>
 
@@ -45,7 +52,8 @@ const onDelete = (e: MouseEvent) => {
     <div v-if="hover" class="name-tip">
       {{ name }}
     </div>
-
+    <!-- ❌ 右上角删除按钮 -->
+    <button v-if="hover && editable" class="edit-btn" @click="onEdit">编辑</button>
     <!-- ❌ 右上角删除按钮 -->
     <button v-if="hover && deleteable" class="delete-btn" @click="onDelete">✕</button>
   </div>
@@ -102,9 +110,30 @@ const onDelete = (e: MouseEvent) => {
   padding: 0;
   transition: background 0.15s ease;
 }
+/* 编辑按钮 */
+.edit-btn {
+  position: absolute;
+  top: 6px;
+  right: 36px;
+  width: 36px;
+  height: 26px;
+  border-radius: 20%;
+  border: none;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 26px;
+  text-align: center;
+  padding: 0;
+  transition: background 0.15s ease;
+}
 
 .delete-btn:hover {
   background: rgba(255, 77, 79, 0.9);
+}
+.edit-btn:hover {
+  background: rgb(230, 162, 60);
 }
 
 /* 动画 */

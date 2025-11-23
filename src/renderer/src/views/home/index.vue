@@ -133,7 +133,17 @@ async function deleteWork(item) {
     })
     .catch(() => {})
 }
-
+async function editWork(item) {
+  ElMessageBox.prompt('请输入新的作品名称', 'Tip', {
+    confirmButtonText: '确认',
+    cancelButtonText: '取消'
+  })
+    .then(async ({ value }) => {
+      await window.api.work.update(item.id, { name: value })
+      await getWorkList()
+    })
+    .catch(() => {})
+}
 // 进入游戏
 function playGame(item) {
   //
@@ -154,6 +164,17 @@ async function deleteGame(item) {
         type: 'success',
         message: '删除成功'
       })
+    })
+    .catch(() => {})
+}
+async function editGame(item) {
+  ElMessageBox.prompt('请输入新的游戏名称', 'Tip', {
+    confirmButtonText: '确认',
+    cancelButtonText: '取消'
+  })
+    .then(async ({ value }) => {
+      await window.api.game.update(item.id, { name: value })
+      await getGameList()
     })
     .catch(() => {})
 }
@@ -188,6 +209,7 @@ async function deleteGame(item) {
         <template v-if="active === 'work'">
           <GameCard
             deleteable
+            editable
             v-if="workList[0]"
             class="mb-[20px]"
             :name="workList[0].name"
@@ -195,10 +217,13 @@ async function deleteGame(item) {
             height="300px"
             @select="selectWork(workList[0])"
             @delete="deleteWork(workList[0])"
+            @edit="editWork(workList[0])"
+            type="work"
           />
           <div class="gap-[20px] flex flex-wrap">
             <GameCard
               deleteable
+              editable
               class="shrink-0"
               v-for="item in workList"
               :name="item.name"
@@ -206,12 +231,15 @@ async function deleteGame(item) {
               height="200px"
               @select="selectWork(item)"
               @delete="deleteWork(item)"
+              @edit="editWork(item)"
+              type="work"
             />
           </div>
         </template>
         <template v-else-if="active === 'my_game'">
           <GameCard
             deleteable
+            editable
             v-if="gameList[0]"
             class="mb-[20px]"
             :name="gameList[0].name"
@@ -220,10 +248,13 @@ async function deleteGame(item) {
             height="300px"
             @select="playGame(gameList[0])"
             @delete="deleteGame(gameList[0])"
+            @edit="editGame(workList[0])"
+            type="game"
           />
           <div class="gap-[20px] flex flex-wrap">
             <GameCard
               deleteable
+              editable
               class="shrink-0"
               v-for="item in gameList"
               :name="item.name"
@@ -232,6 +263,8 @@ async function deleteGame(item) {
               height="200px"
               @select="playGame(item)"
               @delete="deleteGame(item)"
+              @edit="editGame(item)"
+              type="game"
             />
           </div>
         </template>

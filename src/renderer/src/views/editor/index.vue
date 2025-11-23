@@ -31,7 +31,6 @@ import { useRoute, useRouter } from 'vue-router'
 import RoundedRectBox from './components/roundedRectBox.vue'
 import MonacoEditor from '@renderer/components/monacoEditor.vue'
 import { updateLoadedGameData, useGameData } from '@renderer/composables/useGameData'
-import { updateStaticResource } from '@renderer/composables/useStaticResource'
 import { useOperationHistory } from '@renderer/composables/useOperationHistory'
 import PublishDialog from '@renderer/views/editor/components/publishDialog.vue'
 import updateGameDialog from '@renderer/views/editor/components/updateGmaeDialog.vue'
@@ -69,7 +68,6 @@ onMounted(async () => {
     updateLoadedEditorInfo(data.editorInfo)
   }
   const resourceList = (await window.api.resource.list()).data
-  updateStaticResource(resourceList)
   // 绑定撤销/恢复事件
   const editor = document.querySelector('.workCanvas')
   document?.addEventListener('keydown', (e) => {

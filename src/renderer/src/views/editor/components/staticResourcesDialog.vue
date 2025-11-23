@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { updateStaticResource, useStaticResource } from '@renderer/composables/useStaticResource'
+import { useStaticResource } from '@renderer/composables/useStaticResource'
+import { ResourceModel } from '@renderer/types'
 
 const props = defineProps({
   modelValue: Boolean
@@ -11,7 +12,17 @@ const emit = defineEmits(['update:modelValue'])
 // -------------------------------
 // 列表数据 (仍用 composable 来维护 imageList/audioList/videoList)
 // -------------------------------
-const { imageList, audioList, videoList } = useStaticResource()
+
+const imageList = ref<ResourceModel[]>([])
+const audioList = ref<ResourceModel[]>([])
+const videoList = ref<ResourceModel[]>([])
+
+async function getResourceList() {
+  const resource = await useStaticResource()
+  imageList.value = resource.imageList.value
+  audioList.value = resource.audioList.value
+  videoList.value = resource.videoList.value
+}
 
 // -------------------------------
 // group 筛选
@@ -22,7 +33,15 @@ const groupFilter = ref<number>(0) // 0 表示全部
 async function getGroupList() {
   groupList.value = (await window.api.group.list()).data || []
 }
-
+watch(
+  () => props.modelValue,
+  async (val) => {
+    if (val) {
+      await getResourceList()
+      await getGroupList()
+    }
+  }
+)
 // -------------------------------
 // 从后端按筛选拉取资源并更新 composable
 // 使用 query({}) 或 query({ group_id })：
@@ -34,8 +53,7 @@ async function updateResource() {
   }
   // 当 filters 为空对象时，query({}) 与 list() 行为一致（按你所述）
   const res = await window.api.resource.query(filters)
-  const resourceList = res.data || []
-  updateStaticResource(resourceList)
+  await getResourceList()
 }
 
 // 监听 groupFilter 变化，触发服务端筛选请求
@@ -126,11 +144,8 @@ async function deleteResource(item: any) {
       type: 'warning'
     })
 
-    // 1. 删除文件（如果 file.delete 接受 id）
+    // 1. 删除文件（如果 file.delete 接受 id），删除文件传的是资源id,同时也会删除对应的资源
     await window.api.file.delete(item.id)
-
-    // 2. 删除 resource 表记录
-    await window.api.resource.delete(item.id)
 
     ElMessage.success('删除成功')
 

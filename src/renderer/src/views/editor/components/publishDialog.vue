@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ref, reactive, watch, PropType, computed } from 'vue'
+import { ref, reactive, watch, PropType, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { EditorInfo, EditorNode } from '@renderer/types'
-import { useStaticResource } from '@renderer/composables/useStaticResource'
 
 const props = defineProps({
   modelValue: { type: Boolean, required: true },
@@ -12,10 +11,6 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:modelValue'])
 
-// 资源列表（只要图片）
-const { imageList } = useStaticResource()
-
-// visible v-model proxy
 const visible = ref(props.modelValue)
 watch(
   () => props.modelValue,
@@ -75,6 +70,43 @@ function clearCover() {
 function pickCover(res: { id: number; url: string }) {
   form.front_cover = res.url
 }
+
+// 资源列表
+const imageList = ref<Array<{ id: number; name: string; url: string; group?: number }>>([])
+
+// 分组列表
+const groupList = ref<Array<{ id: number; name: string }>>([])
+
+// 当前选中的分组
+const curSelectedGroup = ref(-1)
+
+// 获取资源列表
+async function getImageList() {
+  const group = curSelectedGroup.value === -1 ? undefined : curSelectedGroup.value
+
+  let res
+  if (group !== -1) {
+    res = await window.api.resource.query({ type: 'image', group })
+  } else {
+    res = await window.api.resource.query({ type: 'image' })
+  }
+
+  imageList.value = res.data
+}
+
+// 获取分组列表
+async function getGroupList() {
+  groupList.value = (await window.api.group.list()).data
+}
+watch(
+  () => props.modelValue,
+  async (val) => {
+    if (val) {
+      await getGroupList()
+      await getImageList()
+    }
+  }
+)
 </script>
 
 <template>
