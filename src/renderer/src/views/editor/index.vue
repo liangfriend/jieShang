@@ -287,7 +287,7 @@ function changeMenuType(type) {
 }
 
 // 复制
-function copyTempPrefab() {
+function copySelectedNodesToTempPrefab(prefab: Prefab) {
   const selectedNodes = Array.from(dragSelectedNodes.value)
   if (selectedNodes.some((e) => e.node.nodeType === NodeEnum.Story)) {
     ElMessage.error('不可以复制故事节点')
@@ -478,6 +478,12 @@ function saveAsPrefab(name: string) {
   selectedPrefabId.value = newPrefab.id
 }
 
+const curSelectedPrefab = ref(null)
+
+function copyPrefabToTempPrefab(prefab: Prefab) {
+  tempPrefab.value = prefab
+}
+
 // ============================ 样式===============================
 const worktopStyle = computed(
   (): CSSProperties => ({
@@ -629,21 +635,22 @@ const nodeLinkList = computed(
           }
         }
       } else if (type === NodeEnum.Option) {
-        const node = item.node as OptionNode
-        let sort = 0
-        for (let actionId of node.activeActionIds) {
-          if (editorNodeMap.value.has(actionId)) {
-            const editorActionNode = editorNodeMap.value.get(actionId) as EditorNode
-            const actionNode = editorActionNode?.node as ActionNode
-            if (actionNode.actionType === ActionTypeEnum.Next && actionNode.targetId) {
-              const targetNode = editorNodeMap.value.get(actionNode.targetId)
-              if (targetNode) {
-                pushLine(targetNode, sort)
-                sort++
-              }
-            }
-          }
-        }
+        // optionNode已经不再显示
+        // const node = item.node as OptionNode
+        // let sort = 0
+        // for (let actionId of node.activeActionIds) {
+        //   if (editorNodeMap.value.has(actionId)) {
+        //     const editorActionNode = editorNodeMap.value.get(actionId) as EditorNode
+        //     const actionNode = editorActionNode?.node as ActionNode
+        //     if (actionNode.actionType === ActionTypeEnum.Next && actionNode.targetId) {
+        //       const targetNode = editorNodeMap.value.get(actionNode.targetId)
+        //       if (targetNode) {
+        //         pushLine(targetNode, sort)
+        //         sort++
+        //       }
+        //     }
+        //   }
+        // }
       }
     })
 
@@ -674,11 +681,11 @@ function addEditorNode(nodeType: NodeEnum) {
     node.layout.left = -editorInfo.value.left + containerWidth / 2 - node.layout.width / 2
     node.layout.top = -editorInfo.value.top + containerHeight / 2 - node.layout.height / 2
   } else if ([NodeEnum.Option].includes(nodeType)) {
-    node.layout.width = 200 // 宽高传入后已经展示为缩放后的效果，所以不用除scale
-    node.layout.height = 50
-    node.boxType = EditorBoxEnum.NormalRect
-    node.layout.left = -editorInfo.value.left + containerWidth / 2 - node.layout.width / 2
-    node.layout.top = -editorInfo.value.top + containerHeight / 2 - node.layout.height / 2
+    // node.layout.width = 200 // 宽高传入后已经展示为缩放后的效果，所以不用除scale
+    // node.layout.height = 50
+    // node.boxType = EditorBoxEnum.NormalRect
+    // node.layout.left = -editorInfo.value.left + containerWidth / 2 - node.layout.width / 2
+    // node.layout.top = -editorInfo.value.top + containerHeight / 2 - node.layout.height / 2
   } else {
     node.layout.width = 0 // 宽高传入后已经展示为缩放后的效果，所以不用除scale
     node.layout.height = 0
@@ -755,7 +762,7 @@ provide('curSelectedNode', curSelectedNode)
           <el-button @click="addEditorNode(NodeEnum.Scene)">新增场景</el-button>
           <el-button @click="addEditorNode(NodeEnum.Dialogue)">新增对话</el-button>
           <el-button @click="addEditorNode(NodeEnum.Caption)">新增字幕</el-button>
-          <el-button @click="addEditorNode(NodeEnum.Option)">新增选项</el-button>
+          <!--          <el-button @click="addEditorNode(NodeEnum.Option)">新增选项</el-button>-->
           <el-button :disabled="!nodeMap.has(1)" @click="generateNormalNode"
             >生成常用节点
           </el-button>
@@ -791,6 +798,10 @@ provide('curSelectedNode', curSelectedNode)
           <el-button :disabled="!nodeMap.has(1)" @click="startGame">游戏预览</el-button>
           <el-button @click="publishDialogVisible = true">发布</el-button>
           <el-button @click="updateGameVisible = true">更新数据到游戏</el-button>
+          <el-button @click="copyPrefabToTempPrefab(curSelectedPrefab)">复制预制体</el-button>
+          <el-select v-model="curSelectedPrefab" :style="{ width: '200px' }">
+            <el-option v-for="item in prefabList" :label="item.name" :value="item.id"></el-option>
+          </el-select>
         </div>
       </div>
     </div>
@@ -947,7 +958,7 @@ provide('curSelectedNode', curSelectedNode)
   </update-game-dialog>
   <group-dialog v-model="groupDialogVisible"></group-dialog>
   <context-menu :x="menuPos.x" :y="menuPos.y" :show="showMenu" @close="closeMenu">
-    <div class="menu-item" @click="copyTempPrefab">复制</div>
+    <div class="menu-item" @click="copySelectedNodesToTempPrefab">复制</div>
     <div class="menu-item" @click="spawnPrefab(tempPrefab, menuGridPos.x, menuGridPos.y)">粘贴</div>
     <div class="menu-item" @click="deleteSelectedNodes">删除</div>
     <div class="menu-item" @click="handleSavePrefab">保存为预制体</div>

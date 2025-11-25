@@ -214,6 +214,10 @@ watch(actionType, (value, oldValue) => {
         <el-switch v-model="editorNode.node.autoShowFirstCaption"></el-switch>
       </div>
       <div class="flex mt-2">
+        <div class="w-24 shrink-0">发言人名称:</div>
+        <el-input v-model="editorNode.node.title" />
+      </div>
+      <div class="flex mt-2">
         <div class="w-24 shrink-0">需要保留到场景的资源:</div>
         <DynamicSelectGroup
           v-model="editorNode.node.keepIds"
@@ -345,6 +349,10 @@ watch(actionType, (value, oldValue) => {
       <div class="flex mt-2">
         <div class="w-24 shrink-0">文本内容:</div>
         <el-input v-model="editorNode.node.content" type="textarea"></el-input>
+      </div>
+      <div class="flex mt-2">
+        <div class="w-24 shrink-0">发言人名称:</div>
+        <el-input v-model="editorNode.node.title" />
       </div>
       <div class="flex mt-2">
         <div class="w-24 shrink-0">自动播放:</div>

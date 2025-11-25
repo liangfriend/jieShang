@@ -89,9 +89,6 @@ onMounted(() => {})
   font-size: 16px;
   color: #333;
   user-select: none;
-  transition:
-    transform 0.1s ease,
-    box-shadow 0.1s ease;
 }
 
 .editor-node-box:hover {
