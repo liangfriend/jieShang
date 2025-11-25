@@ -5,27 +5,21 @@ type UseEditor = {
   editorInfo: Ref<EditorInfo>
   resetEditorInfo: () => void
 }
-
+export const defaultConfig = (function () {
+  return {
+    left: -5000,
+    top: -5000,
+    width: 100000,
+    height: 100000,
+    scale: 0.4
+  }
+})()
 function setup(data) {
-  let editorInfo = ref<EditorInfo>(
-    data || {
-      left: -5000,
-      top: -5000,
-      width: 10000,
-      height: 10000,
-      scale: 0.4
-    }
-  )
+  let editorInfo = ref<EditorInfo>(data || defaultConfig)
 
   // 重置数据
   const resetEditorInfo = () => {
-    editorInfo.value = {
-      left: -5000,
-      top: -5000,
-      width: 10000,
-      height: 10000,
-      scale: 0.4
-    }
+    editorInfo.value = defaultConfig
   }
   return {
     editorInfo,
@@ -45,13 +39,7 @@ export function updateLoadedEditorInfo(editorInfo: EditorInfo) {
 
 export function useEditor() {
   if (!res) {
-    res = setup({
-      left: -5000,
-      top: -5000,
-      width: 10000,
-      height: 10000,
-      scale: 0.4
-    })
+    res = setup(defaultConfig)
   }
   return res
 }

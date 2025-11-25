@@ -52,7 +52,8 @@ const {
   groupedNodes,
   clearNodeManager,
   prefabList,
-  addPrefab: registerPrefab
+  addPrefab: registerPrefab,
+  removeNode
 } = useNodeManager()
 const { undo, redo } = useOperationHistory({ editorNodeList, editorInfo, gameData, prefabList })
 
@@ -108,13 +109,16 @@ function onMouseDown(e: MouseEvent) {
     const containerRect = document.querySelector('.ds-ec-left')?.getBoundingClientRect()!
     dragRectLayout.value.show = true
     // 需要减去容器相对视口的left,top
-    dragRectLayout.value.left = (e.clientX - containerRect.left) / scale + -editorInfo.value.left
-    dragRectLayout.value.top = (e.clientY - containerRect.top) / scale + -editorInfo.value.top
-    dragRectLayout.value.width = 0
-    dragRectLayout.value.height = 0
     dragRectLayout.value.startX = e.clientX
     dragRectLayout.value.startY = e.clientY
+    dragRectLayout.value.left =
+      (dragRectLayout.value.startX - containerRect.left) / scale + -editorInfo.value.left
+    dragRectLayout.value.top =
+      (dragRectLayout.value.startY - containerRect.top) / scale + -editorInfo.value.top
+    dragRectLayout.value.width = 0
+    dragRectLayout.value.height = 0
   }
+
   if (e.button === 1) {
     isPanning.value = true
     lastMouse.value = { x: e.clientX, y: e.clientY }
@@ -125,8 +129,22 @@ function onMouseMove(e: MouseEvent) {
   const scale = editorInfo.value.scale
   // 框选
   if (isFrameSelecting.value) {
-    dragRectLayout.value.width = (e.clientX - dragRectLayout.value.startX) / scale
-    dragRectLayout.value.height = (e.clientY - dragRectLayout.value.startY) / scale
+    // 容器视口宽高
+    const containerRect = document.querySelector('.ds-ec-left')?.getBoundingClientRect()!
+    dragRectLayout.value.width = Math.abs(e.clientX - dragRectLayout.value.startX) / scale
+    dragRectLayout.value.height = Math.abs(e.clientY - dragRectLayout.value.startY) / scale
+    if (e.clientX - dragRectLayout.value.startX < 0) {
+      dragRectLayout.value.left =
+        (dragRectLayout.value.startX - containerRect.left) / scale +
+        -editorInfo.value.left -
+        dragRectLayout.value.width
+    }
+    if (e.clientY - dragRectLayout.value.startY < 0) {
+      dragRectLayout.value.top =
+        (dragRectLayout.value.startY - containerRect.top) / scale +
+        -editorInfo.value.top -
+        dragRectLayout.value.height
+    }
     // 在范围内的节点添加到选中列表
     editorNodeMap.value.forEach((node) => {
       if (
@@ -163,8 +181,8 @@ function onMouseUp() {
 
 function onWheel(e: WheelEvent) {
   e.preventDefault()
-  const delta = e.deltaY > 0 ? -0.1 : 0.1
-  const newScale = Math.min(3, Math.max(0.2, editorInfo.value.scale + delta))
+  const delta = e.deltaY > 0 ? -0.02 : 0.02
+  const newScale = Math.min(1.2, Math.max(0.02, editorInfo.value.scale + delta))
   editorInfo.value.scale = newScale
 }
 
@@ -419,8 +437,12 @@ function spawnPrefab(prefab: Prefab, left: number, top: number) {
 }
 
 // 删除
-function deleteTempPrefab() {
-  tempPrefab.value.editorNodeList = []
+function deleteSelectedNodes() {
+  dragSelectedNodes.value.forEach((editorNode) => {
+    removeNode(editorNode.node.id)
+  })
+  dragSelectedNodes.value.clear()
+  closeMenu()
 }
 
 // 保存为预制体
@@ -468,6 +490,19 @@ const worktopStyle = computed(
     transition: isPanning.value ? 'none' : 'transform 0.1s ease'
   })
 )
+const gridLayerStyle = computed((): CSSProperties => {
+  const scale = editorInfo.value.scale
+  // 保证网格大小
+  const size = 40 / scale
+  const lineWidth = 1 / scale
+  return {
+    backgroundSize: `${size}px ${size}px`,
+    'background-image': `
+      linear-gradient(to right, rgba(0, 0, 0, 0.2) ${lineWidth}px, transparent ${lineWidth}px),
+      linear-gradient(to bottom, rgba(0, 0, 0, 0.2) ${lineWidth}px, transparent ${lineWidth}px)
+    `
+  }
+})
 const frameSelectedNodeStyle = computed((): CSSProperties => {
   const res: CSSProperties = {
     position: 'absolute',
@@ -511,17 +546,19 @@ const dragRectBtnStyle = computed((): CSSProperties => {
     top = Infinity,
     width = -Infinity,
     height = -Infinity
-  let MaxLeft = -Infinity
-  let MaxTop = -Infinity
+  // let MaxLeft = -Infinity
+  // let MaxTop = -Infinity
   dragSelectedNodes.value.forEach((node) => {
     left = Math.min(left, node.layout.left)
     top = Math.min(top, node.layout.top)
-    MaxLeft = Math.max(MaxLeft, node.layout.left + node.layout.width)
-    MaxTop = Math.max(MaxTop, node.layout.top + node.layout.height)
-    width = MaxLeft - left
-    height = MaxTop - top
+    // MaxLeft = Math.max(MaxLeft, node.layout.left + node.layout.width)
+    // MaxTop = Math.max(MaxTop, node.layout.top + node.layout.height)
+    // width = MaxLeft - left
+    // height = MaxTop - top
   })
-  const size = 50
+  const scale = editorInfo.value.scale
+  // 保证拖拽按钮展示大小不变
+  const size = (50 / scale) * 0.4
   const res: CSSProperties = {
     position: 'absolute',
     left: left - size / 2 + 'px',
@@ -775,7 +812,7 @@ provide('curSelectedNode', curSelectedNode)
     >
       <div :style="worktopStyle" class="stack absolute workCanvas" comment="超大可拖动画布">
         <!-- 网格层 -->
-        <div class="stack-item gridLayer"></div>
+        <div class="stack-item gridLayer" :style="gridLayerStyle"></div>
         <!-- 节点连线层 -->
         <div class="stack-item nodeLinkLayer">
           <svg style="width: 100%; height: 100%; pointer-events: none">
@@ -912,7 +949,7 @@ provide('curSelectedNode', curSelectedNode)
   <context-menu :x="menuPos.x" :y="menuPos.y" :show="showMenu" @close="closeMenu">
     <div class="menu-item" @click="copyTempPrefab">复制</div>
     <div class="menu-item" @click="spawnPrefab(tempPrefab, menuGridPos.x, menuGridPos.y)">粘贴</div>
-    <div class="menu-item" @click="deleteTempPrefab">删除</div>
+    <div class="menu-item" @click="deleteSelectedNodes">删除</div>
     <div class="menu-item" @click="handleSavePrefab">保存为预制体</div>
   </context-menu>
 </template>
@@ -969,10 +1006,6 @@ provide('curSelectedNode', curSelectedNode)
 
 /* === 网格层 === */
 .gridLayer {
-  background-size: 40px 40px;
-  background-image:
-    linear-gradient(to right, rgba(0, 0, 0, 0.08) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(0, 0, 0, 0.08) 1px, transparent 1px);
 }
 
 /* === 节点层（未来可以放节点组件）=== */

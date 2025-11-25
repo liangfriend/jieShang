@@ -2,6 +2,7 @@
 import { ref, reactive, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRouter } from 'vue-router'
+import { defaultConfig } from '@renderer/composables/useEditor'
 
 // 组件对外暴露 v-model:visible
 const props = defineProps({
@@ -52,13 +53,7 @@ async function createWork() {
       editorNodeList: [],
       gameData: '{}',
       prefabList: [],
-      editorInfo: {
-        left: -5000,
-        top: -5000,
-        width: 10000,
-        height: 10000,
-        scale: 0.4
-      }
+      editorInfo: defaultConfig
     })
   }
   await window.api.work.create(payload)

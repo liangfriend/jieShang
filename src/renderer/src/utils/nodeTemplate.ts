@@ -30,8 +30,8 @@ export function storyNodeTemplate(): StoryNode {
     id: 1,
     nodeName: '故事节点',
     nodeType: NodeEnum.Story,
-    width: 1920,
-    height: 1680,
+    width: 1600,
+    height: 900,
     entrySceneId: -1,
     bgUrl: '',
     fontColor: 'white'

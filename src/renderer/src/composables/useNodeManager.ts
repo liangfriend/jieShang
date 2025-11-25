@@ -31,11 +31,13 @@ export function setup(
   // 监听editorNodeList的变化, 不使用shallowRef,会导致拖拽元素坐标不更新
   watchEffect(() => {
     nodeMap.value.clear()
+    editorNodeMap.value.clear()
     editorNodeList.value?.forEach((item) => {
       const { id, nodeType } = item.node // 显式读取关键字段
       editorNodeMap.value.set(id, item)
       nodeMap.value.set(id, item.node)
     })
+
     if (resolve) {
       resolve(true)
     }
@@ -148,6 +150,7 @@ export async function updateLoadedEditorNodeList(
       // 重新进入的时候，要再初始化watchEffect, effectScope试了不管用
       watchEffect(() => {
         res!.nodeMap.value.clear()
+        res!.editorNodeMap.value.clear()
         res!.editorNodeList.value?.forEach((item) => {
           const { id, nodeType } = item.node // 显式读取关键字段
           res!.editorNodeMap.value.set(id, item)
@@ -155,6 +158,7 @@ export async function updateLoadedEditorNodeList(
         })
         resolve(true)
       })
+
       res.editorNodeList.value = editorNodeList
       res.prefabList.value = prefabList
     }
