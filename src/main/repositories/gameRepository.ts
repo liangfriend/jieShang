@@ -1,4 +1,5 @@
 import GameModel from '../models/GameModel'
+import { Op } from 'sequelize'
 
 export class GameRepository {
   /**
@@ -66,6 +67,21 @@ export class GameRepository {
     const result = await GameModel.findAll({
       where: Object.keys(where).length > 0 ? where : undefined
     })
+    return result.map((item) => item.toJSON())
+  }
+  /**
+   * 根据 name 进行模糊匹配查询
+   * 例：searchByName("abc") → name LIKE '%abc%'
+   */
+  async searchByName(keyword: string) {
+    const result = await GameModel.findAll({
+      where: {
+        name: {
+          [Op.like]: `%${keyword}%`
+        }
+      }
+    })
+
     return result.map((item) => item.toJSON())
   }
 }

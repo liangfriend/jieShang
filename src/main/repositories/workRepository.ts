@@ -1,5 +1,6 @@
 // src/main/repositories/workRepository.ts
 import WorkModel from '../models/WorkModel'
+import { Op } from 'sequelize'
 
 export class WorkRepository {
   /**
@@ -51,6 +52,21 @@ export class WorkRepository {
 
     const result = await WorkModel.findAll({
       where: Object.keys(where).length > 0 ? where : undefined
+    })
+
+    return result.map((item) => item.toJSON())
+  }
+  /**
+   * 根据 name 进行模糊匹配查询
+   * 例：searchByName("abc") → name LIKE '%abc%'
+   */
+  async searchByName(keyword: string) {
+    const result = await WorkModel.findAll({
+      where: {
+        name: {
+          [Op.like]: `%${keyword}%`
+        }
+      }
     })
 
     return result.map((item) => item.toJSON())

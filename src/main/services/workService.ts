@@ -38,4 +38,13 @@ export class WorkService {
     const data = await this.workRepository.query({})
     return { success: true, data }
   }
+
+  /** 根据名称查询 */
+  async searchByName(name: string) {
+    const result = await this.workRepository.searchByName(name)
+    return {
+      success: true,
+      data: result
+    }
+  }
 }

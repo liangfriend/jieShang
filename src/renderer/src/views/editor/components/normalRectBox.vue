@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { computed, CSSProperties, onMounted, ref } from 'vue'
+import { computed, CSSProperties, onMounted, ref, watch } from 'vue'
 import { EditorBoxEnum } from '@renderer/enum'
 import type { EngineNode } from '@renderer/types'
 
@@ -77,7 +77,16 @@ function onMouseUp() {
   document.removeEventListener('mousemove', onMouseMove)
   document.removeEventListener('mouseup', onMouseUp)
 }
-
+watch(
+  () => props.layout,
+  () => {
+    translateX.value = props.layout.left
+    translateY.value = props.layout.top
+  },
+  {
+    deep: true
+  }
+)
 onMounted(() => {
   translateX.value = props.layout.left
   translateY.value = props.layout.top

@@ -16,6 +16,7 @@ export class GameController {
     ipcMain.handle('game:update', (_, id, payload) => this.updateGame(id, payload))
     ipcMain.handle('game:query', (_, filters) => this.queryGames(filters))
     ipcMain.handle('game:list', () => this.listGames())
+    ipcMain.handle('game:searchByName', (_, name) => this.searchByName(name))
   }
 
   async createGame(payload) {
@@ -36,5 +37,8 @@ export class GameController {
 
   async listGames() {
     return await this.gameService.listGames()
+  }
+  async searchByName(name: string) {
+    return await this.gameService.searchByName(name)
   }
 }

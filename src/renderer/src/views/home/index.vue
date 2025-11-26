@@ -16,6 +16,13 @@ const mainLayerStyle = computed((): CSSProperties => {
 })
 // 搜索
 const search = ref('')
+function searchByName() {
+  if (active.value === 'work') {
+    getWorkList()
+  } else if (active.value === 'my_game') {
+    getGameList()
+  }
+}
 // 左侧菜单
 import { House, Tickets, List, User, Folder, Grid } from '@element-plus/icons-vue'
 import HomeMenu from '@renderer/views/home/components/homeMenu.vue'
@@ -50,14 +57,14 @@ async function selectMenu(item: any) {
 const workList = ref<WorkModel[]>([])
 
 async function getWorkList() {
-  workList.value = (await window.api.work.list()).data
+  workList.value = (await window.api.work.searchByName(search.value)).data
 }
 
 // 游戏列表
 const gameList = ref<GameModel[]>([])
 
 async function getGameList() {
-  gameList.value = (await window.api.game.list()).data
+  gameList.value = (await window.api.game.searchByName(search.value)).data
 }
 
 // 初始化
@@ -185,7 +192,13 @@ async function editGame(item) {
     <div class="stack-item main-layer" :style="mainLayerStyle">
       <div class="logo" @click="workDialogVisible = true">创建作品</div>
       <div class="search">
-        <search-input height="50px" btnWidth="100px" size="1.5rem" v-model="search"></search-input>
+        <search-input
+          @search="searchByName"
+          height="50px"
+          btnWidth="100px"
+          size="1.5rem"
+          v-model="search"
+        ></search-input>
       </div>
       <div class="profile" v-mask>
         <el-avatar
