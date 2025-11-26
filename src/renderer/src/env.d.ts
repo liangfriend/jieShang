@@ -10,6 +10,7 @@ declare global {
         update(id: any, payload: any): Promise<any>
         query(filters: any): Promise<any>
         list(): Promise<any>
+        searchByName(name: string): Promise<any>
       }
       file: {
         upload(buffer: any, originalName: string, type: string, displayName: string): Promise<any>
@@ -36,6 +37,7 @@ declare global {
         update(id: any, payload: any): Promise<any>
         query(filters: any): Promise<any>
         list(): Promise<any>
+        searchByName(name: string): Promise<any>
       }
       group: {
         create(payload: any): Promise<any>

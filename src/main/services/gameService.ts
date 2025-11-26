@@ -72,4 +72,12 @@ export class GameService {
       data: result
     }
   }
+  /** 根据名称查询 */
+  async searchByName(name: string) {
+    const result = await this.gameRepository.searchByName(name)
+    return {
+      success: true,
+      data: result
+    }
+  }
 }

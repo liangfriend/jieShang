@@ -5,5 +5,6 @@ export const gameInvoke = {
   delete: (id) => ipcRenderer.invoke('game:delete', id),
   update: (id, payload) => ipcRenderer.invoke('game:update', id, payload),
   query: (filters) => ipcRenderer.invoke('game:query', filters),
-  list: () => ipcRenderer.invoke('game:list')
+  list: () => ipcRenderer.invoke('game:list'),
+  searchByName: (name) => ipcRenderer.invoke('game:searchByName', name)
 }

@@ -16,6 +16,7 @@ export class WorkController {
     ipcMain.handle('work:update', (_, id, payload) => this.updateWork(id, payload))
     ipcMain.handle('work:query', (_, filters) => this.queryWorks(filters))
     ipcMain.handle('work:list', () => this.listWorks())
+    ipcMain.handle('work:searchByName', (_, name) => this.searchByName(name))
   }
 
   async createWork(payload) {
@@ -36,5 +37,9 @@ export class WorkController {
 
   async listWorks() {
     return await this.workService.listWorks()
+  }
+
+  async searchByName(name: string) {
+    return await this.workService.searchByName(name)
   }
 }
