@@ -506,8 +506,7 @@ const gridLayerStyle = computed((): CSSProperties => {
 const frameSelectedNodeStyle = computed((): CSSProperties => {
   const res: CSSProperties = {
     position: 'absolute',
-    left: dragRectLayout.value.left + 'px',
-    top: dragRectLayout.value.top + 'px',
+    transform: `translate(${dragRectLayout.value.left}px,${dragRectLayout.value.top}px)`,
     width: dragRectLayout.value.width + 'px',
     height: dragRectLayout.value.height + 'px',
     outline: '5px dashed red',
@@ -532,8 +531,7 @@ const dragRectStyle = computed((): CSSProperties => {
   })
   const res: CSSProperties = {
     position: 'absolute',
-    left: left + 'px',
-    top: top + 'px',
+    transform: `translate(${left}px,${top}px)`,
     width: width + 'px',
     height: height + 'px',
     outline: '5px solid #555',
@@ -561,8 +559,7 @@ const dragRectBtnStyle = computed((): CSSProperties => {
   const size = (50 / scale) * 0.4
   const res: CSSProperties = {
     position: 'absolute',
-    left: left - size / 2 + 'px',
-    top: top - size / 2 + 'px',
+    transform: `translate(${left - size / 2}px,${top - size / 2}px)`,
     width: size + 'px',
     height: size + 'px',
     outline: '5px solid #555',
