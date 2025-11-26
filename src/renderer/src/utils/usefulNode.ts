@@ -17,9 +17,11 @@ import {
   NodeEnum,
   ObjectFitEnum
 } from '@renderer/enum'
+
 const { editorNodeList, nodeMap, editorNodeMap, addNode, groupedNodes, clearNodeManager } =
   useNodeManager()
 import { editorNodeTemplate } from '@renderer/utils/nodeTemplate'
+
 // 生成常用节点
 export function generateNormalNode() {
   const storyNode = nodeMap.value.get(1) as StoryNode
@@ -31,12 +33,12 @@ export function generateNormalNode() {
     layer: LayerEnum.FrontObject,
     applyPosition: LayoutPositionEnum.LB,
     objectFit: ObjectFitEnum.Fill,
-    left: 0.1 * storyNode.width,
+    left: 0.05 * storyNode.width,
     right: 0,
     top: 0,
-    bottom: 0.1 * storyNode.width,
-    width: 0.8 * storyNode.width,
-    height: 0.3 * storyNode.width,
+    bottom: 0.02 * storyNode.height,
+    width: 0.9 * storyNode.width,
+    height: 0.3 * storyNode.height,
     rotation: 0,
     scale: 1
   } as EngineNode

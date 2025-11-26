@@ -11,6 +11,7 @@ import { LayoutPositionEnum } from '@renderer/enum'
 import { useRouter } from 'vue-router'
 import { useNodeManager } from '@renderer/composables/useNodeManager'
 import { useGame } from '@renderer/composables/useGame'
+import { parseJS } from '@renderer/utils/execJS'
 
 const router = useRouter()
 const { editorNodeList, nodeMap, editorNodeMap, groupedNodes, clearNodeManager } = useNodeManager()
@@ -214,11 +215,24 @@ export function useCaption(
   // 样式
   const captionTextStyle = computed((): CSSProperties => {
     const res: CSSProperties = {
-      color: props.captionNode?.fontColor || '#ffffff',
-      fontSize: props.captionNode?.fontSize + 'px' || '1em'
+      ...parseJS(props.captionNode.captionTextStyle),
+      display: 'flex',
+      'align-items': 'center',
+      'justify-content': 'center',
+      'box-sizing': 'border-box',
+      'white-space': 'pre-wrap',
+      'user-select': 'none',
+      'pointer-events': 'auto'
     }
     return res
   })
+  const captionTitleStyle = computed((): CSSProperties => {
+    const res: CSSProperties = {
+      ...parseJS(props.captionNode.captionTitleStyle)
+    }
+    return res
+  })
+
   const { x, y, width, height } = calcLayout()
 
   return {
@@ -230,6 +244,7 @@ export function useCaption(
     width,
     height,
     captionTextStyle,
+    captionTitleStyle,
     displayText,
     layout: props.layout
   }

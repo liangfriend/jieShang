@@ -12,6 +12,7 @@ export type NodeManager = {
   groupedNodes: ComputedRef<Record<NodeEnum, EditorNode[]>>
   addNode: (node: EditorNode) => void
   removeNode: (id: string | number) => void
+  removeNodes: (ids: number[]) => void
   addNodes: (nodes: EditorNode[]) => void
   clearNodeManager: () => void
   prefabList: Ref<Prefab[]>
@@ -87,7 +88,17 @@ export function setup(
       editorNodeList.value.splice(index, 1) // 使用 splice 确保响应式更新
     }
   }
+  // ✅ 批量删除节点（通过 node.id）
+  const removeNodes = (ids: number[]) => {
+    if (ids.length === 0) return
+    const idsToDelete = new Set(ids)
+    pushHistory({ editorNodeList: editorNodeList.value })
+    // 过滤出不需要删除的节点
+    const filteredNodes = editorNodeList.value.filter((item) => !idsToDelete.has(item.node.id))
 
+    // 替换整个数组，确保响应式更新（推荐）
+    editorNodeList.value = filteredNodes
+  }
   // ✅ 批量添加节点（可选增强）
   const addNodes = (nodes: EditorNode[]) => {
     pushHistory({ editorNodeList: editorNodeList.value })
@@ -131,7 +142,8 @@ export function setup(
     prefabList,
     addPrefab,
     deletePrefab,
-    clearPrefab
+    clearPrefab,
+    removeNodes
   }
 }
 

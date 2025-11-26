@@ -36,7 +36,6 @@ export type DialogueNode = Node & {
   nodeType: NodeEnum.Dialogue
   autoShowFirstCaption: boolean // 是否自动展示首字幕,建议开启，否则需要actionNode去手动播放字幕
   keepIds: number[] // 此节点消失的时候，会保留这些选择的资源
-  title: string // 发言人名称，会被字幕节点继承为title
   initImageIds: number[]
   initCustomIds: number[]
   initAudioIds: number[]
@@ -58,11 +57,14 @@ export type CaptionNode = Node & {
   nodeType: NodeEnum.Caption
   content: string // 字幕内容
   speed: number // 打字机效果速度
+  title: string // 发言人名称，会被字幕节点继承为title,
   boxStyle: string // 字幕框样式
+  captionTextStyle: string // 字幕样式1
+  captionTitleStyle: string // 发言人名称样式
   autoPlay: boolean // 自动播放
   autoNext: boolean // done事件会自动切换下一条字幕/对话
   audioId: number // 字幕配套语音
-  title: string // 发言人名称，会被字幕节点继承为title,
+
   autoPlayDelay: number // autoPlay为字幕触发后，延时出现（同时影响字幕配套语音），
   layoutId: number // 布局节点信息
   initActionIds: number[] // 初始化行为节点

@@ -53,7 +53,9 @@ const {
   clearNodeManager,
   prefabList,
   addPrefab: registerPrefab,
-  removeNode
+  removeNode,
+  removeNodes,
+  addNodes
 } = useNodeManager()
 const { undo, redo } = useOperationHistory({ editorNodeList, editorInfo, gameData, prefabList })
 
@@ -375,6 +377,7 @@ async function handleSavePrefab() {
 // 添加预制体
 function spawnPrefab(prefab: Prefab, left: number, top: number) {
   //
+  console.log('chicken', prefab)
   const newCopy = JSON.parse(JSON.stringify(prefab.editorNodeList)) as EditorNode[]
   // 对newCopy的id进行收集,然后对此id进行映射
   const idMap = new Map()
@@ -431,16 +434,18 @@ function spawnPrefab(prefab: Prefab, left: number, top: number) {
       node.activeActionIds = mapIds(node.activeActionIds)
       node.visibleConditionIds = mapIds(node.visibleConditionIds)
     }
-    addNode(n)
   }
+  addNodes(newCopy)
   closeMenu()
 }
 
 // 删除
 function deleteSelectedNodes() {
-  dragSelectedNodes.value.forEach((editorNode) => {
-    removeNode(editorNode.node.id)
+  const ids = [...dragSelectedNodes.value].map((editorNode) => {
+    return editorNode.node.id
   })
+  console.log('chicken', ids)
+  removeNodes(ids)
   dragSelectedNodes.value.clear()
   closeMenu()
 }
@@ -478,9 +483,12 @@ function saveAsPrefab(name: string) {
   selectedPrefabId.value = newPrefab.id
 }
 
-const curSelectedPrefab = ref(null)
+const curSelectedPrefabId = ref(null)
 
-function copyPrefabToTempPrefab(prefab: Prefab) {
+function copyPrefabToTempPrefab(prefab: Prefab | undefined) {
+  console.log('chicken', prefab)
+  if (!prefab) return
+  console.log('chicken', prefab)
   tempPrefab.value = prefab
 }
 
@@ -510,12 +518,14 @@ const gridLayerStyle = computed((): CSSProperties => {
   }
 })
 const frameSelectedNodeStyle = computed((): CSSProperties => {
+  const scale = editorInfo.value.scale
+  const outlineSize = (5 / scale) * 0.5
   const res: CSSProperties = {
     position: 'absolute',
     transform: `translate(${dragRectLayout.value.left}px,${dragRectLayout.value.top}px)`,
     width: dragRectLayout.value.width + 'px',
     height: dragRectLayout.value.height + 'px',
-    outline: '5px dashed red',
+    outline: `${outlineSize}px dashed red`,
     pointerEvents: 'none'
   }
   return res
@@ -535,12 +545,14 @@ const dragRectStyle = computed((): CSSProperties => {
     width = MaxLeft - left
     height = MaxTop - top
   })
+  const scale = editorInfo.value.scale
+  const outlineSize = (5 / scale) * 0.5
   const res: CSSProperties = {
     position: 'absolute',
     transform: `translate(${left}px,${top}px)`,
     width: width + 'px',
     height: height + 'px',
-    outline: '5px solid #555',
+    outline: `${outlineSize}px solid #555`,
     pointerEvents: 'none'
   }
   return res
@@ -678,11 +690,11 @@ function addEditorNode(nodeType: NodeEnum) {
     node.layout.left = -editorInfo.value.left + containerWidth / 2 - node.layout.width / 2
     node.layout.top = -editorInfo.value.top + containerHeight / 2 - node.layout.height / 2
   } else if ([NodeEnum.Option].includes(nodeType)) {
-    // node.layout.width = 200 // 宽高传入后已经展示为缩放后的效果，所以不用除scale
-    // node.layout.height = 50
-    // node.boxType = EditorBoxEnum.NormalRect
-    // node.layout.left = -editorInfo.value.left + containerWidth / 2 - node.layout.width / 2
-    // node.layout.top = -editorInfo.value.top + containerHeight / 2 - node.layout.height / 2
+    node.layout.width = 200 // 宽高传入后已经展示为缩放后的效果，所以不用除scale
+    node.layout.height = 50
+    node.boxType = EditorBoxEnum.NormalRect
+    node.layout.left = -editorInfo.value.left + containerWidth / 2 - node.layout.width / 2
+    node.layout.top = -editorInfo.value.top + containerHeight / 2 - node.layout.height / 2
   } else {
     node.layout.width = 0 // 宽高传入后已经展示为缩放后的效果，所以不用除scale
     node.layout.height = 0
@@ -759,7 +771,7 @@ provide('curSelectedNode', curSelectedNode)
           <el-button @click="addEditorNode(NodeEnum.Scene)">新增场景</el-button>
           <el-button @click="addEditorNode(NodeEnum.Dialogue)">新增对话</el-button>
           <el-button @click="addEditorNode(NodeEnum.Caption)">新增字幕</el-button>
-          <!--          <el-button @click="addEditorNode(NodeEnum.Option)">新增选项</el-button>-->
+          <el-button @click="addEditorNode(NodeEnum.Option)">新增选项</el-button>
           <el-button :disabled="!nodeMap.has(1)" @click="generateNormalNode"
             >生成常用节点
           </el-button>
@@ -795,8 +807,11 @@ provide('curSelectedNode', curSelectedNode)
           <el-button :disabled="!nodeMap.has(1)" @click="startGame">游戏预览</el-button>
           <el-button @click="publishDialogVisible = true">发布</el-button>
           <el-button @click="updateGameVisible = true">更新数据到游戏</el-button>
-          <el-button @click="copyPrefabToTempPrefab(curSelectedPrefab)">复制预制体</el-button>
-          <el-select v-model="curSelectedPrefab" :style="{ width: '200px' }">
+          <el-button
+            @click="copyPrefabToTempPrefab(prefabList.find((e) => e.id === curSelectedPrefabId))"
+            >复制预制体
+          </el-button>
+          <el-select v-model="curSelectedPrefabId" :style="{ width: '200px' }">
             <el-option v-for="item in prefabList" :label="item.name" :value="item.id"></el-option>
           </el-select>
         </div>

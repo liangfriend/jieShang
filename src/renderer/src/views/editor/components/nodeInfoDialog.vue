@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref, watch } from 'vue'
-import { EditorNode, ImageNode } from '@renderer/types'
+import { EditorNode, ImageNode, ResourceModel } from '@renderer/types'
 import { ActionTypeEnum, EditorBoxEnum, NodeEnum } from '@renderer/enum'
 import DynamicSelectGroup from '@renderer/components/dynamicSelectGroup.vue'
 import {
@@ -15,6 +15,7 @@ import { useNodeManager } from '@renderer/composables/useNodeManager'
 import monacoEditor from '@renderer/components/monacoEditor.vue'
 import MonacoEditor from '@renderer/components/monacoEditor.vue'
 import ResourceSelect from '@renderer/views/editor/components/resourceSelect.vue'
+import { useStaticResource } from '@renderer/composables/useStaticResource'
 
 const props = defineProps({
   modelValue: {
@@ -60,6 +61,13 @@ watch(actionType, (value, oldValue) => {
   if (editorNode.value.node && 'targetId' in editorNode.value.node) {
     editorNode.value.node.targetId = -1
   }
+})
+
+const imageList = ref<ResourceModel[]>([])
+
+onMounted(async () => {
+  const staticResource = await useStaticResource()
+  imageList.value = staticResource.imageList.value
 })
 </script>
 
@@ -214,10 +222,6 @@ watch(actionType, (value, oldValue) => {
         <el-switch v-model="editorNode.node.autoShowFirstCaption"></el-switch>
       </div>
       <div class="flex mt-2">
-        <div class="w-24 shrink-0">发言人名称:</div>
-        <el-input v-model="editorNode.node.title" />
-      </div>
-      <div class="flex mt-2">
         <div class="w-24 shrink-0">需要保留到场景的资源:</div>
         <DynamicSelectGroup
           v-model="editorNode.node.keepIds"
@@ -369,6 +373,14 @@ watch(actionType, (value, oldValue) => {
       <div class="flex mt-2">
         <div class="w-24 shrink-0">字幕框样式:</div>
         <monaco-editor v-model="editorNode.node.boxStyle"></monaco-editor>
+      </div>
+      <div class="flex mt-2">
+        <div class="w-24 shrink-0">字幕样式:</div>
+        <monaco-editor v-model="editorNode.node.captionTextStyle"></monaco-editor>
+      </div>
+      <div class="flex mt-2">
+        <div class="w-24 shrink-0">名称样式:</div>
+        <monaco-editor v-model="editorNode.node.captionTitleStyle"></monaco-editor>
       </div>
       <div class="flex mt-2">
         <div class="w-24 shrink-0">字幕语音:</div>

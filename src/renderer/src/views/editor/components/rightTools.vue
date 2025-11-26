@@ -216,10 +216,6 @@ onMounted(async () => {
       <el-switch v-model="curSelectedNode.node.autoShowFirstCaption"></el-switch>
     </div>
     <div class="flex mt-2">
-      <div class="w-24 shrink-0">发言人名称:</div>
-      <el-input v-model="curSelectedNode.node.title" />
-    </div>
-    <div class="flex mt-2">
       <div class="w-24 shrink-0">需要保留到场景的资源:</div>
       <DynamicSelectGroup
         v-model="curSelectedNode.node.keepIds"
@@ -320,6 +316,14 @@ onMounted(async () => {
     <div class="flex mt-2">
       <div class="w-24 shrink-0">字幕框样式:</div>
       <monaco-editor v-model="curSelectedNode.node.boxStyle"></monaco-editor>
+    </div>
+    <div class="flex mt-2">
+      <div class="w-24 shrink-0">字幕样式:</div>
+      <monaco-editor v-model="curSelectedNode.node.captionTextStyle"></monaco-editor>
+    </div>
+    <div class="flex mt-2">
+      <div class="w-24 shrink-0">发言人名称样式:</div>
+      <monaco-editor v-model="curSelectedNode.node.captionTitleStyle"></monaco-editor>
     </div>
     <div class="flex mt-2">
       <div class="w-24 shrink-0">自动播放:</div>

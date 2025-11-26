@@ -37,6 +37,7 @@ const {
   width,
   height,
   captionTextStyle,
+  captionTitleStyle,
   displayText,
   layout,
   status,
@@ -109,7 +110,9 @@ const optionStyle = computed((): ((node: OptionNode) => CSSProperties) => {
         <div class="caption-text stack-item" :style="captionTextStyle">
           {{ displayText }}
         </div>
-
+        <div class="caption-title stack-item" :style="captionTitleStyle">
+          {{ captionNode.title }}
+        </div>
         <div
           v-if="status === 'finished' || status === 'done'"
           class="optionContainer stack-item"
@@ -131,18 +134,4 @@ const optionStyle = computed((): ((node: OptionNode) => CSSProperties) => {
   </g>
 </template>
 
-<style scoped>
-.caption-text {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
-  box-sizing: border-box;
-  white-space: pre-wrap;
-  font-family: 'Microsoft YaHei', sans-serif;
-  user-select: none;
-  pointer-events: none;
-}
-</style>
+<style scoped></style>
