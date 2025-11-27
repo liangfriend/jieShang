@@ -88,10 +88,6 @@ const tabList = ref([
   {
     label: '条件',
     value: NodeEnum.Condition
-  },
-  {
-    label: '数据',
-    value: NodeEnum.Data
   }
 ])
 // 选中的标签

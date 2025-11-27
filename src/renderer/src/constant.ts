@@ -21,8 +21,7 @@ export const nodeNameMap = {
   [NodeEnum.Video]: '视频节点',
   [NodeEnum.Filter]: '滤镜节点',
   [NodeEnum.Custom]: '自定义节点',
-  [NodeEnum.Condition]: '条件节点',
-  [NodeEnum.Data]: '数据节点'
+  [NodeEnum.Condition]: '条件节点'
 }
 
 // 行为类型列表

@@ -289,7 +289,7 @@ function changeMenuType(type) {
 }
 
 // 复制
-function copySelectedNodesToTempPrefab(prefab: Prefab) {
+function copySelectedNodesToTempPrefab() {
   const selectedNodes = Array.from(dragSelectedNodes.value)
   if (selectedNodes.some((e) => e.node.nodeType === NodeEnum.Story)) {
     ElMessage.error('不可以复制故事节点')
