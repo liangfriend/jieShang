@@ -28,7 +28,6 @@ import { editorNodeTemplate } from '@renderer/utils/nodeTemplate'
 import { updateLoadedEditorInfo, useEditor } from '@renderer/composables/useEditor'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useRoute, useRouter } from 'vue-router'
-import RoundedRectBox from './components/roundedRectBox.vue'
 import MonacoEditor from '@renderer/components/monacoEditor.vue'
 import { updateLoadedGameData, useGameData } from '@renderer/composables/useGameData'
 import { useOperationHistory } from '@renderer/composables/useOperationHistory'
@@ -57,7 +56,12 @@ const {
   removeNodes,
   addNodes
 } = useNodeManager()
-const { undo, redo } = useOperationHistory({ editorNodeList, editorInfo, gameData, prefabList })
+const { undo, redo, pushHistory } = useOperationHistory({
+  editorNodeList,
+  editorInfo,
+  gameData,
+  prefabList
+})
 
 const workId = computed(() => {
   return route.query.workId
@@ -184,7 +188,8 @@ function onMouseUp() {
 function onWheel(e: WheelEvent) {
   e.preventDefault()
   const delta = e.deltaY > 0 ? -0.02 : 0.02
-  const newScale = Math.min(1.2, Math.max(0.02, editorInfo.value.scale + delta))
+  // 最小值不能再小了，0.1就是极限，如果div尺寸过大，会导致分块内存不足
+  const newScale = Math.min(1.2, Math.max(0.1, editorInfo.value.scale + delta))
   editorInfo.value.scale = newScale
 }
 
@@ -263,21 +268,22 @@ const contextMenuType = ref('grid') // 右键菜单类型  grid node frame  网�
  * */
 // 临时预制体
 const tempPrefab = ref<Prefab>({ id: -1, name: '临时', editorNodeList: [] })
-const selectedPrefabId = ref<number | null>(null)
+// 准备要粘贴的prefabId
+const targetPrefabId = ref<number | null>(null)
 const selectedPrefab = computed(() => {
-  if (!prefabList.value.length || selectedPrefabId.value == null) return null
-  return prefabList.value.find((item) => item.id === selectedPrefabId.value) ?? null
+  if (!prefabList.value.length || targetPrefabId.value == null) return null
+  return prefabList.value.find((item) => item.id === targetPrefabId.value) ?? null
 })
 
 watch(
   prefabList,
   (list) => {
     if (!list.length) {
-      selectedPrefabId.value = null
+      targetPrefabId.value = null
       return
     }
-    if (!list.find((prefab) => prefab.id === selectedPrefabId.value)) {
-      selectedPrefabId.value = list[0].id
+    if (!list.find((prefab) => prefab.id === targetPrefabId.value)) {
+      targetPrefabId.value = list[0].id
     }
   },
   { deep: true }
@@ -289,7 +295,7 @@ function changeMenuType(type) {
 }
 
 // 复制
-function copySelectedNodesToTempPrefab(prefab: Prefab) {
+function copySelectedNodesToTempPrefab() {
   const selectedNodes = Array.from(dragSelectedNodes.value)
   if (selectedNodes.some((e) => e.node.nodeType === NodeEnum.Story)) {
     ElMessage.error('不可以复制故事节点')
@@ -480,9 +486,9 @@ function saveAsPrefab(name: string) {
     editorNodeList: copy
   }
   registerPrefab(newPrefab)
-  selectedPrefabId.value = newPrefab.id
+  targetPrefabId.value = newPrefab.id
 }
-
+// 预制体列表选择器的v-model
 const curSelectedPrefabId = ref(null)
 
 function copyPrefabToTempPrefab(prefab: Prefab | undefined) {
@@ -757,63 +763,66 @@ provide('curSelectedNode', curSelectedNode)
 <template>
   <div class="engineContainer">
     <div class="ds-ec-up" comment="上方">
-      <div class="flex justify-between">
-        <div>
-          <div>
-            <el-button @click="router.replace({ path: '/home' })">返回首页</el-button>
-            x：{{ editorInfo.left.toFixed(2) }},y：{{ editorInfo.top.toFixed(2) }} 倍数：{{
-              editorInfo.scale.toFixed(2)
-            }}
-          </div>
-          <el-button :disabled="nodeMap.has(1)" @click="addEditorNode(NodeEnum.Story)"
-            >新增故事
-          </el-button>
-          <el-button @click="addEditorNode(NodeEnum.Scene)">新增场景</el-button>
-          <el-button @click="addEditorNode(NodeEnum.Dialogue)">新增对话</el-button>
-          <el-button @click="addEditorNode(NodeEnum.Caption)">新增字幕</el-button>
-          <el-button @click="addEditorNode(NodeEnum.Option)">新增选项</el-button>
-          <el-button :disabled="!nodeMap.has(1)" @click="generateNormalNode"
-            >生成常用节点
-          </el-button>
-          <div class="flex items-center gap-2 mt-2">
-            <el-select
-              v-model="selectedPrefabId"
-              class="prefab-select"
-              placeholder="选择预制体"
-              style="width: 220px"
+      <div class="toolbar">
+        <div class="toolbar-left">
+          <div class="meta">
+            <el-button size="small" @click="router.replace({ path: '/home' })">返回首页</el-button>
+            <el-tag
+              >坐标 x: {{ editorInfo.left.toFixed(2) }} y: {{ editorInfo.top.toFixed(2) }}</el-tag
             >
-              <el-option
-                v-for="prefab in prefabList"
-                :key="prefab.id"
-                :label="prefab.name"
-                :value="prefab.id"
-              />
+            <el-tag type="success">倍数: {{ editorInfo.scale.toFixed(2) }}</el-tag>
+          </div>
+          <div class="group">
+            <el-button-group>
+              <el-button
+                size="small"
+                :disabled="nodeMap.has(1)"
+                @click="addEditorNode(NodeEnum.Story)"
+                >新增故事</el-button
+              >
+              <el-button size="small" @click="addEditorNode(NodeEnum.Scene)">新增场景</el-button>
+              <el-button size="small" @click="addEditorNode(NodeEnum.Dialogue)">新增对话</el-button>
+              <el-button size="small" @click="addEditorNode(NodeEnum.Caption)">新增字幕</el-button>
+              <el-button size="small" @click="addEditorNode(NodeEnum.Option)">新增选项</el-button>
+              <el-button size="small" :disabled="!nodeMap.has(1)" @click="generateNormalNode"
+                >生成常用节点</el-button
+              >
+            </el-button-group>
+          </div>
+          <div class="group">
+            <el-button size="small" :disabled="!selectedPrefab" @click="handleAddPrefabToCenter"
+              >添加预制体</el-button
+            >
+            <el-button
+              size="small"
+              :disabled="dragSelectedNodes.size === 0"
+              @click="handleSavePrefab"
+              >保存为预制体</el-button
+            >
+            <el-button
+              size="small"
+              @click="copyPrefabToTempPrefab(prefabList.find((e) => e.id === curSelectedPrefabId))"
+              >复制预制体</el-button
+            >
+            <el-select v-model="curSelectedPrefabId" :style="{ width: '200px' }">
+              <el-option v-for="item in prefabList" :label="item.name" :value="item.id"></el-option>
             </el-select>
-            <el-button :disabled="!selectedPrefab" @click="handleAddPrefabToCenter"
-              >添加预制体
-            </el-button>
-            <el-button :disabled="dragSelectedNodes.size === 0" @click="handleSavePrefab"
-              >保存为预制体
-            </el-button>
           </div>
         </div>
-        <div>
-          <el-button @click="save">保存</el-button>
-          <el-button @click="dataCardVisible = true">数据卡</el-button>
-          <el-button @click="leftDrawerVisible = true">节点管理</el-button>
-          <el-button @click="groupDialogVisible = true">组管理</el-button>
-          <el-button @click="staticResourcesVisible = true">静态资源总览</el-button>
-          <el-button @click="reset">重置数据</el-button>
-          <el-button :disabled="!nodeMap.has(1)" @click="startGame">游戏预览</el-button>
-          <el-button @click="publishDialogVisible = true">发布</el-button>
-          <el-button @click="updateGameVisible = true">更新数据到游戏</el-button>
-          <el-button
-            @click="copyPrefabToTempPrefab(prefabList.find((e) => e.id === curSelectedPrefabId))"
-            >复制预制体
-          </el-button>
-          <el-select v-model="curSelectedPrefabId" :style="{ width: '200px' }">
-            <el-option v-for="item in prefabList" :label="item.name" :value="item.id"></el-option>
-          </el-select>
+        <div class="toolbar-right">
+          <el-space wrap size="small">
+            <el-button size="small" @click="save">保存</el-button>
+            <el-button size="small" @click="dataCardVisible = true">数据卡</el-button>
+            <el-button size="small" @click="leftDrawerVisible = true">节点管理</el-button>
+            <el-button size="small" @click="groupDialogVisible = true">组管理</el-button>
+            <el-button size="small" @click="staticResourcesVisible = true">静态资源总览</el-button>
+            <el-button size="small" @click="reset">重置数据</el-button>
+            <el-button size="small" :disabled="!nodeMap.has(1)" @click="startGame"
+              >游戏预览</el-button
+            >
+            <el-button size="small" @click="publishDialogVisible = true">发布</el-button>
+            <el-button size="small" @click="updateGameVisible = true">更新数据到游戏</el-button>
+          </el-space>
         </div>
       </div>
     </div>
@@ -917,6 +926,7 @@ provide('curSelectedNode', curSelectedNode)
               :node="item.node"
               :scale="editorInfo.scale"
               fontSize="2rem"
+              @beforeUpdateLayout="pushHistory({ editorNodeList: editorNodeList })"
               @mousedown="
                 (e) => {
                   handleRectBoxClick(item)
@@ -986,13 +996,40 @@ provide('curSelectedNode', curSelectedNode)
     'up up'
     'left right';
   grid-template-columns: 1fr 400px;
-  grid-template-rows: 100px 1fr;
+  grid-template-rows: auto 1fr;
 }
 
 .ds-ec-up {
   grid-area: up;
   background: #f8f8f8;
   border-bottom: 1px solid #ddd;
+  padding: 12px 16px;
+}
+
+.toolbar {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: start;
+  gap: 16px;
+}
+
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toolbar-right {
+  display: flex;
+  align-items: flex-start;
 }
 
 .ds-ec-left {

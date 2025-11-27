@@ -2,6 +2,7 @@
 import { computed, CSSProperties, onMounted, ref, watch } from 'vue'
 import { EditorBoxEnum } from '@renderer/enum'
 import type { EngineNode } from '@renderer/types'
+import { useOperationHistory } from '@renderer/composables/useOperationHistory'
 
 interface Props {
   layout: {
@@ -44,7 +45,7 @@ const boxStyle = computed(
 
 // 拖拽功能
 const emit = defineEmits<{
-  (e: 'update:layout', layout: Props['layout']): void
+  (e: 'beforeUpdateLayout'): void
 }>()
 
 const isDragging = ref(false)
@@ -71,9 +72,11 @@ function onMouseMove(e: MouseEvent) {
 function onMouseUp() {
   if (!isDragging.value) return
   isDragging.value = false
+  emit('beforeUpdateLayout')
   // 只在这里更新 Vue 数据（外部 input 也只更新一次）
   props.layout.left = translateX.value
   props.layout.top = translateY.value
+
   document.removeEventListener('mousemove', onMouseMove)
   document.removeEventListener('mouseup', onMouseUp)
 }

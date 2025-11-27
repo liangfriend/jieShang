@@ -88,7 +88,7 @@ const recommendationList = ref([
   },
   {
     avatar: '',
-    title: '吃过番茄之后可以大胆表白',
+    title: '吃过番茄之后',
     subTitle: '青春文学',
     ranting: 4
   },

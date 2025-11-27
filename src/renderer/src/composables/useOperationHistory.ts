@@ -24,10 +24,10 @@ export function useOperationHistory({
 }>) {
   // 保存历史记录
   function pushHistory(prevState: Partial<OperationHistory>) {
+    console.log('chicken', 'pushHistory')
     undoStack.push(JSON.parse(JSON.stringify(prevState)))
     // 只要有新操作进来，就清空 redo
     redoStack.length = 0
-    console.log('chicken')
   }
 
   // 撤销
