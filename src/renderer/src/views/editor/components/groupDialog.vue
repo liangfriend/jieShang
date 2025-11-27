@@ -5,7 +5,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 const props = defineProps({
   modelValue: Boolean
 })
-const emit = defineEmits(['update:modelValue'])
+const emit = defineEmits(['update:modelValue', 'changed'])
 
 // ===================== 分组数据 ======================
 const groupList = ref([])
@@ -51,6 +51,7 @@ async function saveGroup() {
 
   editVisible.value = false
   await loadGroupList()
+  emit('changed')
 }
 
 // ===================== 删除 ======================

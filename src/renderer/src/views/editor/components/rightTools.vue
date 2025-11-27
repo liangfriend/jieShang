@@ -6,8 +6,10 @@ import { nodeNameMap } from '@renderer/constant'
 import { useRoute, useRouter } from 'vue-router'
 import { useNodeManager } from '@renderer/composables/useNodeManager'
 import { computed, inject, onMounted, ref, Ref } from 'vue'
-import { EditorNode, ImageNode, StoryNode } from '@renderer/types'
+import { EditorNode, ImageNode, ResourceModel, StoryNode } from '@renderer/types'
 import MonacoEditor from '@renderer/components/monacoEditor.vue'
+import { useStaticResource } from '@renderer/composables/useStaticResource'
+import ResourceSelect from '@renderer/views/editor/components/resourceSelect.vue'
 
 const {
   editorNodeList,
@@ -60,9 +62,9 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div v-if="curSelectedNode">
-    <div v-if="curSelectedNode.node.nodeType === NodeEnum.Scene">
-      <el-button @click="startGame(curSelectedNode.node.id)">预览此场景节点</el-button>
+  <div v-if="curSelectedNode" class="rt-panel">
+    <div v-if="curSelectedNode.node.nodeType === NodeEnum.Scene" class="rt-actions">
+      <el-button size="small" @click="startGame(curSelectedNode.node.id)">预览此场景节点</el-button>
     </div>
     <div class="font-bold">布局信息</div>
     <div class="flex mt-2">
@@ -110,14 +112,7 @@ onMounted(async () => {
     </div>
     <div class="flex mt-2">
       <div class="w-24 shrink-0">背景图片:</div>
-      <el-select v-model="curSelectedNode.node.bgUrl" :style="{ width: '16rem' }">
-        <el-option value="" label="无" />
-        <el-option
-          v-for="item in groupedNodes[NodeEnum.Image]"
-          :label="item.node.nodeName"
-          :value="(item.node as ImageNode).url"
-        ></el-option>
-      </el-select>
+      <resource-select v-model="curSelectedNode.node.bgUrl" resource-type="image" />
     </div>
     <div class="flex mt-2">
       <div class="w-24 shrink-0">选项文字颜色:</div>
@@ -457,8 +452,45 @@ onMounted(async () => {
   </template>
   <div>
     <div class="font-bold">节点操作</div>
-    <el-button @click="deleteNode">删除节点</el-button>
+    <el-button size="small" @click="deleteNode">删除节点</el-button>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.rt-panel {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.rt-actions {
+  display: flex;
+  justify-content: flex-start;
+}
+.rt-panel .font-bold {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  padding-top: 10px;
+  margin-top: 6px;
+  border-top: 1px solid #eee;
+}
+.rt-panel .flex.mt-2 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.rt-panel .w-24,
+.rt-panel .w-20,
+.rt-panel .w-16 {
+  color: #666;
+}
+.rt-panel :deep(.el-input),
+.rt-panel :deep(.el-select),
+.rt-panel :deep(.el-switch) {
+  --el-border-color: #ddd;
+}
+.rt-panel :deep(.el-button) {
+  border-radius: 6px;
+}
+</style>

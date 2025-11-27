@@ -11,7 +11,7 @@ export type StaticResource = {
 export async function useStaticResource(groupId: number = -1): Promise<StaticResource> {
   const resourceList = ref([])
   resourceList.value = (
-    await window.api.resource.query(groupId !== -1 ? { group: groupId } : {})
+    await window.api.resource.query(groupId !== -1 ? { group_id: groupId } : {})
   ).data
   const imageList = computed(() => {
     return resourceList.value.filter((r: any) => r.type === 'image')

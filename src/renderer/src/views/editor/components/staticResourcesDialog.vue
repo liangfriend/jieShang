@@ -3,6 +3,7 @@ import { ref, onMounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { useStaticResource } from '@renderer/composables/useStaticResource'
 import { ResourceModel } from '@renderer/types'
+import GroupDialog from '@renderer/views/editor/components/groupDialog.vue'
 
 const props = defineProps({
   modelValue: Boolean
@@ -18,7 +19,7 @@ const audioList = ref<ResourceModel[]>([])
 const videoList = ref<ResourceModel[]>([])
 
 async function getResourceList() {
-  const resource = await useStaticResource()
+  const resource = await useStaticResource(groupFilter.value)
   imageList.value = resource.imageList.value
   audioList.value = resource.audioList.value
   videoList.value = resource.videoList.value
@@ -28,7 +29,7 @@ async function getResourceList() {
 // group 筛选
 // -------------------------------
 const groupList = ref<Array<{ id: number; name: string }>>([])
-const groupFilter = ref<number>(0) // 0 表示全部
+const groupFilter = ref<number>(-1) // 0 表示全部
 
 async function getGroupList() {
   groupList.value = (await window.api.group.list()).data || []
@@ -155,7 +156,39 @@ async function deleteResource(item: any) {
     /* 用户取消 */
   }
 }
+/*
+ * 编辑资源
+ * */
+const editingId = ref<number | null>(null)
+const editVisible = ref(false)
+async function editResource(item: any) {
+  editingId.value = item.id
 
+  // 将该条数据填入 form
+  form.value = {
+    name: item.name,
+    group_id: item.group_id ?? null,
+    file: null // 编辑不修改文件
+  }
+
+  editVisible.value = true
+}
+async function updateResourceInfo() {
+  if (!editingId.value) return
+  console.log('chicken', form.value.group_id)
+  await window.api.resource.update(editingId.value, {
+    name: form.value.name,
+    group_id: form.value.group_id
+  })
+
+  ElMessage.success('更新成功')
+
+  editVisible.value = false
+
+  await updateResource()
+}
+// 创建组
+const groupDialogVisible = ref(false)
 // -------------------------------
 // 初始化
 // -------------------------------
@@ -175,8 +208,8 @@ onMounted(async () => {
     <div style="margin-bottom: 10px; display: flex; gap: 12px; align-items: center">
       <el-button type="primary" @click="openUpload">上传资源</el-button>
 
-      <el-select v-model="groupFilter" placeholder="筛选分组" clearable style="width: 240px">
-        <el-option :value="0" label="全部分组" />
+      <el-select v-model="groupFilter" placeholder="筛选分组" style="width: 240px">
+        <el-option :value="-1" label="全部分组" />
         <el-option v-for="g in groupList" :key="g.id" :label="g.name" :value="g.id" />
       </el-select>
     </div>
@@ -195,6 +228,9 @@ onMounted(async () => {
             <el-button type="danger" size="small" @click.stop="deleteResource(item)" plain>
               删除
             </el-button>
+            <el-button type="danger" size="small" @click.stop="editResource(item)" plain>
+              编辑
+            </el-button>
           </div>
         </div>
       </div>
@@ -210,6 +246,9 @@ onMounted(async () => {
             <el-button type="danger" size="small" @click.stop="deleteResource(item)" plain>
               删除
             </el-button>
+            <el-button type="danger" size="small" @click.stop="editResource(item)" plain>
+              编辑
+            </el-button>
           </div>
         </div>
       </div>
@@ -224,6 +263,9 @@ onMounted(async () => {
 
             <el-button type="danger" size="small" @click.stop="deleteResource(item)" plain>
               删除
+            </el-button>
+            <el-button type="danger" size="small" @click.stop="editResource(item)" plain>
+              编辑
             </el-button>
           </div>
         </div>
@@ -242,6 +284,7 @@ onMounted(async () => {
         <el-select v-model="form.group_id" placeholder="选择分组">
           <el-option v-for="g in groupList" :key="g.id" :label="g.name" :value="g.id" />
         </el-select>
+        <el-button @click="groupDialogVisible = !groupDialogVisible">创建组</el-button>
       </el-form-item>
 
       <el-form-item label="文件">
@@ -254,6 +297,27 @@ onMounted(async () => {
       <el-button type="primary" @click="createResource">上传</el-button>
     </template>
   </el-dialog>
+  <!-- 编辑弹窗 -->
+  <el-dialog v-model="editVisible" title="编辑资源" width="400px">
+    <el-form label-width="80px">
+      <el-form-item label="名称">
+        <el-input v-model="form.name" placeholder="输入资源名称" />
+      </el-form-item>
+
+      <el-form-item label="分组">
+        <el-select v-model="form.group_id" placeholder="选择分组">
+          <el-option v-for="g in groupList" :key="g.id" :label="g.name" :value="g.id" />
+        </el-select>
+        <el-button @click="groupDialogVisible = !groupDialogVisible">创建组</el-button>
+      </el-form-item>
+    </el-form>
+
+    <template #footer>
+      <el-button @click="editVisible = false">取消</el-button>
+      <el-button type="primary" @click="updateResourceInfo">确认</el-button>
+    </template>
+  </el-dialog>
+  <group-dialog v-model="groupDialogVisible" @changed="getGroupList"></group-dialog>
 </template>
 
 <style scoped>
