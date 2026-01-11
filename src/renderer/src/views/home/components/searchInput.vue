@@ -31,7 +31,10 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'search'])
 
-const onSearch = () => emit('search', props.modelValue)
+const onSearch = () => {
+  console.log('chicken')
+  emit('search', props.modelValue)
+}
 const updateValue = (e: Event) => emit('update:modelValue', (e.target as HTMLInputElement).value)
 
 // 计算样式：保持字符串原样（px/%/rem...都支持）

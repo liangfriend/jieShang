@@ -7,6 +7,7 @@ export interface WorkAttributes {
   id: number
   name: string
   data: string
+  isTemplate: boolean
   created_at?: Date
   updated_at?: Date
   deleted_at?: Date | null
@@ -25,7 +26,7 @@ export class WorkModel
   declare id: number
   declare name: string
   declare data: string
-
+  declare isTemplate: boolean
   declare created_at: Date
   declare updated_at: Date
   declare deleted_at: Date | null
@@ -48,7 +49,11 @@ WorkModel.init(
       type: DataTypes.TEXT,
       allowNull: false
     },
-
+    isTemplate: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
     created_at: {
       type: DataTypes.DATE,
       allowNull: false,

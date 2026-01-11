@@ -16,6 +16,7 @@ const mainLayerStyle = computed((): CSSProperties => {
 })
 // 搜索
 const search = ref('')
+
 function searchByName() {
   if (active.value === 'work') {
     getWorkList()
@@ -23,6 +24,7 @@ function searchByName() {
     getGameList()
   }
 }
+
 // 左侧菜单
 import { House, Tickets, List, User, Folder, Grid } from '@element-plus/icons-vue'
 import HomeMenu from '@renderer/views/home/components/homeMenu.vue'
@@ -140,6 +142,7 @@ async function deleteWork(item) {
     })
     .catch(() => {})
 }
+
 async function editWork(item) {
   ElMessageBox.prompt('请输入新的作品名称', 'Tip', {
     confirmButtonText: '确认',
@@ -151,6 +154,7 @@ async function editWork(item) {
     })
     .catch(() => {})
 }
+
 // 进入游戏
 function playGame(item) {
   //
@@ -174,6 +178,7 @@ async function deleteGame(item) {
     })
     .catch(() => {})
 }
+
 async function editGame(item) {
   ElMessageBox.prompt('请输入新的游戏名称', 'Tip', {
     confirmButtonText: '确认',
@@ -325,7 +330,7 @@ async function editGame(item) {
   gap: 20px;
   padding: 20px;
   grid-template-rows: 100px 1fr;
-  grid-template-columns: 300px 1fr 300px;
+  grid-template-columns: 300px 1fr 0px;
   grid-template-areas:
     'logo search profile '
     'menu list recommendation';

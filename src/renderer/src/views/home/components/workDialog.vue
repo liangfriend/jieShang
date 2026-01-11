@@ -26,7 +26,9 @@ const workList = ref<any[]>([])
 
 const formVisible = ref(false)
 const form = reactive({
-  name: ''
+  name: '',
+  isTemplate: false,
+  templateId: -1
 })
 
 // ----------------------
@@ -36,6 +38,7 @@ async function loadWorks() {
   loading.value = true
   try {
     workList.value = (await window.api.work.list()).data
+    templateList.value = workList.value.filter((work) => work.isTemplate)
   } finally {
     loading.value = false
   }
@@ -49,6 +52,7 @@ async function createWork() {
 
   const payload = {
     name: form.name,
+    isTemplate: form.isTemplate,
     data: JSON.stringify({
       editorNodeList: [],
       gameData: '{}',
@@ -56,12 +60,18 @@ async function createWork() {
       editorInfo: defaultConfig
     })
   }
+  if (form.templateId !== -1) {
+    payload.data = JSON.parse(
+      JSON.stringify(templateList.value.find((e) => e.id === form.templateId).data)
+    )
+  }
   await window.api.work.create(payload)
   emit('created')
   ElMessage.success('创建成功')
 
   // 清空表单
   form.name = ''
+  form.isTemplate = false
   formVisible.value = false
 
   // 重新加载
@@ -94,9 +104,12 @@ function deleteWork(work) {
     .catch(() => {})
 }
 
-watch(visible, (v) => {
+// 模版列表
+const templateList = ref<any[]>([])
+
+watch(visible, async (v) => {
   if (v) {
-    loadWorks()
+    await loadWorks()
   }
 })
 </script>
@@ -130,6 +143,19 @@ watch(visible, (v) => {
     <el-form label-width="80px" :model="form">
       <el-form-item label="名称">
         <el-input v-model="form.name" placeholder="输入作品名称" />
+      </el-form-item>
+      <el-form-item label="使用模版">
+        <el-select v-model="form.templateId">
+          <el-option :value="-1" label="无"></el-option>
+          <el-option
+            v-for="option in templateList"
+            :label="option.name"
+            :value="option.id"
+          ></el-option>
+        </el-select>
+      </el-form-item>
+      <el-form-item label="加入模版">
+        <el-switch v-model="form.isTemplate"></el-switch>
       </el-form-item>
     </el-form>
 
