@@ -1,39 +1,33 @@
 import { Model, DataTypes, Optional } from 'sequelize'
 import sequelize from '../database/connection'
-import ScoreModel from './ScoreModel'
 
-/**
- * 作品扩展数据（不含曲谱本体，曲谱在 score 表）
- * 例：{ brushStrokes, mediaResourceIds, audioResourceIds, layers, notes }
- */
-export interface WorkAttributes {
+/** 曲谱表：仅存打谱 JSON，可从作品通过 score_id 单独提取 */
+export interface ScoreAttributes {
   id: number
   name: string
-  /** 关联曲谱，便于从作品还原曲谱 */
-  score_id: number | null
+  /** 曲谱渲染插件产出的 JSON 字符串 */
   data: string
   created_at?: Date
   updated_at?: Date
   deleted_at?: Date | null
 }
 
-export interface WorkCreationAttributes
-  extends Optional<WorkAttributes, 'id' | 'score_id' | 'created_at' | 'updated_at' | 'deleted_at'> {}
+export interface ScoreCreationAttributes
+  extends Optional<ScoreAttributes, 'id' | 'created_at' | 'updated_at' | 'deleted_at'> {}
 
-export class WorkModel
-  extends Model<WorkAttributes, WorkCreationAttributes>
-  implements WorkAttributes
+export class ScoreModel
+  extends Model<ScoreAttributes, ScoreCreationAttributes>
+  implements ScoreAttributes
 {
   declare id: number
   declare name: string
-  declare score_id: number | null
   declare data: string
   declare created_at: Date
   declare updated_at: Date
   declare deleted_at: Date | null
 }
 
-WorkModel.init(
+ScoreModel.init(
   {
     id: {
       type: DataTypes.INTEGER,
@@ -43,14 +37,6 @@ WorkModel.init(
     name: {
       type: DataTypes.STRING,
       allowNull: false
-    },
-    score_id: {
-      type: DataTypes.INTEGER,
-      allowNull: true,
-      references: {
-        model: ScoreModel,
-        key: 'id'
-      }
     },
     data: {
       type: DataTypes.TEXT,
@@ -74,7 +60,7 @@ WorkModel.init(
   },
   {
     sequelize,
-    tableName: 'work',
+    tableName: 'score',
     freezeTableName: true,
     timestamps: true,
     createdAt: 'created_at',
@@ -85,7 +71,4 @@ WorkModel.init(
   }
 )
 
-WorkModel.belongsTo(ScoreModel, { foreignKey: 'score_id', as: 'score' })
-ScoreModel.hasMany(WorkModel, { foreignKey: 'score_id', as: 'works' })
-
-export default WorkModel
+export default ScoreModel

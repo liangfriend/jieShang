@@ -1,10 +1,14 @@
-<script setup lang="ts">
-import { ref, onMounted } from 'vue'
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <div>解熵</div>
-  <!--  <router-view></router-view>-->
+  <router-view />
 </template>
 
-<style scoped></style>
+<style>
+html,
+body,
+#app {
+  width: 100%;
+  height: 100%;
+}
+</style>

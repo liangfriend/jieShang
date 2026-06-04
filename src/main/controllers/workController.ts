@@ -9,37 +9,13 @@ export class WorkController {
   }
 
   register() {
-    console.log('Work controller registered')
-
-    ipcMain.handle('work:create', (_, payload) => this.createWork(payload))
-    ipcMain.handle('work:delete', (_, id) => this.deleteWork(id))
-    ipcMain.handle('work:update', (_, id, payload) => this.updateWork(id, payload))
-    ipcMain.handle('work:query', (_, filters) => this.queryWorks(filters))
-    ipcMain.handle('work:list', () => this.listWorks())
-    ipcMain.handle('work:searchByName', (_, name) => this.searchByName(name))
-  }
-
-  async createWork(payload) {
-    return await this.workService.createWork(payload)
-  }
-
-  async deleteWork(id: string) {
-    return await this.workService.deleteWork(id)
-  }
-
-  async updateWork(id: string, payload) {
-    return await this.workService.updateWork(id, payload)
-  }
-
-  async queryWorks(filters) {
-    return await this.workService.queryWorks(filters)
-  }
-
-  async listWorks() {
-    return await this.workService.listWorks()
-  }
-
-  async searchByName(name: string) {
-    return await this.workService.searchByName(name)
+    ipcMain.handle('work:create', (_, payload) => this.workService.createWork(payload))
+    ipcMain.handle('work:delete', (_, id) => this.workService.deleteWork(id))
+    ipcMain.handle('work:update', (_, id, payload) => this.workService.updateWork(id, payload))
+    ipcMain.handle('work:get', (_, id, includeScore) => this.workService.getWork(id, includeScore))
+    ipcMain.handle('work:query', (_, filters) => this.workService.queryWorks(filters))
+    ipcMain.handle('work:list', () => this.workService.listWorks())
+    ipcMain.handle('work:searchByName', (_, name) => this.workService.searchByName(name))
+    ipcMain.handle('work:extractScore', (_, id) => this.workService.extractScore(id))
   }
 }

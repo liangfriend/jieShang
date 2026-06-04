@@ -9,9 +9,12 @@ import { GameController } from './controllers/gameController'
 import { SaveRepository } from './repositories/saveRepository'
 import { SaveService } from './services/saveService'
 import { SaveController } from './controllers/saveController'
+import { ScoreRepository } from './repositories/scoreRepository'
+import { ScoreService } from './services/scoreService'
+import { ScoreController } from './controllers/scoreController'
+import { WorkRepository } from './repositories/workRepository'
 import { WorkService } from './services/workService'
 import { WorkController } from './controllers/workController'
-import { WorkRepository } from './repositories/workRepository'
 import { FileService } from './services/fileService'
 import { FileController } from './controllers/fileController'
 import { ResourceService } from './services/resourceService'
@@ -25,13 +28,9 @@ import { WindowController } from './controllers/windowController'
 export const container = createContainer()
 
 export async function setupContainer() {
-  // 1. 先连接数据库
   await sequelize.authenticate()
-
-  // 2. 执行迁移（自动创建表）
   await runMigrations()
 
-  // 3. 再注册 IOC 容器
   container.register({
     sequelize: asValue(sequelize),
 
@@ -42,6 +41,10 @@ export async function setupContainer() {
     saveRepository: asClass(SaveRepository).singleton(),
     saveService: asClass(SaveService).singleton(),
     saveController: asClass(SaveController).singleton(),
+
+    scoreRepository: asClass(ScoreRepository).singleton(),
+    scoreService: asClass(ScoreService).singleton(),
+    scoreController: asClass(ScoreController).singleton(),
 
     workRepository: asClass(WorkRepository).singleton(),
     workService: asClass(WorkService).singleton(),

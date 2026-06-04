@@ -31,13 +31,33 @@ declare global {
         query(filters: any): Promise<any>
         list(): Promise<any>
       }
-      work: {
-        create(payload: any): Promise<any>
-        delete(id: any): Promise<any>
-        update(id: any, payload: any): Promise<any>
-        query(filters: any): Promise<any>
+      score: {
+        create(payload: { name: string; data?: string }): Promise<any>
+        delete(id: number | string): Promise<any>
+        update(id: number | string, payload: Partial<{ name: string; data: string }>): Promise<any>
+        get(id: number | string): Promise<any>
+        query(filters: Partial<{ id: number | string; name: string }>): Promise<any>
         list(): Promise<any>
         searchByName(name: string): Promise<any>
+      }
+      work: {
+        create(payload: {
+          name: string
+          score_id?: number | null
+          data?: string
+        }): Promise<any>
+        delete(id: number | string): Promise<any>
+        update(
+          id: number | string,
+          payload: Partial<{ name: string; score_id: number | null; data: string }>
+        ): Promise<any>
+        get(id: number | string, includeScore?: boolean): Promise<any>
+        query(
+          filters: Partial<{ id: number | string; name: string; score_id: number }>
+        ): Promise<any>
+        list(): Promise<any>
+        searchByName(name: string): Promise<any>
+        extractScore(id: number | string): Promise<any>
       }
       group: {
         create(payload: any): Promise<any>

@@ -1,5 +1,3 @@
-// src/main/services/workService.ts
-
 import { WorkRepository } from '../repositories/workRepository'
 
 export class WorkService {
@@ -9,42 +7,46 @@ export class WorkService {
     this.workRepository = workRepository
   }
 
-  /** 创建 */
-  async createWork(payload: { name: string; data: string }) {
+  async createWork(payload: { name: string; score_id?: number | null; data?: string }) {
     const data = await this.workRepository.create(payload)
     return { success: true, data }
   }
 
-  /** 删除 */
-  async deleteWork(id: string) {
+  async deleteWork(id: string | number) {
     const data = await this.workRepository.delete(id)
     return { success: true, data }
   }
 
-  /** 更新 */
-  async updateWork(id: string, payload: Partial<{ name: string; data: string }>) {
+  async updateWork(
+    id: string | number,
+    payload: Partial<{ name: string; score_id: number | null; data: string }>
+  ) {
     const data = await this.workRepository.update(id, payload)
     return { success: true, data }
   }
 
-  /** 条件查询 */
-  async queryWorks(filters: Partial<{ id: string; name: string; data: string }>) {
+  async getWork(id: string | number, includeScore = false) {
+    const data = await this.workRepository.findById(id, includeScore)
+    return { success: true, data }
+  }
+
+  async queryWorks(filters: Partial<{ id: string | number; name: string; score_id: number }>) {
     const data = await this.workRepository.query(filters)
     return { success: true, data }
   }
 
-  /** 查询全部 */
   async listWorks() {
     const data = await this.workRepository.query({})
     return { success: true, data }
   }
 
-  /** 根据名称查询 */
   async searchByName(name: string) {
-    const result = await this.workRepository.searchByName(name)
-    return {
-      success: true,
-      data: result
-    }
+    const data = await this.workRepository.searchByName(name)
+    return { success: true, data }
+  }
+
+  async extractScore(workId: string | number) {
+    const data = await this.workRepository.extractScore(workId)
+    return { success: true, data }
   }
 }
