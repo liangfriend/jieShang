@@ -55,14 +55,10 @@ export function resolveScoreName(musicScore: MusicScore): string {
   return readTitleField(musicScore, 'title').trim() || '未命名曲谱'
 }
 
-export function applyMusicScore(target: MusicScore, source: MusicScore) {
-  for (const key of Object.keys(target)) {
-    delete target[key as keyof MusicScore]
-  }
-  Object.assign(target, JSON.parse(JSON.stringify(source)) as MusicScore)
-}
-
-export async function importSjFromDisk(): Promise<{ musicScore: MusicScore; fileName: string } | null> {
+export async function importSjFromDisk(): Promise<{
+  musicScore: MusicScore
+  fileName: string
+} | null> {
   const result = (await window.api.file.importSj()) as SjImportResult
   if (result.canceled || !result.content) return null
 

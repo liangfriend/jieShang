@@ -70,7 +70,7 @@ export type MusicScoreComponentExpose = {
  * - 页面（如 renderEditTest.vue）：插槽按钮样式、侧栏、快捷键等某一种产品形态
  */
 export function useRenderEdit(
-  musicScore: MusicScore,
+  scoreData: Ref<MusicScore>,
   options?: { musicScoreRef?: Ref<MusicScoreComponentExpose | null> }
 ) {
   const scoreRootRef = ref<HTMLElement | null>(null)
@@ -177,7 +177,7 @@ export function useRenderEdit(
     clearRelatedHighlights()
     if (!slot) return
     if (isVoltaSelected(slot)) {
-      for (const measureId of resolveVoltaMeasureIds(musicScore, slot.self)) {
+      for (const measureId of resolveVoltaMeasureIds(scoreData.value, slot.self)) {
         const el = resolveMeasureElement(measureId)
         if (el) addRelatedHighlight(el)
       }
@@ -367,7 +367,7 @@ export function useRenderEdit(
     const vdom = vDomList.value.find((node) => node.targetId === session.slurId && isSlurVDom(node))
     if (!vdom) return
     const { x, y } = pointerToSvg(svg, event.clientX, event.clientY)
-    updateSlurDragFromPointer(session, musicScore, vdom, x, y)
+    updateSlurDragFromPointer(session, scoreData.value, vdom, x, y)
   }
 
   function endSlurDrag(event: PointerEvent) {
@@ -383,7 +383,7 @@ export function useRenderEdit(
     const svg = resolveScoreSvg()
     if (!svg) return
     const { x, y } = pointerToSvg(svg, event.clientX, event.clientY)
-    updateVoltaDragFromPointer(session, musicScore, x, y)
+    updateVoltaDragFromPointer(session, scoreData.value, x, y)
   }
 
   function endVoltaDrag(event: PointerEvent) {
@@ -433,7 +433,7 @@ export function useRenderEdit(
   function handleVoltaHandleDown(handle: VoltaHandleKind, event: PointerEvent) {
     const slot = selectedItem.value
     if (!isVoltaSelected(slot)) return
-    const sym = findVoltaSymbol(musicScore, slot.self.id)
+    const sym = findVoltaSymbol(scoreData.value, slot.self.id)
     if (!sym) return
     const svg = resolveScoreSvg()
     if (!svg) return
@@ -450,7 +450,7 @@ export function useRenderEdit(
   function deleteSelected(): boolean {
     const selected = selectedItem.value
     if (!selected) return false
-    if (!deleteSelectedItem(musicScore, selected)) return false
+    if (!deleteSelectedItem(scoreData.value, selected)) return false
     clearSelection()
     return true
   }
@@ -474,7 +474,7 @@ export function useRenderEdit(
     const result = applyMeasureAddAction(
       measureSlot as SlotData & { measure: typeof measureSlot.measure },
       preview,
-      musicScore
+      scoreData.value
     )
     if (!result) return
 
@@ -485,7 +485,7 @@ export function useRenderEdit(
 
   function resolveSlotFromVDom(vdom: VDom): SlotData | null {
     if (vdom.slotData) return vdom.slotData
-    return slotDataFromVDom(musicScore, vdom)
+    return slotDataFromVDom(scoreData.value, vdom)
   }
 
   // —— dr 事件 ——
@@ -537,7 +537,7 @@ export function useRenderEdit(
     if (EXCLUDED_INTERACTION_TAGS.has(vdom.tag)) return
     if (vdom.tag !== 'noteHead') return
 
-    const slot = slotDataFromVDom(musicScore, vdom)
+    const slot = slotDataFromVDom(scoreData.value, vdom)
     if (!slot?.info || !slot.note || !slot.measure) return
     if (!('region' in slot.info)) return
 

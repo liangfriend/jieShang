@@ -1,17 +1,20 @@
 <script lang="ts" setup>
 import musicScoreVue from 'deciphony-renderer'
-import type { MusicScore } from 'deciphony-renderer'
-import { onMounted, reactive, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
 import ScoreModeToolbar from '@renderer/components/ScoreModeToolbar.vue'
-import { initMusicScoreFromRoute, loadScoreTemplate, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
+import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
+import empty from '@renderer/template/empty'
 
 const route = useRoute()
-const musicScoreData = reactive(loadScoreTemplate('empty'))
+const musicScoreData = ref(empty)
 
 onMounted(async () => {
-  await initMusicScoreFromRoute(route, musicScoreData)
+  const loaded = await loadScoreFromRoute(route)
+  if (loaded) {
+    musicScoreData.value = loaded
+  }
 })
 </script>
 

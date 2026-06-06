@@ -2,11 +2,7 @@ import type { MusicScore } from 'deciphony-renderer'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import emptyTemplate from '@renderer/template/empty'
-import {
-  applyMusicScore,
-  loadScoreFromDatabase,
-  parseScoreJson
-} from '@renderer/utils/fileHelper'
+import { loadScoreFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper'
 
 export type ScoreTemplateKey = 'empty' | 'singleVoice' | 'DoubleVoice'
 
@@ -36,6 +32,20 @@ export function resolveTemplateKey(raw: unknown): ScoreTemplateKey {
 export function loadScoreTemplate(template: ScoreTemplateKey): MusicScore {
   return TEMPLATE_LOADERS[template]()
 }
+// TODO 这里还要判断route.template
+export async function loadScoreFromRoute(
+  route: RouteLocationNormalizedLoaded
+): Promise<MusicScore | null> {
+  const scoreId = resolveScoreId(route.query.scoreId)
+  if (!scoreId) return null
+
+  const record = await loadScoreFromDatabase(scoreId)
+  if (!record?.data) {
+    ElMessage.error('曲谱加载失败')
+    return null
+  }
+  return parseScoreJson(record.data)
+}
 
 export function buildScoreRouteQuery(route: RouteLocationNormalizedLoaded): Record<string, string> {
   const scoreId = resolveScoreId(route.query.scoreId)
@@ -43,24 +53,6 @@ export function buildScoreRouteQuery(route: RouteLocationNormalizedLoaded): Reco
     return { scoreId }
   }
   return { template: resolveTemplateKey(route.query.template) }
-}
-
-export async function initMusicScoreFromRoute(
-  route: RouteLocationNormalizedLoaded,
-  target: MusicScore
-): Promise<void> {
-  const scoreId = resolveScoreId(route.query.scoreId)
-  if (scoreId) {
-    const record = await loadScoreFromDatabase(scoreId)
-    if (!record?.data) {
-      ElMessage.error('曲谱加载失败')
-      return
-    }
-    applyMusicScore(target, parseScoreJson(record.data))
-    return
-  }
-
-  applyMusicScore(target, loadScoreTemplate(resolveTemplateKey(route.query.template)))
 }
 
 export const SCORE_SLOT_CONFIG = {

@@ -1,5 +1,4 @@
 export {
-  applyMusicScore,
   displayScoreName,
   exportSjToDisk,
   importSjFromDisk,

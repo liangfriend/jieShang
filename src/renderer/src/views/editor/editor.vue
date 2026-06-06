@@ -1,8 +1,7 @@
 <script lang="ts" setup>
 import musicScoreVue from 'deciphony-renderer'
-import type { MusicScore } from 'deciphony-renderer'
 import { ElMessage } from 'element-plus'
-import { computed, onBeforeUnmount, onMounted, reactive, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { MusicScoreComponentExpose } from '@renderer/utils/editHelper/useRenderEdit'
 import {
@@ -16,20 +15,16 @@ import {
   useRenderEdit
 } from '@renderer/utils/editHelper'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
-import {
-  applyMusicScore,
-  exportSjToDisk,
-  importSjFromDisk,
-  saveScoreToDatabase
-} from '@renderer/utils/fileHelper'
+import { exportSjToDisk, importSjFromDisk, saveScoreToDatabase } from '@renderer/utils/fileHelper'
 import ScoreModeToolbar from '@renderer/components/ScoreModeToolbar.vue'
-import { initMusicScoreFromRoute, loadScoreTemplate, resolveScoreId, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
+import { loadScoreFromRoute, resolveScoreId, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
+import empty from '@renderer/template/empty'
 
 const route = useRoute()
 const router = useRouter()
 const scoreId = computed(() => resolveScoreId(route.query.scoreId))
 
-const musicScoreData = reactive(loadScoreTemplate('empty'))
+const musicScoreData = ref(empty)
 const musicScoreRef = ref<MusicScoreComponentExpose | null>(null)
 const fileBusy = ref(false)
 
@@ -61,7 +56,7 @@ async function handleImportSj() {
   try {
     const result = await importSjFromDisk()
     if (!result) return
-    applyMusicScore(musicScoreData, result.musicScore)
+    musicScoreData.value = result.musicScore
     clearSelection()
     ElMessage.success(`已导入 ${result.fileName}`)
   } catch (error) {
@@ -131,7 +126,10 @@ function onKeyDown(event: KeyboardEvent) {
 
 onMounted(async () => {
   window.addEventListener('keydown', onKeyDown)
-  await initMusicScoreFromRoute(route, musicScoreData)
+  const loaded = await loadScoreFromRoute(route)
+  if (loaded) {
+    musicScoreData.value = loaded
+  }
 })
 
 onBeforeUnmount(() => {
@@ -144,8 +142,12 @@ onBeforeUnmount(() => {
     <header class="editor-toolbar">
       <span class="editor-toolbar__title">曲谱编辑</span>
       <div class="editor-toolbar__actions">
-        <el-button :disabled="fileBusy" size="small" @click="handleImportSj">导入 sj 曲谱</el-button>
-        <el-button :disabled="fileBusy" size="small" @click="handleExportSj">导出 sj 曲谱</el-button>
+        <el-button :disabled="fileBusy" size="small" @click="handleImportSj"
+          >导入 sj 曲谱</el-button
+        >
+        <el-button :disabled="fileBusy" size="small" @click="handleExportSj"
+          >导出 sj 曲谱</el-button
+        >
         <el-button :disabled="fileBusy" size="small" type="primary" @click="handleSaveScore">
           保存
         </el-button>
