@@ -1,28 +1,39 @@
 <script lang="ts" setup>
-import type {Chronaxie} from 'deciphony-renderer'
+import type { Chronaxie } from 'deciphony-renderer'
+import { computed } from 'vue'
 import {
   ADD_NOTE_KIND_OPTIONS,
-  CHRONAXIE_OPTIONS,
+  chronaxieOptionsForKind,
   type AddNoteSlotKind,
-  type AddNoteState,
+  type AddNoteState
 } from '../renderEditAddNoteState'
 
-const model = defineModel<AddNoteState>({required: true})
+const model = defineModel<AddNoteState>({ required: true })
 
-function setKind(kind: AddNoteSlotKind) {
-  model.value = {...model.value, kind}
-}
+const kind = computed({
+  get: () => model.value.kind,
+  set: (value: AddNoteSlotKind) => {
+    model.value = { ...model.value, kind: value }
+  }
+})
 
-function setChronaxie(chronaxie: Chronaxie) {
-  model.value = {...model.value, chronaxie}
-}
+const chronaxie = computed({
+  get: () => model.value.chronaxie,
+  set: (value: Chronaxie) => {
+    model.value = { ...model.value, chronaxie: value }
+  }
+})
+
+const chronaxieOptions = computed(() => chronaxieOptionsForKind(model.value.kind))
+
+const durationLabel = computed(() => (model.value.kind === 'rest' ? '⏸ 时值' : '🎵 时值'))
 </script>
 
 <template>
   <div class="add-note-state">
     <div class="add-note-state__row">
       <span class="add-note-state__label">✏️ 添加</span>
-      <el-radio-group :model-value="model.kind" size="small" @change="setKind">
+      <el-radio-group v-model="kind" size="small">
         <el-radio-button
           v-for="opt in ADD_NOTE_KIND_OPTIONS"
           :key="opt.value"
@@ -33,10 +44,10 @@ function setChronaxie(chronaxie: Chronaxie) {
       </el-radio-group>
     </div>
     <div class="add-note-state__row">
-      <span class="add-note-state__label">🎵 时值</span>
-      <el-radio-group :model-value="model.chronaxie" size="small" @change="setChronaxie">
+      <span class="add-note-state__label">{{ durationLabel }}</span>
+      <el-radio-group v-model="chronaxie" size="small">
         <el-radio-button
-          v-for="opt in CHRONAXIE_OPTIONS"
+          v-for="opt in chronaxieOptions"
           :key="opt.value"
           :label="opt.value"
         >

@@ -474,7 +474,8 @@ export function useRenderEdit(
     const result = applyMeasureAddAction(
       measureSlot as SlotData & { measure: typeof measureSlot.measure },
       preview,
-      scoreData.value
+      scoreData.value,
+      addNoteState.value
     )
     if (!result) return
 

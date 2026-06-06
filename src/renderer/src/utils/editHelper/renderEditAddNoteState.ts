@@ -20,12 +20,28 @@ export const ADD_NOTE_KIND_OPTIONS: { value: AddNoteSlotKind; label: string }[] 
 
 /** 时值选项（chronaxie 越大音符越长） */
 export const CHRONAXIE_OPTIONS: { value: Chronaxie; label: string }[] = [
-  {value: 256, label: '全音符'},
-  {value: 128, label: '二分音符'},
-  {value: 64, label: '四分音符'},
-  {value: 32, label: '八分音符'},
-  {value: 16, label: '十六分音符'},
-  {value: 8, label: '三十二分音符'},
-  {value: 4, label: '六十四分音符'},
-  {value: 2, label: '一百二十八分音符'},
+  { value: 256, label: '全音符' },
+  { value: 128, label: '二分音符' },
+  { value: 64, label: '四分音符' },
+  { value: 32, label: '八分音符' },
+  { value: 16, label: '十六分音符' },
+  { value: 8, label: '三十二分音符' },
+  { value: 4, label: '六十四分音符' },
+  { value: 2, label: '一百二十八分音符' },
 ]
+
+/** 休止符时值选项（chronaxie 与 renderer 休止符一致） */
+export const REST_CHRONAXIE_OPTIONS: { value: Chronaxie; label: string }[] = [
+  { value: 256, label: '全休止符' },
+  { value: 128, label: '二分休止符' },
+  { value: 64, label: '四分休止符' },
+  { value: 32, label: '八分休止符' },
+  { value: 16, label: '十六分休止符' },
+  { value: 8, label: '三十二分休止符' },
+  { value: 4, label: '六十四分休止符' },
+  { value: 2, label: '一百二十八分休止符' },
+]
+
+export function chronaxieOptionsForKind(kind: AddNoteSlotKind) {
+  return kind === 'rest' ? REST_CHRONAXIE_OPTIONS : CHRONAXIE_OPTIONS
+}

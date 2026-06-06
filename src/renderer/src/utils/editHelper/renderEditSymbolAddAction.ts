@@ -45,18 +45,7 @@ const NOTE_HEAD_WIDTH: Partial<Record<Chronaxie, number>> = {
   1: 16
 }
 
-const CHRONAXIE_TO_SVG_KEY: Record<Chronaxie, keyof typeof noteSymbolSvg.up> = {
-  256: 1,
-  128: 2,
-  64: 4,
-  32: 8,
-  16: 16,
-  8: 32,
-  4: 64,
-  2: 128,
-  1: 256
-}
-
+/** 小节在谱面 SVG 用户坐标系中的矩形范围（与 vDom / getBBox 一致） */
 export type MeasureBounds = { x: number; y: number; w: number; h: number }
 
 export type SnapPoint =
@@ -133,19 +122,18 @@ export function noteHeadWidth(chronaxie: Chronaxie): number {
 }
 
 export function previewSvgHtml(chronaxie: Chronaxie, direction: 'up' | 'down'): string {
-  const key = CHRONAXIE_TO_SVG_KEY[chronaxie] ?? 4
-  return noteSymbolSvg[direction][key]
+  return noteSymbolSvg[direction][chronaxie] ?? noteSymbolSvg[direction][64]
 }
 
 const REST_PREVIEW_HEIGHT: Partial<Record<Chronaxie, number>> = {
   256: 6,
   128: 6,
-  64: 10,
-  32: 8,
-  16: 8,
-  8: 8,
-  4: 8,
-  2: 8
+  64: 18.2,
+  32: 11.04,
+  16: 17.03,
+  8: 23.03,
+  4: 29.03,
+  2: 35.03
 }
 
 const REST_PREVIEW_WIDTH: Partial<Record<Chronaxie, number>> = {
@@ -164,6 +152,7 @@ export function restYFromChronaxie(chronaxie: Chronaxie): number {
   const h = REST_PREVIEW_HEIGHT[chronaxie] ?? 8
   if (chronaxie === 256) return MEASURE_HEIGHT / 4
   if (chronaxie === 128) return MEASURE_HEIGHT / 2 - h
+  console.log('chicken', chronaxie)
   return (MEASURE_HEIGHT - h) / 2
 }
 
@@ -506,27 +495,29 @@ export function resolveGhostNotePreview(params: ResolveGhostNoteParams): GhostNo
 export function applyMeasureAddAction(
   slot: SlotData & { measure: Measure },
   preview: GhostNotePreview,
-  musicScore: MusicScore
+  musicScore: MusicScore,
+  addNoteState: AddNoteState = DEFAULT_ADD_NOTE_STATE
 ): MeasureAddActionResult | null {
   const measure = slot.measure
+  const { kind, chronaxie } = addNoteState
 
   if (preview.snap.kind === 'insert') {
     const at = Math.max(0, Math.min(preview.snap.insertIndex, measure.notes.length))
-    if (preview.slotKind === 'rest') {
-      const rest = createNoteRest({ chronaxie: preview.chronaxie })
+    if (kind === 'rest') {
+      const rest = createNoteRest({ chronaxie })
       measure.notes.splice(at, 0, rest)
       return { type: 'inserted' }
     }
     const note = createNoteSymbol({
       region: preview.region,
-      chronaxie: preview.chronaxie,
+      chronaxie,
       direction: preview.direction
     })
     measure.notes.splice(at, 0, note)
     return { type: 'inserted' }
   }
 
-  if (preview.slotKind === 'rest') return null
+  if (kind === 'rest') return null
 
   const note = measure.notes[preview.snap.noteIndex]
   if (!note || !isNoteSymbol(note)) return null
