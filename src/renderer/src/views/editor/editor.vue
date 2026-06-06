@@ -18,6 +18,7 @@ import { TitleSlot } from '@renderer/dr-extensions/dr-title'
 import { exportSjToDisk, importSjFromDisk, saveScoreToDatabase } from '@renderer/utils/fileHelper'
 import ScoreModeToolbar from '@renderer/components/ScoreModeToolbar.vue'
 import { loadScoreFromRoute, resolveScoreId, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
+import '@renderer/styles/editor-cute.css'
 import empty from '@renderer/template/empty'
 
 const route = useRoute()
@@ -138,26 +139,31 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="score-page">
-    <header class="editor-toolbar">
-      <span class="editor-toolbar__title">曲谱编辑</span>
-      <div class="editor-toolbar__actions">
-        <el-button :disabled="fileBusy" size="small" @click="handleImportSj"
-          >导入 sj 曲谱</el-button
+  <div class="score-page editor-cute">
+    <header class="editor-top-bar">
+      <AddNoteStatePanel v-model="addNoteState" class="editor-top-bar__note" />
+      <div class="editor-top-bar__files">
+        <el-button class="toolbar-btn" :disabled="fileBusy" size="small" @click="handleImportSj">
+          导入 sj
+        </el-button>
+        <el-button class="toolbar-btn" :disabled="fileBusy" size="small" @click="handleExportSj">
+          导出 sj
+        </el-button>
+        <el-button
+          class="toolbar-btn toolbar-btn--save"
+          :disabled="fileBusy"
+          size="small"
+          type="primary"
+          @click="handleSaveScore"
         >
-        <el-button :disabled="fileBusy" size="small" @click="handleExportSj"
-          >导出 sj 曲谱</el-button
-        >
-        <el-button :disabled="fileBusy" size="small" type="primary" @click="handleSaveScore">
           保存
         </el-button>
       </div>
     </header>
 
-    <AddNoteStatePanel v-model="addNoteState" />
-
-    <div ref="scoreRootRef" class="score-page__main">
-      <div class="score-page__stack">
+    <div class="editor-body">
+      <div ref="scoreRootRef" class="score-page__main">
+        <div class="score-page__stack">
         <musicScoreVue
           ref="musicScoreRef"
           class="score-page__svg"
@@ -218,10 +224,12 @@ onBeforeUnmount(() => {
             @handle-down="handleVoltaHandleDown"
           />
         </svg>
+        </div>
       </div>
+
+      <PropertyPanel :kind="propertyPanelKind" :selected="selectedItem" />
     </div>
 
-    <PropertyPanel :kind="propertyPanelKind" :selected="selectedItem" />
     <ScoreModeToolbar mode="edit" />
   </div>
 </template>
@@ -232,31 +240,55 @@ onBeforeUnmount(() => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-bottom: 64px;
+  padding-bottom: var(--ec-bottom-bar-h, 56px);
   box-sizing: border-box;
 }
 
-.editor-toolbar {
+.editor-top-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
-  padding: 10px 16px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
-  background: #fff;
+  gap: 16px;
+  min-height: var(--ec-toolbar-h, 52px);
+  padding: 8px 16px;
   flex-shrink: 0;
+  background: var(--ec-card);
+  border-bottom: 1px solid rgba(255, 184, 208, 0.35);
+  box-shadow: var(--ec-shadow);
 }
 
-.editor-toolbar__title {
-  font-size: 14px;
-  font-weight: 600;
-  color: #303133;
+.editor-top-bar__note {
+  flex: 1;
+  min-width: 0;
 }
 
-.editor-toolbar__actions {
+.editor-top-bar__files {
   display: flex;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.editor-top-bar :deep(.add-note-state) {
+  padding: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+}
+
+.editor-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+.toolbar-btn {
+  --el-button-bg-color: rgba(255, 255, 255, 0.85);
+  --el-button-border-color: rgba(255, 184, 208, 0.5);
+  --el-button-text-color: var(--ec-text);
+  --el-button-hover-bg-color: rgba(255, 214, 232, 0.85);
+  --el-button-hover-border-color: var(--ec-pink-deep);
 }
 
 .score-page__main {

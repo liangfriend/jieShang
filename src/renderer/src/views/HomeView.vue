@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Document, EditPen, Reading, VideoPlay } from '@element-plus/icons-vue'
+import { HOME_TEMPLATE_TO_ROUTE } from '@renderer/utils/scoreRoute'
 
 const router = useRouter()
 const storyVisible = ref(false)
@@ -23,8 +24,6 @@ const templates = [
 const hasSave = true
 const saveTitle = '和声之城'
 const saveProgress = 58
-
-import { HOME_TEMPLATE_TO_ROUTE } from '@renderer/utils/scoreRoute'
 
 function onTemplateSelect(key: string) {
   templateVisible.value = false
@@ -111,6 +110,18 @@ function goToScores() {
         <button type="button" class="action-btn action-scores" @click="goToScores">
           <span class="action-icon"><el-icon><Document /></el-icon></span>
           <span class="action-label">我的曲谱</span>
+        </button>
+      </section>
+
+      <section class="action-row action-row--dual">
+        <button type="button" class="action-btn action-whiteboard">
+          <span class="action-emoji">🎹</span>
+          <span class="action-label">教学白板</span>
+        </button>
+
+        <button type="button" class="action-btn action-training">
+          <span class="action-emoji">🎯</span>
+          <span class="action-label">素养训练营</span>
         </button>
       </section>
     </main>
@@ -491,6 +502,10 @@ function goToScores() {
   gap: 14px;
 }
 
+.action-row--dual {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .action-btn {
   display: flex;
   flex-direction: column;
@@ -523,6 +538,14 @@ function goToScores() {
 
 .action-scores:hover {
   background: rgba(212, 240, 255, 0.9);
+}
+
+.action-whiteboard:hover {
+  background: rgba(232, 213, 255, 0.92);
+}
+
+.action-training:hover {
+  background: rgba(200, 248, 218, 0.92);
 }
 
 .action-emoji {

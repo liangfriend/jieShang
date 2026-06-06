@@ -48,9 +48,10 @@ function switchMode() {
   align-items: center;
   gap: 12px;
   padding: 10px 16px calc(10px + env(safe-area-inset-bottom, 0px));
-  border-top: 1px solid rgba(0, 0, 0, 0.08);
-  background: rgba(255, 255, 255, 0.94);
+  border-top: 1px solid rgba(255, 184, 208, 0.35);
+  background: rgba(255, 248, 251, 0.94);
   backdrop-filter: blur(8px);
+  box-shadow: 0 -4px 24px rgba(200, 140, 180, 0.1);
 }
 
 .score-mode-toolbar__side {
@@ -69,20 +70,20 @@ function switchMode() {
   justify-content: center;
   gap: 6px;
   padding: 8px 18px;
-  border: 1px solid rgba(64, 158, 255, 0.35);
+  border: 1px solid rgba(201, 184, 255, 0.55);
   border-radius: 999px;
-  background: rgba(64, 158, 255, 0.08);
-  color: #409eff;
+  background: linear-gradient(90deg, rgba(255, 184, 208, 0.35), rgba(201, 184, 255, 0.35));
+  color: #5c4a6a;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   transition:
-    background 0.15s ease,
-    transform 0.15s ease;
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
 .score-mode-toolbar__switch:hover {
-  background: rgba(64, 158, 255, 0.16);
   transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(200, 140, 180, 0.2);
 }
 </style>

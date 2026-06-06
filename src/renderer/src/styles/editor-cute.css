@@ -1,0 +1,76 @@
+.editor-cute {
+  --ec-pink: #ffb8d0;
+  --ec-pink-deep: #ff8fb8;
+  --ec-lavender: #c9b8ff;
+  --ec-sky: #b8e4ff;
+  --ec-mint: #c8f0d0;
+  --ec-text: #5c4a6a;
+  --ec-text-soft: #9a8aa8;
+  --ec-card: rgba(255, 255, 255, 0.9);
+  --ec-shadow: 0 8px 24px rgba(200, 140, 180, 0.14);
+  --ec-radius: 16px;
+  --ec-toolbar-h: 52px;
+  --ec-bottom-bar-h: 56px;
+
+  color: var(--ec-text);
+  background: linear-gradient(145deg, #fff5f9 0%, #f3ebff 42%, #e8f4ff 100%);
+}
+
+.editor-cute .measure-props__label,
+.editor-cute .note-head-props__label,
+.editor-cute .volta-props__label,
+.editor-cute .add-note-state__label {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ec-text-soft);
+  letter-spacing: 0.02em;
+}
+
+.editor-cute .measure-props__section,
+.editor-cute .note-head-props__section,
+.editor-cute .volta-props__section {
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.85);
+}
+
+.editor-cute .el-button {
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.editor-cute .el-button--primary {
+  --el-button-bg-color: #ff8fb8;
+  --el-button-border-color: #ff8fb8;
+  --el-button-hover-bg-color: #ff7aab;
+  --el-button-hover-border-color: #ff7aab;
+  --el-button-active-bg-color: #f06a9a;
+  --el-button-active-border-color: #f06a9a;
+}
+
+.editor-cute .el-radio-button__inner {
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 184, 208, 0.45) !important;
+  background: rgba(255, 255, 255, 0.75) !important;
+  color: var(--ec-text) !important;
+  box-shadow: none !important;
+  padding: 6px 12px !important;
+}
+
+.editor-cute .el-radio-button:first-child .el-radio-button__inner {
+  border-left: 1px solid rgba(255, 184, 208, 0.45) !important;
+}
+
+.editor-cute .el-radio-button__original-radio:checked + .el-radio-button__inner {
+  background: linear-gradient(90deg, var(--ec-pink-deep), var(--ec-lavender)) !important;
+  border-color: transparent !important;
+  color: #fff !important;
+}
+
+.editor-cute .el-input__wrapper,
+.editor-cute .el-select__wrapper {
+  border-radius: 12px !important;
+  box-shadow: 0 0 0 1px rgba(255, 184, 208, 0.35) inset !important;
+}
