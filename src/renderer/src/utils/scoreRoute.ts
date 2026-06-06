@@ -4,13 +4,11 @@ import { ElMessage } from 'element-plus'
 import emptyTemplate from '@renderer/template/empty'
 import singleVoiceTemplate from '@renderer/template/singleVoice'
 import doubleVoiceTemplate from '@renderer/template/doubleVoice'
+import { EDIT_NEW_SCORE_TEMP_ID } from '@renderer/constant'
 import { useDataStore } from '@renderer/store/data.store'
 import { loadScoreFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper'
 
 export type ScoreTemplateKey = 'empty' | 'singleVoice' | 'DoubleVoice'
-
-/** 从曲谱制作进入、未保存到数据库前的临时曲谱键 */
-export const EDIT_NEW_SCORE_TEMP_ID = 'editNewScore'
 
 const TEMPLATE_LOADERS: Record<ScoreTemplateKey, () => MusicScore> = {
   empty: () => JSON.parse(JSON.stringify(emptyTemplate)) as MusicScore,
@@ -77,9 +75,6 @@ export async function loadScoreFromRoute(
   return null
 }
 
-/**
- * 切换 播放/编辑 模式时调用此函数构建路由
- */
 export function buildScoreRouteQuery(route: RouteLocationNormalizedLoaded): Record<string, string> {
   const scoreId = resolveScoreId(route.query.scoreId)
   if (scoreId) {
@@ -90,7 +85,7 @@ export function buildScoreRouteQuery(route: RouteLocationNormalizedLoaded): Reco
   if (tempId) {
     return { tempId }
   }
-  // 切换模式时如果有template说明是从首页进入编辑器，加上tempId从dataScore中获取存储的临时数据
+  // 如果template有值
   if (hasTemplateQuery(route)) {
     return { tempId: EDIT_NEW_SCORE_TEMP_ID }
   }
