@@ -21,9 +21,19 @@ onMounted(async () => {
 <template>
   <div class="score-page">
     <div class="score-page__main">
-      <musicScoreVue class="score-page__svg" :data="musicScoreData" skin-name="default">
+      <musicScoreVue
+        class="score-page__svg"
+        :data="musicScoreData"
+        :slot-config="SCORE_SLOT_CONFIG"
+        skin-name="default"
+      >
         <template #t="{ node }">
-          <TitleSlot mode="show" :music-score="musicScoreData" :node="node" />
+          <TitleSlot
+            mode="show"
+            :music-score="musicScoreData"
+            :node="node"
+            :slot-config="SCORE_SLOT_CONFIG"
+          />
         </template>
       </musicScoreVue>
     </div>

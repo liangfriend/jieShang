@@ -126,7 +126,6 @@ function onKeyDown(event: KeyboardEvent) {
 }
 
 onMounted(async () => {
-  console.log('chicken')
   window.addEventListener('keydown', onKeyDown)
   const loaded = await loadScoreFromRoute(route)
   if (loaded) {
@@ -181,7 +180,12 @@ onBeforeUnmount(() => {
             @top-up="handleTopUp"
           >
             <template #t="{ node }">
-              <TitleSlot mode="edit" :music-score="musicScoreData" :node="node" />
+              <TitleSlot
+                mode="edit"
+                :music-score="musicScoreData"
+                :node="node"
+                :slot-config="SCORE_SLOT_CONFIG"
+              />
             </template>
             <template #g-d="{ node }">
               <AddGrandStaffButton :node="node" />
