@@ -25,7 +25,7 @@ const route = useRoute()
 const router = useRouter()
 const scoreId = computed(() => resolveScoreId(route.query.scoreId))
 
-const musicScoreData = ref(empty)
+const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
 const musicScoreRef = ref<MusicScoreComponentExpose | null>(null)
 const fileBusy = ref(false)
 
@@ -71,7 +71,7 @@ async function handleExportSj() {
   if (fileBusy.value) return
   fileBusy.value = true
   try {
-    const ok = await exportSjToDisk(musicScoreData)
+    const ok = await exportSjToDisk(musicScoreData.value)
     if (ok) ElMessage.success('曲谱已导出')
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '导出失败')
@@ -84,7 +84,7 @@ async function handleSaveScore() {
   if (fileBusy.value) return
   fileBusy.value = true
   try {
-    const saved = await saveScoreToDatabase(musicScoreData, scoreId.value)
+    const saved = await saveScoreToDatabase(musicScoreData.value, scoreId.value)
     if (!scoreId.value) {
       await router.replace({
         name: 'edit',
@@ -126,6 +126,7 @@ function onKeyDown(event: KeyboardEvent) {
 }
 
 onMounted(async () => {
+  console.log('chicken')
   window.addEventListener('keydown', onKeyDown)
   const loaded = await loadScoreFromRoute(route)
   if (loaded) {
@@ -164,66 +165,66 @@ onBeforeUnmount(() => {
     <div class="editor-body">
       <div ref="scoreRootRef" class="score-page__main">
         <div class="score-page__stack">
-        <musicScoreVue
-          ref="musicScoreRef"
-          class="score-page__svg"
-          :data="musicScoreData"
-          :slot-config="SCORE_SLOT_CONFIG"
-          skin-name="default"
-          @renderMusicScore="handleRenderMusicScore"
-          @dr-click="handleDrClick"
-          @dr-down="handleDrDown"
-          @dr-enter="handleDrEnter"
-          @dr-leave="handleDrLeave"
-          @dr-up="handleDrUp"
-          @top-move="handleTopMove"
-          @top-up="handleTopUp"
-        >
-          <template #t="{ node }">
-            <TitleSlot mode="edit" :music-score="musicScoreData" :node="node" />
-          </template>
-          <template #g-d="{ node }">
-            <AddGrandStaffButton :node="node" />
-          </template>
-          <template #s-d="{ node }">
-            <EditSlotSdButtons :node="node" />
-          </template>
-          <template #m="{ node }">
-            <rect
-              v-if="selectedItem?.measure?.id === node.slotData?.measure?.id"
-              class="measure-selection-frame dr-selected-highlight"
-              :height="node.h"
-              :width="node.w"
-              fill="white"
-              fill-opacity="0.01"
-              pointer-events="none"
+          <musicScoreVue
+            ref="musicScoreRef"
+            class="score-page__svg"
+            :data="musicScoreData"
+            :slot-config="SCORE_SLOT_CONFIG"
+            skin-name="default"
+            @renderMusicScore="handleRenderMusicScore"
+            @dr-click="handleDrClick"
+            @dr-down="handleDrDown"
+            @dr-enter="handleDrEnter"
+            @dr-leave="handleDrLeave"
+            @dr-up="handleDrUp"
+            @top-move="handleTopMove"
+            @top-up="handleTopUp"
+          >
+            <template #t="{ node }">
+              <TitleSlot mode="edit" :music-score="musicScoreData" :node="node" />
+            </template>
+            <template #g-d="{ node }">
+              <AddGrandStaffButton :node="node" />
+            </template>
+            <template #s-d="{ node }">
+              <EditSlotSdButtons :node="node" />
+            </template>
+            <template #m="{ node }">
+              <rect
+                v-if="selectedItem?.measure?.id === node.slotData?.measure?.id"
+                class="measure-selection-frame dr-selected-highlight"
+                :height="node.h"
+                :width="node.w"
+                fill="white"
+                fill-opacity="0.01"
+                pointer-events="none"
+              />
+              <GhostNotePreview
+                :measure-id="selectedItem?.measure?.id"
+                :node="node"
+                :preview="activeGhostPreview"
+              />
+            </template>
+          </musicScoreVue>
+          <svg
+            v-if="slurHandlePoints || voltaHandlePoints"
+            class="score-page__affiliated-drag-layer"
+            :height="musicScoreData.height"
+            :viewBox="`0 0 ${musicScoreData.width} ${musicScoreData.height}`"
+            :width="musicScoreData.width"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <SlurDragHandles
+              v-if="slurHandlePoints"
+              :handles="slurHandlePoints"
+              @handle-down="handleSlurHandleDown"
             />
-            <GhostNotePreview
-              :measure-id="selectedItem?.measure?.id"
-              :node="node"
-              :preview="activeGhostPreview"
+            <VoltaDragHandles
+              v-if="voltaHandlePoints"
+              :handles="voltaHandlePoints"
+              @handle-down="handleVoltaHandleDown"
             />
-          </template>
-        </musicScoreVue>
-        <svg
-          v-if="slurHandlePoints || voltaHandlePoints"
-          class="score-page__affiliated-drag-layer"
-          :height="musicScoreData.height"
-          :viewBox="`0 0 ${musicScoreData.width} ${musicScoreData.height}`"
-          :width="musicScoreData.width"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <SlurDragHandles
-            v-if="slurHandlePoints"
-            :handles="slurHandlePoints"
-            @handle-down="handleSlurHandleDown"
-          />
-          <VoltaDragHandles
-            v-if="voltaHandlePoints"
-            :handles="voltaHandlePoints"
-            @handle-down="handleVoltaHandleDown"
-          />
-        </svg>
+          </svg>
         </div>
       </div>
 

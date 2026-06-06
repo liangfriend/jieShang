@@ -29,22 +29,21 @@ export function resolveTemplateKey(raw: unknown): ScoreTemplateKey {
   return 'empty'
 }
 
-export function loadScoreTemplate(template: ScoreTemplateKey): MusicScore {
-  return TEMPLATE_LOADERS[template]()
-}
-// TODO 这里还要判断route.template
 export async function loadScoreFromRoute(
   route: RouteLocationNormalizedLoaded
 ): Promise<MusicScore | null> {
   const scoreId = resolveScoreId(route.query.scoreId)
-  if (!scoreId) return null
-
-  const record = await loadScoreFromDatabase(scoreId)
-  if (!record?.data) {
-    ElMessage.error('曲谱加载失败')
-    return null
+  if (scoreId) {
+    const record = await loadScoreFromDatabase(scoreId)
+    if (!record?.data) {
+      ElMessage.error('曲谱加载失败')
+      return null
+    }
+    return parseScoreJson(record.data)
   }
-  return parseScoreJson(record.data)
+
+  const template = resolveTemplateKey(route.query.template)
+  return TEMPLATE_LOADERS[template]()
 }
 
 export function buildScoreRouteQuery(route: RouteLocationNormalizedLoaded): Record<string, string> {

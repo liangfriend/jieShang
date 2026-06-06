@@ -1,4 +1,5 @@
 import type { MusicScore } from 'deciphony-renderer'
+import { toRaw } from 'vue'
 import { readTitleField } from '@renderer/dr-extensions/dr-title/titleFields'
 
 export type SjImportResult = {
@@ -40,7 +41,7 @@ export async function searchScoresFromDatabase(keyword = ''): Promise<ScoreListI
 }
 
 export function serializeScore(musicScore: MusicScore): string {
-  return JSON.stringify(musicScore)
+  return JSON.stringify(toRaw(musicScore))
 }
 
 export function parseScoreJson(raw: string): MusicScore {

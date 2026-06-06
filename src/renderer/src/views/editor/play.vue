@@ -8,7 +8,7 @@ import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRout
 import empty from '@renderer/template/empty'
 
 const route = useRoute()
-const musicScoreData = ref(empty)
+const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
 
 onMounted(async () => {
   const loaded = await loadScoreFromRoute(route)
