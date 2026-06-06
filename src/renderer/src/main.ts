@@ -7,11 +7,14 @@ import './base.css'
 import router from './router'
 import * as ElementPlusIconsVue from '@element-plus/icons-vue'
 import i18n from '@renderer/i18n'
+import { usePlayStore } from '@renderer/store/play.store'
 
 const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia).use(ElementPlus).use(router).use(i18n)
+
+void usePlayStore().init()
 
 for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
   app.component(key, component)

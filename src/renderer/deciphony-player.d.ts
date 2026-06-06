@@ -1,19 +1,47 @@
 declare module 'deciphony-player' {
-  export class AudioPlayer {
-    constructor()
+  export type PlaySequenceItem = {
+    id: string
+    midi: number
+    duration: number
+    playTime: number
+    toneColor: string
+    data?: Record<string, unknown>
+    end?: boolean
+  }
 
-    addAudio(url: string): Promise<void>
+  export type PlaySequence = PlaySequenceItem[]
 
-    play(): void
+  export class NPlayer {
+    constructor(options?: { checkTime?: number; checkDuration?: number })
+
+    addToneColor(name: string, toneColor: unknown): Promise<void>
+
+    setPlaySequence(seq: PlaySequence): void
+
+    play(): Promise<void>
 
     pause(): void
 
     stop(): void
 
-    destroy?(): void
+    dispose(): void
 
-    destory?(): void
+    get volume(): number
+
+    set volume(value: number)
+
+    get bpm(): number
+
+    set bpm(value: number)
+
+    set onProgressStart(cb: (progress: number, data: unknown) => void)
+
+    set onProgressEnd(cb: (progress: number, data: unknown) => void)
+
+    set onEnd(cb: () => void)
   }
 
-  export default AudioPlayer
+  export function activeContext(): Promise<void>
+
+  export function startJPlayer(): void
 }

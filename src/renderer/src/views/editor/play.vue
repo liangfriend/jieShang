@@ -1,20 +1,27 @@
 <script lang="ts" setup>
 import musicScoreVue from 'deciphony-renderer'
-import { onMounted, ref } from 'vue'
+import { onMounted, provide, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
 import { PlayModeToolbar } from '@renderer/components/score-toolbar'
+import { scorePlaybackKey, useScorePlayback } from '@renderer/dr-extensions/dr-play'
+import { usePlayStore } from '@renderer/store/play.store'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
 import empty from '@renderer/template/empty'
 
 const route = useRoute()
+const playStore = usePlayStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
+const playback = useScorePlayback(musicScoreData)
+
+provide(scorePlaybackKey, playback)
 
 onMounted(async () => {
   const loaded = await loadScoreFromRoute(route)
   if (loaded) {
     musicScoreData.value = loaded
   }
+  await playStore.restorePlaybackDefaults(musicScoreData.value)
 })
 </script>
 

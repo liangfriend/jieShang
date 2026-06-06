@@ -4,7 +4,8 @@ import vue from '@vitejs/plugin-vue'
 import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 const rendererSrc = path.resolve(__dirname, '../deciphony/packages/deciphony-renderer/src')
-console.log('chicken', path.resolve(rendererSrc, 'index.ts'))
+const playerSrc = path.resolve(__dirname, '../deciphony/packages/deciphony-player/src')
+console.log('chicken', path.resolve(playerSrc, 'index.ts'))
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()]
@@ -17,7 +18,7 @@ export default defineConfig({
       alias: {
         '@renderer': resolve('src/renderer/src'),
         'deciphony-renderer': path.resolve(rendererSrc, 'index.ts'),
-        'deciphony-player': path.resolve(__dirname, '../deciphony-player/src/index.ts'),
+        'deciphony-player': path.resolve(playerSrc, 'index.ts'),
         // 'j-player': path.resolve(__dirname, '../j-player/src/index.ts'),
         // 'deciphony-ui': path.resolve(__dirname, '../deciphony-ui/src/index.ts'),
         // '@assets': path.resolve(__dirname, '../deciphony-ui/src/assets'),

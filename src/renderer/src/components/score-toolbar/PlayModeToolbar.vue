@@ -1,45 +1,77 @@
 <script setup lang="ts">
 import { EditPen, VideoPause, VideoPlay } from '@element-plus/icons-vue'
-import { computed, ref } from 'vue'
+import { storeToRefs } from 'pinia'
+import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BackButton from '@renderer/components/BackButton.vue'
+import VerticalDragSlider from '@renderer/components/VerticalDragSlider.vue'
+import { scorePlaybackKey } from '@renderer/dr-extensions/dr-play'
+import {
+  PLAY_BPM_MAX,
+  PLAY_BPM_MIN,
+  PLAY_VOLUME_MAX,
+  PLAY_VOLUME_MIN
+} from '@renderer/constant/play'
+import { usePlayStore } from '@renderer/store/play.store'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
 import { buildScoreRouteQuery } from '@renderer/utils/scoreRoute'
 
-type PlaybackState = 'idle' | 'playing' | 'paused'
-
 const route = useRoute()
 const router = useRouter()
-const playbackState = ref<PlaybackState>('idle')
+const playback = inject(scorePlaybackKey)
+const playStore = usePlayStore()
+const { volume, bpm } = storeToRefs(playStore)
 
-const playDisabled = computed(() => playbackState.value === 'playing')
-const pauseDisabled = computed(() => playbackState.value !== 'playing')
-const stopDisabled = computed(() => playbackState.value === 'idle')
+if (!playback) {
+  throw new Error('PlayModeToolbar requires scorePlayback from play.vue')
+}
+
+const { playDisabled, pauseDisabled, stopDisabled, handlePlay, handlePause, handleStop } = playback
+
+const activePanel = ref<'volume' | 'bpm' | null>(null)
+
+const volumeLabel = computed(() => `${Math.round(volume.value * 100)}%`)
+const bpmLabel = computed(() => `${Math.round(bpm.value)}`)
+
+function togglePanel(panel: 'volume' | 'bpm') {
+  activePanel.value = activePanel.value === panel ? null : panel
+}
+
+function formatVolume(value: number) {
+  return `${Math.round(value * 100)}%`
+}
+
+function formatBpm(value: number) {
+  return `${Math.round(value)}`
+}
+
+function onDocumentPointerDown(event: PointerEvent) {
+  const target = event.target as HTMLElement
+  if (!target.closest('.score-toolbar__adjuster')) {
+    activePanel.value = null
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('pointerdown', onDocumentPointerDown)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('pointerdown', onDocumentPointerDown)
+})
 
 function switchToEdit() {
+  handleStop()
+  activePanel.value = null
   router.replace({
     name: 'edit',
     query: buildScoreRouteQuery(route)
   })
 }
 
-function handlePlay() {
-  if (playbackState.value === 'idle' || playbackState.value === 'paused') {
-    playbackState.value = 'playing'
-  }
-}
-
-function handlePause() {
-  if (playbackState.value === 'playing') {
-    playbackState.value = 'paused'
-  }
-}
-
-function handleStop() {
-  playbackState.value = 'idle'
-}
-
 function goPractice() {
+  handleStop()
+  activePanel.value = null
   router.push({
     name: 'practice',
     query: buildScoreRouteQuery(route)
@@ -47,6 +79,8 @@ function goPractice() {
 }
 
 function goForBeginner() {
+  handleStop()
+  activePanel.value = null
   router.push({
     name: 'forBeginner',
     query: buildScoreRouteQuery(route)
@@ -81,6 +115,38 @@ function goForBeginner() {
         <span class="score-toolbar__stop-icon" aria-hidden="true" />
         <span>停止</span>
       </button>
+      <div class="score-toolbar__adjuster">
+        <button type="button" class="score-toolbar__btn" @click="togglePanel('volume')">
+          音量 {{ volumeLabel }}
+        </button>
+        <div v-if="activePanel === 'volume'" class="score-toolbar__popup" @pointerdown.stop>
+          <VerticalDragSlider
+            :format="formatVolume"
+            label="音量"
+            :max="PLAY_VOLUME_MAX"
+            :min="PLAY_VOLUME_MIN"
+            :model-value="volume"
+            :step="0.01"
+            @update:model-value="playStore.setVolume"
+          />
+        </div>
+      </div>
+      <div class="score-toolbar__adjuster">
+        <button type="button" class="score-toolbar__btn" @click="togglePanel('bpm')">
+          BPM {{ bpmLabel }}
+        </button>
+        <div v-if="activePanel === 'bpm'" class="score-toolbar__popup" @pointerdown.stop>
+          <VerticalDragSlider
+            :format="formatBpm"
+            label="BPM"
+            :max="PLAY_BPM_MAX"
+            :min="PLAY_BPM_MIN"
+            :model-value="bpm"
+            :step="1"
+            @update:model-value="playStore.setBpm"
+          />
+        </div>
+      </div>
       <button type="button" class="score-toolbar__btn" @click="goPractice">
         <span>练习模式</span>
       </button>
@@ -97,5 +163,22 @@ function goForBeginner() {
   height: 10px;
   border-radius: 2px;
   background: currentColor;
+}
+
+.score-toolbar__adjuster {
+  position: relative;
+}
+
+.score-toolbar__popup {
+  position: absolute;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  z-index: 40;
+  padding: 12px 14px;
+  border: 1px solid rgba(201, 184, 255, 0.55);
+  border-radius: 14px;
+  background: rgba(255, 248, 251, 0.98);
+  box-shadow: 0 8px 28px rgba(200, 140, 180, 0.22);
+  transform: translateX(-50%);
 }
 </style>
