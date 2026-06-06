@@ -2,14 +2,16 @@ import type { MusicScore } from 'deciphony-renderer'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import emptyTemplate from '@renderer/template/empty'
+import singleVoiceTemplate from '@renderer/template/singleVoice'
+import doubleVoiceTemplate from '@renderer/template/doubleVoice'
 import { loadScoreFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper'
 
 export type ScoreTemplateKey = 'empty' | 'singleVoice' | 'DoubleVoice'
 
 const TEMPLATE_LOADERS: Record<ScoreTemplateKey, () => MusicScore> = {
   empty: () => JSON.parse(JSON.stringify(emptyTemplate)) as MusicScore,
-  singleVoice: () => JSON.parse(JSON.stringify(emptyTemplate)) as MusicScore,
-  DoubleVoice: () => JSON.parse(JSON.stringify(emptyTemplate)) as MusicScore
+  singleVoice: () => JSON.parse(JSON.stringify(singleVoiceTemplate)) as MusicScore,
+  DoubleVoice: () => JSON.parse(JSON.stringify(doubleVoiceTemplate)) as MusicScore
 }
 
 export const HOME_TEMPLATE_TO_ROUTE: Record<string, ScoreTemplateKey> = {
