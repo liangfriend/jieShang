@@ -18,6 +18,8 @@ import { TitleSlot } from '@renderer/dr-extensions/dr-title'
 import { exportSjToDisk, importSjFromDisk, saveScoreToDatabase } from '@renderer/utils/fileHelper'
 import { EditModeToolbar } from '@renderer/components/score-toolbar'
 import { loadScoreFromRoute, resolveScoreId, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
+import { CUR_PLAY_SCORE_TEMP_ID } from '@renderer/constant'
+import { useDataStore } from '@renderer/store/data.store'
 import '@renderer/styles/editor-cute.css'
 import empty from '@renderer/template/empty'
 
@@ -85,10 +87,15 @@ async function handleSaveScore() {
   fileBusy.value = true
   try {
     const saved = await saveScoreToDatabase(musicScoreData.value, scoreId.value)
+    const dataStore = useDataStore()
+    dataStore.setTempScore(CUR_PLAY_SCORE_TEMP_ID, musicScoreData.value)
     if (!scoreId.value) {
       await router.replace({
         name: 'edit',
-        query: { scoreId: String(saved.id) }
+        query: {
+          scoreId: String(saved.id),
+          tempId: CUR_PLAY_SCORE_TEMP_ID
+        }
       })
     }
     ElMessage.success('曲谱已保存')

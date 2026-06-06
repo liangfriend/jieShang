@@ -6,7 +6,22 @@ import singleVoiceTemplate from '@renderer/template/singleVoice'
 import doubleVoiceTemplate from '@renderer/template/doubleVoice'
 import { useDataStore } from '@renderer/store/data.store'
 import { loadScoreFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper'
-import { EDIT_NEW_SCORE_TEMP_ID } from '@renderer/constant'
+import { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from '@renderer/constant'
+
+/**
+ * 曲谱页路由 query 规则（edit / play 模式切换与加载）
+ *
+ * | 当前 query | 模式切换后 query（buildScoreRouteQuery） | 保存行为 |
+ * |------------|------------------------------------------|----------|
+ * | template   | tempId=editNewScore（去掉 template）     | 新增曲谱 |
+ * | scoreId    | scoreId + tempId=curPlayScore            | 更新已有 |
+ * | tempId     | 保留 tempId                              | 新增曲谱 |
+ * | scoreId + tempId | 保留 scoreId + tempId              | 更新已有 |
+ *
+ * 加载优先级（loadScoreFromRoute）：tempId 缓存 > scoreId 查库 > template 模版。
+ * 同时有 scoreId 与 tempId 时优先用 tempId 对应缓存；查库结果写入 curPlayScore。
+ * tempId 常量见 @renderer/constant/score.ts（editNewScore / curPlayScore）。
+ */
 
 export type ScoreTemplateKey = 'empty' | 'singleVoice' | 'DoubleVoice'
 
@@ -44,6 +59,7 @@ function hasTemplateQuery(route: RouteLocationNormalizedLoaded): boolean {
   return true
 }
 
+/** 按路由 query 加载曲谱，见文件顶部路由规则表 */
 export async function loadScoreFromRoute(
   route: RouteLocationNormalizedLoaded
 ): Promise<MusicScore | null> {
@@ -62,7 +78,9 @@ export async function loadScoreFromRoute(
       ElMessage.error('曲谱加载失败')
       return null
     }
-    return parseScoreJson(record.data)
+    const score = parseScoreJson(record.data)
+    dataStore.setTempScore(CUR_PLAY_SCORE_TEMP_ID, score)
+    return dataStore.getTempScore(CUR_PLAY_SCORE_TEMP_ID) ?? score
   }
 
   if (hasTemplateQuery(route)) {
@@ -75,17 +93,21 @@ export async function loadScoreFromRoute(
   return null
 }
 
+/** 编辑/播放模式切换时构造下一页 query，见文件顶部路由规则表 */
 export function buildScoreRouteQuery(route: RouteLocationNormalizedLoaded): Record<string, string> {
   const scoreId = resolveScoreId(route.query.scoreId)
   if (scoreId) {
-    return { scoreId }
+    return {
+      scoreId,
+      tempId: resolveTempId(route.query.tempId) ?? CUR_PLAY_SCORE_TEMP_ID
+    }
   }
 
   const tempId = resolveTempId(route.query.tempId)
   if (tempId) {
     return { tempId }
   }
-  // 如果template有值
+
   if (hasTemplateQuery(route)) {
     return { tempId: EDIT_NEW_SCORE_TEMP_ID }
   }
