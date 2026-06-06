@@ -20,6 +20,18 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '曲谱播放' }
   },
   {
+    path: '/practice',
+    name: 'practice',
+    component: () => import('./views/editor/practice.vue'),
+    meta: { title: '练习模式' }
+  },
+  {
+    path: '/for-beginner',
+    name: 'forBeginner',
+    component: () => import('./views/editor/forBeginner.vue'),
+    meta: { title: '新手模式' }
+  },
+  {
     path: '/scores',
     name: 'scores',
     component: () => import('./views/ScoreListView.vue'),

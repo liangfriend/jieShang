@@ -4,9 +4,9 @@ import { ElMessage } from 'element-plus'
 import emptyTemplate from '@renderer/template/empty'
 import singleVoiceTemplate from '@renderer/template/singleVoice'
 import doubleVoiceTemplate from '@renderer/template/doubleVoice'
-import { EDIT_NEW_SCORE_TEMP_ID } from '@renderer/constant'
 import { useDataStore } from '@renderer/store/data.store'
 import { loadScoreFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper'
+import { EDIT_NEW_SCORE_TEMP_ID } from '@renderer/constant'
 
 export type ScoreTemplateKey = 'empty' | 'singleVoice' | 'DoubleVoice'
 

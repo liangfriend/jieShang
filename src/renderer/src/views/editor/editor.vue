@@ -16,7 +16,7 @@ import {
 } from '@renderer/utils/editHelper'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
 import { exportSjToDisk, importSjFromDisk, saveScoreToDatabase } from '@renderer/utils/fileHelper'
-import ScoreModeToolbar from '@renderer/components/ScoreModeToolbar.vue'
+import { EditModeToolbar } from '@renderer/components/score-toolbar'
 import { loadScoreFromRoute, resolveScoreId, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
 import '@renderer/styles/editor-cute.css'
 import empty from '@renderer/template/empty'
@@ -235,7 +235,7 @@ onBeforeUnmount(() => {
       <PropertyPanel :kind="propertyPanelKind" :selected="selectedItem" />
     </div>
 
-    <ScoreModeToolbar mode="edit" />
+    <EditModeToolbar />
   </div>
 </template>
 

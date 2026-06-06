@@ -3,7 +3,7 @@ import musicScoreVue from 'deciphony-renderer'
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
-import ScoreModeToolbar from '@renderer/components/ScoreModeToolbar.vue'
+import { PlayModeToolbar } from '@renderer/components/score-toolbar'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
 import empty from '@renderer/template/empty'
 
@@ -37,7 +37,7 @@ onMounted(async () => {
         </template>
       </musicScoreVue>
     </div>
-    <ScoreModeToolbar mode="play" />
+    <PlayModeToolbar />
   </div>
 </template>
 
@@ -46,7 +46,7 @@ onMounted(async () => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-bottom: 64px;
+  padding-bottom: 72px;
   box-sizing: border-box;
 }
 
