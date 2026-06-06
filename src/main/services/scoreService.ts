@@ -33,7 +33,7 @@ export class ScoreService {
   }
 
   async listScores() {
-    const data = await this.scoreRepository.query({})
+    const data = await this.scoreRepository.listSummaries()
     return { success: true, data }
   }
 

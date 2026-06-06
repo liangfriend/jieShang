@@ -73,5 +73,20 @@ export const migrations: Migrations[] = [
         await sequelize.query('ALTER TABLE work RENAME TO courseware')
       }
     }
+  },
+  {
+    id: '004-score-thumbnail',
+    async up() {
+      const table = await sequelize.getQueryInterface().describeTable('score')
+      if (!table.thumbnail) {
+        await sequelize.query('ALTER TABLE score ADD COLUMN thumbnail TEXT')
+      }
+    },
+    async down() {
+      const table = await sequelize.getQueryInterface().describeTable('score')
+      if (table.thumbnail) {
+        await sequelize.query('ALTER TABLE score DROP COLUMN thumbnail')
+      }
+    }
   }
 ]

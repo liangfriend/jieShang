@@ -11,9 +11,19 @@ declare global {
         list(): Promise<any>
       }
       file: {
-        upload(buffer: any, name: any, type: any): Promise<any>
+        upload(buffer: any, originalName: string, type: string, displayName: string): Promise<any>
         delete(id: any): Promise<any>
         query(query: any): Promise<any>
+        importSj(): Promise<{
+          canceled: boolean
+          filePath?: string
+          fileName?: string
+          content?: string
+        }>
+        exportSj(
+          content: string,
+          defaultName?: string
+        ): Promise<{ canceled: boolean; filePath?: string }>
       }
       resource: {
         create(payload: any): Promise<any>

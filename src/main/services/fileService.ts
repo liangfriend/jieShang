@@ -1,8 +1,11 @@
 // src/main/services/fileService.ts
 import fs from 'fs'
 import path from 'path'
+import { BrowserWindow, dialog } from 'electron'
 import pathManager from '../utils/pathManager'
 import { ResourceService } from './resourceService'
+
+const SJ_FILTER = [{ name: 'SJ 曲谱', extensions: ['sj'] }] as const
 
 export class FileService {
   private resourceService: ResourceService
@@ -86,5 +89,51 @@ export class FileService {
   async updateResource(id: number, data: any) {
     const res = await this.resourceService.updateResource(String(id), data)
     return { success: true, data: res }
+  }
+
+  /** 通过系统对话框导入 .sj 曲谱文件 */
+  async importSj(window?: BrowserWindow | null) {
+    const parent = window ?? BrowserWindow.getFocusedWindow() ?? undefined
+    const { canceled, filePaths } = await dialog.showOpenDialog(parent, {
+      title: '导入 SJ 曲谱',
+      filters: [...SJ_FILTER],
+      properties: ['openFile']
+    })
+
+    if (canceled || !filePaths[0]) {
+      return { canceled: true as const }
+    }
+
+    const filePath = filePaths[0]
+    const content = fs.readFileSync(filePath, 'utf-8')
+
+    return {
+      canceled: false as const,
+      filePath,
+      fileName: path.basename(filePath),
+      content
+    }
+  }
+
+  /** 通过系统对话框导出 .sj 曲谱文件 */
+  async exportSj(content: string, defaultName = '未命名曲谱', window?: BrowserWindow | null) {
+    const parent = window ?? BrowserWindow.getFocusedWindow() ?? undefined
+    const safeName = defaultName.replace(/[<>:"/\\|?*]/g, '_').trim() || '未命名曲谱'
+    const { canceled, filePath } = await dialog.showSaveDialog(parent, {
+      title: '导出 SJ 曲谱',
+      defaultPath: `${safeName}.sj`,
+      filters: [...SJ_FILTER]
+    })
+
+    if (canceled || !filePath) {
+      return { canceled: true as const }
+    }
+
+    fs.writeFileSync(filePath, content, 'utf-8')
+
+    return {
+      canceled: false as const,
+      filePath
+    }
   }
 }

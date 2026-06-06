@@ -1,4 +1,4 @@
-import { ipcMain } from 'electron'
+import { BrowserWindow, ipcMain } from 'electron'
 
 export class FileController {
   private fileService
@@ -25,6 +25,16 @@ export class FileController {
 
     ipcMain.handle('file:query', (_, query) => {
       return this.fileService.queryResources(query)
+    })
+
+    ipcMain.handle('file:importSj', (event) => {
+      const window = BrowserWindow.fromWebContents(event.sender)
+      return this.fileService.importSj(window)
+    })
+
+    ipcMain.handle('file:exportSj', (event, content: string, defaultName?: string) => {
+      const window = BrowserWindow.fromWebContents(event.sender)
+      return this.fileService.exportSj(content, defaultName, window)
     })
   }
 }

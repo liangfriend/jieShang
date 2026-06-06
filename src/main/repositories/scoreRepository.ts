@@ -1,6 +1,8 @@
 import ScoreModel from '../models/ScoreModel'
 import { Op } from 'sequelize'
 
+const SCORE_LIST_ATTRIBUTES = ['id', 'name', 'thumbnail', 'created_at', 'updated_at'] as const
+
 export class ScoreRepository {
   async create(payload: { name: string; data?: string }) {
     const result = await ScoreModel.create({
@@ -38,9 +40,23 @@ export class ScoreRepository {
     return result.map((item) => item.toJSON())
   }
 
-  async searchByName(keyword: string) {
+  async listSummaries() {
     const result = await ScoreModel.findAll({
-      where: { name: { [Op.like]: `%${keyword}%` } },
+      attributes: [...SCORE_LIST_ATTRIBUTES],
+      order: [['updated_at', 'DESC']]
+    })
+    return result.map((item) => item.toJSON())
+  }
+
+  async searchByName(keyword: string) {
+    const trimmed = keyword.trim()
+    if (!trimmed) {
+      return this.listSummaries()
+    }
+
+    const result = await ScoreModel.findAll({
+      attributes: [...SCORE_LIST_ATTRIBUTES],
+      where: { name: { [Op.like]: `%${trimmed}%` } },
       order: [['updated_at', 'DESC']]
     })
     return result.map((item) => item.toJSON())

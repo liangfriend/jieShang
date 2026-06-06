@@ -7,13 +7,15 @@ export interface ScoreAttributes {
   name: string
   /** 曲谱渲染插件产出的 JSON 字符串 */
   data: string
+  /** 曲谱缩略图（预留，列表卡片展示用） */
+  thumbnail?: string | null
   created_at?: Date
   updated_at?: Date
   deleted_at?: Date | null
 }
 
 export interface ScoreCreationAttributes
-  extends Optional<ScoreAttributes, 'id' | 'created_at' | 'updated_at' | 'deleted_at'> {}
+  extends Optional<ScoreAttributes, 'id' | 'thumbnail' | 'created_at' | 'updated_at' | 'deleted_at'> {}
 
 export class ScoreModel
   extends Model<ScoreAttributes, ScoreCreationAttributes>
@@ -22,6 +24,7 @@ export class ScoreModel
   declare id: number
   declare name: string
   declare data: string
+  declare thumbnail: string | null
   declare created_at: Date
   declare updated_at: Date
   declare deleted_at: Date | null
@@ -42,6 +45,10 @@ ScoreModel.init(
       type: DataTypes.TEXT,
       allowNull: false,
       defaultValue: '{}'
+    },
+    thumbnail: {
+      type: DataTypes.TEXT,
+      allowNull: true
     },
     created_at: {
       type: DataTypes.DATE,

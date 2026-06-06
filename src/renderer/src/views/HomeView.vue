@@ -1,561 +1,673 @@
 <script setup lang="ts">
-import {
-  Bell,
-  Calendar,
-  Collection,
-  Document,
-  EditPen,
-  FolderOpened,
-  Message,
-  Notebook,
-  Promotion,
-  Reading,
-  Right,
-  Setting,
-  VideoPlay
-} from '@element-plus/icons-vue'
+import { ref } from 'vue'
+import { useRouter } from 'vue-router'
+import { Document, EditPen, Reading, VideoPlay } from '@element-plus/icons-vue'
 
-const theoryProgress = 860
-const theoryMax = 1200
-const theoryPercent = Math.round((theoryProgress / theoryMax) * 100)
+const router = useRouter()
+const storyVisible = ref(false)
+const templateVisible = ref(false)
 
-const featureCards = [
-  {
-    key: 'work-create',
-    title: '作品制作',
-    desc: '在曲谱上叠加画笔、媒体与音频',
-    icon: Notebook
-  },
-  {
-    key: 'score-create',
-    title: '曲谱制作',
-    desc: '创作、编辑你的乐谱',
-    icon: EditPen
-  },
-  {
-    key: 'collection',
-    title: '藏品',
-    desc: '收集乐谱、角色与纪念品',
-    icon: Collection
-  },
-  {
-    key: 'score-list',
-    title: '我的曲谱',
-    desc: '管理和查看你的作品',
-    icon: Document
-  },
-  {
-    key: 'work-list',
-    title: '我的作品',
-    desc: '管理和查看你的作品',
-    icon: FolderOpened
-  },
-  {
-    key: 'online',
-    title: '在线作品',
-    desc: '浏览和分享优秀作品',
-    icon: Promotion
-  }
+const mockScripts = [
+  { id: 1, title: '初遇之章', color: '#ffd6e8' },
+  { id: 2, title: '和声之城', color: '#e8d5ff' },
+  { id: 3, title: '晚风与旧歌', color: '#d4f0ff' },
+  { id: 4, title: '星轨序曲', color: '#fff0c9' }
 ]
 
-function onCardClick(key: string) {
-  console.log('[home] navigate:', key)
+const templates = [
+  { key: 'empty', label: '空', emoji: '✨' },
+  { key: 'single', label: '单声部', emoji: '🎵' },
+  { key: 'double', label: '双声部', emoji: '🎶' }
+]
+
+const hasSave = true
+const saveTitle = '和声之城'
+const saveProgress = 58
+
+import { HOME_TEMPLATE_TO_ROUTE } from '@renderer/utils/scoreRoute'
+
+function onTemplateSelect(key: string) {
+  templateVisible.value = false
+  router.push({
+    name: 'edit',
+    query: { template: HOME_TEMPLATE_TO_ROUTE[key] ?? 'empty' }
+  })
+}
+
+function goToScores() {
+  router.push({ name: 'scores' })
 }
 </script>
 
 <template>
   <div class="home">
-    <header class="home-header">
-      <div class="brand">
-        <div class="brand-mark" aria-hidden="true">♪</div>
-        <div>
-          <h1 class="brand-title">谱旅之章</h1>
-          <p class="brand-sub">在旋律中书写你的故事</p>
-        </div>
-      </div>
+    <div class="bg-deco" aria-hidden="true">
+      <span class="float-note n1">♪</span>
+      <span class="float-note n2">♫</span>
+      <span class="float-note n3">♩</span>
+      <span class="bubble b1" />
+      <span class="bubble b2" />
+      <span class="bubble b3" />
+    </div>
 
-      <div class="header-actions">
-        <button type="button" class="icon-btn" aria-label="通知">
-          <el-icon><Bell /></el-icon>
-        </button>
-        <button type="button" class="icon-btn" aria-label="消息">
-          <el-icon><Message /></el-icon>
-        </button>
-        <button type="button" class="icon-btn" aria-label="日历">
-          <el-icon><Calendar /></el-icon>
-        </button>
-        <button type="button" class="icon-btn" aria-label="设置">
-          <el-icon><Setting /></el-icon>
-        </button>
-        <div class="user-pill">
-          <div class="avatar">M</div>
-          <div class="user-meta">
-            <span class="user-name">MelodySeeker</span>
-            <span class="user-level">Lv. 23</span>
-          </div>
+    <header class="home-header">
+      <div class="logo-wrap">
+        <span class="logo-face">♪</span>
+        <div>
+          <h1 class="title">谱旅之章</h1>
+          <p class="subtitle">在旋律里，遇见你的故事</p>
         </div>
       </div>
     </header>
 
     <main class="home-main">
-      <section class="story-column">
-        <article class="panel panel-hero">
-          <div class="panel-icon">
+      <section class="play-zone">
+        <button type="button" class="story-card" @click="storyVisible = true">
+          <span class="card-badge">剧情</span>
+          <div class="story-icon">
             <el-icon><Reading /></el-icon>
           </div>
-          <h2>主线剧情</h2>
-          <p>踏上音乐之旅，揭开世界的真相</p>
-          <button type="button" class="round-btn" aria-label="进入主线">
-            <el-icon><Right /></el-icon>
-          </button>
-        </article>
+          <h2>选择剧本</h2>
+          <p>翻开正方形的小故事，开始一段新的谱旅</p>
+          <span class="card-hint">点击查看全部剧本 →</span>
+        </button>
 
-        <article class="panel">
-          <div class="panel-icon">
+        <button
+          type="button"
+          class="continue-card"
+          :class="{ 'is-empty': !hasSave }"
+          :disabled="!hasSave"
+        >
+          <div class="continue-icon">
             <el-icon><VideoPlay /></el-icon>
           </div>
-          <h2>继续游戏</h2>
-          <p class="muted">回到你的冒险旅程</p>
-          <div class="progress-block">
-            <span>第三章：和声之城</span>
-            <div class="bar-track"><div class="bar-fill" style="width: 58%" /></div>
-            <span class="muted">进度 58%</span>
+          <div class="continue-body">
+            <h2>继续游戏</h2>
+            <template v-if="hasSave">
+              <p class="save-name">{{ saveTitle }}</p>
+              <div class="progress-wrap">
+                <div class="progress-bar">
+                  <div class="progress-fill" :style="{ width: saveProgress + '%' }" />
+                </div>
+                <span class="progress-text">{{ saveProgress }}%</span>
+              </div>
+            </template>
+            <p v-else class="empty-tip">还没有存档哦，先去选个剧本吧～</p>
           </div>
-        </article>
-
-        <article class="panel">
-          <div class="panel-icon">
-            <el-icon><Collection /></el-icon>
-          </div>
-          <h2>DLC</h2>
-          <p class="muted">探索更多音乐与故事</p>
-          <div class="dlc-row">
-            <span>晚风与旧歌</span>
-            <span class="tag tag-new">新内容</span>
-            <span class="tag tag-owned">已拥有</span>
-          </div>
-        </article>
+        </button>
       </section>
 
-      <section class="feature-grid">
-        <button
-          v-for="card in featureCards"
-          :key="card.key"
-          type="button"
-          class="feature-card"
-          @click="onCardClick(card.key)"
-        >
-          <div class="feature-icon">
-            <el-icon><component :is="card.icon" /></el-icon>
-          </div>
-          <h3>{{ card.title }}</h3>
-          <p>{{ card.desc }}</p>
+      <section class="action-row">
+        <button type="button" class="action-btn action-collection">
+          <span class="action-emoji">🎁</span>
+          <span class="action-label">藏品</span>
+        </button>
+
+        <button type="button" class="action-btn action-compose" @click="templateVisible = true">
+          <span class="action-icon"><el-icon><EditPen /></el-icon></span>
+          <span class="action-label">曲谱制作</span>
+        </button>
+
+        <button type="button" class="action-btn action-scores" @click="goToScores">
+          <span class="action-icon"><el-icon><Document /></el-icon></span>
+          <span class="action-label">我的曲谱</span>
         </button>
       </section>
     </main>
 
-    <footer class="home-footer">
-      <div class="tip-box">
-        <span class="tip-label">今日小贴士</span>
-        <p>认识五线谱：每条线与每个间都代表不同的音高哦！</p>
-      </div>
-      <div class="study-box">
-        <div class="study-head">
-          <span>乐理学习进度</span>
-          <span class="study-lv">Lv. 23</span>
-        </div>
-        <div class="study-bar">
-          <div class="bar-track bar-track-wide">
-            <div class="bar-fill" :style="{ width: theoryPercent + '%' }" />
+    <!-- 剧情弹窗 UI -->
+    <el-dialog
+      v-model="storyVisible"
+      title="选择剧本"
+      width="520px"
+      class="cute-dialog"
+      append-to-body
+      align-center
+    >
+      <p class="dialog-desc">悬停剧本卡片，即可看到「开始游戏」</p>
+      <div class="script-grid">
+        <div
+          v-for="script in mockScripts"
+          :key="script.id"
+          class="script-card"
+          :style="{ '--card-tint': script.color }"
+        >
+          <div class="script-cover">
+            <span class="script-emoji">📖</span>
           </div>
-          <span class="study-num">{{ theoryProgress }} / {{ theoryMax }}</span>
+          <div class="script-hover">
+            <span>开始游戏</span>
+          </div>
+          <p class="script-title">{{ script.title }}</p>
         </div>
-        <button type="button" class="study-btn">去学习</button>
       </div>
-    </footer>
+    </el-dialog>
+
+    <!-- 曲谱模版弹窗 UI -->
+    <el-dialog
+      v-model="templateVisible"
+      title="选择模版"
+      width="420px"
+      class="cute-dialog"
+      append-to-body
+      align-center
+    >
+      <p class="dialog-desc">选好模版后，就可以进入曲谱编辑啦</p>
+      <div class="template-list">
+        <button
+          v-for="tpl in templates"
+          :key="tpl.key"
+          type="button"
+          class="template-item"
+          @click="onTemplateSelect(tpl.key)"
+        >
+          <span class="template-emoji">{{ tpl.emoji }}</span>
+          <span>{{ tpl.label }}</span>
+        </button>
+      </div>
+    </el-dialog>
   </div>
 </template>
 
 <style scoped>
 .home {
-  --bg-deep: #2a1f14;
-  --bg-mid: #3d2e1f;
-  --panel: rgba(58, 44, 30, 0.72);
-  --border: rgba(212, 175, 98, 0.45);
-  --gold: #d4af62;
-  --gold-light: #f0d9a0;
-  --text: #f5ead6;
-  --muted: #c4b59a;
+  --cream: #fff8fb;
+  --pink: #ffb8d0;
+  --pink-deep: #ff8fb8;
+  --lavender: #c9b8ff;
+  --sky: #b8e4ff;
+  --text: #5c4a6a;
+  --text-soft: #9a8aa8;
+  --card: rgba(255, 255, 255, 0.82);
+  --shadow: 0 8px 32px rgba(200, 140, 180, 0.18);
 
+  position: relative;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  padding: 20px 28px 16px;
-  color: var(--text);
-  background: linear-gradient(160deg, var(--bg-deep) 0%, var(--bg-mid) 45%, #4a3828 100%);
+  align-items: center;
+  padding: 36px 32px 40px;
   box-sizing: border-box;
-}
-
-.home-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-
-.brand {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-
-.brand-mark {
-  width: 48px;
-  height: 48px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  color: var(--gold-light);
-  background: rgba(0, 0, 0, 0.2);
-}
-
-.brand-title {
-  margin: 0;
-  font-size: 28px;
-  font-weight: 700;
-  letter-spacing: 0.12em;
-  color: var(--gold-light);
-}
-
-.brand-sub {
-  margin: 4px 0 0;
-  font-size: 13px;
-  color: var(--muted);
-}
-
-.header-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.icon-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.15);
-  color: var(--gold-light);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.icon-btn:hover {
-  border-color: var(--gold);
-  color: #fff;
-}
-
-.user-pill {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-left: 8px;
-  padding: 6px 12px 6px 6px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.18);
-}
-
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #8b6914, #d4af62);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 700;
-  font-size: 14px;
-  color: #2a1f14;
-}
-
-.user-meta {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-}
-
-.user-name {
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.user-level {
-  font-size: 11px;
-  color: var(--gold);
-}
-
-.home-main {
-  flex: 1;
-  display: grid;
-  grid-template-columns: minmax(240px, 300px) 1fr;
-  gap: 20px;
-  min-height: 0;
-}
-
-.story-column {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-}
-
-.panel {
-  position: relative;
-  padding: 18px 18px 16px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  backdrop-filter: blur(4px);
-}
-
-.panel-hero {
-  flex: 1;
-  min-height: 140px;
-}
-
-.panel-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  border: 1px solid var(--border);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--gold);
-  font-size: 20px;
-  margin-bottom: 10px;
-}
-
-.panel h2 {
-  margin: 0 0 6px;
-  font-size: 18px;
-  color: var(--gold-light);
-}
-
-.panel p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.muted {
-  color: var(--muted) !important;
-}
-
-.round-btn {
-  position: absolute;
-  right: 16px;
-  bottom: 16px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid var(--gold);
-  background: rgba(212, 175, 98, 0.15);
-  color: var(--gold-light);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.progress-block {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  font-size: 12px;
-}
-
-.bar-track {
-  height: 6px;
-  border-radius: 999px;
-  background: rgba(0, 0, 0, 0.35);
+  color: var(--text);
+  background: linear-gradient(145deg, #fff5f9 0%, #f3ebff 45%, #e8f4ff 100%);
   overflow: hidden;
 }
 
-.bar-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #8b6914, var(--gold-light));
+.bg-deco {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
 }
 
-.dlc-row {
-  margin-top: 12px;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  font-size: 13px;
+.float-note {
+  position: absolute;
+  font-size: 28px;
+  opacity: 0.35;
+  animation: drift 6s ease-in-out infinite;
 }
 
-.tag {
-  font-size: 11px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
+.n1 {
+  top: 12%;
+  left: 8%;
+  color: var(--pink-deep);
 }
 
-.tag-new {
-  color: #ffd89b;
-  border-color: #c9a227;
+.n2 {
+  top: 20%;
+  right: 10%;
+  animation-delay: -2s;
+  color: var(--lavender);
 }
 
-.tag-owned {
-  color: #9fd89f;
-  border-color: #5a8f5a;
+.n3 {
+  bottom: 18%;
+  left: 12%;
+  animation-delay: -4s;
+  color: var(--sky);
 }
 
-.feature-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  grid-template-rows: repeat(2, 1fr);
-  gap: 14px;
+.bubble {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.45);
 }
 
-.feature-card {
+.b1 {
+  width: 120px;
+  height: 120px;
+  top: -30px;
+  right: 15%;
+}
+
+.b2 {
+  width: 80px;
+  height: 80px;
+  bottom: 10%;
+  right: 8%;
+}
+
+.b3 {
+  width: 60px;
+  height: 60px;
+  bottom: 25%;
+  left: 5%;
+}
+
+@keyframes drift {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-5deg);
+  }
+  50% {
+    transform: translateY(-12px) rotate(5deg);
+  }
+}
+
+.home-header {
+  position: relative;
+  z-index: 1;
+  margin-bottom: 36px;
+  text-align: center;
+}
+
+.logo-wrap {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 20px 16px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: var(--panel);
-  color: inherit;
-  cursor: pointer;
-  text-align: center;
-  transition:
-    border-color 0.2s,
-    transform 0.15s;
+  gap: 10px;
 }
 
-.feature-card:hover {
-  border-color: var(--gold);
-  transform: translateY(-2px);
-}
-
-.feature-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
+.logo-face {
+  width: 56px;
+  height: 56px;
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 26px;
-  color: var(--gold);
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--pink) 0%, var(--lavender) 100%);
+  box-shadow: var(--shadow);
+  animation: bounce 3s ease-in-out infinite;
 }
 
-.feature-card h3 {
-  margin: 4px 0 0;
-  font-size: 16px;
-  color: var(--gold-light);
+@keyframes bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
 }
 
-.feature-card p {
+.title {
   margin: 0;
-  font-size: 12px;
-  color: var(--muted);
-  line-height: 1.4;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  background: linear-gradient(90deg, var(--pink-deep), var(--lavender));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
 }
 
-.home-footer {
-  margin-top: 16px;
+.subtitle {
+  margin: 6px 0 0;
+  font-size: 14px;
+  color: var(--text-soft);
+}
+
+.home-main {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 640px;
   display: flex;
-  align-items: stretch;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.play-zone {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
   gap: 16px;
 }
 
-.tip-box {
-  flex: 1;
-  padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.2);
+.story-card,
+.continue-card {
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  background: var(--card);
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
-.tip-label {
+.story-card:hover,
+.continue-card:not(:disabled):hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(200, 140, 180, 0.28);
+}
+
+.story-card {
+  position: relative;
+  padding: 24px 22px;
+  overflow: hidden;
+}
+
+.story-card::before {
+  content: '';
+  position: absolute;
+  top: -40px;
+  right: -40px;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 184, 208, 0.35), rgba(201, 184, 255, 0.25));
+}
+
+.card-badge {
   display: inline-block;
-  font-size: 12px;
-  color: var(--gold);
-  margin-bottom: 4px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(90deg, var(--pink-deep), var(--lavender));
+  margin-bottom: 14px;
 }
 
-.tip-box p {
+.story-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  color: var(--pink-deep);
+  background: rgba(255, 184, 208, 0.25);
+  margin-bottom: 12px;
+}
+
+.story-card h2 {
+  margin: 0 0 8px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.story-card p {
   margin: 0;
   font-size: 13px;
-  color: var(--muted);
+  line-height: 1.6;
+  color: var(--text-soft);
 }
 
-.study-box {
+.card-hint {
+  display: inline-block;
+  margin-top: 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--pink-deep);
+}
+
+.continue-card {
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.continue-card.is-empty {
+  opacity: 0.72;
+  cursor: not-allowed;
+}
+
+.continue-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  color: #fff;
+  background: linear-gradient(135deg, var(--lavender), var(--sky));
+}
+
+.continue-body h2 {
+  margin: 0 0 6px;
+  font-size: 17px;
+  font-weight: 700;
+}
+
+.save-name {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--text-soft);
+}
+
+.progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(201, 184, 255, 0.25);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--pink), var(--lavender));
+}
+
+.progress-text {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--lavender);
+  min-width: 32px;
+}
+
+.empty-tip {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-soft);
+}
+
+.action-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px 12px;
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  border-radius: 20px;
+  background: var(--card);
+  box-shadow: var(--shadow);
+  cursor: pointer;
+  color: inherit;
+  transition:
+    transform 0.2s ease,
+    background 0.2s ease;
+}
+
+.action-btn:hover {
+  transform: translateY(-2px) scale(1.02);
+}
+
+.action-collection:hover {
+  background: rgba(255, 240, 201, 0.9);
+}
+
+.action-compose:hover {
+  background: rgba(255, 214, 232, 0.9);
+}
+
+.action-scores:hover {
+  background: rgba(212, 240, 255, 0.9);
+}
+
+.action-emoji {
+  font-size: 28px;
+}
+
+.action-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  color: var(--pink-deep);
+  background: rgba(255, 184, 208, 0.2);
+}
+
+.action-label {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.dialog-desc {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+.script-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.script-card {
+  position: relative;
+  cursor: pointer;
+}
+
+.script-cover {
+  aspect-ratio: 1;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--card-tint);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  box-shadow: 0 4px 16px rgba(180, 140, 200, 0.15);
+  transition: transform 0.2s ease;
+}
+
+.script-emoji {
+  font-size: 36px;
+}
+
+.script-hover {
+  position: absolute;
+  inset: 0;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(92, 74, 106, 0.55);
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.script-hover span {
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(90deg, var(--pink-deep), var(--lavender));
+}
+
+.script-card:hover .script-cover {
+  transform: scale(1.02);
+}
+
+.script-card:hover .script-hover {
+  opacity: 1;
+}
+
+.script-title {
+  margin: 8px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: center;
+}
+
+.template-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.template-item {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 16px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  background: rgba(0, 0, 0, 0.2);
-  min-width: 360px;
-}
-
-.study-head {
-  display: flex;
-  flex-direction: column;
-  font-size: 12px;
-  white-space: nowrap;
-}
-
-.study-lv {
-  color: var(--gold);
+  padding: 16px 20px;
+  border: 2px solid rgba(255, 184, 208, 0.4);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 15px;
   font-weight: 600;
-}
-
-.study-bar {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  min-width: 120px;
-}
-
-.bar-track-wide {
-  width: 100%;
-}
-
-.study-num {
-  font-size: 11px;
-  color: var(--muted);
-}
-
-.study-btn {
-  padding: 8px 20px;
-  border-radius: 999px;
-  border: 1px solid var(--gold);
-  background: linear-gradient(180deg, rgba(212, 175, 98, 0.35), rgba(139, 105, 20, 0.5));
-  color: var(--gold-light);
-  font-size: 13px;
-  font-weight: 600;
+  color: var(--text);
   cursor: pointer;
-  white-space: nowrap;
+  transition:
+    transform 0.15s ease,
+    border-color 0.15s ease,
+    background 0.15s ease;
 }
 
-.study-btn:hover {
-  filter: brightness(1.1);
+.template-item:hover {
+  transform: translateX(4px);
+  border-color: var(--pink-deep);
+  background: rgba(255, 214, 232, 0.5);
+}
+
+.template-emoji {
+  font-size: 24px;
+}
+</style>
+
+<style>
+.cute-dialog.el-dialog {
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fff8fb 0%, #f8f0ff 100%);
+}
+
+.cute-dialog .el-dialog__header {
+  padding: 20px 24px 8px;
+}
+
+.cute-dialog .el-dialog__title {
+  font-weight: 800;
+  color: #5c4a6a;
+}
+
+.cute-dialog .el-dialog__body {
+  padding: 8px 24px 24px;
 }
 </style>

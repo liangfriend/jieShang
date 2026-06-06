@@ -17,7 +17,7 @@ export default defineConfig({
       alias: {
         '@renderer': resolve('src/renderer/src'),
         'deciphony-renderer': path.resolve(rendererSrc, 'index.ts'),
-        // 'deciphony-player': path.resolve(__dirname, '../deciphony-player/src/index.ts'),
+        'deciphony-player': path.resolve(__dirname, '../deciphony-player/src/index.ts'),
         // 'j-player': path.resolve(__dirname, '../j-player/src/index.ts'),
         // 'deciphony-ui': path.resolve(__dirname, '../deciphony-ui/src/index.ts'),
         // '@assets': path.resolve(__dirname, '../deciphony-ui/src/assets'),
