@@ -7,6 +7,15 @@ export type { PlaybackState }
 
 export type UseScorePagePlaybackOptions = {
   musicScoreRef?: Ref<MusicScoreHighlightExpose | null>
+  /** 与曲谱播放同步的瀑布流控制（play / pause / stop） */
+  waterfallRef?: Ref<PianoWaterfallPlaybackExpose | null>
+}
+
+export type PianoWaterfallPlaybackExpose = {
+  play: () => void
+  pause: () => void
+  stop: () => void
+  clearActiveParts: () => void
 }
 
 export type ScorePagePlaybackController = {

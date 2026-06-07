@@ -7,9 +7,17 @@ import { TitleSlot } from '@renderer/dr-extensions/dr-title'
 import { PracticeModeToolbar } from '@renderer/components/score-toolbar'
 import PianoWaterfall from '@renderer/components/pianoWaterfall.vue'
 import VirtualPiano from '@renderer/components/virtualPiano.vue'
-import { scorePlaybackKey, useScorePagePlayback } from '@renderer/utils/scorePagePlayback'
+import {
+  scorePlaybackKey,
+  toPerformSequence,
+  toPlaySequence,
+  useScorePagePlayback,
+  type PerformSequence,
+  type PianoWaterfallPlaybackExpose
+} from '@renderer/utils/scorePagePlayback'
 import { mergeGrandStaff } from '@renderer/dr-extensions/scoreUtil'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
+import { resolvePlayBpm } from '@renderer/constant/play'
 import { usePlayStore } from '@renderer/store/play.store'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
 import empty from '@renderer/template/empty'
@@ -33,7 +41,13 @@ const route = useRoute()
 const playStore = usePlayStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
-const playback = useScorePagePlayback(musicScoreData, { musicScoreRef })
+const pianoWaterfallRef = ref<PianoWaterfallPlaybackExpose | null>(null)
+const performSequence = ref<PerformSequence>({})
+const practiceBpm = ref(120)
+const playback = useScorePagePlayback(musicScoreData, {
+  musicScoreRef,
+  waterfallRef: pianoWaterfallRef
+})
 
 provide(scorePlaybackKey, playback)
 
@@ -52,6 +66,12 @@ function applyPracticeScoreLayout(score: MusicScore) {
   }
 }
 
+function buildPracticePerformSequence(score: MusicScore) {
+  const bpm = resolvePlayBpm(score.bpm)
+  practiceBpm.value = bpm
+  performSequence.value = toPerformSequence(toPlaySequence(score), bpm)
+}
+
 onMounted(async () => {
   const loaded = await loadScoreFromRoute(route)
   if (loaded) {
@@ -59,8 +79,10 @@ onMounted(async () => {
     mergeGrandStaff(cloned)
     applyPracticeScoreLayout(cloned)
     musicScoreData.value = cloned
+    buildPracticePerformSequence(cloned)
   } else {
     applyPracticeScoreLayout(musicScoreData.value)
+    buildPracticePerformSequence(musicScoreData.value)
   }
 
   await playStore.restorePlaybackDefaults(musicScoreData.value)
@@ -68,6 +90,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   playStore.stop()
+  pianoWaterfallRef.value?.stop()
 })
 </script>
 
@@ -85,10 +108,15 @@ onBeforeUnmount(() => {
 
     <section class="practice-page__waterfall">
       <PianoWaterfall
+        ref="pianoWaterfallRef"
         class="practice-page__waterfall-inner"
         layout-mode="fillParent"
         :height="PRACTICE_WATERFALL_HEIGHT"
         :midi="PRACTICE_MIDI_RANGE"
+        :perform-sequence="performSequence"
+        :bpm="practiceBpm"
+        :baseLineBottom="50"
+        :prepare-time="0"
       />
     </section>
 

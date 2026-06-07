@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { Document, EditPen, Reading, VideoPlay } from '@element-plus/icons-vue'
 import { HOME_TEMPLATE_TO_ROUTE } from '@renderer/utils/scoreRoute'
+import { useMidiStore } from '@renderer/store/midi.store'
 
 const router = useRouter()
+const { hasConnectedInput } = storeToRefs(useMidiStore())
 const storyVisible = ref(false)
 const templateVisible = ref(false)
 
@@ -189,6 +192,16 @@ function goToLiteracyCamp() {
         </button>
       </div>
     </el-dialog>
+
+    <div
+      class="midi-status"
+      :class="hasConnectedInput ? 'is-connected' : 'is-disconnected'"
+      :title="hasConnectedInput ? 'MIDI 琴已连接' : 'MIDI 琴未连接'"
+      aria-live="polite"
+      :aria-label="hasConnectedInput ? 'MIDI 琴已连接' : 'MIDI 琴未连接'"
+    >
+      <span class="midi-status__icon" aria-hidden="true">🎹</span>
+    </div>
   </div>
 </template>
 
@@ -683,6 +696,58 @@ function goToLiteracyCamp() {
 
 .template-emoji {
   font-size: 24px;
+}
+
+.midi-status {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 20;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 20px rgba(92, 74, 106, 0.16);
+  animation: midi-float 2.8s ease-in-out infinite;
+  transition:
+    background 0.35s ease,
+    box-shadow 0.35s ease,
+    border-color 0.35s ease;
+}
+
+.midi-status__icon {
+  font-size: 22px;
+  line-height: 1;
+  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.08));
+}
+
+.midi-status.is-connected {
+  background: linear-gradient(145deg, rgba(168, 230, 181, 0.95), rgba(126, 207, 147, 0.92));
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 6px 22px rgba(82, 196, 110, 0.28),
+    0 0 0 3px rgba(126, 207, 147, 0.18);
+}
+
+.midi-status.is-disconnected {
+  background: linear-gradient(145deg, rgba(255, 186, 186, 0.95), rgba(255, 143, 143, 0.9));
+  border-color: rgba(255, 255, 255, 0.95);
+  box-shadow:
+    0 6px 22px rgba(255, 120, 120, 0.22),
+    0 0 0 3px rgba(255, 143, 143, 0.16);
+}
+
+@keyframes midi-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
 }
 </style>
 

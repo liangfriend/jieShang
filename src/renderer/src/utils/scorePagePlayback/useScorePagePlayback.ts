@@ -33,6 +33,9 @@ export function useScorePagePlayback(
 
   let progressStartSubId: string | null = null
   let onEndSubId: string | null = null
+  let waterfallEndSubId: string | null = null
+
+  const waterfall = () => options.waterfallRef?.value ?? null
 
   if (highlight) {
     progressStartSubId = playStore.subscribeProgressStart((_progress, data) => {
@@ -46,9 +49,16 @@ export function useScorePagePlayback(
     })
   }
 
+  if (options.waterfallRef) {
+    waterfallEndSubId = playStore.subscribeOnEnd(() => {
+      waterfall()?.stop()
+    })
+  }
+
   onBeforeUnmount(() => {
     if (progressStartSubId) playStore.unsubscribeProgressStart(progressStartSubId)
     if (onEndSubId) playStore.unsubscribeOnEnd(onEndSubId)
+    if (waterfallEndSubId) playStore.unsubscribeOnEnd(waterfallEndSubId)
   })
 
   async function handlePlay() {
@@ -59,18 +69,26 @@ export function useScorePagePlayback(
     }
 
     await playStore.waitReady()
-    playStore.setPlaySequence(sequence)
+
+    if (playbackState.value !== 'paused') {
+      playStore.setPlaySequence(sequence)
+    }
+
+    waterfall()?.play()
     await playStore.play()
   }
 
   function handlePause() {
     playStore.pause()
     highlight?.handlePlaybackPause()
+    waterfall()?.pause()
   }
 
   function handleStop() {
     playStore.stop()
     highlight?.handlePlaybackStop()
+    waterfall()?.stop()
+    waterfall()?.clearActiveParts()
   }
 
   return {

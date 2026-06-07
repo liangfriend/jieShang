@@ -9,11 +9,18 @@ import {
   ref,
   watch
 } from 'vue'
-
+import { parseAndFormatDimension } from '../utils/commonUtil'
+import {
+  AccidentalEnum,
+  midiToNoteName,
+  noteNameToHelmholtz,
+  noteNameToNoteString
+} from 'deciphony-core'
+import vDrag from '../../directivces/drag'
 import { KeyCodeEnum } from '../../types/enum'
 import { defaultCodeConfig } from '../utils/constant'
 import { HighlightPolicy } from '@/types/types'
-import { parseAndFormatDimension } from '@renderer/utils/commonUtil'
+import { useMidiStore } from '@renderer/store/midi.store'
 
 defineOptions({
   name: 'DsPianoWaterfall'
@@ -120,7 +127,6 @@ const duration = computed(() => {
 
 const containerRef = ref<HTMLElement | null>(null)
 const containerSize = ref({ width: 0, height: 0 })
-
 const isFillParentMode = computed(() => props.layoutMode === 'fillParent')
 
 /** 判断是否是白键 */
@@ -139,11 +145,11 @@ const whiteKeyCount = computed(() => {
 
 /** 解析容器高度，单位*/
 const containerHeightNum = computed(() => {
-  const { value: containerHeightNum } = parseAndFormatDimension(props.height)
+  const { value: containerHeightNum, unit: heightUnit } = parseAndFormatDimension(props.height)
   return containerHeightNum
 })
 const containerHeightUnit = computed(() => {
-  const { unit: heightUnit } = parseAndFormatDimension(props.height)
+  const { value: containerHeightNum, unit: heightUnit } = parseAndFormatDimension(props.height)
   return heightUnit
 })
 
@@ -161,7 +167,8 @@ const whiteKeyWidthNum = computed(() => {
 
 const keyUnit = computed(() => {
   if (isFillParentMode.value) return 'px'
-  return parseAndFormatDimension(props.whiteKeyWidth).unit
+  const { unit } = parseAndFormatDimension(props.whiteKeyWidth)
+  return unit
 })
 
 function getMidiWidth(midi) {
@@ -433,23 +440,45 @@ watch(
     observeContainer()
   }
 )
-
+const midiStore = useMidiStore()
 onMounted(() => {
   observeContainer()
   // 绑定键盘按下与抬起事件
   window.addEventListener('keydown', handleKeyDown)
   window.addEventListener('keyup', handleKeyUp)
+  midiStore.addMessageListener(handleMidiMessage)
 })
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   // 移除事件绑定
-  window.removeEventListener('keydown', handleKeyDown)
-  window.removeEventListener('keyup', handleKeyUp)
+  window.removeEventListener('keydown', keyBoardKeyDown)
+  window.removeEventListener('keyup', keyBoardKeyUp)
+  midiStore.removeMessageListener(handleMidiMessage)
 })
-
-function handleKeyDown(e: KeyboardEvent) {
+function keyBoardKeyDown(event: KeyboardEvent) {
   const midi = props.config.keyboard?.find((item) => item.code === e.code)?.midi
+  handleKeyDown(midi)
+}
+function keyBoardKeyUp(event: KeyboardEvent) {
+  const midi = props.config.keyboard?.find((item) => item.code === e.code)?.midi
+  handleKeyUp(midi)
+}
+function handleMidiMessage(event: MIDIMessageEvent) {
+  const data = event.data
+  if (!data || data.length < 2) return
+
+  const command = data[0] & 0xf0
+  const midi = data[1]
+  const velocity = data.length > 2 ? data[2] : 0
+
+  if (command === 0x90 && velocity > 0) {
+    handleKeyDown(midi)
+  } else if (command === 0x80 || (command === 0x90 && velocity === 0)) {
+    handleKeyUp(midi)
+  }
+}
+function handleKeyDown(midi) {
   if (!midi) return
   // 防止重复按下
   if (activeKeys.value.has(midi)) return
@@ -465,8 +494,7 @@ function handleKeyDown(e: KeyboardEvent) {
   }
 }
 
-function handleKeyUp(e: KeyboardEvent) {
-  const midi = props.config.keyboard?.find((item) => item.code === e.code)?.midi
+function handleKeyUp(midi) {
   if (!midi) return
   activeKeys.value.delete(midi)
   if (state.value !== 'playing') return
@@ -523,8 +551,7 @@ const highlightSegments = computed(() => {
 })
 /* 整体宽度 */
 const totalWidth = computed(() => {
-  const { value, unit } = parseAndFormatDimension(props.whiteKeyWidth)
-  return value * whiteKeyCount.value + unit
+  return fixedWhiteKeyWidthNum.value * whiteKeyCount.value + keyUnit.value
 })
 
 // 播放功能
@@ -637,5 +664,21 @@ defineExpose({
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none; /* Chrome */
+}
+.stack {
+  position: relative;
+  height: 100%;
+  width: 100%;
+}
+
+.stackItem {
+  pointer-events: none;
+  position: absolute;
+  height: 100%;
+  width: 100%;
+
+  > * {
+    pointer-events: auto;
+  }
 }
 </style>
