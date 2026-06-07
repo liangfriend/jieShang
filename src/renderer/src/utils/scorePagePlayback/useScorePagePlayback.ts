@@ -137,7 +137,10 @@ export function useScorePagePlayback(
 
   function handleClearPlayData() {
     waterfall()?.clearActiveParts()
+    options.onClearPlayData?.()
   }
+
+  const hasClearPlayData = Boolean(options.waterfallRef || options.onClearPlayData)
 
   return {
     playbackState,
@@ -148,7 +151,7 @@ export function useScorePagePlayback(
     handlePlay,
     handlePause,
     handleStop,
-    handleClearPlayData: options.waterfallRef ? handleClearPlayData : undefined,
+    handleClearPlayData: hasClearPlayData ? handleClearPlayData : undefined,
     handleRenderMusicScore: highlight?.handleRenderMusicScore,
     setHighlightBpm: highlight?.setBpm
   }

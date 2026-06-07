@@ -1,0 +1,47 @@
+/** 练习模式：音符评分结果 filter（加在符头/符干等顶层 g 上，略实心、像一层描边） */
+.dr-practice-note-result {
+  transition: filter 0.15s ease;
+}
+
+/* 完美：彩虹色大 shadow */
+.dr-practice-note-result--perfect {
+  filter:
+    drop-shadow(0 0 2px #ff3366) drop-shadow(0 0 4px #ff9933) drop-shadow(0 0 6px #ffdd00)
+    drop-shadow(0 0 8px #33cc66) drop-shadow(0 0 10px #3399ff) drop-shadow(0 0 12px #9933ff)
+    drop-shadow(0 0 16px rgba(255, 51, 102, 0.65)) drop-shadow(0 0 22px rgba(153, 51, 255, 0.55));
+}
+
+/* 优秀：深绿色 */
+.dr-practice-note-result--good {
+  filter:
+    drop-shadow(0 0 0.8px #15803d) drop-shadow(0 0 1.6px #166534) drop-shadow(0 0 3px #15803d)
+    drop-shadow(0 0 5px rgba(21, 128, 61, 0.75));
+}
+
+/* 及格：橙色 */
+.dr-practice-note-result--pass {
+  filter:
+    drop-shadow(0 0 0.8px #f97316) drop-shadow(0 0 1.6px #ea580c) drop-shadow(0 0 3px #f97316)
+    drop-shadow(0 0 5px rgba(249, 115, 22, 0.75));
+}
+
+/* 弹早：浅蓝 */
+.dr-practice-note-result--early {
+  filter:
+    drop-shadow(0 0 0.8px #93c5fd) drop-shadow(0 0 1.6px #7dd3fc) drop-shadow(0 0 3px #93c5fd)
+    drop-shadow(0 0 5px rgba(147, 197, 253, 0.8));
+}
+
+/* 弹晚：浅粉 */
+.dr-practice-note-result--late {
+  filter:
+    drop-shadow(0 0 0.8px #f9a8d4) drop-shadow(0 0 1.6px #fbcfe8) drop-shadow(0 0 3px #f9a8d4)
+    drop-shadow(0 0 5px rgba(249, 168, 212, 0.8));
+}
+
+/* 漏弹：黑灰色大 shadow */
+.dr-practice-note-result--miss {
+  filter:
+    drop-shadow(0 0 2px #374151) drop-shadow(0 0 4px #4b5563) drop-shadow(0 0 8px #6b7280)
+    drop-shadow(0 0 12px rgba(55, 65, 81, 0.85)) drop-shadow(0 0 18px rgba(31, 41, 55, 0.7));
+}

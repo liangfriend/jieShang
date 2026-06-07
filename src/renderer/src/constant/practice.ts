@@ -29,14 +29,24 @@ export const DIFFICULTY_POLICY: Record<PracticeDifficulty, HighlightPolicy> = {
 
 export const DEFAULT_DIFFICULTY: PracticeDifficulty = 'beginner'
 
-/** 音符评分结果对应的颜色 */
+/** 音符评分结果对应的颜色（瀑布流/图例主色） */
 export const NOTE_RESULT_COLOR: Record<NoteScoreResult, string> = {
-  perfect: '#2eb8a6',
-  good: '#4dd4c4',
-  pass: '#ffd166',
-  early: '#ff9f43',
-  late: '#ff6b9d',
-  miss: '#c4c4c4'
+  perfect: '#9933ff',
+  good: '#15803d',
+  pass: '#f97316',
+  early: '#93c5fd',
+  late: '#f9a8d4',
+  miss: '#4b5563'
+}
+
+/** 设置附录图例色块（完美为彩虹渐变） */
+export const NOTE_RESULT_LEGEND_STYLE: Record<NoteScoreResult, string> = {
+  perfect: 'linear-gradient(135deg, #ff3366, #ff9933, #ffdd00, #33cc66, #3399ff, #9933ff)',
+  good: NOTE_RESULT_COLOR.good,
+  pass: NOTE_RESULT_COLOR.pass,
+  early: NOTE_RESULT_COLOR.early,
+  late: NOTE_RESULT_COLOR.late,
+  miss: NOTE_RESULT_COLOR.miss
 }
 
 export const NOTE_RESULT_LABEL: Record<NoteScoreResult, string> = {

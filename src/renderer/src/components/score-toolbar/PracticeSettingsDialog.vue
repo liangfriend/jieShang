@@ -3,7 +3,7 @@ import { computed, inject, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import { practiceContextKey } from '@renderer/utils/practiceContext'
 import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store'
-import { NOTE_RESULT_COLOR, NOTE_RESULT_LABEL } from '@renderer/constant/practice'
+import { NOTE_RESULT_LABEL, NOTE_RESULT_LEGEND_STYLE } from '@renderer/constant/practice'
 import { PLAY_BPM_MAX, PLAY_BPM_MIN } from '@renderer/constant/play'
 
 defineOptions({ name: 'PracticeSettingsDialog' })
@@ -62,7 +62,7 @@ const difficultyOptions = [
 ] as const
 
 const noteColorLegend = (Object.keys(NOTE_RESULT_LABEL) as (keyof typeof NOTE_RESULT_LABEL)[]).map(
-  (key) => ({ label: NOTE_RESULT_LABEL[key], color: NOTE_RESULT_COLOR[key] })
+  (key) => ({ label: NOTE_RESULT_LABEL[key], style: NOTE_RESULT_LEGEND_STYLE[key] })
 )
 
 const keyColorLegend = [
@@ -181,7 +181,7 @@ const appendixOpen = ref(false)
             <p class="practice-settings-legend__title">音符颜色</p>
             <ul>
               <li v-for="item in noteColorLegend" :key="item.label">
-                <span class="practice-settings-legend__dot" :style="{ background: item.color }" />
+                <span class="practice-settings-legend__dot" :style="{ background: item.style }" />
                 {{ item.label }}
               </li>
             </ul>

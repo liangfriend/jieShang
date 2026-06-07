@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { MusicScore } from 'deciphony-renderer'
+import type { MusicScore, VDom } from 'deciphony-renderer'
 import musicScoreVue from 'deciphony-renderer'
 import { onBeforeUnmount, onMounted, provide, ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -25,6 +25,7 @@ import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store
 import { NOTE_RESULT_COLOR } from '@renderer/constant/practice'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
 import { practiceContextKey } from '@renderer/utils/practiceContext'
+import { createPracticeNoteResultHighlight } from '@renderer/utils/practiceNoteResultHighlight'
 import empty from '@renderer/template/empty'
 
 /** 练习模式瀑布流 / 虚拟钢琴共用 midi 范围（88 键） */
@@ -51,6 +52,13 @@ const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
 const pianoWaterfallRef = ref<PianoWaterfallPlaybackExpose | null>(null)
 const performSequence = ref<PerformSequence>({})
 const practiceBpm = ref(120)
+const vDomList = ref<VDom[]>([])
+
+const noteResultHighlight = createPracticeNoteResultHighlight({
+  getVDomList: () => vDomList.value,
+  findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
+})
+
 const playback = useScorePagePlayback(musicScoreData, {
   musicScoreRef,
   waterfallRef: pianoWaterfallRef,
@@ -59,7 +67,8 @@ const playback = useScorePagePlayback(musicScoreData, {
     if (settings.metronomeDuringPlay) void metronomeStore.startLoop()
   },
   onPlaybackPaused: () => metronomeStore.stop(),
-  onPlaybackStopped: () => metronomeStore.stop()
+  onPlaybackStopped: () => metronomeStore.stop(),
+  onClearPlayData: () => noteResultHighlight.clearAll()
 })
 
 provide(scorePlaybackKey, playback)
@@ -81,6 +90,13 @@ watch(
   () => settings.metronomeVolume,
   (value) => metronomeStore.setVolume(value)
 )
+watch(
+  () => settings.showNoteResult,
+  (enabled) => {
+    if (enabled) noteResultHighlight.showAll()
+    else noteResultHighlight.hideAll()
+  }
+)
 
 const maxStaffCount = computed(() => {
   let max = 0
@@ -95,17 +111,23 @@ provide(practiceContextKey, {
   bpm: practiceBpm
 })
 
-/** 音符评分回调（第三个参数为 noteInfo id），水柱上色由 pianoWaterfall 内部完成 */
+/** 音符评分回调：通过 noteInfo id 定位曲谱 DOM，按结果加 filter */
 function handleNoteScore(
   result: NoteScoreResult,
   realScore: number,
   totalScore: number,
   info: any
 ) {
-  void result
   void realScore
   void totalScore
-  void info
+  if (!settings.showNoteResult) return
+  noteResultHighlight.applyNoteResult(info, result)
+}
+
+function handleRenderMusicScore(list: VDom[]) {
+  vDomList.value = list
+  playback.handleRenderMusicScore?.(list)
+  noteResultHighlight.rebindAfterRender()
 }
 
 function countPracticeMeasures(score: MusicScore): number {
@@ -177,6 +199,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   playback.handleStop()
   metronomeStore.stop()
+  noteResultHighlight.clearAll()
 })
 </script>
 
@@ -188,7 +211,7 @@ onBeforeUnmount(() => {
         class="practice-page__score-svg"
         :data="musicScoreData"
         skin-name="default"
-        @renderMusicScore="playback.handleRenderMusicScore"
+        @renderMusicScore="handleRenderMusicScore"
       />
     </section>
 

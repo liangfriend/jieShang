@@ -18,6 +18,8 @@ export type UseScorePagePlaybackOptions = {
   onPlaybackPaused?: () => void
   /** 播放停止时回调（如停止节拍器） */
   onPlaybackStopped?: () => void
+  /** 清空弹奏数据时回调（如清除曲谱音符 filter） */
+  onClearPlayData?: () => void
 }
 
 export type PianoWaterfallPlaybackExpose = {
