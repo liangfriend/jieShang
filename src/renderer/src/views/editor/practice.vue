@@ -15,6 +15,7 @@ import {
   type PerformSequence,
   type PianoWaterfallPlaybackExpose
 } from '@renderer/utils/scorePagePlayback'
+import type { NoteScoreResult } from '@renderer/types/types'
 import { mergeGrandStaff } from '@renderer/dr-extensions/scoreUtil'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
 import { resolvePlayBpm } from '@renderer/constant/play'
@@ -50,6 +51,19 @@ const playback = useScorePagePlayback(musicScoreData, {
 })
 
 provide(scorePlaybackKey, playback)
+
+/** 最近一次音符评分回调（第三个参数为 noteInfo id，后续用于按 id 定位 DOM 加样式） */
+function handleNoteScore(
+  result: NoteScoreResult,
+  realScore: number,
+  totalScore: number,
+  info: any
+) {
+  void result
+  void realScore
+  void totalScore
+  void info
+}
 
 function countPracticeMeasures(score: MusicScore): number {
   const staff = score.grandStaffs[0]?.staves[0]
@@ -106,6 +120,22 @@ onBeforeUnmount(() => {
       />
     </section>
 
+    <section class="practice-page__stats">
+      <span class="practice-page__stat">音符总数 {{ pianoWaterfallRef?.stats?.total ?? 0 }}</span>
+      <span class="practice-page__stat">漏弹 {{ pianoWaterfallRef?.stats?.miss ?? 0 }}</span>
+      <span class="practice-page__stat">弹早 {{ pianoWaterfallRef?.stats?.early ?? 0 }}</span>
+      <span class="practice-page__stat">弹晚 {{ pianoWaterfallRef?.stats?.late ?? 0 }}</span>
+      <span class="practice-page__stat">及格 {{ pianoWaterfallRef?.stats?.pass ?? 0 }}</span>
+      <span class="practice-page__stat">优秀 {{ pianoWaterfallRef?.stats?.good ?? 0 }}</span>
+      <span class="practice-page__stat">完美 {{ pianoWaterfallRef?.stats?.perfect ?? 0 }}</span>
+      <span class="practice-page__stat practice-page__stat--score">
+        实时分 {{ (pianoWaterfallRef?.stats?.realScore ?? 0).toFixed(1) }}
+      </span>
+      <span class="practice-page__stat practice-page__stat--score">
+        总分 {{ (pianoWaterfallRef?.stats?.totalScore ?? 0).toFixed(1) }}
+      </span>
+    </section>
+
     <section class="practice-page__waterfall">
       <PianoWaterfall
         ref="pianoWaterfallRef"
@@ -118,6 +148,7 @@ onBeforeUnmount(() => {
         :baseLineBottom="100"
         :prepare-time="0"
         :columnHeightConstant="0.1"
+        @score="handleNoteScore"
       />
     </section>
 
@@ -156,6 +187,28 @@ onBeforeUnmount(() => {
 
 .practice-page__score-svg {
   flex-shrink: 0;
+}
+
+.practice-page__stats {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 13px;
+  color: #8a5a72;
+  background: rgba(255, 248, 252, 0.9);
+  border-bottom: 1px solid rgba(255, 184, 208, 0.25);
+}
+
+.practice-page__stat {
+  white-space: nowrap;
+}
+
+.practice-page__stat--score {
+  font-weight: 600;
+  color: #d6336c;
 }
 
 .practice-page__waterfall {

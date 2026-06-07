@@ -19,12 +19,17 @@ import {
 import vDrag from '../../directivces/drag'
 import { KeyCodeEnum } from '../../types/enum'
 import { defaultCodeConfig } from '../utils/constant'
-import { HighlightPolicy } from '@/types/types'
+import { HighlightPolicy, NoteScoreResult } from '@/types/types'
 import { useMidiStore } from '@renderer/store/midi.store'
 
 defineOptions({
   name: 'DsPianoWaterfall'
 })
+
+const emit = defineEmits<{
+  /** 单个音符评分完成：评分结果、实时分、总分、第三个附加参数(noteInfo id) */
+  (e: 'score', result: NoteScoreResult, realScore: number, totalScore: number, info: any): void
+}>()
 
 const props = defineProps({
   /** whiteKeyWidth：固定白键宽度；fillParent：铺满父级并按 midi 范围均分白键宽 */
@@ -64,21 +69,22 @@ const props = defineProps({
     default: 3000 // 三秒的预备时间
   },
   performSequence: {
+    type: Object as PropType<Record<string, [number, number, any?][]>>,
     default: () => {
       return {
         '60': [
-          [0, 600],
-          [600, 1200],
-          [3200, 4200],
-          [4800, 5600]
+          [0, 600, 'n60-0'],
+          [600, 1200, 'n60-1'],
+          [3200, 4200, 'n60-2'],
+          [4800, 5600, 'n60-3']
         ],
         '61': [
-          [1200, 1800],
-          [1800, 3200]
+          [1200, 1800, 'n61-0'],
+          [1800, 3200, 'n61-1']
         ],
         '62': [
-          [0, 600],
-          [1800, 2400]
+          [0, 600, 'n62-0'],
+          [1800, 2400, 'n62-1']
         ]
       }
     }
@@ -101,11 +107,15 @@ const props = defineProps({
 })
 
 const performSequenceComputed = computed(() => {
-  const res: Record<number, [number, number][]> = {}
+  const res: Record<number, [number, number, any?][]> = {}
 
   for (const [midiStr, seq] of Object.entries(props.performSequence)) {
     const midi = Number(midiStr)
-    res[midi] = seq.map(([start, end]) => [start + props.prepareTime, end + props.prepareTime])
+    res[midi] = seq.map(([start, end, info]) => [
+      start + props.prepareTime,
+      end + props.prepareTime,
+      info
+    ])
   }
 
   return res
@@ -308,7 +318,7 @@ const pianoWaterfallContainerStyle = computed(
     height: props.height,
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: '16px',
+    borderRadius: '0',
     border: '1px solid rgba(255, 184, 208, 0.35)',
     background:
       'linear-gradient(180deg, rgba(255, 248, 252, 0.96) 0%, rgba(245, 238, 255, 0.94) 55%, rgba(234, 245, 255, 0.92) 100%)',
@@ -368,7 +378,7 @@ const midiEventStyle = computed(() => {
 
 // 水柱样式
 const waterColumnStyle = computed(() => {
-  return (midi: number, item: [number, number]) => {
+  return (midi: number, item: [number, number, any?]) => {
     const start = item[0]
     const end = item[1]
     const hue = noteHue(midi)
@@ -395,7 +405,7 @@ const waterColumnActiveStyle = computed(() => {
       height: (end - start) * props.columnHeightConstant + 'px',
       width: '14px',
       background: 'linear-gradient(180deg, #7ee8fa 0%, #4dd4c4 50%, #2eb8a6 100%)',
-      opacity:0.7,
+      opacity: 0.7,
       position: 'absolute',
       flexShrink: 0,
       borderRadius: '999px',
@@ -420,13 +430,16 @@ const midiEventContainerStyle = computed((): CSSProperties => {
 })
 
 /*
- * 事件
+ * 评分机制
+ * 单位都是毫秒
  * */
 
 const defaultHighlightPolicy: HighlightPolicy = {
-  allowRepeat: false, // 有了后两个触发时间的限制，这个暂时可以不要，现在无实际功能
-  startTriggerThreshold: 100,
-  postTriggerThreshold: 100
+  startTriggerThreshold: 200, // 能提前触发弹奏的时间,理论上讲它应该比goodThreshold大，否则触发不了谈早
+  postTriggerThreshold: 200, // 能延后触发弹奏的时间，理论上讲应该比goodThreshold大，否则触发不了弹晚
+  passThreshold: 150, //后多少秒之内触发不算谈早弹晚，算及格,
+  goodThreshold: 100, // 前后多少秒之内触发算优秀
+  perfectThresdhold: 70 // 前后多少秒之内触发算完美
 }
 const policy = computed(() => ({
   ...defaultHighlightPolicy,
@@ -434,6 +447,112 @@ const policy = computed(() => ({
 }))
 const activeKeys = ref<Set<number>>(new Set())
 const activeParts = ref(new Map<number, Array<Array<number>>>())
+
+/* ---------------- 评分 ---------------- */
+
+type FlatNote = {
+  /** 唯一标识，优先用第三个附加参数(noteInfo id) */
+  key: string
+  midi: number
+  /** 起始毫秒（含 prepareTime） */
+  start: number
+  /** 结束毫秒（含 prepareTime） */
+  end: number
+  /** 第三个附加参数，回调时原样带出 */
+  info: any
+}
+
+/** 把 performSequence 拍平成音符列表，便于逐音符判定 */
+const flatNotes = computed<FlatNote[]>(() => {
+  const list: FlatNote[] = []
+  for (const [midiStr, seq] of Object.entries(performSequenceComputed.value)) {
+    const midi = Number(midiStr)
+    seq.forEach(([start, end, info], idx) => {
+      list.push({
+        midi,
+        start,
+        end,
+        info,
+        key: info != null ? String(info) : `${midi}:${idx}`
+      })
+    })
+  }
+  return list
+})
+
+/** 已判定音符：key -> 评分结果 */
+const noteScores = ref(new Map<string, NoteScoreResult>())
+
+/** 实时详情信息 */
+const stats = computed(() => {
+  let perfect = 0
+  let good = 0
+  let pass = 0
+  let early = 0
+  let late = 0
+  let miss = 0
+  for (const result of noteScores.value.values()) {
+    if (result === 'perfect') perfect++
+    else if (result === 'good') good++
+    else if (result === 'pass') pass++
+    else if (result === 'early') early++
+    else if (result === 'late') late++
+    else if (result === 'miss') miss++
+  }
+  const total = flatNotes.value.length
+  const judged = noteScores.value.size
+  const earned = (early + late) * 50 + pass * 60 + good * 80 + perfect * 100
+  const totalScore = total ? (earned / (total * 100)) * 100 : 0
+  const realScore = judged ? (earned / (judged * 100)) * 100 : 0
+  return { total, miss, early, late, pass, good, perfect, judged, realScore, totalScore }
+})
+
+/** 记录某个音符的评分，并回调出去（同一音符只评一次） */
+function recordScore(note: FlatNote, result: NoteScoreResult) {
+  if (noteScores.value.has(note.key)) return
+  const next = new Map(noteScores.value)
+  next.set(note.key, result)
+  noteScores.value = next
+  emit('score', result, stats.value.realScore, stats.value.totalScore, note.info)
+}
+
+/** 按键按下时，判定命中的音符 */
+function judgeOnPress(midi: number, t: number) {
+  const candidates = flatNotes.value.filter(
+    (n) =>
+      n.midi === midi &&
+      !noteScores.value.has(n.key) &&
+      t >= n.start - policy.value.startTriggerThreshold &&
+      t <= n.start + policy.value.postTriggerThreshold
+  )
+  if (!candidates.length) return
+
+  // 取触发时刻最接近音符起点的那个
+  let best = candidates[0]
+  for (const c of candidates) {
+    if (Math.abs(t - c.start) < Math.abs(t - best.start)) best = c
+  }
+
+  const delta = t - best.start
+  const ad = Math.abs(delta)
+  let result: NoteScoreResult
+  if (ad <= policy.value.perfectThresdhold) result = 'perfect'
+  else if (ad <= policy.value.goodThreshold) result = 'good'
+  else if (ad <= policy.value.passThreshold) result = 'pass'
+  else result = delta < 0 ? 'early' : 'late'
+
+  recordScore(best, result)
+}
+
+/** 时间推进时，将已错过触发窗口且未命中的音符判为漏弹 */
+function evaluateMisses(t: number) {
+  for (const n of flatNotes.value) {
+    if (noteScores.value.has(n.key)) continue
+    if (t > n.start + policy.value.postTriggerThreshold) {
+      recordScore(n, 'miss')
+    }
+  }
+}
 
 let resizeObserver: ResizeObserver | null = null
 
@@ -465,8 +584,8 @@ const midiStore = useMidiStore()
 onMounted(() => {
   observeContainer()
   // 绑定键盘按下与抬起事件
-  window.addEventListener('keydown', handleKeyDown)
-  window.addEventListener('keyup', handleKeyUp)
+  window.addEventListener('keydown', keyBoardKeyDown)
+  window.addEventListener('keyup', keyBoardKeyUp)
   midiStore.addMessageListener(handleMidiMessage)
 })
 
@@ -478,11 +597,14 @@ onBeforeUnmount(() => {
   midiStore.removeMessageListener(handleMidiMessage)
 })
 function keyBoardKeyDown(event: KeyboardEvent) {
-  const midi = props.config.keyboard?.find((item) => item.code === e.code)?.midi
+  if (event.repeat) return
+  const midi = props.config.keyboard?.find((item) => item.code === event.code)?.midi
+  if (midi == null) return
   handleKeyDown(midi)
 }
 function keyBoardKeyUp(event: KeyboardEvent) {
-  const midi = props.config.keyboard?.find((item) => item.code === e.code)?.midi
+  const midi = props.config.keyboard?.find((item) => item.code === event.code)?.midi
+  if (midi == null) return
   handleKeyUp(midi)
 }
 function handleMidiMessage(event: MIDIMessageEvent) {
@@ -513,6 +635,8 @@ function handleKeyDown(midi) {
   } else {
     activeParts.value.set(midi, [[timeStamp]])
   }
+  // 评分判定
+  judgeOnPress(midi, timeStamp)
 }
 
 function handleKeyUp(midi) {
@@ -587,6 +711,10 @@ let rafId: number | null = null
 /** 播放函数 */
 function play() {
   if (state.value === 'playing') return
+  // 从头开始播放时清空上一轮评分
+  if (currentTime.value === 0) {
+    noteScores.value = new Map<string, NoteScoreResult>()
+  }
   state.value = 'playing'
   lastTimestamp = performance.now()
   requestFrame()
@@ -610,6 +738,8 @@ function stop() {
 /* 清空已激活数据 */
 function clearActiveParts() {
   activeParts.value = new Map<number, Array<Array<number>>>()
+  activeKeys.value = new Set<number>()
+  noteScores.value = new Map<string, NoteScoreResult>()
 }
 
 /** 动画循环 */
@@ -620,6 +750,9 @@ function requestFrame() {
     const delta = timestamp - lastTimestamp
     lastTimestamp = timestamp
     currentTime.value += delta
+
+    // 漏弹判定：错过触发窗口仍未命中的音符
+    evaluateMisses(currentTime.value)
 
     // 若播放超出总时长，停止动画，但保留状态
     if (currentTime.value >= duration.value) {
@@ -635,7 +768,8 @@ defineExpose({
   play,
   pause,
   stop,
-  clearActiveParts
+  clearActiveParts,
+  stats
 })
 </script>
 

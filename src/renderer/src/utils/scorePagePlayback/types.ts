@@ -2,6 +2,7 @@ import type { VDom } from 'deciphony-renderer'
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
 import type { PlaybackState } from '@renderer/store/play.store'
+import type { WaterfallScoreStats } from '@renderer/types/types'
 
 export type { PlaybackState }
 
@@ -16,6 +17,7 @@ export type PianoWaterfallPlaybackExpose = {
   pause: () => void
   stop: () => void
   clearActiveParts: () => void
+  stats: WaterfallScoreStats
 }
 
 export type ScorePagePlaybackController = {

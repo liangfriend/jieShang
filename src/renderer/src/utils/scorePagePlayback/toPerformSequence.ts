@@ -1,7 +1,7 @@
 import type { PlaySequence } from 'deciphony-player'
 
-/** pianoWaterfall.performSequence：midi → [开始毫秒, 结束毫秒][] */
-export type PerformSequence = Record<string, [number, number][]>
+/** pianoWaterfall.performSequence：midi → [开始毫秒, 结束毫秒, 附加信息?][] */
+export type PerformSequence = Record<string, [number, number, any?][]>
 
 /** Unit256：256=全音符，64=四分音符 */
 const UNIT256_QUARTER = 64
@@ -23,7 +23,7 @@ export function toPerformSequence(playSequence: PlaySequence, bpm: number): Perf
     const key = String(item.midi)
 
     if (!result[key]) result[key] = []
-    result[key]!.push([startMs, endMs])
+    result[key]!.push([startMs, endMs, item.id])
   }
 
   for (const segments of Object.values(result)) {
