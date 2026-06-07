@@ -8,6 +8,7 @@ import {
   noteNameToNoteString
 } from 'deciphony-core'
 import vDrag from '@renderer/directivces/drag'
+import { useMidiStore } from '@renderer/store/midi.store'
 
 defineOptions({
   name: 'DsPiano'
@@ -206,18 +207,29 @@ function isMidiInRange(midi: number) {
   return midi >= props.midi.min && midi <= props.midi.max
 }
 
+function setActiveKey(midi: number, active: boolean) {
+  const next = new Set(activeKeys.value)
+  if (active) {
+    if (next.has(midi)) return false
+    next.add(midi)
+  } else {
+    if (!next.has(midi)) return false
+    next.delete(midi)
+  }
+  activeKeys.value = next
+  return true
+}
+
 function emitKey(type: 'keyUp' | 'keyDown', midi: number) {
   if (!isMidiInRange(midi)) return
 
   if (type === 'keyDown') {
-    if (activeKeys.value.has(midi)) return
-    activeKeys.value.add(midi)
+    if (!setActiveKey(midi, true)) return
     emits('keyDown', midi)
     return
   }
 
-  if (!activeKeys.value.has(midi)) return
-  activeKeys.value.delete(midi)
+  if (!setActiveKey(midi, false)) return
   emits('keyUp', midi)
 }
 
@@ -643,10 +655,9 @@ function chordBoxPointerUp(event: PointerEvent) {
   curActiveChordMidi.value.clear()
 }
 
-// MIDI 设备输入
+// MIDI 设备输入（设备列表由 midi store 统一管理）
 
-let midiAccess: MIDIAccess | null = null
-const midiInputHandlers = new Map<MIDIInput, (event: MIDIMessageEvent) => void>()
+const midiStore = useMidiStore()
 
 function handleMidiMessage(event: MIDIMessageEvent) {
   const data = event.data
@@ -660,35 +671,6 @@ function handleMidiMessage(event: MIDIMessageEvent) {
     emitKey('keyDown', note)
   } else if (command === 0x80 || (command === 0x90 && velocity === 0)) {
     emitKey('keyUp', note)
-  }
-}
-
-function bindMidiInput(input: MIDIInput) {
-  if (midiInputHandlers.has(input)) return
-  const handler = (event: MIDIMessageEvent) => handleMidiMessage(event)
-  midiInputHandlers.set(input, handler)
-  input.onmidimessage = handler
-}
-
-function unbindAllMidiInputs() {
-  midiInputHandlers.forEach((handler, input) => {
-    if (input.onmidimessage === handler) {
-      input.onmidimessage = null
-    }
-  })
-  midiInputHandlers.clear()
-}
-
-async function setupMidiAccess() {
-  if (!navigator.requestMIDIAccess) return
-  try {
-    midiAccess = await navigator.requestMIDIAccess()
-    midiAccess.inputs.forEach((input) => bindMidiInput(input))
-    midiAccess.onstatechange = () => {
-      midiAccess?.inputs.forEach((input) => bindMidiInput(input))
-    }
-  } catch {
-    /* 无 MIDI 权限或设备时静默失败 */
   }
 }
 
@@ -721,13 +703,12 @@ watch(
 
 onMounted(() => {
   observeContainer()
-  void setupMidiAccess()
+  midiStore.addMessageListener(handleMidiMessage)
 })
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
-  unbindAllMidiInputs()
-  midiAccess = null
+  midiStore.removeMessageListener(handleMidiMessage)
 })
 </script>
 
