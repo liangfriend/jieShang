@@ -503,12 +503,14 @@ const chordList = ref([
 ])
 const chordBoxStyle = computed((): CSSProperties => {
   const keyW = Math.max(whiteKeyWidthNum.value, 28)
+  const rightPad = keyW * 0.85
   return {
-    width: dim(keyW * 5),
+    width: dim(keyW * 5 + rightPad),
     height: dim(keyW),
     bottom: '0',
     position: 'absolute',
-    display: 'flex'
+    display: 'flex',
+    padding: `2px ${dim(rightPad)} 2px 6px`
   }
 })
 const curChord = ref({
@@ -935,7 +937,6 @@ onBeforeUnmount(() => {
   pointer-events: auto;
   align-items: center;
   gap: 4px;
-  padding: 2px 6px;
   box-sizing: border-box;
   min-width: 140px;
   min-height: 40px;

@@ -160,7 +160,7 @@ onBeforeUnmount(async () => {
   flex-direction: column;
   background: #fff8fb;
   box-sizing: border-box;
-  padding-bottom: 168px;
+  padding-bottom: 120px;
 }
 
 .whiteboard__score {
@@ -192,11 +192,14 @@ onBeforeUnmount(async () => {
 .whiteboard__piano--custom {
   overflow-x: auto;
   overflow-y: hidden;
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .whiteboard__piano-inner {
-  width: 100%;
   flex-shrink: 0;
+}
+
+.whiteboard__piano:not(.whiteboard__piano--custom) .whiteboard__piano-inner {
+  width: 100%;
 }
 </style>
