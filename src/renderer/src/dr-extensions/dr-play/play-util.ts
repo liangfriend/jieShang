@@ -15,25 +15,26 @@ import {
   NoteSymbolTypeEnum,
   NotesInfo,
   StaffSlot
-} from "@/index";
+} from '@/index'
+import { getKeySignatureAccidental, getNoteMidi, type AlteredAccidental } from '../scoreUtil'
 
 /**
  * TODO 目前这个播放函数只针对五线谱
  * */
-export type Unit256 = number; // 256=whole, 128=half, 64=quarter, 32=eighth, 16=sixteenth.
+export type Unit256 = number // 256=whole, 128=half, 64=quarter, 32=eighth, 16=sixteenth.
 export type DR_playSequence_item = {
-  note_id: string;
-  midi: number;
-  duration: Unit256;
-  playTime: Unit256;
+  note_id: string
+  midi: number
+  duration: Unit256
+  playTime: Unit256
   /** 延音线（同音高 slur）时：首音=整段时值之和，其余=0；未设置则与 duration 同义 */
-  real_duration?: Unit256;
+  real_duration?: Unit256
 }
 export type DR_playSequence = Array<DR_playSequence_item>
 
 enum EndAnchorEnum {
   Barline_final = 'barline_final',
-  Fine_sign = 'fine_sign',
+  Fine_sign = 'fine_sign'
 }
 
 type MeasurePosition = {
@@ -57,9 +58,7 @@ type StaffPlayState = {
 }
 
 /** 小节内变音号记忆：region → 已生效的变音（null=本小节曾出现还原号，该级自然） */
-type MeasureAccidentalScope = Map<number, Exclude<AccidentalTypeEnum, AccidentalTypeEnum.Natural> | null>
-
-type AlteredAccidental = Exclude<AccidentalTypeEnum, AccidentalTypeEnum.Natural>
+type MeasureAccidentalScope = Map<number, AlteredAccidental | null>
 
 type RepeatState = {
   barLine: boolean
@@ -73,16 +72,6 @@ type RepeatState = {
   coda: boolean
   toCoda: boolean
 }
-// 各谱号锚点：startRegion 对应某个 C（do），startMidi 为该 C 的 midi
-const CLEF_ANCHOR: Record<ClefTypeEnum, { startRegion: number; startMidi: number }> = {
-  [ClefTypeEnum.Treble]: {startRegion: -2, startMidi: 60}, // 第一线下方 C4
-  [ClefTypeEnum.Bass]: {startRegion: -4, startMidi: 36},   // 第一线下方 C2
-  [ClefTypeEnum.Alto]: {startRegion: -3, startMidi: 48},   // 第一线下方 C3
-  [ClefTypeEnum.Tenor]: {startRegion: -1, startMidi: 48},  // 第一线下方 C3
-}
-
-// 以 C=do 为 0 的七个自然音级字母
-const DIATONIC_LETTERS = ['C', 'D', 'E', 'F', 'G', 'A', 'B'] as const
 
 /**
  * 倚音播放时值：不占小节拍位，不累加 playTime；从主音时值中抢奏。
@@ -130,7 +119,7 @@ function isSlurNotesInfoEndpoint(musicScore: MusicScore, endpointId: string): bo
 
 function findSeqItemBySlurEndpoint(
   seq: DR_playSequence,
-  endpointId: string,
+  endpointId: string
 ): DR_playSequence_item | undefined {
   if (!endpointId) return undefined
   return seq.find((it) => it.note_id === endpointId && it.midi > 0)
@@ -143,13 +132,16 @@ function findSeqItemBySlurEndpoint(
 function applySlurTieRealDuration(
   seq: DR_playSequence,
   musicScore: MusicScore,
-  noteStaveIndex: Map<string, number>,
+  noteStaveIndex: Map<string, number>
 ): void {
   for (const sym of musicScore.affiliatedSymbols ?? []) {
     if (sym.name !== DoubleNoteAffiliatedSymbolNameEnum.Slur) continue
     if (!('startId' in sym) || !('endId' in sym)) continue
 
-    if (!isSlurNotesInfoEndpoint(musicScore, sym.startId) || !isSlurNotesInfoEndpoint(musicScore, sym.endId)) {
+    if (
+      !isSlurNotesInfoEndpoint(musicScore, sym.startId) ||
+      !isSlurNotesInfoEndpoint(musicScore, sym.endId)
+    ) {
       continue
     }
     const startItem = findSeqItemBySlurEndpoint(seq, sym.startId)
@@ -164,14 +156,14 @@ function applySlurTieRealDuration(
     const tMax = Math.max(startItem.playTime, endItem.playTime)
 
     const inSlur = seq
-    .filter(
-      (it) =>
-        it.midi > 0 &&
-        noteStaveIndex.get(it.note_id) === stave &&
-        it.playTime >= tMin &&
-        it.playTime <= tMax,
-    )
-    .sort((a, b) => a.playTime - b.playTime || a.note_id.localeCompare(b.note_id))
+      .filter(
+        (it) =>
+          it.midi > 0 &&
+          noteStaveIndex.get(it.note_id) === stave &&
+          it.playTime >= tMin &&
+          it.playTime <= tMax
+      )
+      .sort((a, b) => a.playTime - b.playTime || a.note_id.localeCompare(b.note_id))
 
     if (inSlur.length < 2) continue
 
@@ -184,13 +176,6 @@ function applySlurTieRealDuration(
       inSlur[i]!.real_duration = 0
     }
   }
-}
-
-/** clef + region → 自然音级（0=C,1=D,…6=B），region 是按线/间逐级递增的“级进”，7 级 = 1 个八度 */
-function getDiatonicDegreeFromC(clef: ClefTypeEnum, region: number): number {
-  const {startRegion} = CLEF_ANCHOR[clef]
-  const steps = region - startRegion
-  return ((steps % 7) + 7) % 7
 }
 
 /**
@@ -256,9 +241,13 @@ export function getDrPlaySequence(musicScoreData: MusicScore): DR_playSequence {
     voltaByEndIndex.set(volta.endIndex, volta)
   }
   // 第一个segno
-  const firstSegnoIndex = measurePositions.findIndex(({measure}) => measure.startRepeat?.type === MeasureStartRepeatEnum.Segno)
+  const firstSegnoIndex = measurePositions.findIndex(
+    ({ measure }) => measure.startRepeat?.type === MeasureStartRepeatEnum.Segno
+  )
   // 第一个coda
-  const firstCodaIndex = measurePositions.findIndex(({measure}) => measure.startRepeat?.type === MeasureStartRepeatEnum.Coda)
+  const firstCodaIndex = measurePositions.findIndex(
+    ({ measure }) => measure.startRepeat?.type === MeasureStartRepeatEnum.Coda
+  )
   // 待播放小节索引列表，直接通过这个生成播放序列
   const playMeasureIndexes: number[] = []
   // 指向当前操作的小节的指针
@@ -269,7 +258,11 @@ export function getDrPlaySequence(musicScoreData: MusicScore): DR_playSequence {
   // 防止死循环
   const maxRepeatSteps = Math.max(measurePositions.length * 32, 256)
 
-  while (measureCursor >= 0 && measureCursor < measurePositions.length && loopGuard < maxRepeatSteps) {
+  while (
+    measureCursor >= 0 &&
+    measureCursor < measurePositions.length &&
+    loopGuard < maxRepeatSteps
+  ) {
     // 循环次数加1
     loopGuard += 1
     // 如果小节有volta, 且不存在当前volta轮次，跳过
@@ -295,7 +288,10 @@ export function getDrPlaySequence(musicScoreData: MusicScore): DR_playSequence {
       reapeatState.coda = false
     }
     // 如果当前停止模式是Fine且当前小节有FIne,跳出循环
-    if (endAnchor === EndAnchorEnum.Fine_sign && measure.endRepeat?.type === MeasureEndRepeatEnum.Fine) {
+    if (
+      endAnchor === EndAnchorEnum.Fine_sign &&
+      measure.endRepeat?.type === MeasureEndRepeatEnum.Fine
+    ) {
       break
     }
     // 判断小节的endRepeat是否生效，执行反复
@@ -313,7 +309,7 @@ export function getDrPlaySequence(musicScoreData: MusicScore): DR_playSequence {
       },
       () => {
         voltaRound += 1
-      },
+      }
     )
     // 存在跳转索引，跳转
     if (jumpIndex != null) {
@@ -321,7 +317,10 @@ export function getDrPlaySequence(musicScoreData: MusicScore): DR_playSequence {
       continue
     }
     // 如果当前停止模式是Final_barline且当前小节有Final_barline,跳出循环
-    if (measure.barline_b?.type === BarlineTypeEnum.Final_barline && endAnchor === EndAnchorEnum.Barline_final) {
+    if (
+      measure.barline_b?.type === BarlineTypeEnum.Final_barline &&
+      endAnchor === EndAnchorEnum.Barline_final
+    ) {
       break
     }
     measureCursor += 1
@@ -334,14 +333,15 @@ export function getDrPlaySequence(musicScoreData: MusicScore): DR_playSequence {
    * 下一行复谱表同序号单谱表若小节无 clef_f/keySignature_f，继承上一行同序号声部结束时的状态。
    */
   const maxStaves = Math.max(0, ...musicScoreData.grandStaffs.map((gs) => gs.staves.length))
-  const staffStates: StaffPlayState[] = Array.from({length: maxStaves}, () => ({
+  const staffStates: StaffPlayState[] = Array.from({ length: maxStaves }, () => ({
     curKeySignature: KeySignatureTypeEnum.C,
-    curClef: ClefTypeEnum.Treble,
+    curClef: ClefTypeEnum.Treble
   }))
   let globalPlayTime: Unit256 = 0
 
   for (const measureIndex of playMeasureIndexes) {
-    const {grandStaffIndex, measureIndex: measureInGrandStaffIndex} = measurePositions[measureIndex]
+    const { grandStaffIndex, measureIndex: measureInGrandStaffIndex } =
+      measurePositions[measureIndex]
     const grandStaff = musicScoreData.grandStaffs[grandStaffIndex]
     let measureDuration: Unit256 = 0
     for (let staveIndex = 0; staveIndex < grandStaff.staves.length; staveIndex++) {
@@ -354,7 +354,7 @@ export function getDrPlaySequence(musicScoreData: MusicScore): DR_playSequence {
         globalPlayTime,
         staffStates[staveIndex],
         staveIndex,
-        noteStaveIndex,
+        noteStaveIndex
       )
       measureDuration = Math.max(measureDuration, staveDuration)
     }
@@ -401,7 +401,7 @@ function resolveAccidentalInMeasure(
   scope: MeasureAccidentalScope,
   clef: ClefTypeEnum,
   keySignature: KeySignatureTypeEnum,
-  region: number,
+  region: number
 ): AlteredAccidental | null {
   if (explicitType != null) {
     if (explicitType === AccidentalTypeEnum.Natural) {
@@ -423,7 +423,7 @@ function pushPitchItem(
   seq: DR_playSequence,
   noteStaveIndex: Map<string, number>,
   staveIndex: number,
-  item: DR_playSequence_item,
+  item: DR_playSequence_item
 ): void {
   seq.push(item)
   if (item.midi > 0) {
@@ -438,7 +438,7 @@ function appendNotesInfoChord(
   state: StaffPlayState,
   scope: MeasureAccidentalScope,
   staveIndex: number,
-  noteStaveIndex: Map<string, number>,
+  noteStaveIndex: Map<string, number>
 ): Unit256 {
   const lead = notesInfo[0]
   const duration = lead ? getDuration(lead.chronaxie, lead.augmentationDot?.count ?? 0) : 0
@@ -448,10 +448,15 @@ function appendNotesInfoChord(
       scope,
       state.curClef,
       state.curKeySignature,
-      noteInfo.region,
+      noteInfo.region
     )
     const midi = getNoteMidi(state.curClef, noteInfo.region, accidental)
-    pushPitchItem(seq, noteStaveIndex, staveIndex, {note_id: noteInfo.id, midi, duration, playTime})
+    pushPitchItem(seq, noteStaveIndex, staveIndex, {
+      note_id: noteInfo.id,
+      midi,
+      duration,
+      playTime
+    })
   }
   return duration
 }
@@ -463,21 +468,21 @@ function pushGraceNote(
   state: StaffPlayState,
   scope: MeasureAccidentalScope,
   staveIndex: number,
-  noteStaveIndex: Map<string, number>,
+  noteStaveIndex: Map<string, number>
 ): void {
   const accidental = resolveAccidentalInMeasure(
     g.accidental?.type,
     scope,
     state.curClef,
     state.curKeySignature,
-    g.region,
+    g.region
   )
   const midi = getNoteMidi(state.curClef, g.region, accidental)
   pushPitchItem(seq, noteStaveIndex, staveIndex, {
     note_id: g.id,
     midi,
     duration: GRACE_PLAY_DURATION,
-    playTime: at,
+    playTime: at
   })
 }
 
@@ -489,7 +494,7 @@ function appendGraceNotesBefore(
   state: StaffPlayState,
   scope: MeasureAccidentalScope,
   staveIndex: number,
-  noteStaveIndex: Map<string, number>,
+  noteStaveIndex: Map<string, number>
 ): void {
   const list = graceNotes ?? []
   if (!list.length) return
@@ -509,7 +514,7 @@ function appendGraceNotesAfter(
   state: StaffPlayState,
   scope: MeasureAccidentalScope,
   staveIndex: number,
-  noteStaveIndex: Map<string, number>,
+  noteStaveIndex: Map<string, number>
 ): void {
   const list = graceNotes ?? []
   if (!list.length) return
@@ -528,7 +533,7 @@ function appendNoteSymbolSequence(
   state: StaffPlayState,
   scope: MeasureAccidentalScope,
   staveIndex: number,
-  noteStaveIndex: Map<string, number>,
+  noteStaveIndex: Map<string, number>
 ): Unit256 {
   applySlotClef(state, note.clef)
   appendGraceNotesBefore(seq, note.graceNotes, playTime, state, scope, staveIndex, noteStaveIndex)
@@ -539,7 +544,7 @@ function appendNoteSymbolSequence(
     state,
     scope,
     staveIndex,
-    noteStaveIndex,
+    noteStaveIndex
   )
   appendGraceNotesAfter(
     seq,
@@ -549,7 +554,7 @@ function appendNoteSymbolSequence(
     state,
     scope,
     staveIndex,
-    noteStaveIndex,
+    noteStaveIndex
   )
   return playTime + chordDuration
 }
@@ -560,7 +565,7 @@ function appendMeasureSequence(
   measureStart: Unit256,
   state: StaffPlayState,
   staveIndex: number,
-  noteStaveIndex: Map<string, number>,
+  noteStaveIndex: Map<string, number>
 ): Unit256 {
   // 记录小节作用域的变音符号
   const measureAccidentals: MeasureAccidentalScope = new Map()
@@ -575,7 +580,7 @@ function appendMeasureSequence(
     if (s.type === NoteSymbolTypeEnum.Rest) {
       applySlotClef(state, s.clef)
       const duration = getDuration(s.chronaxie, s.augmentationDot?.count ?? 0)
-      seq.push({note_id: s.id, midi: 0, duration, playTime})
+      seq.push({ note_id: s.id, midi: 0, duration, playTime })
       playTime += duration
     } else if (s.type === NoteSymbolTypeEnum.Note) {
       playTime = appendNoteSymbolSequence(
@@ -585,7 +590,7 @@ function appendMeasureSequence(
         state,
         measureAccidentals,
         staveIndex,
-        noteStaveIndex,
+        noteStaveIndex
       )
     }
   }
@@ -597,7 +602,11 @@ function appendMeasureSequence(
 
 function getMeasurePositions(musicScoreData: MusicScore): MeasurePosition[] {
   const positions: MeasurePosition[] = []
-  for (let grandStaffIndex = 0; grandStaffIndex < musicScoreData.grandStaffs.length; grandStaffIndex++) {
+  for (
+    let grandStaffIndex = 0;
+    grandStaffIndex < musicScoreData.grandStaffs.length;
+    grandStaffIndex++
+  ) {
     const grandStaff = musicScoreData.grandStaffs[grandStaffIndex]
     const conductorStave = grandStaff.staves[0]
     if (!conductorStave) continue
@@ -605,7 +614,7 @@ function getMeasurePositions(musicScoreData: MusicScore): MeasurePosition[] {
       positions.push({
         grandStaffIndex,
         measureIndex,
-        measure: conductorStave.measures[measureIndex],
+        measure: conductorStave.measures[measureIndex]
       })
     }
   }
@@ -615,11 +624,14 @@ function getMeasurePositions(musicScoreData: MusicScore): MeasurePosition[] {
 function getVoltaList(
   musicScoreData: MusicScore,
   measureIndexMap: Map<string, number>,
-  measurePositions: MeasurePosition[],
+  measurePositions: MeasurePosition[]
 ): VoltaInfo[] {
-  return musicScoreData.affiliatedSymbols
-  .flatMap(symbol => {
-    if (symbol.name !== DoubleMeasureAffiliatedSymbolNameEnum.Volta || !('volta' in symbol.data) || !symbol.data.volta) {
+  return musicScoreData.affiliatedSymbols.flatMap((symbol) => {
+    if (
+      symbol.name !== DoubleMeasureAffiliatedSymbolNameEnum.Volta ||
+      !('volta' in symbol.data) ||
+      !symbol.data.volta
+    ) {
       return []
     }
     const startIndex = measureIndexMap.get(symbol.startId)
@@ -627,12 +639,14 @@ function getVoltaList(
     if (startIndex == null || endIndex == null) return []
     const endMeasure = measurePositions[endIndex]?.measure
     if (!isEndRepeatBarline(endMeasure?.barline_b?.type)) return []
-    return [{
-      id: symbol.id,
-      startIndex,
-      endIndex,
-      value: symbol.data.volta.value,
-    }]
+    return [
+      {
+        id: symbol.id,
+        startIndex,
+        endIndex,
+        value: symbol.data.volta.value
+      }
+    ]
   })
 }
 
@@ -646,7 +660,7 @@ function getRepeatJumpIndex(
   actived: Set<string>,
   reapeatState: RepeatState,
   activateFine: () => void,
-  increaseVoltaRound: () => void,
+  increaseVoltaRound: () => void
 ): number | null {
   const endRepeat = measure.endRepeat
   if (endRepeat) {
@@ -736,11 +750,16 @@ function disableDcState(reapeatState: RepeatState): void {
 }
 
 function isStartRepeatBarline(type: BarlineTypeEnum | undefined): boolean {
-  return type === BarlineTypeEnum.StartRepeat_barline || type === BarlineTypeEnum.Start_end_repeat_barline
+  return (
+    type === BarlineTypeEnum.StartRepeat_barline ||
+    type === BarlineTypeEnum.Start_end_repeat_barline
+  )
 }
 
 function isEndRepeatBarline(type: BarlineTypeEnum | undefined): boolean {
-  return type === BarlineTypeEnum.EndRepeat_barline || type === BarlineTypeEnum.Start_end_repeat_barline
+  return (
+    type === BarlineTypeEnum.EndRepeat_barline || type === BarlineTypeEnum.Start_end_repeat_barline
+  )
 }
 
 function getDuration(chronaxie: Chronaxie, dotCount: number): Unit256 {
@@ -751,55 +770,4 @@ function getDuration(chronaxie: Chronaxie, dotCount: number): Unit256 {
     total += add
   }
   return total
-}
-
-const SHARP_ORDER = ['F', 'C', 'G', 'D', 'A', 'E', 'B'] as const
-const FLAT_ORDER = ['B', 'E', 'A', 'D', 'G', 'C', 'F'] as const
-
-const KEY_ALTERATION: Record<KeySignatureTypeEnum, { kind: 'sharp' | 'flat'; count: number }> = {
-  [KeySignatureTypeEnum.C]: {kind: 'sharp', count: 0},
-  [KeySignatureTypeEnum.G]: {kind: 'sharp', count: 1},
-  [KeySignatureTypeEnum.D]: {kind: 'sharp', count: 2},
-  [KeySignatureTypeEnum.A]: {kind: 'sharp', count: 3},
-  [KeySignatureTypeEnum.E]: {kind: 'sharp', count: 4},
-  [KeySignatureTypeEnum.B]: {kind: 'sharp', count: 5},
-  [KeySignatureTypeEnum.F_sharp]: {kind: 'sharp', count: 6},
-  [KeySignatureTypeEnum.C_sharp]: {kind: 'sharp', count: 7},
-  [KeySignatureTypeEnum.F]: {kind: 'flat', count: 1},
-  [KeySignatureTypeEnum.B_flat]: {kind: 'flat', count: 2},
-  [KeySignatureTypeEnum.E_flat]: {kind: 'flat', count: 3},
-  [KeySignatureTypeEnum.A_flat]: {kind: 'flat', count: 4},
-  [KeySignatureTypeEnum.D_flat]: {kind: 'flat', count: 5},
-  [KeySignatureTypeEnum.G_flat]: {kind: 'flat', count: 6},
-  [KeySignatureTypeEnum.C_flat]: {kind: 'flat', count: 7},
-}
-
-export function getKeySignatureAccidental(
-  clef: ClefTypeEnum,
-  keySignature: KeySignatureTypeEnum,
-  region: number,
-): Exclude<AccidentalTypeEnum, AccidentalTypeEnum.Natural> | null {
-  const alteration = KEY_ALTERATION[keySignature]
-  if (!alteration || alteration.count === 0) return null
-  const letter = DIATONIC_LETTERS[getDiatonicDegreeFromC(clef, region)]
-  const order = alteration.kind === 'sharp' ? SHARP_ORDER : FLAT_ORDER
-  const altered = order.slice(0, alteration.count) as readonly string[]
-  if (!altered.includes(letter)) return null
-  return alteration.kind === 'sharp' ? AccidentalTypeEnum.Sharp : AccidentalTypeEnum.Flat
-}
-
-function getNoteMidi(clef: ClefTypeEnum, region: number, accidental: Exclude<AccidentalTypeEnum, AccidentalTypeEnum.Natural> | null = null): number {
-  const rule = [0, 2, 4, 5, 7, 9, 11]
-  const acc_offset_map: Record<Exclude<AccidentalTypeEnum, AccidentalTypeEnum.Natural>, number> = {
-    [AccidentalTypeEnum.Flat]: -1,
-    [AccidentalTypeEnum.Sharp]: 1,
-    [AccidentalTypeEnum.Double_flat]: -2,
-    [AccidentalTypeEnum.Double_sharp]: 2,
-  }
-  const {startRegion, startMidi} = CLEF_ANCHOR[clef]
-  const steps = region - startRegion
-  const multiple = Math.floor(steps / 7)
-  const remain = ((steps % 7) + 7) % 7
-  const accOffset = accidental ? acc_offset_map[accidental] : 0
-  return multiple * 12 + rule[remain] + accOffset + startMidi
 }

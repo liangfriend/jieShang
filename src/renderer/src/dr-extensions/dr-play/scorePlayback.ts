@@ -1,11 +1,11 @@
 import type { MusicScore } from 'deciphony-renderer'
-import type { ComputedRef, Ref } from 'vue'
-import type { InjectionKey } from 'vue'
-import { onMounted, watch, type Ref as VueRef } from 'vue'
+import { ElMessage } from 'element-plus'
+import type { PlaySequence } from 'deciphony-player'
+import type { ComputedRef, InjectionKey, Ref } from 'vue'
+import type { Ref as VueRef } from 'vue'
 import { storeToRefs } from 'pinia'
 import { PIANO_TONE_COLOR_NAME, usePlayStore, type PlaybackState } from '@renderer/store/play.store'
 import { getDrPlaySequence } from './play-util'
-import type { PlaySequence } from 'deciphony-player'
 
 /** DR 播放序列 → NPlayer 播放序列 */
 export function toPlaySequence(musicScore: MusicScore): PlaySequence {
@@ -40,35 +40,34 @@ export type ScorePlaybackController = {
   handlePlay: () => Promise<void>
   handlePause: () => void
   handleStop: () => void
-  refreshSequence: () => void
 }
 
 export const scorePlaybackKey: InjectionKey<ScorePlaybackController> = Symbol('scorePlayback')
 
-/** 绑定当前页曲谱到全局 NPlayer 播放序列 */
+/** 绑定当前页曲谱到全局 NPlayer；播放时再生成序列 */
 export function useScorePlayback(musicScore: VueRef<MusicScore>): ScorePlaybackController {
   const playStore = usePlayStore()
   const { playbackState, playDisabled, pauseDisabled, stopDisabled } = storeToRefs(playStore)
 
-  function refreshSequence() {
-    playStore.refreshSequence(toPlaySequence(musicScore.value))
-  }
+  async function handlePlay() {
+    const sequence = toPlaySequence(musicScore.value)
+    if (sequence.length === 0) {
+      ElMessage.warning('当前曲谱没有可播放的内容')
+      return
+    }
 
-  onMounted(async () => {
     await playStore.waitReady()
-    playStore.setPlaySequence(toPlaySequence(musicScore.value))
-  })
-
-  watch(musicScore, () => refreshSequence(), { deep: true })
+    playStore.setPlaySequence(sequence)
+    await playStore.play()
+  }
 
   return {
     playbackState,
     playDisabled,
     pauseDisabled,
     stopDisabled,
-    handlePlay: () => playStore.play(),
+    handlePlay,
     handlePause: () => playStore.pause(),
-    handleStop: () => playStore.stop(),
-    refreshSequence
+    handleStop: () => playStore.stop()
   }
 }

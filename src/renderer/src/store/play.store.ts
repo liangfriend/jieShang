@@ -4,6 +4,9 @@ import { NPlayer, activeContext, startJPlayer } from 'deciphony-player'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import piano from '@renderer/toneColor/accoustic_grand_piano'
+import { DEFAULT_TONE_COLOR_ID, TONE_COLOR_MAP } from '@renderer/constant/toneColor'
+import { WHITEBOARD_NOTE_HOLD_DURATION_SEC } from '@renderer/constant/whiteboard'
+import type { ToneColorId } from '@renderer/types/toneColor'
 import {
   PLAY_BPM_MAX,
   PLAY_BPM_MIN,
@@ -30,10 +33,12 @@ export const usePlayStore = defineStore('play', () => {
   const ready = ref(false)
   const volume = ref(PLAY_DEFAULT_VOLUME)
   const bpm = ref(PLAY_DEFAULT_BPM)
+  const toneColorId = ref<ToneColorId>('accoustic_grand_piano')
 
   let nplayer: NPlayer | null = null
   let initPromise: Promise<void> | null = null
   let listenerSeq = 0
+  const heldNoteIds = new Map<number, string>()
 
   const progressStartListeners = new Map<string, ProgressListener>()
   const progressEndListeners = new Map<string, ProgressListener>()
@@ -141,6 +146,49 @@ export const usePlayStore = defineStore('play', () => {
     if (nplayer) nplayer.bpm = next
   }
 
+  async function setToneColor(id: ToneColorId) {
+    await waitReady()
+    if (!nplayer) return
+    const meta = TONE_COLOR_MAP[id]
+    if (!meta) return
+    const module = await meta.loader()
+    const toneData = module.default ?? module
+    await nplayer.addToneColor(PIANO_TONE_COLOR_NAME, toneData)
+    toneColorId.value = id
+  }
+
+  async function resetToneColorToDefault() {
+    await setToneColor(DEFAULT_TONE_COLOR_ID)
+  }
+
+  async function triggerNote(midi: number) {
+    await waitReady()
+    if (!nplayer || heldNoteIds.has(midi)) return
+    await activeContext()
+    const id = `whiteboard-${midi}`
+    nplayer.trigger({
+      id,
+      midi,
+      toneColor: PIANO_TONE_COLOR_NAME,
+      volume: volume.value,
+      duration: WHITEBOARD_NOTE_HOLD_DURATION_SEC
+    })
+    heldNoteIds.set(midi, id)
+  }
+
+  function releaseNote(midi: number) {
+    if (!nplayer) return
+    const id = heldNoteIds.get(midi)
+    if (!id) return
+    nplayer.release({ id })
+    heldNoteIds.delete(midi)
+  }
+
+  function releaseAllHeldNotes() {
+    nplayer?.releaseAll()
+    heldNoteIds.clear()
+  }
+
   async function restorePlaybackDefaults(musicScore: MusicScore) {
     await waitReady()
     setVolume(PLAY_DEFAULT_VOLUME)
@@ -186,6 +234,7 @@ export const usePlayStore = defineStore('play', () => {
     ready,
     volume,
     bpm,
+    toneColorId,
     playDisabled,
     pauseDisabled,
     stopDisabled,
@@ -193,6 +242,11 @@ export const usePlayStore = defineStore('play', () => {
     waitReady,
     setVolume,
     setBpm,
+    setToneColor,
+    resetToneColorToDefault,
+    triggerNote,
+    releaseNote,
+    releaseAllHeldNotes,
     restorePlaybackDefaults,
     syncPlayerSettings,
     setPlaySequence,

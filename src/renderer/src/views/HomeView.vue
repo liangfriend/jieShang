@@ -36,6 +36,18 @@ function onTemplateSelect(key: string) {
 function goToScores() {
   router.push({ name: 'scores' })
 }
+
+function goToCollection() {
+  router.push({ name: 'collection' })
+}
+
+function goToWhiteboard() {
+  router.push({ name: 'whiteboard' })
+}
+
+function goToLiteracyCamp() {
+  router.push({ name: 'literacyCamp' })
+}
 </script>
 
 <template>
@@ -97,7 +109,7 @@ function goToScores() {
       </section>
 
       <section class="action-row">
-        <button type="button" class="action-btn action-collection">
+        <button type="button" class="action-btn action-collection" @click="goToCollection">
           <span class="action-emoji">🎁</span>
           <span class="action-label">藏品</span>
         </button>
@@ -114,12 +126,12 @@ function goToScores() {
       </section>
 
       <section class="action-row action-row--dual">
-        <button type="button" class="action-btn action-whiteboard">
+        <button type="button" class="action-btn action-whiteboard" @click="goToWhiteboard">
           <span class="action-emoji">🎹</span>
           <span class="action-label">教学白板</span>
         </button>
 
-        <button type="button" class="action-btn action-training">
+        <button type="button" class="action-btn action-training" @click="goToLiteracyCamp">
           <span class="action-emoji">🎯</span>
           <span class="action-label">素养训练营</span>
         </button>

@@ -36,6 +36,24 @@ const routes: RouteRecordRaw[] = [
     name: 'scores',
     component: () => import('./views/ScoreListView.vue'),
     meta: { title: '我的曲谱' }
+  },
+  {
+    path: '/whiteboard',
+    name: 'whiteboard',
+    component: () => import('./views/TeachingWhiteboardView.vue'),
+    meta: { title: '教学白板' }
+  },
+  {
+    path: '/literacy-camp',
+    name: 'literacyCamp',
+    component: () => import('./views/LiteracyCampView.vue'),
+    meta: { title: '素养训练营' }
+  },
+  {
+    path: '/collection',
+    name: 'collection',
+    component: () => import('./views/CollectionView.vue'),
+    meta: { title: '藏品' }
   }
 ]
 

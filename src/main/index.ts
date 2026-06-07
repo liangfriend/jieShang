@@ -3,7 +3,7 @@ import { join } from 'path'
 
 const path = require('node:path')
 const url = require('node:url')
-import { electronApp, optimizer, is } from '@electron-toolkit/utils'
+import { electronApp, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initShortcut } from './utils/shortcutManager'
 import { setupContainer } from './container'
@@ -22,8 +22,10 @@ function createWindow(): void {
       webSecurity: false
     }
   })
-  mainWindow.webContents.openDevTools({ mode: 'bottom', activate: true })
   initShortcut(mainWindow)
+  if (is.dev) {
+    mainWindow.webContents.openDevTools({ mode: 'right', activate: true })
+  }
   mainWindow.on('ready-to-show', () => {
     mainWindow.show()
   })
@@ -46,10 +48,6 @@ process.env.VITE_DEV_SERVER_URL = VITE_DEV_SERVER_URL
 app.whenReady().then(async () => {
   await registerController()
   electronApp.setAppUserModelId('com.electron')
-
-  app.on('browser-window-created', (_, window) => {
-    optimizer.watchWindowShortcuts(window)
-  })
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))
