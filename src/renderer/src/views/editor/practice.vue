@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { MusicScore, VDom } from 'deciphony-renderer'
+import type { PlaySequence } from 'deciphony-player'
 import musicScoreVue from 'deciphony-renderer'
 import { onBeforeUnmount, onMounted, provide, ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
@@ -26,6 +27,7 @@ import { NOTE_RESULT_COLOR } from '@renderer/constant/practice'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
 import { practiceContextKey } from '@renderer/utils/practiceContext'
 import { createPracticeNoteResultHighlight } from '@renderer/utils/practiceNoteResultHighlight'
+import { createPracticeStaffDim } from '@renderer/utils/practiceStaffDim'
 import empty from '@renderer/template/empty'
 
 /** 练习模式瀑布流 / 虚拟钢琴共用 midi 范围（88 键） */
@@ -48,9 +50,19 @@ const playStore = usePlayStore()
 const metronomeStore = useMetronomeStore()
 const settings = usePracticeSettingsStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
+
+const maxStaffCount = computed(() => {
+  let max = 0
+  for (const grandStaff of musicScoreData.value.grandStaffs ?? []) {
+    max = Math.max(max, grandStaff.staves?.length ?? 0)
+  }
+  return max
+})
+
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
 const pianoWaterfallRef = ref<PianoWaterfallPlaybackExpose | null>(null)
 const performSequence = ref<PerformSequence>({})
+const playSequence = ref<PlaySequence>([])
 const practiceBpm = ref(120)
 const vDomList = ref<VDom[]>([])
 
@@ -59,9 +71,15 @@ const noteResultHighlight = createPracticeNoteResultHighlight({
   findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
 })
 
+const staffDim = createPracticeStaffDim({
+  getVDomList: () => vDomList.value,
+  findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
+})
+
 const playback = useScorePagePlayback(musicScoreData, {
   musicScoreRef,
   waterfallRef: pianoWaterfallRef,
+  getPlaySequence: () => playSequence.value,
   countIn: () => metronomeStore.playCountIn(),
   onPlayStarted: () => {
     if (settings.metronomeDuringPlay) void metronomeStore.startLoop()
@@ -98,14 +116,6 @@ watch(
   }
 )
 
-const maxStaffCount = computed(() => {
-  let max = 0
-  for (const grandStaff of musicScoreData.value.grandStaffs ?? []) {
-    max = Math.max(max, grandStaff.staves?.length ?? 0)
-  }
-  return max
-})
-
 provide(practiceContextKey, {
   maxStaffCount,
   bpm: practiceBpm
@@ -128,6 +138,7 @@ function handleRenderMusicScore(list: VDom[]) {
   vDomList.value = list
   playback.handleRenderMusicScore?.(list)
   noteResultHighlight.rebindAfterRender()
+  staffDim.rebindAfterRender()
 }
 
 function countPracticeMeasures(score: MusicScore): number {
@@ -169,12 +180,30 @@ function applyPracticeScoreLayout(score: MusicScore) {
   }
 }
 
-function buildPracticePerformSequence(score: MusicScore) {
+function rebuildPracticeSequences(score: MusicScore) {
   const bpm = resolvePlayBpm(score.bpm)
   practiceBpm.value = bpm
-  performSequence.value = toPerformSequence(toPlaySequence(score), bpm)
+  const passSingleStaffIndex = settings.disabledStaffIndexes
+  playSequence.value = toPlaySequence(score, { passSingleStaffIndex })
+  performSequence.value = toPerformSequence(playSequence.value, bpm)
   syncMetronome(score, bpm)
+  staffDim.sync(score, passSingleStaffIndex)
+  if (playback.playbackState.value === 'stopped') {
+    playStore.setPlaySequence(playSequence.value)
+  }
 }
+
+watch(
+  maxStaffCount,
+  (count) => settings.initStaffEnabled(count),
+  { immediate: true }
+)
+
+watch(
+  () => settings.staffEnabled,
+  () => rebuildPracticeSequences(musicScoreData.value),
+  { deep: true }
+)
 
 onMounted(async () => {
   const loaded = await loadScoreFromRoute(route)
@@ -183,10 +212,10 @@ onMounted(async () => {
     mergeGrandStaff(cloned)
     applyPracticeScoreLayout(cloned)
     musicScoreData.value = cloned
-    buildPracticePerformSequence(cloned)
+    rebuildPracticeSequences(cloned)
   } else {
     applyPracticeScoreLayout(musicScoreData.value)
-    buildPracticePerformSequence(musicScoreData.value)
+    rebuildPracticeSequences(musicScoreData.value)
   }
 
   await playStore.restorePlaybackDefaults(musicScoreData.value)
@@ -200,6 +229,7 @@ onBeforeUnmount(() => {
   playback.handleStop()
   metronomeStore.stop()
   noteResultHighlight.clearAll()
+  staffDim.clearAll()
 })
 </script>
 

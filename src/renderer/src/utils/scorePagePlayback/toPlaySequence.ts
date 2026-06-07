@@ -2,10 +2,28 @@ import type { MusicScore } from 'deciphony-renderer'
 import type { PlaySequence } from 'deciphony-player'
 import { getDrPlaySequence } from '@renderer/dr-extensions/dr-play'
 import { PIANO_TONE_COLOR_NAME } from '@renderer/store/play.store'
+import { buildNoteStaveIndexMap } from '@renderer/utils/practice/staffNotes'
+
+export type ToPlaySequenceOptions = {
+  /** 跳过的单谱表行号（关闭的声部） */
+  passSingleStaffIndex?: number[]
+}
 
 /** DR 播放序列 → NPlayer 播放序列 */
-export function toPlaySequence(musicScoreData: MusicScore): PlaySequence {
-  const drSeq = getDrPlaySequence(musicScoreData)
+export function toPlaySequence(
+  musicScoreData: MusicScore,
+  options: ToPlaySequenceOptions = {}
+): PlaySequence {
+  let drSeq = getDrPlaySequence(musicScoreData)
+  const passSet = new Set(options.passSingleStaffIndex ?? [])
+  if (passSet.size > 0) {
+    const staveMap = buildNoteStaveIndexMap(musicScoreData)
+    drSeq = drSeq.filter((it) => {
+      const st = staveMap.get(it.note_id)
+      if (st == null) return true
+      return !passSet.has(st)
+    })
+  }
 
   let curPlayTime = -Infinity
   const playSeq = drSeq.map((it) => {

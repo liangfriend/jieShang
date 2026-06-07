@@ -86,7 +86,7 @@ export function useScorePagePlayback(
   })
 
   async function handlePlay() {
-    const sequence = toPlaySequence(musicScore.value)
+    const sequence = options.getPlaySequence?.() ?? toPlaySequence(musicScore.value)
     if (sequence.length === 0) {
       ElMessage.warning('当前曲谱没有可播放的内容')
       return

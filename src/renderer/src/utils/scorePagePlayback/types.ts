@@ -1,4 +1,5 @@
 import type { VDom } from 'deciphony-renderer'
+import type { PlaySequence } from 'deciphony-player'
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
 import type { PlaybackState } from '@renderer/store/play.store'
@@ -20,6 +21,8 @@ export type UseScorePagePlaybackOptions = {
   onPlaybackStopped?: () => void
   /** 清空弹奏数据时回调（如清除曲谱音符 filter） */
   onClearPlayData?: () => void
+  /** 预生成的播放序列（练习模式进入页面时构建，播放时不再重建） */
+  getPlaySequence?: () => PlaySequence
 }
 
 export type PianoWaterfallPlaybackExpose = {

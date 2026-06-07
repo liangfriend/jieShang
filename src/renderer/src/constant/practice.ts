@@ -31,7 +31,7 @@ export const DEFAULT_DIFFICULTY: PracticeDifficulty = 'beginner'
 
 /** 音符评分结果对应的颜色（瀑布流/图例主色） */
 export const NOTE_RESULT_COLOR: Record<NoteScoreResult, string> = {
-  perfect: '#9933ff',
+  perfect: '#3399ff',
   good: '#15803d',
   pass: '#f97316',
   early: '#93c5fd',
@@ -39,9 +39,9 @@ export const NOTE_RESULT_COLOR: Record<NoteScoreResult, string> = {
   miss: '#4b5563'
 }
 
-/** 设置附录图例色块（完美为彩虹渐变） */
+/** 设置附录图例色块（完美为彩虹渐变，红→橙→黄→绿→蓝） */
 export const NOTE_RESULT_LEGEND_STYLE: Record<NoteScoreResult, string> = {
-  perfect: 'linear-gradient(135deg, #ff3366, #ff9933, #ffdd00, #33cc66, #3399ff, #9933ff)',
+  perfect: 'linear-gradient(135deg, #ff3366, #ff9933, #ffdd00, #33cc66, #3399ff)',
   good: NOTE_RESULT_COLOR.good,
   pass: NOTE_RESULT_COLOR.pass,
   early: NOTE_RESULT_COLOR.early,

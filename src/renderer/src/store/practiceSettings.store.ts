@@ -21,12 +21,29 @@ export const usePracticeSettingsStore = defineStore('practiceSettings', () => {
   const bpm = ref(PLAY_DEFAULT_BPM)
   /** 播放过程是否开启节拍器（默认关闭） */
   const metronomeDuringPlay = ref(false)
-  /** 虚拟钢琴按键提示（暂未实现） */
-  const pianoKeyHint = ref(false)
   /** 难度 */
   const difficulty = ref<PracticeDifficulty>(DEFAULT_DIFFICULTY)
 
   const highlightPolicy = computed(() => DIFFICULTY_POLICY[difficulty.value])
+
+  /** 单谱表是否参与练习（true=参与，false=跳过并半透明） */
+  const staffEnabled = ref<boolean[]>([])
+
+  function initStaffEnabled(count: number) {
+    if (count <= 0) {
+      staffEnabled.value = []
+      return
+    }
+    if (staffEnabled.value.length === count) return
+    staffEnabled.value = Array.from({ length: count }, () => true)
+  }
+
+  const disabledStaffIndexes = computed(() =>
+    staffEnabled.value.reduce<number[]>((acc, enabled, index) => {
+      if (!enabled) acc.push(index)
+      return acc
+    }, [])
+  )
 
   return {
     showNoteResult,
@@ -35,8 +52,10 @@ export const usePracticeSettingsStore = defineStore('practiceSettings', () => {
     metronomeVolume,
     bpm,
     metronomeDuringPlay,
-    pianoKeyHint,
     difficulty,
-    highlightPolicy
+    highlightPolicy,
+    staffEnabled,
+    initStaffEnabled,
+    disabledStaffIndexes
   }
 })

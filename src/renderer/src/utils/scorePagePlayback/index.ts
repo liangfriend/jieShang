@@ -1,4 +1,4 @@
-export { toPlaySequence } from './toPlaySequence'
+export { toPlaySequence, type ToPlaySequenceOptions } from './toPlaySequence'
 export { toPerformSequence, unit256ToMs, type PerformSequence } from './toPerformSequence'
 export { useScorePagePlayback } from './useScorePagePlayback'
 export {

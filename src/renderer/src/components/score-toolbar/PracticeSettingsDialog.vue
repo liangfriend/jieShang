@@ -1,7 +1,6 @@
 <script setup lang="ts">
-import { computed, inject, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { storeToRefs } from 'pinia'
-import { practiceContextKey } from '@renderer/utils/practiceContext'
 import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store'
 import { NOTE_RESULT_LABEL, NOTE_RESULT_LEGEND_STYLE } from '@renderer/constant/practice'
 import { PLAY_BPM_MAX, PLAY_BPM_MIN } from '@renderer/constant/play'
@@ -16,7 +15,6 @@ const emit = defineEmits<{
   (e: 'update:modelValue', value: boolean): void
 }>()
 
-const practiceContext = inject(practiceContextKey)
 const settings = usePracticeSettingsStore()
 const {
   showNoteResult,
@@ -25,8 +23,8 @@ const {
   metronomeVolume,
   bpm,
   metronomeDuringPlay,
-  pianoKeyHint,
-  difficulty
+  difficulty,
+  staffEnabled
 } = storeToRefs(settings)
 
 const visible = computed({
@@ -44,17 +42,6 @@ const metronomeVolumePercent = computed({
   set: (value: number) => (metronomeVolume.value = value / 100)
 })
 
-/** 单谱表开关（暂未接入功能） */
-const staffEnabled = ref<boolean[]>([])
-
-watch(
-  () => practiceContext?.maxStaffCount.value,
-  (count) => {
-    staffEnabled.value = Array.from({ length: count ?? 0 }, () => true)
-  },
-  { immediate: true }
-)
-
 const difficultyOptions = [
   { label: '新手', value: 'beginner', desc: '判定窗口较宽，适合入门' },
   { label: '老手', value: 'intermediate', desc: '标准判定，适合日常练习' },
@@ -64,12 +51,6 @@ const difficultyOptions = [
 const noteColorLegend = (Object.keys(NOTE_RESULT_LABEL) as (keyof typeof NOTE_RESULT_LABEL)[]).map(
   (key) => ({ label: NOTE_RESULT_LABEL[key], style: NOTE_RESULT_LEGEND_STYLE[key] })
 )
-
-const keyColorLegend = [
-  { label: '下批音符', color: '#ff6b6b' },
-  { label: '下下批音符', color: '#5b9dff' },
-  { label: '两批重合', color: '#51cf66' }
-]
 
 const appendixOpen = ref(false)
 </script>
@@ -125,8 +106,8 @@ const appendixOpen = ref(false)
       </section>
 
       <section class="practice-settings-section">
-        <h3 class="practice-settings-section__title">单谱表</h3>
-        <p class="practice-settings-section__hint">关闭后对应谱表与瀑布流音符会变透明</p>
+        <h3 class="practice-settings-section__title">声部选择</h3>
+        <p class="practice-settings-section__hint">选择参与弹奏的声部</p>
         <div v-if="staffEnabled.length" class="practice-settings-staff-list">
           <div
             v-for="(_, index) in staffEnabled"
@@ -141,28 +122,19 @@ const appendixOpen = ref(false)
       </section>
 
       <section class="practice-settings-section">
-        <h3 class="practice-settings-section__title">辅助</h3>
-        <div class="practice-settings-row">
-          <div class="practice-settings-row__label">
-            <span>虚拟钢琴按键提示</span>
-            <small>下批红色、下下批蓝色、重合绿色</small>
-          </div>
-          <el-switch v-model="pianoKeyHint" />
-        </div>
-        <el-form-item label="难度">
-          <el-radio-group v-model="difficulty" class="practice-settings-difficulty">
-            <el-radio
-              v-for="opt in difficultyOptions"
-              :key="opt.value"
-              :value="opt.value"
-              border
-              class="practice-settings-difficulty__item"
-            >
-              <span class="practice-settings-difficulty__label">{{ opt.label }}</span>
-              <small>{{ opt.desc }}</small>
-            </el-radio>
-          </el-radio-group>
-        </el-form-item>
+        <h3 class="practice-settings-section__title">难度</h3>
+        <el-radio-group v-model="difficulty" class="practice-settings-difficulty">
+          <el-radio
+            v-for="opt in difficultyOptions"
+            :key="opt.value"
+            :value="opt.value"
+            border
+            class="practice-settings-difficulty__item"
+          >
+            <span class="practice-settings-difficulty__label">{{ opt.label }}</span>
+            <small>{{ opt.desc }}</small>
+          </el-radio>
+        </el-radio-group>
       </section>
 
       <section class="practice-settings-section practice-settings-section--appendix">
@@ -182,15 +154,6 @@ const appendixOpen = ref(false)
             <ul>
               <li v-for="item in noteColorLegend" :key="item.label">
                 <span class="practice-settings-legend__dot" :style="{ background: item.style }" />
-                {{ item.label }}
-              </li>
-            </ul>
-          </div>
-          <div class="practice-settings-legend">
-            <p class="practice-settings-legend__title">琴键提示颜色</p>
-            <ul>
-              <li v-for="item in keyColorLegend" :key="item.label">
-                <span class="practice-settings-legend__dot" :style="{ background: item.color }" />
                 {{ item.label }}
               </li>
             </ul>
