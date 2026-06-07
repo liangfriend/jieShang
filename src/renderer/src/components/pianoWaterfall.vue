@@ -296,14 +296,23 @@ function getMidiWidth(midi) {
 /*
  * 样式
  * */
+/** 按 midi 生成柔和的糖果色相 */
+function noteHue(midi: number) {
+  return (midi * 17 + 285) % 360
+}
+
 /** 样式 - 外容器（带滚动） */
 const pianoWaterfallContainerStyle = computed(
   (): CSSProperties => ({
     width: isFillParentMode.value ? '100%' : totalWidth.value,
     height: props.height,
-    outline: '1px dashed black',
     position: 'relative',
-    overflow: 'hidden'
+    overflow: 'hidden',
+    borderRadius: '16px',
+    border: '1px solid rgba(255, 184, 208, 0.35)',
+    background:
+      'linear-gradient(180deg, rgba(255, 248, 252, 0.96) 0%, rgba(245, 238, 255, 0.94) 55%, rgba(234, 245, 255, 0.92) 100%)',
+    boxShadow: 'inset 0 2px 10px rgba(255, 192, 220, 0.18)'
   })
 )
 const waterfallStyle = computed((): CSSProperties => {
@@ -341,12 +350,17 @@ const keyStyle = computed(() => {
 const midiEventStyle = computed(() => {
   return (midi: number): CSSProperties => {
     const midiWidth = getMidiWidth(midi)
+    const active = activeKeys.value.has(midi)
     const res: CSSProperties = {
       width: midiWidth + keyUnit.value,
       flexShrink: 0,
-      height: '0.1px',
-      boxShadow: '0 0px 5px 1px red',
-      visibility: activeKeys.value.has(midi) ? 'visible' : 'hidden'
+      height: active ? '6px' : '0.1px',
+      borderRadius: '999px',
+      background: 'linear-gradient(90deg, #ffd1e8, #ff9ec7, #c9b8ff)',
+      boxShadow: '0 0 10px 2px rgba(255, 143, 184, 0.85)',
+      transform: 'translateY(-3px)',
+      transition: 'height 0.1s ease',
+      visibility: active ? 'visible' : 'hidden'
     }
     return res
   }
@@ -354,16 +368,18 @@ const midiEventStyle = computed(() => {
 
 // 水柱样式
 const waterColumnStyle = computed(() => {
-  return (item: [number, number]) => {
+  return (midi: number, item: [number, number]) => {
     const start = item[0]
     const end = item[1]
+    const hue = noteHue(midi)
     const res: CSSProperties = {
       height: (end - start) * props.columnHeightConstant + 'px',
-      width: '10px',
-      backgroundColor: 'blue',
+      width: '14px',
+      background: `linear-gradient(180deg, hsla(${hue}, 100%, 84%, 0.98) 0%, hsla(${hue}, 85%, 70%, 0.96) 100%)`,
       position: 'absolute',
       flexShrink: 0,
-      borderRadius: '5px',
+      borderRadius: '999px',
+      boxShadow: `0 2px 8px hsla(${hue}, 80%, 60%, 0.35), inset 0 2px 3px rgba(255, 255, 255, 0.55)`,
       bottom: start * props.columnHeightConstant + 'px'
     }
     return res
@@ -377,11 +393,12 @@ const waterColumnActiveStyle = computed(() => {
 
     return {
       height: (end - start) * props.columnHeightConstant + 'px',
-      width: '10px',
-      background: `red`,
+      width: '14px',
+      background: 'linear-gradient(180deg, #7ee8fa 0%, #4dd4c4 50%, #2eb8a6 100%)',
+      opacity:0.7,
       position: 'absolute',
       flexShrink: 0,
-      borderRadius: '5px',
+      borderRadius: '999px',
       bottom: start * props.columnHeightConstant + 'px'
     }
   }
@@ -391,10 +408,14 @@ const waterColumnActiveStyle = computed(() => {
 // 高亮效果
 const midiEventContainerStyle = computed((): CSSProperties => {
   return {
-    height: '0px',
+    height: '3px',
     bottom: props.baseLineBottom + 'px',
-    outline: '1px dashed yellow',
-    display: 'flex'
+    background:
+      'linear-gradient(90deg, transparent 0%, rgba(255, 158, 199, 0.45) 8%, rgba(255, 158, 199, 0.85) 50%, rgba(201, 184, 255, 0.45) 92%, transparent 100%)',
+    boxShadow: '0 0 12px 1px rgba(255, 158, 199, 0.6)',
+    borderRadius: '999px',
+    display: 'flex',
+    alignItems: 'flex-end'
   }
 })
 
@@ -634,7 +655,7 @@ defineExpose({
         <div
           v-for="(item, index) in performSequenceComputed[midi]"
           :key="index"
-          :style="waterColumnStyle(item)"
+          :style="waterColumnStyle(midi, item)"
           comment="音符水柱,后续改插槽自定义样式"
         ></div>
         <div

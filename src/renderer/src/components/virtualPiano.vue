@@ -1,5 +1,14 @@
 <script lang="ts" setup>
-import { computed, CSSProperties, nextTick, onBeforeUnmount, onMounted, PropType, ref, watch } from 'vue'
+import {
+  computed,
+  CSSProperties,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  PropType,
+  ref,
+  watch
+} from 'vue'
 import { parseAndFormatDimension } from '@renderer/utils/commonUtil'
 import {
   AccidentalEnum,
@@ -186,6 +195,12 @@ function dim(value: number) {
 
 /** 生成白键样式 left 值 */
 function leftForWhiteByIndex(whiteIndex: number) {
+  console.log(
+    'chicken',
+    whiteIndex,
+    whiteKeyWidthNum.value,
+    dim(whiteIndex * whiteKeyWidthNum.value)
+  )
   return dim(whiteIndex * whiteKeyWidthNum.value)
 }
 
@@ -422,9 +437,8 @@ const intervalRulerTickStyle = computed((): ((index: number) => CSSProperties) =
   return (index) => {
     const res: CSSProperties = {
       width: '1px',
-      height: index % 2
-        ? dim(containerHeightNum.value * 0.1)
-        : dim(containerHeightNum.value * 0.07),
+      height:
+        index % 2 ? dim(containerHeightNum.value * 0.1) : dim(containerHeightNum.value * 0.07),
       backgroundColor: '#111'
     }
     return res
