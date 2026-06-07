@@ -26,7 +26,7 @@ import empty from '@renderer/template/empty'
 const PRACTICE_MIDI_RANGE = { min: 21, max: 108 } as const
 
 /** 瀑布流区域高度 */
-const PRACTICE_WATERFALL_HEIGHT = '140px'
+const PRACTICE_WATERFALL_HEIGHT = '100%'
 
 /** 虚拟钢琴高度（比教学白板更紧凑） */
 const PRACTICE_PIANO_HEIGHT = '96px'
@@ -115,8 +115,9 @@ onBeforeUnmount(() => {
         :midi="PRACTICE_MIDI_RANGE"
         :perform-sequence="performSequence"
         :bpm="practiceBpm"
-        :baseLineBottom="50"
+        :baseLineBottom="100"
         :prepare-time="0"
+        :columnHeightConstant="0.1"
       />
     </section>
 
@@ -159,7 +160,7 @@ onBeforeUnmount(() => {
 
 .practice-page__waterfall {
   flex-shrink: 0;
-  height: 140px;
+  flex: 1;
   overflow: hidden;
   border-bottom: 1px solid rgba(255, 184, 208, 0.15);
   background: rgba(255, 255, 255, 0.72);
