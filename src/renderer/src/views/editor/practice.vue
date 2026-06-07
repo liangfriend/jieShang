@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type { MusicScore } from 'deciphony-renderer'
 import musicScoreVue from 'deciphony-renderer'
-import { onBeforeUnmount, onMounted, provide, ref } from 'vue'
+import { onBeforeUnmount, onMounted, provide, ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
 import { PracticeModeToolbar } from '@renderer/components/score-toolbar'
@@ -20,7 +20,11 @@ import { mergeGrandStaff } from '@renderer/dr-extensions/scoreUtil'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
 import { resolvePlayBpm } from '@renderer/constant/play'
 import { usePlayStore } from '@renderer/store/play.store'
+import { useMetronomeStore } from '@renderer/store/metronome.store'
+import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store'
+import { NOTE_RESULT_COLOR } from '@renderer/constant/practice'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
+import { practiceContextKey } from '@renderer/utils/practiceContext'
 import empty from '@renderer/template/empty'
 
 /** 练习模式瀑布流 / 虚拟钢琴共用 midi 范围（88 键） */
@@ -40,6 +44,8 @@ const PRACTICE_MEASURE_WIDTH = 200
 
 const route = useRoute()
 const playStore = usePlayStore()
+const metronomeStore = useMetronomeStore()
+const settings = usePracticeSettingsStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
 const pianoWaterfallRef = ref<PianoWaterfallPlaybackExpose | null>(null)
@@ -47,12 +53,49 @@ const performSequence = ref<PerformSequence>({})
 const practiceBpm = ref(120)
 const playback = useScorePagePlayback(musicScoreData, {
   musicScoreRef,
-  waterfallRef: pianoWaterfallRef
+  waterfallRef: pianoWaterfallRef,
+  countIn: () => metronomeStore.playCountIn(),
+  onPlayStarted: () => {
+    if (settings.metronomeDuringPlay) void metronomeStore.startLoop()
+  },
+  onPlaybackPaused: () => metronomeStore.stop(),
+  onPlaybackStopped: () => metronomeStore.stop()
 })
 
 provide(scorePlaybackKey, playback)
 
-/** 最近一次音符评分回调（第三个参数为 noteInfo id，后续用于按 id 定位 DOM 加样式） */
+const noteResultColor = NOTE_RESULT_COLOR
+
+watch(
+  () => settings.scoreVolume,
+  (value) => playStore.setVolume(value)
+)
+watch(
+  () => settings.bpm,
+  (value) => {
+    playStore.setBpm(value)
+    metronomeStore.setBpm(value)
+  }
+)
+watch(
+  () => settings.metronomeVolume,
+  (value) => metronomeStore.setVolume(value)
+)
+
+const maxStaffCount = computed(() => {
+  let max = 0
+  for (const grandStaff of musicScoreData.value.grandStaffs ?? []) {
+    max = Math.max(max, grandStaff.staves?.length ?? 0)
+  }
+  return max
+})
+
+provide(practiceContextKey, {
+  maxStaffCount,
+  bpm: practiceBpm
+})
+
+/** 音符评分回调（第三个参数为 noteInfo id），水柱上色由 pianoWaterfall 内部完成 */
 function handleNoteScore(
   result: NoteScoreResult,
   realScore: number,
@@ -70,6 +113,30 @@ function countPracticeMeasures(score: MusicScore): number {
   return Math.max(1, staff?.measures.length ?? 1)
 }
 
+/** 从曲谱首小节解析拍号字符串（如 '4_4' → '4/4'），并取 beatUnit（分母） */
+function resolveTimeSignature(score: MusicScore): { timeSignature: string; beatUnit: number } {
+  let raw: string | undefined
+  for (const grandStaff of score.grandStaffs ?? []) {
+    for (const staff of grandStaff.staves ?? []) {
+      const type = staff.measures?.[0]?.timeSignature_f?.type as string | undefined
+      if (type) {
+        raw = type
+        break
+      }
+    }
+    if (raw) break
+  }
+  const normalized = (raw ?? '4_4').replace('_', '/')
+  const denominator = Number(normalized.split('/')[1]) || 4
+  return { timeSignature: normalized, beatUnit: denominator }
+}
+
+/** 进入练习模式：同步谱子 bpm / beatUnit / timeSignature 给节拍器 */
+function syncMetronome(score: MusicScore, bpm: number) {
+  const { timeSignature, beatUnit } = resolveTimeSignature(score)
+  metronomeStore.syncScore({ bpm, beatUnit, timeSignature })
+}
+
 function applyPracticeScoreLayout(score: MusicScore) {
   const measureCount = countPracticeMeasures(score)
   score.width = measureCount * PRACTICE_MEASURE_WIDTH
@@ -84,6 +151,7 @@ function buildPracticePerformSequence(score: MusicScore) {
   const bpm = resolvePlayBpm(score.bpm)
   practiceBpm.value = bpm
   performSequence.value = toPerformSequence(toPlaySequence(score), bpm)
+  syncMetronome(score, bpm)
 }
 
 onMounted(async () => {
@@ -100,11 +168,15 @@ onMounted(async () => {
   }
 
   await playStore.restorePlaybackDefaults(musicScoreData.value)
+  // 设置面板初值与曲谱默认对齐
+  settings.bpm = playStore.bpm
+  settings.scoreVolume = playStore.volume
+  metronomeStore.setVolume(settings.metronomeVolume)
 })
 
 onBeforeUnmount(() => {
-  playStore.stop()
-  pianoWaterfallRef.value?.stop()
+  playback.handleStop()
+  metronomeStore.stop()
 })
 </script>
 
@@ -148,8 +220,16 @@ onBeforeUnmount(() => {
         :baseLineBottom="100"
         :prepare-time="0"
         :columnHeightConstant="0.1"
+        :highlight-policy="settings.highlightPolicy"
+        :show-note-result="settings.showNoteResult"
+        :result-color-map="noteResultColor"
         @score="handleNoteScore"
       />
+
+      <div v-if="settings.coverWaterfall" class="practice-page__waterfall-cover">
+        <span class="practice-page__waterfall-cover-emoji">🎵</span>
+        <span class="practice-page__waterfall-cover-text">凭听觉练习吧</span>
+      </div>
     </section>
 
     <section class="practice-page__piano">
@@ -212,11 +292,37 @@ onBeforeUnmount(() => {
 }
 
 .practice-page__waterfall {
+  position: relative;
   flex-shrink: 0;
   flex: 1;
   overflow: hidden;
   border-bottom: 1px solid rgba(255, 184, 208, 0.15);
   background: rgba(255, 255, 255, 0.72);
+}
+
+.practice-page__waterfall-cover {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  background:
+    radial-gradient(circle at 30% 30%, rgba(255, 209, 232, 0.95), rgba(201, 184, 255, 0.92)),
+    #ffd1e8;
+  color: #fff;
+}
+
+.practice-page__waterfall-cover-emoji {
+  font-size: 56px;
+}
+
+.practice-page__waterfall-cover-text {
+  font-size: 16px;
+  font-weight: 700;
+  color: #7a5a86;
 }
 
 .practice-page__waterfall-inner {

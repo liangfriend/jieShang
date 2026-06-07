@@ -1,7 +1,7 @@
 import type { MusicScore } from 'deciphony-renderer'
 import { ElMessage } from 'element-plus'
 import type { Ref as VueRef } from 'vue'
-import { onBeforeUnmount, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
 import {
   usePlayHighlight,
@@ -20,7 +20,22 @@ export function useScorePagePlayback(
   options: UseScorePagePlaybackOptions = {}
 ): ScorePagePlaybackController {
   const playStore = usePlayStore()
-  const { playbackState, playDisabled, pauseDisabled, stopDisabled, bpm } = storeToRefs(playStore)
+  const {
+    playbackState,
+    playDisabled: storePlayDisabled,
+    pauseDisabled: storePauseDisabled,
+    stopDisabled: storeStopDisabled,
+    bpm
+  } = storeToRefs(playStore)
+
+  /** 预备拍阶段 */
+  const countingIn = ref(false)
+  let countInAborted = false
+
+  const playDisabled = computed(() => storePlayDisabled.value || countingIn.value)
+  const pauseDisabled = computed(() => storePauseDisabled.value || countingIn.value)
+  // 预备拍期间允许停止
+  const stopDisabled = computed(() => storeStopDisabled.value && !countingIn.value)
 
   const highlight = options.musicScoreRef
     ? usePlayHighlight({
@@ -34,6 +49,7 @@ export function useScorePagePlayback(
   let progressStartSubId: string | null = null
   let onEndSubId: string | null = null
   let waterfallEndSubId: string | null = null
+  let stoppedSubId: string | null = null
 
   const waterfall = () => options.waterfallRef?.value ?? null
 
@@ -55,10 +71,18 @@ export function useScorePagePlayback(
     })
   }
 
+  // 自然播放结束也要停止节拍器
+  if (options.onPlaybackStopped) {
+    stoppedSubId = playStore.subscribeOnEnd(() => {
+      options.onPlaybackStopped?.()
+    })
+  }
+
   onBeforeUnmount(() => {
     if (progressStartSubId) playStore.unsubscribeProgressStart(progressStartSubId)
     if (onEndSubId) playStore.unsubscribeOnEnd(onEndSubId)
     if (waterfallEndSubId) playStore.unsubscribeOnEnd(waterfallEndSubId)
+    if (stoppedSubId) playStore.unsubscribeOnEnd(stoppedSubId)
   })
 
   async function handlePlay() {
@@ -72,33 +96,59 @@ export function useScorePagePlayback(
 
     if (playbackState.value !== 'paused') {
       playStore.setPlaySequence(sequence)
+
+      // 正式播放前先打一小节预备拍
+      if (options.countIn) {
+        countInAborted = false
+        countingIn.value = true
+        try {
+          await options.countIn()
+        } finally {
+          countingIn.value = false
+        }
+        // 预备拍期间被停止则中止本次播放
+        if (countInAborted) {
+          countInAborted = false
+          return
+        }
+      }
     }
 
     waterfall()?.play()
     await playStore.play()
+    options.onPlayStarted?.()
   }
 
   function handlePause() {
     playStore.pause()
     highlight?.handlePlaybackPause()
     waterfall()?.pause()
+    options.onPlaybackPaused?.()
   }
 
   function handleStop() {
+    if (countingIn.value) countInAborted = true
     playStore.stop()
     highlight?.handlePlaybackStop()
     waterfall()?.stop()
+    // 停止只暂停回到开头，不清空评分与已激活水柱（清空走「清空弹奏数据」）
+    options.onPlaybackStopped?.()
+  }
+
+  function handleClearPlayData() {
     waterfall()?.clearActiveParts()
   }
 
   return {
     playbackState,
+    countingIn,
     playDisabled,
     pauseDisabled,
     stopDisabled,
     handlePlay,
     handlePause,
     handleStop,
+    handleClearPlayData: options.waterfallRef ? handleClearPlayData : undefined,
     handleRenderMusicScore: highlight?.handleRenderMusicScore,
     setHighlightBpm: highlight?.setBpm
   }

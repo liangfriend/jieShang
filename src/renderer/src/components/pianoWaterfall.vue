@@ -711,9 +711,9 @@ let rafId: number | null = null
 /** 播放函数 */
 function play() {
   if (state.value === 'playing') return
-  // 从头开始播放时清空上一轮评分
+  // 从头开始播放时清空上一轮评分与已激活水柱
   if (currentTime.value === 0) {
-    noteScores.value = new Map<string, NoteScoreResult>()
+    clearActiveParts()
   }
   state.value = 'playing'
   lastTimestamp = performance.now()

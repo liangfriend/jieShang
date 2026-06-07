@@ -26,6 +26,11 @@
   pointer-events: none;
 }
 
+.score-toolbar__side:not(.score-toolbar__side--spacer) {
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .score-toolbar__center {
   display: flex;
   flex-wrap: wrap;
