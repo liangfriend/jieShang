@@ -9,14 +9,16 @@
  * const edit = useRenderEdit(musicScoreData)
  */
 
-export {EXCLUDED_INTERACTION_TAGS, HIGHLIGHT_CLASS} from './constants'
-export {createEditHighlight, type EditHighlightRefs} from './renderEditHighlight'
-export {resolveInteractionTarget, resolveSvgFromEvent} from './renderEditPointer'
-export {slotDataFromVDom} from './renderEditSelection'
+export { EXCLUDED_INTERACTION_TAGS, HIGHLIGHT_CLASS } from './constants'
+export { createEditHighlight, type EditHighlightRefs } from './renderEditHighlight'
+export { resolveInteractionTarget, resolveSvgFromEvent } from './renderEditPointer'
+export { slotDataFromVDom } from './renderEditSelection'
 export {
   addGrandStaffFromSlot,
   addMeasureFromSlot,
   addSingleStaffFromSlot,
+  deleteGrandStaffFromSlot,
+  deleteSingleStaffFromSlot
 } from './renderEditSlotActions'
 export {
   ADD_GRAND_STAFF_BTN_H,
@@ -25,12 +27,21 @@ export {
   ADD_MEASURE_BTN_W,
   ADD_SINGLE_STAFF_BTN_H,
   ADD_SINGLE_STAFF_BTN_W,
+  DELETE_GRAND_STAFF_BTN_H,
+  DELETE_GRAND_STAFF_BTN_W,
+  DELETE_SINGLE_STAFF_BTN_H,
+  DELETE_SINGLE_STAFF_BTN_W,
+  SLOT_BTN_GAP,
   addGrandStaffBtnX,
   addGrandStaffBtnY,
   addMeasureBtnX,
   addMeasureBtnY,
   addSingleStaffBtnX,
   addSingleStaffBtnY,
+  deleteGrandStaffBtnX,
+  deleteGrandStaffBtnY,
+  deleteSingleStaffBtnX,
+  deleteSingleStaffBtnY
 } from './renderEditSlotLayout'
 export {
   applyMeasureAddAction,
@@ -40,31 +51,28 @@ export {
   pointerToSvg,
   resolveGhostNotePreview,
   resolveMeasureBounds,
-  type GhostNotePreview as GhostNotePreviewState,
-  type MeasureBounds,
+  type GhostNotePreview,
+  type MeasureBounds
 } from './renderEditSymbolAddAction'
 export {
   createNoteHeadDragSession,
   isNoteHeadSelected,
   updateNoteHeadDragFromPointer,
-  type NoteHeadDragSession,
+  type NoteHeadDragSession
 } from './renderEditNoteHeadDrag'
-export {deleteSelectedItem, isRestSelected} from './renderEditDelete'
-export {resolvePropertyPanelKind, type PropertyPanelKind} from './renderEditPropertyPanel'
+export { deleteSelectedItem, isRestSelected } from './renderEditDelete'
+export { resolvePropertyPanelKind, type PropertyPanelKind } from './renderEditPropertyPanel'
 export {
   ADD_NOTE_KIND_OPTIONS,
   CHRONAXIE_OPTIONS,
   DEFAULT_ADD_NOTE_STATE,
   type AddNoteSlotKind,
-  type AddNoteState,
+  type AddNoteState
 } from './renderEditAddNoteState'
-export {findVoltaAtMeasure, findVoltaAtMeasure as findVoltaEndingAt} from './renderEditVoltaAdd'
-export {VOLTA_SPAN_OPTIONS, tryAddVoltaFromMeasure, type VoltaSpan} from './renderEditVoltaAdd'
-export {
-  insertMeasureAfter,
-  insertMeasureBefore,
-} from './renderEditMeasureProperties'
-export {SLUR_SPAN_OPTIONS, tryAddSlurFromNoteHead, type SlurSpan} from './renderEditSlurAdd'
+export { findVoltaAtMeasure, findVoltaAtMeasure as findVoltaEndingAt } from './renderEditVoltaAdd'
+export { VOLTA_SPAN_OPTIONS, tryAddVoltaFromMeasure, type VoltaSpan } from './renderEditVoltaAdd'
+export { insertMeasureAfter, insertMeasureBefore } from './renderEditMeasureProperties'
+export { SLUR_SPAN_OPTIONS, tryAddSlurFromNoteHead, type SlurSpan } from './renderEditSlurAdd'
 export {
   computeSlurHandlePoints,
   createSlurDragSession,
@@ -73,7 +81,7 @@ export {
   updateSlurDragFromPointer,
   type SlurDragSession,
   type SlurHandleKind,
-  type SlurHandlePoints,
+  type SlurHandlePoints
 } from './renderEditSlurDrag'
 export {
   computeVoltaHandlePoints,
@@ -84,19 +92,22 @@ export {
   updateVoltaDragFromPointer,
   type VoltaDragSession,
   type VoltaHandleKind,
-  type VoltaHandlePoints,
+  type VoltaHandlePoints
 } from './renderEditVoltaDrag'
-export {useRenderEdit} from './useRenderEdit'
+export { useRenderEdit } from './useRenderEdit'
 
-export {default as AddNoteStatePanel} from './components/AddNoteStatePanel.vue'
-export {default as PropertyPanel} from './components/PropertyPanel.vue'
-export {default as MeasurePropertyPanel} from './components/MeasurePropertyPanel.vue'
-export {default as NoteHeadPropertyPanel} from './components/NoteHeadPropertyPanel.vue'
-export {default as VoltaPropertyPanel} from './components/VoltaPropertyPanel.vue'
-export {default as VoltaDragHandles} from './components/VoltaDragHandles.vue'
-export {default as SlurDragHandles} from './components/SlurDragHandles.vue'
-export {default as AddGrandStaffButton} from './components/AddGrandStaffButton.vue'
-export {default as AddSingleStaffButton} from './components/AddSingleStaffButton.vue'
-export {default as AddMeasureButton} from './components/AddMeasureButton.vue'
-export {default as EditSlotSdButtons} from './components/EditSlotSdButtons.vue'
-export {default as GhostNotePreview} from './components/GhostNotePreview.vue'
+export { default as AddNoteStatePanel } from './components/AddNoteStatePanel.vue'
+export { default as PropertyPanel } from './components/PropertyPanel.vue'
+export { default as MeasurePropertyPanel } from './components/MeasurePropertyPanel.vue'
+export { default as NoteHeadPropertyPanel } from './components/NoteHeadPropertyPanel.vue'
+export { default as VoltaPropertyPanel } from './components/VoltaPropertyPanel.vue'
+export { default as VoltaDragHandles } from './components/VoltaDragHandles.vue'
+export { default as SlurDragHandles } from './components/SlurDragHandles.vue'
+export { default as AddGrandStaffButton } from './components/AddGrandStaffButton.vue'
+export { default as DeleteGrandStaffButton } from './components/DeleteGrandStaffButton.vue'
+export { default as EditSlotGdButtons } from './components/EditSlotGdButtons.vue'
+export { default as AddSingleStaffButton } from './components/AddSingleStaffButton.vue'
+export { default as DeleteSingleStaffButton } from './components/DeleteSingleStaffButton.vue'
+export { default as AddMeasureButton } from './components/AddMeasureButton.vue'
+export { default as EditSlotSdButtons } from './components/EditSlotSdButtons.vue'
+export { default as GhostNotePreview } from './components/GhostNotePreview.vue'

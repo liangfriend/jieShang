@@ -29,7 +29,11 @@ function createDoubleVoiceGrandStaff() {
       )
     )
     bassStaff.measures.push(
-      createMeasure(i === 0 ? { clef: ClefTypeEnum.Bass } : {})
+      createMeasure(
+        i === 0
+          ? { clef: ClefTypeEnum.Bass, timeSignature: TimeSignatureTypeEnum['4_4'] }
+          : {}
+      )
     )
   }
 

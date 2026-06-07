@@ -5,8 +5,8 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { MusicScoreComponentExpose } from '@renderer/utils/editHelper/useRenderEdit'
 import {
-  AddGrandStaffButton,
   AddNoteStatePanel,
+  EditSlotGdButtons,
   EditSlotSdButtons,
   GhostNotePreview,
   PropertyPanel,
@@ -195,7 +195,7 @@ onBeforeUnmount(() => {
               />
             </template>
             <template #g-d="{ node }">
-              <AddGrandStaffButton :node="node" />
+              <EditSlotGdButtons :node="node" />
             </template>
             <template #s-d="{ node }">
               <EditSlotSdButtons :node="node" />
