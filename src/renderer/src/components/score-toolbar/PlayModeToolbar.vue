@@ -5,7 +5,7 @@ import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BackButton from '@renderer/components/BackButton.vue'
 import VerticalDragSlider from '@renderer/components/VerticalDragSlider.vue'
-import { scorePlaybackKey } from '@renderer/dr-extensions/dr-play'
+import { scorePlaybackKey } from '@renderer/utils/scorePagePlayback'
 import {
   PLAY_BPM_MAX,
   PLAY_BPM_MIN,

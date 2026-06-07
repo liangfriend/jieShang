@@ -3,9 +3,11 @@ import {
   ClefTypeEnum,
   KeySignatureTypeEnum,
   Measure,
+  TimeSignatureTypeEnum,
   NotesInfo,
   NoteSymbolTypeEnum,
-  StaffSlot
+  StaffSlot,
+  MusicScore
 } from 'deciphony-renderer'
 import { createAccidental } from './dr-edit/score-builder'
 
@@ -143,6 +145,7 @@ export function getNoteRegionAndAccidental(
   const region = getNoteRegion(clef, midi, priority)!
   return { region, accidental: priority }
 }
+
 /**
  * 小节音符变调函数
  * 传入小节, 当前调号，目标调号，返回音符变调后的小节（原地修改）
@@ -223,4 +226,52 @@ export function changeMeasureNotesKeySignature(
   }
 
   return measure
+}
+
+/** 去掉与上一保留值相同的前置谱号/调号/拍号（连续重复只保留第一次） */
+function dedupeMeasureFrontSymbols(measures: Measure[]) {
+  let prevClef: ClefTypeEnum | undefined
+  let prevKey: KeySignatureTypeEnum | undefined
+  let prevTime: TimeSignatureTypeEnum | undefined
+
+  for (const measure of measures) {
+    if (measure.clef_f) {
+      if (measure.clef_f.type === prevClef) delete measure.clef_f
+      else prevClef = measure.clef_f.type
+    }
+    if (measure.keySignature_f) {
+      if (measure.keySignature_f.type === prevKey) delete measure.keySignature_f
+      else prevKey = measure.keySignature_f.type
+    }
+    if (measure.timeSignature_f) {
+      if (measure.timeSignature_f.type === prevTime) delete measure.timeSignature_f
+      else prevTime = measure.timeSignature_f.type
+    }
+  }
+}
+
+/**
+ * 曲谱转换为单个复谱表模式
+ */
+export function mergeGrandStaff(musicScore: MusicScore): MusicScore {
+  if (musicScore.grandStaffs.length === 0) return musicScore
+
+  const staffCounts = musicScore.grandStaffs.map((gs) => gs.staves.length)
+  const expectedCount = staffCounts[0]!
+  if (staffCounts.some((count) => count !== expectedCount)) {
+    throw new Error('单谱表数量不一致，无法转换')
+  }
+
+  const mergedGrandStaff = musicScore.grandStaffs[0]!
+  for (let staffIndex = 0; staffIndex < expectedCount; staffIndex++) {
+    const measures: Measure[] = []
+    for (const grandStaff of musicScore.grandStaffs) {
+      measures.push(...grandStaff.staves[staffIndex]!.measures)
+    }
+    mergedGrandStaff.staves[staffIndex]!.measures = measures
+    dedupeMeasureFrontSymbols(measures)
+  }
+
+  musicScore.grandStaffs = [mergedGrandStaff]
+  return musicScore
 }

@@ -3,8 +3,9 @@ import musicScoreVue from 'deciphony-renderer'
 import { onMounted, provide, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
+import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
 import { PlayModeToolbar } from '@renderer/components/score-toolbar'
-import { scorePlaybackKey, useScorePlayback } from '@renderer/dr-extensions/dr-play'
+import { scorePlaybackKey, useScorePagePlayback } from '@renderer/utils/scorePagePlayback'
 import { usePlayStore } from '@renderer/store/play.store'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
 import empty from '@renderer/template/empty'
@@ -12,7 +13,8 @@ import empty from '@renderer/template/empty'
 const route = useRoute()
 const playStore = usePlayStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
-const playback = useScorePlayback(musicScoreData)
+const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
+const playback = useScorePagePlayback(musicScoreData, { musicScoreRef })
 
 provide(scorePlaybackKey, playback)
 
@@ -29,10 +31,12 @@ onMounted(async () => {
   <div class="score-page">
     <div class="score-page__main">
       <musicScoreVue
+        ref="musicScoreRef"
         class="score-page__svg"
         :data="musicScoreData"
         :slot-config="SCORE_SLOT_CONFIG"
         skin-name="default"
+        @renderMusicScore="playback.handleRenderMusicScore"
       >
         <template #t="{ node }">
           <TitleSlot
