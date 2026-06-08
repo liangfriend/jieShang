@@ -15,7 +15,7 @@ import {
   useScorePagePlayback,
   type PerformSequence,
   type PianoWaterfallPlaybackExpose
-} from '@renderer/utils/scorePagePlayback'
+} from '@renderer/views/play/scorePagePlayback'
 import type { NoteScoreResult } from '@renderer/types/types'
 import { mergeGrandStaff } from '@renderer/dr-extensions/scoreUtil'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
@@ -24,9 +24,9 @@ import { useMetronomeStore } from '@renderer/store/metronome.store'
 import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store'
 import { NOTE_RESULT_COLOR } from '@renderer/constant/practice'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
-import { practiceContextKey } from '@renderer/utils/practiceContext'
-import { createPracticeNoteResultHighlight } from '@renderer/utils/practiceNoteResultHighlight'
-import { createPracticeStaffDim } from '@renderer/utils/practiceStaffDim'
+import { practiceContextKey } from '@renderer/views/practice/practiceContext'
+import { createPracticeNoteResultHighlight } from '@renderer/views/practice/practiceNoteResultHighlight'
+import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
 import empty from '@renderer/template/empty'
 
 /** 练习模式瀑布流 / 虚拟钢琴共用 midi 范围（88 键） */

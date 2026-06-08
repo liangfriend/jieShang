@@ -12,7 +12,7 @@ import {
   createNoteRest,
   createNoteSymbol,
   createNotesInfo
-} from '../../dr-extensions/dr-edit/score-builder/factories'
+} from '@renderer/dr-extensions/dr-edit/score-builder/factories'
 import {
   DEFAULT_ADD_NOTE_STATE,
   type AddNoteSlotKind,

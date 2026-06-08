@@ -13,7 +13,7 @@ import {
   applyWhiteboardKeySignature,
   clearAllWhiteboardNotes,
   resolveChronaxieFromHoldMs
-} from '@renderer/utils/whiteboard/noteInput'
+} from '@renderer/views/teachingWhiteboard/noteInput'
 
 const WHITEBOARD_SLOT_CONFIG = {
   'g-l': { w: 50 },

@@ -113,10 +113,12 @@ export async function importMusicXmlFromDisk(): Promise<{
   }
 }
 
-/** 将谱子转为 MusicXML 并写入磁盘；扩展未实现时返回 null */
-export async function exportMusicXmlToDisk(musicScore: MusicScore): Promise<boolean | null> {
+/** 将谱子转为 MusicXML 并通过另存为对话框写入磁盘 */
+export async function exportMusicXmlToDisk(musicScore: MusicScore): Promise<boolean> {
   const xmlFile = musicScoreToXml(musicScore)
-  if (!xmlFile?.size) return null
+  if (!xmlFile?.size) {
+    throw new Error('MusicXML 导出失败：生成的文件为空')
+  }
 
   const content = await xmlFile.text()
   const defaultName = resolveScoreName(musicScore)

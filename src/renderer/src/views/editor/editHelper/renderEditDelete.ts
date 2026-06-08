@@ -7,7 +7,7 @@ import type {
     NotesInfo,
     SlotData,
 } from 'deciphony-renderer'
-import {deleteMeasure} from '../../dr-extensions/dr-edit/edit-util'
+import {deleteMeasure} from '@renderer/dr-extensions/dr-edit/edit-util'
 import {isNoteHeadSelected} from './renderEditNoteHeadDrag'
 import {removeVolta} from './renderEditMeasureProperties'
 import {isMeasureAddMode} from './renderEditSymbolAddAction'

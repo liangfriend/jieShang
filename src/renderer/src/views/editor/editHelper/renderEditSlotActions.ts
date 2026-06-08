@@ -8,7 +8,7 @@ import {
   deleteSingleStaff,
   insertGrandStaff,
   insertSingleStaff
-} from '../../dr-extensions/dr-edit/edit-util'
+} from '@renderer/dr-extensions/dr-edit/edit-util'
 
 /** 新增复谱表时，默认单谱表的小节数 */
 const NEW_GRAND_STAFF_MEASURE_COUNT = 4

@@ -12,7 +12,7 @@ import {
   MeasureStartRepeatEnum,
   TimeSignatureTypeEnum,
 } from 'deciphony-renderer'
-import {insertMeasure} from '../../dr-extensions/dr-edit/edit-util'
+import {insertMeasure} from '@renderer/dr-extensions/dr-edit/edit-util'
 import {
   createBarline,
   createClef,
@@ -20,7 +20,7 @@ import {
   createMeasureEndRepeat,
   createMeasureStartRepeat,
   createTimeSignature,
-} from '../../dr-extensions/dr-edit/score-builder'
+} from '@renderer/dr-extensions/dr-edit/score-builder'
 
 export type MeasureEditSlot = SlotData & {measure: Measure; singleStaff: SingleStaff}
 

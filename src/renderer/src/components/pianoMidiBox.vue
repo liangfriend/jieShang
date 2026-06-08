@@ -18,11 +18,11 @@ defineOptions({
   name: 'DsPianoMidiBox'
 })
 
-import type { MidiBoxSequence } from '@renderer/utils/scorePagePlayback/toMidiBoxSequence'
+import type { MidiBoxSequence } from '@renderer/views/play/scorePagePlayback/toMidiBoxSequence'
 import type {
   BeginnerMidiBoxNote,
   MidiBoxBatchPayload
-} from '@renderer/utils/beginnerNoteProgressHighlight'
+} from '@renderer/views/forBeginner/beginnerNoteProgressHighlight'
 
 const emit = defineEmits<{
   (e: 'finished'): void

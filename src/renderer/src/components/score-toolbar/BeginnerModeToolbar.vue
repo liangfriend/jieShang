@@ -2,7 +2,7 @@
 import { Setting, VideoPlay } from '@element-plus/icons-vue'
 import { computed, inject, ref } from 'vue'
 import BackButton from '@renderer/components/BackButton.vue'
-import { beginnerPlaybackKey } from '@renderer/utils/beginnerPlayback'
+import { beginnerPlaybackKey } from '@renderer/views/forBeginner/beginnerPlayback'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
 import BeginnerSettingsDialog from './BeginnerSettingsDialog.vue'
 

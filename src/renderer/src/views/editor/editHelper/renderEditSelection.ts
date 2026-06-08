@@ -12,7 +12,7 @@ import {
     locateNoteSlot,
     locateNotesInfoById,
     locateSingleStaff,
-} from '../../dr-extensions/dr-edit/score-builder/locate'
+} from '@renderer/dr-extensions/dr-edit/score-builder/locate'
 
 const MEASURE_SYMBOL_KEYS = [
     'barline_f',

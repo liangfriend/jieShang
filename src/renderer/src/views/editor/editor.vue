@@ -3,7 +3,7 @@ import musicScoreVue from 'deciphony-renderer'
 import { ElMessage } from 'element-plus'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import type { MusicScoreComponentExpose } from '@renderer/utils/editHelper/useRenderEdit'
+import type { MusicScoreComponentExpose } from '@renderer/views/editor/editHelper/useRenderEdit'
 import {
   AddNoteStatePanel,
   EditSlotGdButtons,
@@ -13,7 +13,7 @@ import {
   SlurDragHandles,
   VoltaDragHandles,
   useRenderEdit
-} from '@renderer/utils/editHelper'
+} from '@renderer/views/editor/editHelper'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
 import {
   exportMusicXmlToDisk,
@@ -85,9 +85,9 @@ async function handleImportSj() {
     if (!result) return
     musicScoreData.value = result.musicScore
     clearSelection()
-    ElMessage.success(`已导入 ${result.fileName}`)
+    ElMessage.success(`??? ${result.fileName}`)
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '导入失败')
+    ElMessage.error(error instanceof Error ? error.message : '????')
   } finally {
     fileBusy.value = false
   }
@@ -102,9 +102,9 @@ async function handleImportMusicXml() {
     musicScoreData.value = result.musicScore
     syncScoreToTemp(result.musicScore)
     clearSelection()
-    ElMessage.success(`已导入 ${result.fileName}`)
+    ElMessage.success(`??? ${result.fileName}`)
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : 'MusicXML 导入失败')
+    ElMessage.error(error instanceof Error ? error.message : 'MusicXML ????')
   } finally {
     fileBusy.value = false
   }
@@ -115,13 +115,9 @@ async function handleExportMusicXml() {
   fileBusy.value = true
   try {
     const ok = await exportMusicXmlToDisk(musicScoreData.value)
-    if (ok === null) {
-      ElMessage.warning('导出 MusicXML 功能尚在开发中')
-      return
-    }
-    if (ok) ElMessage.success('曲谱已导出')
+    if (ok) ElMessage.success('?????')
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : 'MusicXML 导出失败')
+    ElMessage.error(error instanceof Error ? error.message : 'MusicXML ????')
   } finally {
     fileBusy.value = false
   }
@@ -132,9 +128,9 @@ async function handleExportSj() {
   fileBusy.value = true
   try {
     const ok = await exportSjToDisk(musicScoreData.value)
-    if (ok) ElMessage.success('曲谱已导出')
+    if (ok) ElMessage.success('?????')
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '导出失败')
+    ElMessage.error(error instanceof Error ? error.message : '????')
   } finally {
     fileBusy.value = false
   }
@@ -156,9 +152,9 @@ async function handleSaveScore() {
         }
       })
     }
-    ElMessage.success('曲谱已保存')
+    ElMessage.success('?????')
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '保存失败')
+    ElMessage.error(error instanceof Error ? error.message : '????')
   } finally {
     fileBusy.value = false
   }

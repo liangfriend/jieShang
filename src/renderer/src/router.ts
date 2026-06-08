@@ -16,19 +16,19 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/play',
     name: 'play',
-    component: () => import('./views/editor/play.vue'),
+    component: () => import('./views/play/play.vue'),
     meta: { title: '曲谱播放' }
   },
   {
     path: '/practice',
     name: 'practice',
-    component: () => import('./views/editor/practice.vue'),
+    component: () => import('./views/practice/practice.vue'),
     meta: { title: '练习模式' }
   },
   {
     path: '/for-beginner',
     name: 'forBeginner',
-    component: () => import('./views/editor/forBeginner.vue'),
+    component: () => import('./views/forBeginner/forBeginner.vue'),
     meta: { title: '新手模式' }
   },
   {

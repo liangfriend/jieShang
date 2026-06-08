@@ -17,17 +17,17 @@ import {
   toMidiBoxSequence,
   toPlaySequence,
   type MidiBoxSequence
-} from '@renderer/utils/scorePagePlayback'
+} from '@renderer/views/play/scorePagePlayback'
 import {
   beginnerPlaybackKey,
   useBeginnerPlayback,
   type PianoMidiBoxExpose
-} from '@renderer/utils/beginnerPlayback'
-import { createPracticeStaffDim } from '@renderer/utils/practiceStaffDim'
+} from '@renderer/views/forBeginner/beginnerPlayback'
+import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
 import {
   createBeginnerNoteProgressHighlight,
   type MidiBoxBatchPayload
-} from '@renderer/utils/beginnerNoteProgressHighlight'
+} from '@renderer/views/forBeginner/beginnerNoteProgressHighlight'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
 import empty from '@renderer/template/empty'
 

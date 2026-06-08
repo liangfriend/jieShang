@@ -5,7 +5,7 @@
  * 具体产品形态（renderEditTest 等）只消费本层 composable / 工具。
  *
  * @example
- * import { useRenderEdit, addGrandStaffBtnX } from './editHelper'
+ * import { useRenderEdit, addGrandStaffBtnX } from '@renderer/views/editor/editHelper'
  * const edit = useRenderEdit(musicScoreData)
  */
 
