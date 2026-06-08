@@ -1,7 +1,9 @@
 export {
   deleteScoreFromDatabase,
   displayScoreName,
+  exportMusicXmlToDisk,
   exportSjToDisk,
+  importMusicXmlFromDisk,
   importSjFromDisk,
   loadScoreFromDatabase,
   parseScoreJson,
@@ -9,6 +11,8 @@ export {
   saveScoreToDatabase,
   searchScoresFromDatabase,
   serializeScore,
+  type MusicXmlExportResult,
+  type MusicXmlImportResult,
   type ScoreListItem,
   type ScoreRecord,
   type SjExportResult,

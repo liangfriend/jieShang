@@ -9,13 +9,13 @@ import {
   Measure,
   MeasureEndRepeatEnum,
   MeasureStartRepeatEnum,
+  MusicScore,
   NoteNumber,
-  NotesNumberInfo,
-  TimeSignatureTypeEnum,
   NotesInfo,
+  NotesNumberInfo,
   NoteSymbolTypeEnum,
   StaffSlot,
-  MusicScore
+  TimeSignatureTypeEnum
 } from 'deciphony-renderer'
 import { createAccidental, newId } from './dr-edit/score-builder'
 
@@ -116,8 +116,10 @@ export function getNoteMidi(
  *
  * 先扣除变音记号偏移得到自然音 midi，再按谱号锚点换算出五线谱位置 region。
  * 若扣除变音后不是自然音级（落在黑键上），说明 accidental 与 midi 不自洽，返回 null。
+ * 因为不完整，不对外使用，只是getNoteRegionAndAccidental的工具函数
+ * TODO 这个不应该是函数了。应该合并到getNoteRegionAndAccidental
  */
-export function getNoteRegion(
+function getNoteRegion(
   clef: ClefTypeEnum,
   midi: number,
   accidental: Exclude<AccidentalTypeEnum, AccidentalTypeEnum.Natural> | null = null
@@ -133,23 +135,101 @@ export function getNoteRegion(
   return startRegion + octave * 7 + remain
 }
 
+/** 谱面记号 → 有效变音（与 play-util resolveAccidentalInMeasure 一致） */
+function effectiveFromWritten(
+  written: AccidentalTypeEnum | null,
+  keySigAcc: AlteredAccidental | null
+): AlteredAccidental | null {
+  if (written === null) return keySigAcc
+  if (written === AccidentalTypeEnum.Natural) return null
+  return written as AlteredAccidental
+}
+
+/** 在已知目标有效变音与调号默认变音时，选出最简谱面记号 */
+function resolveMinimalWritten(
+  needed: AlteredAccidental | null,
+  keySigAcc: AlteredAccidental | null
+): AccidentalTypeEnum | null {
+  const options: (AccidentalTypeEnum | null)[] = [
+    null,
+    AccidentalTypeEnum.Natural,
+    AccidentalTypeEnum.Sharp,
+    AccidentalTypeEnum.Flat,
+    AccidentalTypeEnum.Double_sharp,
+    AccidentalTypeEnum.Double_flat
+  ]
+  for (const written of options) {
+    if (effectiveFromWritten(written, keySigAcc) === needed) return written
+  }
+  return null
+}
+
 /**
- * 传入 clef、midi、priority，返回 region 与 accidental。
+ * 传入 clef、midi、调号，返回 region 与谱面显式变音记号。
  *
- * 自然音直接返回（accidental 为 null）；黑键音按 priority 选择升/降记号：
- * - priority = Sharp：记为「下方自然音 + 升号」
- * - priority = Flat：记为「上方自然音 + 降号」
+ * 与 getNoteMidi + getKeySignatureAccidental 对称：先枚举候选拼写，再用调号折算最简记号。
+ * - 白键：调号已覆盖则 accidental 为 null；与调号冲突时写还原号
+ * - 黑键：升/降两种拼写，优先无记号，其次与调号色彩一致，最后用 priority 打破平局
  */
 export function getNoteRegionAndAccidental(
   clef: ClefTypeEnum,
   midi: number,
+  keySignature: KeySignatureTypeEnum = KeySignatureTypeEnum.C,
   priority: AccidentalTypeEnum.Sharp | AccidentalTypeEnum.Flat = AccidentalTypeEnum.Sharp
-): { region: number; accidental: AccidentalTypeEnum.Sharp | AccidentalTypeEnum.Flat | null } {
+): { region: number; accidental: AccidentalTypeEnum | null } {
+  type Spelling = 'natural' | AccidentalTypeEnum.Sharp | AccidentalTypeEnum.Flat
+  type Candidate = { region: number; needed: AlteredAccidental | null; spelling: Spelling }
+
+  const candidates: Candidate[] = []
   const naturalRegion = getNoteRegion(clef, midi, null)
   if (naturalRegion !== null) {
-    return { region: naturalRegion, accidental: null }
+    candidates.push({ region: naturalRegion, needed: null, spelling: 'natural' })
+  } else {
+    const alt: AccidentalTypeEnum.Sharp | AccidentalTypeEnum.Flat =
+      priority === AccidentalTypeEnum.Sharp ? AccidentalTypeEnum.Flat : AccidentalTypeEnum.Sharp
+    const spellings: (AccidentalTypeEnum.Sharp | AccidentalTypeEnum.Flat)[] = [priority, alt]
+    for (const spell of spellings) {
+      const region = getNoteRegion(clef, midi, spell)
+      if (region !== null) candidates.push({ region, needed: spell, spelling: spell })
+    }
   }
-  // 黑键：扣除 priority 偏移后即为对应自然音位置
+
+  const keyKind = KEY_ALTERATION[keySignature]?.kind ?? 'sharp'
+  let best: { region: number; accidental: AccidentalTypeEnum | null; score: number } | null = null
+
+  for (const { region, needed, spelling } of candidates) {
+    if (getNoteMidi(clef, region, needed) !== midi) continue
+
+    const written = resolveMinimalWritten(
+      needed,
+      getKeySignatureAccidental(clef, keySignature, region)
+    )
+    const explicitScore =
+      written === null
+        ? 0
+        : written === AccidentalTypeEnum.Natural
+          ? 1
+          : written === AccidentalTypeEnum.Sharp || written === AccidentalTypeEnum.Flat
+            ? 2
+            : 3
+    const keyColorScore =
+      spelling === 'natural'
+        ? 0
+        : (keyKind === 'sharp' && spelling === AccidentalTypeEnum.Sharp) ||
+            (keyKind === 'flat' && spelling === AccidentalTypeEnum.Flat)
+          ? 0
+          : 1
+    const priorityScore = spelling === 'natural' ? 0 : spelling === priority ? 0 : 1
+    const score = explicitScore * 100 + keyColorScore * 10 + priorityScore
+
+    if (!best || score < best.score) {
+      best = { region, accidental: written, score }
+    }
+  }
+
+  if (best) return { region: best.region, accidental: best.accidental }
+
+  // 不应到达；兜底保持旧行为
   const region = getNoteRegion(clef, midi, priority)!
   return { region, accidental: priority }
 }

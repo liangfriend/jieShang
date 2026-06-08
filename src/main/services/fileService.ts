@@ -6,6 +6,7 @@ import pathManager from '../utils/pathManager'
 import { ResourceService } from './resourceService'
 
 const SJ_FILTER = [{ name: 'SJ 曲谱', extensions: ['sj'] }] as const
+const MUSICXML_FILTER = [{ name: 'MusicXML', extensions: ['xml', 'musicxml'] }] as const
 
 export class FileService {
   private resourceService: ResourceService
@@ -123,6 +124,52 @@ export class FileService {
       title: '导出 SJ 曲谱',
       defaultPath: `${safeName}.sj`,
       filters: [...SJ_FILTER]
+    })
+
+    if (canceled || !filePath) {
+      return { canceled: true as const }
+    }
+
+    fs.writeFileSync(filePath, content, 'utf-8')
+
+    return {
+      canceled: false as const,
+      filePath
+    }
+  }
+
+  /** 通过系统对话框导入 MusicXML 文件 */
+  async importMusicXml(window?: BrowserWindow | null) {
+    const parent = window ?? BrowserWindow.getFocusedWindow() ?? undefined
+    const { canceled, filePaths } = await dialog.showOpenDialog(parent, {
+      title: '导入 MusicXML',
+      filters: [...MUSICXML_FILTER],
+      properties: ['openFile']
+    })
+
+    if (canceled || !filePaths[0]) {
+      return { canceled: true as const }
+    }
+
+    const filePath = filePaths[0]
+    const content = fs.readFileSync(filePath, 'utf-8')
+
+    return {
+      canceled: false as const,
+      filePath,
+      fileName: path.basename(filePath),
+      content
+    }
+  }
+
+  /** 通过系统对话框导出 MusicXML 文件 */
+  async exportMusicXml(content: string, defaultName = '未命名曲谱', window?: BrowserWindow | null) {
+    const parent = window ?? BrowserWindow.getFocusedWindow() ?? undefined
+    const safeName = defaultName.replace(/[<>:"/\\|?*]/g, '_').trim() || '未命名曲谱'
+    const { canceled, filePath } = await dialog.showSaveDialog(parent, {
+      title: '导出 MusicXML',
+      defaultPath: `${safeName}.musicxml`,
+      filters: [...MUSICXML_FILTER]
     })
 
     if (canceled || !filePath) {

@@ -24,6 +24,16 @@ declare global {
           content: string,
           defaultName?: string
         ): Promise<{ canceled: boolean; filePath?: string }>
+        importMusicXml(): Promise<{
+          canceled: boolean
+          filePath?: string
+          fileName?: string
+          content?: string
+        }>
+        exportMusicXml(
+          content: string,
+          defaultName?: string
+        ): Promise<{ canceled: boolean; filePath?: string }>
       }
       resource: {
         create(payload: any): Promise<any>

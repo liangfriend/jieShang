@@ -15,10 +15,21 @@ import {
   useRenderEdit
 } from '@renderer/utils/editHelper'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
-import { exportSjToDisk, importSjFromDisk, saveScoreToDatabase } from '@renderer/utils/fileHelper'
-import { EditModeToolbar } from '@renderer/components/score-toolbar'
-import { loadScoreFromRoute, resolveScoreId, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
-import { CUR_PLAY_SCORE_TEMP_ID } from '@renderer/constant'
+import {
+  exportMusicXmlToDisk,
+  exportSjToDisk,
+  importMusicXmlFromDisk,
+  importSjFromDisk,
+  saveScoreToDatabase
+} from '@renderer/utils/fileHelper'
+import { EditModeToolbar, MusicXmlNoticeDialog } from '@renderer/components/score-toolbar'
+import {
+  loadScoreFromRoute,
+  resolveScoreId,
+  resolveTempId,
+  SCORE_SLOT_CONFIG
+} from '@renderer/utils/scoreRoute'
+import { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from '@renderer/constant'
 import { useDataStore } from '@renderer/store/data.store'
 import '@renderer/styles/editor-cute.css'
 import empty from '@renderer/template/empty'
@@ -30,6 +41,7 @@ const scoreId = computed(() => resolveScoreId(route.query.scoreId))
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
 const musicScoreRef = ref<MusicScoreComponentExpose | null>(null)
 const fileBusy = ref(false)
+const musicXmlNoticeVisible = ref(false)
 
 const {
   scoreRootRef,
@@ -53,6 +65,18 @@ const {
   clearSelection
 } = useRenderEdit(musicScoreData, { musicScoreRef })
 
+function syncScoreToTemp(score: typeof musicScoreData.value) {
+  const dataStore = useDataStore()
+  dataStore.setTempScore(CUR_PLAY_SCORE_TEMP_ID, score)
+
+  const tempId = resolveTempId(route.query.tempId)
+  if (tempId) {
+    dataStore.setTempScore(tempId, score)
+  } else if (route.query.template) {
+    dataStore.setTempScore(EDIT_NEW_SCORE_TEMP_ID, score)
+  }
+}
+
 async function handleImportSj() {
   if (fileBusy.value) return
   fileBusy.value = true
@@ -64,6 +88,40 @@ async function handleImportSj() {
     ElMessage.success(`已导入 ${result.fileName}`)
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '导入失败')
+  } finally {
+    fileBusy.value = false
+  }
+}
+
+async function handleImportMusicXml() {
+  if (fileBusy.value) return
+  fileBusy.value = true
+  try {
+    const result = await importMusicXmlFromDisk()
+    if (!result) return
+    musicScoreData.value = result.musicScore
+    syncScoreToTemp(result.musicScore)
+    clearSelection()
+    ElMessage.success(`已导入 ${result.fileName}`)
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : 'MusicXML 导入失败')
+  } finally {
+    fileBusy.value = false
+  }
+}
+
+async function handleExportMusicXml() {
+  if (fileBusy.value) return
+  fileBusy.value = true
+  try {
+    const ok = await exportMusicXmlToDisk(musicScoreData.value)
+    if (ok === null) {
+      ElMessage.warning('导出 MusicXML 功能尚在开发中')
+      return
+    }
+    if (ok) ElMessage.success('曲谱已导出')
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : 'MusicXML 导出失败')
   } finally {
     fileBusy.value = false
   }
@@ -150,6 +208,25 @@ onBeforeUnmount(() => {
     <header class="editor-top-bar">
       <AddNoteStatePanel v-model="addNoteState" class="editor-top-bar__note" />
       <div class="editor-top-bar__files">
+        <el-button class="toolbar-btn" size="small" @click="musicXmlNoticeVisible = true">
+          需知
+        </el-button>
+        <el-button
+          class="toolbar-btn"
+          :disabled="fileBusy"
+          size="small"
+          @click="handleImportMusicXml"
+        >
+          导入 musicxml
+        </el-button>
+        <el-button
+          class="toolbar-btn"
+          :disabled="fileBusy"
+          size="small"
+          @click="handleExportMusicXml"
+        >
+          导出 musicxml
+        </el-button>
         <el-button class="toolbar-btn" :disabled="fileBusy" size="small" @click="handleImportSj">
           导入 sj
         </el-button>
@@ -243,6 +320,8 @@ onBeforeUnmount(() => {
     </div>
 
     <EditModeToolbar />
+
+    <MusicXmlNoticeDialog v-model="musicXmlNoticeVisible" />
   </div>
 </template>
 

@@ -7,5 +7,8 @@ export const fileInvoke = {
   query: (query) => ipcRenderer.invoke('file:query', query),
   importSj: () => ipcRenderer.invoke('file:importSj'),
   exportSj: (content: string, defaultName?: string) =>
-    ipcRenderer.invoke('file:exportSj', content, defaultName)
+    ipcRenderer.invoke('file:exportSj', content, defaultName),
+  importMusicXml: () => ipcRenderer.invoke('file:importMusicXml'),
+  exportMusicXml: (content: string, defaultName?: string) =>
+    ipcRenderer.invoke('file:exportMusicXml', content, defaultName)
 }

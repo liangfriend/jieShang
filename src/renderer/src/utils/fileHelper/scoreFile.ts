@@ -1,6 +1,11 @@
 import type { MusicScore } from 'deciphony-renderer'
 import { toRaw } from 'vue'
 import { readTitleField } from '@renderer/dr-extensions/dr-title/titleFields'
+import {
+  getXmlJson,
+  musicScoreToXml,
+  xmlToMusicScore
+} from '@renderer/dr-extensions/dr-musicxml-transfer'
 
 export type SjImportResult = {
   canceled: boolean
@@ -10,6 +15,18 @@ export type SjImportResult = {
 }
 
 export type SjExportResult = {
+  canceled: boolean
+  filePath?: string
+}
+
+export type MusicXmlImportResult = {
+  canceled: boolean
+  filePath?: string
+  fileName?: string
+  content?: string
+}
+
+export type MusicXmlExportResult = {
   canceled: boolean
   filePath?: string
 }
@@ -73,6 +90,37 @@ export async function exportSjToDisk(musicScore: MusicScore): Promise<boolean> {
   const content = serializeScore(musicScore)
   const defaultName = resolveScoreName(musicScore)
   const result = (await window.api.file.exportSj(content, defaultName)) as SjExportResult
+  return !result.canceled
+}
+
+export async function importMusicXmlFromDisk(): Promise<{
+  musicScore: MusicScore
+  fileName: string
+} | null> {
+  const result = (await window.api.file.importMusicXml()) as MusicXmlImportResult
+  if (result.canceled || !result.content) return null
+
+  const fileName = result.fileName ?? 'imported.musicxml'
+  const file = new File([result.content], fileName, {
+    type: 'application/vnd.recordare.musicxml+xml'
+  })
+  const xmlJson = await getXmlJson(file)
+  if (!xmlJson) return null
+
+  return {
+    musicScore: xmlToMusicScore(xmlJson),
+    fileName
+  }
+}
+
+/** 将谱子转为 MusicXML 并写入磁盘；扩展未实现时返回 null */
+export async function exportMusicXmlToDisk(musicScore: MusicScore): Promise<boolean | null> {
+  const xmlFile = musicScoreToXml(musicScore)
+  if (!xmlFile?.size) return null
+
+  const content = await xmlFile.text()
+  const defaultName = resolveScoreName(musicScore)
+  const result = (await window.api.file.exportMusicXml(content, defaultName)) as MusicXmlExportResult
   return !result.canceled
 }
 

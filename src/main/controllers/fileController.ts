@@ -36,5 +36,15 @@ export class FileController {
       const window = BrowserWindow.fromWebContents(event.sender)
       return this.fileService.exportSj(content, defaultName, window)
     })
+
+    ipcMain.handle('file:importMusicXml', (event) => {
+      const window = BrowserWindow.fromWebContents(event.sender)
+      return this.fileService.importMusicXml(window)
+    })
+
+    ipcMain.handle('file:exportMusicXml', (event, content: string, defaultName?: string) => {
+      const window = BrowserWindow.fromWebContents(event.sender)
+      return this.fileService.exportMusicXml(content, defaultName, window)
+    })
   }
 }

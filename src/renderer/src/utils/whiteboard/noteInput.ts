@@ -5,7 +5,11 @@ import {
   NoteSymbolTypeEnum
 } from 'deciphony-renderer'
 import type { Chronaxie, Measure, MusicScore, SingleStaff, StaffSlot } from 'deciphony-renderer'
-import { CHRONAXIES, createKeySignature, createNoteSymbol } from '@renderer/dr-extensions/dr-edit/score-builder'
+import {
+  CHRONAXIES,
+  createKeySignature,
+  createNoteSymbol
+} from '@renderer/dr-extensions/dr-edit/score-builder'
 import {
   changeMeasureNotesKeySignature,
   getKeySignatureAccidental,
@@ -118,7 +122,12 @@ export function addNoteToWhiteboardScore(params: AddWhiteboardNoteParams): boole
   if (!staff || !measure) return false
 
   const keySignature = staffKeySignature(staff)
-  const { region, accidental } = getNoteRegionAndAccidental(clef, midi, AccidentalTypeEnum.Sharp)
+  const { region, accidental } = getNoteRegionAndAccidental(
+    clef,
+    midi,
+    KeySignatureTypeEnum.C,
+    AccidentalTypeEnum.Sharp
+  )
   const writeAccidental = resolveAccidentalToWrite(measure, clef, keySignature, region, accidental)
 
   const note = createNoteSymbol({
@@ -144,10 +153,7 @@ export function clearAllWhiteboardNotes(score: MusicScore): void {
  * 同步更改全部单谱表调号：先把每个小节内的音符做变调（保持实际音高不变），
  * 再把首小节的 keySignature_f 改为目标调号。
  */
-export function applyWhiteboardKeySignature(
-  score: MusicScore,
-  target: KeySignatureTypeEnum
-): void {
+export function applyWhiteboardKeySignature(score: MusicScore, target: KeySignatureTypeEnum): void {
   for (const grandStaff of score.grandStaffs) {
     for (const staff of grandStaff.staves) {
       const first = staff.measures[0]
