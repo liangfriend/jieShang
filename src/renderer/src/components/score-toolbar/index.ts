@@ -1,3 +1,4 @@
+export { default as BeginnerModeToolbar } from './BeginnerModeToolbar.vue'
 export { default as EditModeToolbar } from './EditModeToolbar.vue'
 export { default as PlayModeToolbar } from './PlayModeToolbar.vue'
 export { default as PracticeModeToolbar } from './PracticeModeToolbar.vue'

@@ -18,8 +18,30 @@ defineOptions({
   name: 'DsPianoMidiBox'
 })
 
-/** midi → [批次索引, 附加信息][] */
-export type MidiBoxSequence = Record<string, [number, any?][]>
+import type { MidiBoxSequence } from '@renderer/utils/scorePagePlayback/toMidiBoxSequence'
+import type {
+  BeginnerMidiBoxNote,
+  MidiBoxBatchPayload
+} from '@renderer/utils/beginnerNoteProgressHighlight'
+
+const emit = defineEmits<{
+  (e: 'finished'): void
+  (e: 'progressReset'): void
+  (e: 'batchComplete', payload: MidiBoxBatchPayload): void
+  (e: 'batchActive', payload: MidiBoxBatchPayload): void
+}>()
+
+/** 相邻块不使用相近色 */
+const BLOCK_PALETTE = [
+  'hsl(350, 88%, 72%)',
+  'hsl(280, 78%, 72%)',
+  'hsl(200, 82%, 68%)',
+  'hsl(145, 70%, 62%)',
+  'hsl(45, 90%, 68%)',
+  'hsl(15, 85%, 68%)',
+  'hsl(320, 75%, 70%)',
+  'hsl(250, 70%, 72%)'
+] as const
 
 const props = defineProps({
   layoutMode: {
@@ -82,6 +104,11 @@ const props = defineProps({
   baseLineBottom: {
     type: Number,
     default: 100
+  },
+  /** 批次完成后的下落动画时长（秒） */
+  fallDuration: {
+    type: Number,
+    default: 0.1
   }
 })
 
@@ -231,8 +258,9 @@ const isFinished = computed(
   () => state.value === 'playing' && currentBatchIndex.value > maxBatchIndex.value
 )
 
-function noteHue(midi: number) {
-  return (midi * 17 + 285) % 360
+function blockColor(midi: number, batchIndex: number) {
+  const idx = (batchIndex * 5 + midi) % BLOCK_PALETTE.length
+  return BLOCK_PALETTE[idx]
 }
 
 const totalWidth = computed(() => fixedWhiteKeyWidthNum.value * whiteKeyCount.value + keyUnit.value)
@@ -261,7 +289,7 @@ const waterfallStyle = computed((): CSSProperties => ({
   position: 'absolute',
   bottom: 0,
   transform: `translateY(${fallenBatchCount.value * blockStride.value}px)`,
-  transition: 'transform 0.18s ease-out',
+  transition: `transform ${props.fallDuration}s ease-out`,
   userSelect: 'none',
   display: 'flex'
 }))
@@ -313,7 +341,7 @@ function isCurrentBatchBlock(midi: number, batchIndex: number) {
 }
 
 function blockStyle(midi: number, batchIndex: number): CSSProperties {
-  const hue = noteHue(midi)
+  const color = blockColor(midi, batchIndex)
   const highlighted = isCurrentBatchBlock(midi, batchIndex)
   const fallen = batchIndex < fallenBatchCount.value
 
@@ -325,13 +353,11 @@ function blockStyle(midi: number, batchIndex: number): CSSProperties {
     borderRadius: '3px',
     bottom: `${props.baseLineBottom + batchIndex * blockStride.value}px`,
     background: highlighted
-      ? `linear-gradient(180deg, #7ee8fa 0%, #4dd4c4 50%, #2eb8a6 100%)`
-      : `linear-gradient(180deg, hsla(${hue}, 100%, 84%, 0.98) 0%, hsla(${hue}, 85%, 70%, 0.96) 100%)`,
-    boxShadow: highlighted
-      ? '0 0 10px 2px rgba(46, 184, 166, 0.75)'
-      : `0 2px 6px hsla(${hue}, 80%, 60%, 0.3)`,
+      ? `linear-gradient(180deg, #fff 0%, ${color} 100%)`
+      : color,
+    boxShadow: highlighted ? '0 0 10px 2px rgba(46, 184, 166, 0.75)' : '0 2px 6px rgba(0, 0, 0, 0.12)',
     opacity: fallen ? 0.35 : 1,
-    transition: 'opacity 0.18s ease, box-shadow 0.15s ease'
+    transition: `opacity ${props.fallDuration}s ease, box-shadow 0.1s ease`
   }
 }
 
@@ -353,6 +379,21 @@ function skipEmptyBatches() {
   }
 }
 
+function toBatchNotes(notes: { midi: number; info: any }[]): BeginnerMidiBoxNote[] {
+  return notes.map((note) => ({ midi: note.midi, info: note.info }))
+}
+
+function emitBatchActive() {
+  if (currentBatchIndex.value > maxBatchIndex.value) {
+    emit('batchActive', { batchIndex: -1, notes: [] })
+    return
+  }
+  emit('batchActive', {
+    batchIndex: currentBatchIndex.value,
+    notes: toBatchNotes(currentBatchNotes.value)
+  })
+}
+
 function tryAdvanceBatch() {
   const required = currentBatchNotes.value
   if (!required.length) return
@@ -360,24 +401,37 @@ function tryAdvanceBatch() {
   const allPressed = required.every((note) => activeKeys.value.has(note.midi))
   if (!allPressed) return
 
+  const completedIndex = currentBatchIndex.value
+  const completedNotes = toBatchNotes(required)
+
   fallenBatchCount.value += 1
   currentBatchIndex.value += 1
   skipEmptyBatches()
 
+  emit('batchComplete', { batchIndex: completedIndex, notes: completedNotes })
+
   if (currentBatchIndex.value > maxBatchIndex.value) {
     state.value = 'stopped'
+    emit('batchActive', { batchIndex: -1, notes: [] })
+    emit('finished')
+    return
   }
+
+  emitBatchActive()
 }
 
 function play() {
   if (state.value === 'playing') return
   resetProgress()
+  emit('progressReset')
   state.value = 'playing'
+  emitBatchActive()
 }
 
 function stop() {
   state.value = 'stopped'
   resetProgress()
+  emit('progressReset')
 }
 
 function clearActiveParts() {
