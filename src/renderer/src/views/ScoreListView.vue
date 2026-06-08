@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { Search } from '@element-plus/icons-vue'
+import { Delete, Search } from '@element-plus/icons-vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import BackButton from '@renderer/components/BackButton.vue'
 import {
+  deleteScoreFromDatabase,
   displayScoreName,
   searchScoresFromDatabase,
   type ScoreListItem
@@ -12,6 +14,7 @@ import {
 const router = useRouter()
 const keyword = ref('')
 const loading = ref(false)
+const deletingId = ref<number | null>(null)
 const scores = ref<ScoreListItem[]>([])
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
@@ -41,6 +44,38 @@ function openScore(score: ScoreListItem) {
   })
 }
 
+async function deleteScore(score: ScoreListItem, event: Event) {
+  event.stopPropagation()
+
+  if (deletingId.value != null) return
+
+  try {
+    await ElMessageBox.confirm(
+      `确定删除曲谱「${displayScoreName(score.name)}」吗？此操作不可恢复。`,
+      '删除曲谱',
+      {
+        confirmButtonText: '删除',
+        cancelButtonText: '取消',
+        type: 'warning',
+        confirmButtonClass: 'el-button--danger'
+      }
+    )
+  } catch {
+    return
+  }
+
+  deletingId.value = score.id
+  try {
+    await deleteScoreFromDatabase(score.id)
+    scores.value = scores.value.filter((item) => item.id !== score.id)
+    ElMessage.success('曲谱已删除')
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '删除失败')
+  } finally {
+    deletingId.value = null
+  }
+}
+
 watch(keyword, scheduleSearch)
 
 onMounted(() => {
@@ -67,17 +102,22 @@ onMounted(() => {
       </div>
 
       <div v-else class="score-grid">
-        <button
-          v-for="score in scores"
-          :key="score.id"
-          type="button"
-          class="score-card"
-          @click="openScore(score)"
-        >
-          <div class="score-card__cover">
-            <span class="score-card__name">{{ displayScoreName(score.name) }}</span>
-          </div>
-        </button>
+        <div v-for="score in scores" :key="score.id" class="score-card">
+          <button
+            type="button"
+            class="score-card__delete"
+            :disabled="deletingId === score.id"
+            aria-label="删除曲谱"
+            @click="deleteScore(score, $event)"
+          >
+            <el-icon><Delete /></el-icon>
+          </button>
+          <button type="button" class="score-card__open" @click="openScore(score)">
+            <div class="score-card__cover">
+              <span class="score-card__name">{{ displayScoreName(score.name) }}</span>
+            </div>
+          </button>
+        </div>
       </div>
     </main>
 
@@ -147,16 +187,59 @@ onMounted(() => {
 }
 
 .score-card {
+  position: relative;
+  text-align: center;
+}
+
+.score-card__open {
+  width: 100%;
   border: none;
   padding: 0;
   background: transparent;
   cursor: pointer;
-  text-align: center;
   transition: transform 0.2s ease;
 }
 
-.score-card:hover {
+.score-card:hover .score-card__open {
   transform: translateY(-3px);
+}
+
+.score-card__delete {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #c45656;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 2px 8px rgba(200, 140, 180, 0.25);
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    background 0.2s ease,
+    color 0.2s ease;
+}
+
+.score-card:hover .score-card__delete,
+.score-card__delete:focus-visible {
+  opacity: 1;
+}
+
+.score-card__delete:hover:not(:disabled) {
+  color: #fff;
+  background: #f56c6c;
+}
+
+.score-card__delete:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
 }
 
 .score-card__cover {
@@ -174,7 +257,7 @@ onMounted(() => {
     background 0.2s ease;
 }
 
-.score-card:hover .score-card__cover {
+.score-card__open:hover .score-card__cover {
   background: rgba(255, 214, 232, 0.72);
   box-shadow: 0 12px 40px rgba(200, 140, 180, 0.28);
 }

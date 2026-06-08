@@ -105,3 +105,10 @@ export async function loadScoreFromDatabase(scoreId: number | string): Promise<S
   if (!res.success || !res.data) return null
   return res.data as ScoreRecord
 }
+
+export async function deleteScoreFromDatabase(scoreId: number | string): Promise<void> {
+  const res = await window.api.score.delete(scoreId)
+  if (!res.success) {
+    throw new Error('曲谱删除失败')
+  }
+}

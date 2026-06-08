@@ -115,6 +115,7 @@ export const usePlayStore = defineStore('play', () => {
     initPromise = (async () => {
       startJPlayer()
       nplayer = new NPlayer({ checkTime: 50, checkDuration: 500 })
+      console.log('chicken', nplayer)
       bindPlayerCallbacks(nplayer)
       await nplayer.addToneColor(PIANO_TONE_COLOR_NAME, piano)
       syncPlayerSettings()

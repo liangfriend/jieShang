@@ -12,7 +12,7 @@ import { registerController } from './register'
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
     width: 1500,
-    height: 1900,
+    height: 1000,
     show: false,
     autoHideMenuBar: true,
     ...(process.platform === 'linux' ? { icon } : {}),

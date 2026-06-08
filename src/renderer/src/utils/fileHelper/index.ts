@@ -1,4 +1,5 @@
 export {
+  deleteScoreFromDatabase,
   displayScoreName,
   exportSjToDisk,
   importSjFromDisk,

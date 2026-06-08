@@ -19,7 +19,6 @@ import {
 import type { NoteScoreResult } from '@renderer/types/types'
 import { mergeGrandStaff } from '@renderer/dr-extensions/scoreUtil'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
-import { resolvePlayBpm } from '@renderer/constant/play'
 import { usePlayStore } from '@renderer/store/play.store'
 import { useMetronomeStore } from '@renderer/store/metronome.store'
 import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store'
@@ -102,6 +101,9 @@ watch(
   (value) => {
     playStore.setBpm(value)
     metronomeStore.setBpm(value)
+    practiceBpm.value = value
+    performSequence.value = toPerformSequence(playSequence.value, value)
+    syncMetronome(musicScoreData.value, value)
   }
 )
 watch(
@@ -181,7 +183,7 @@ function applyPracticeScoreLayout(score: MusicScore) {
 }
 
 function rebuildPracticeSequences(score: MusicScore) {
-  const bpm = resolvePlayBpm(score.bpm)
+  const bpm = settings.bpm
   practiceBpm.value = bpm
   const passSingleStaffIndex = settings.disabledStaffIndexes
   playSequence.value = toPlaySequence(score, { passSingleStaffIndex })
@@ -212,17 +214,16 @@ onMounted(async () => {
     mergeGrandStaff(cloned)
     applyPracticeScoreLayout(cloned)
     musicScoreData.value = cloned
-    rebuildPracticeSequences(cloned)
   } else {
     applyPracticeScoreLayout(musicScoreData.value)
-    rebuildPracticeSequences(musicScoreData.value)
   }
 
   await playStore.restorePlaybackDefaults(musicScoreData.value)
-  // 设置面板初值与曲谱默认对齐
+  // 设置面板初值与曲谱默认对齐后再重建序列，避免 BPM 与瀑布流不同步
   settings.bpm = playStore.bpm
   settings.scoreVolume = playStore.volume
   metronomeStore.setVolume(settings.metronomeVolume)
+  rebuildPracticeSequences(musicScoreData.value)
 })
 
 onBeforeUnmount(() => {

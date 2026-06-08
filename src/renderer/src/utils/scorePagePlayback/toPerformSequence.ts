@@ -1,4 +1,5 @@
 import type { PlaySequence } from 'deciphony-player'
+import { ca } from 'element-plus/es/locale/index.mjs'
 
 /** pianoWaterfall.performSequence：midi → [开始毫秒, 结束毫秒, 附加信息?][] */
 export type PerformSequence = Record<string, [number, number, any?][]>
@@ -13,6 +14,7 @@ export function unit256ToMs(unit: number, bpm: number): number {
 
 /** NPlayer 播放序列 → 瀑布流 performSequence（毫秒） */
 export function toPerformSequence(playSequence: PlaySequence, bpm: number): PerformSequence {
+  console.log("chicken")
   const result: PerformSequence = {}
 
   for (const item of playSequence) {
