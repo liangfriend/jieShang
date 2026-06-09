@@ -15,10 +15,13 @@ import {
   useScorePagePlayback,
   type PerformSequence,
   type PianoWaterfallPlaybackExpose
-} from '@renderer/views/play/scorePagePlayback'
+} from '@renderer/utils/scorePagePlayback'
 import type { NoteScoreResult } from '@renderer/types/types'
 import { mergeGrandStaff } from '@renderer/dr-extensions/scoreUtil'
-import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
+import type {
+  MusicScoreHighlightExpose,
+  PlayHighlightProgressData
+} from '@renderer/dr-extensions/dr-play-highlight'
 import { usePlayStore } from '@renderer/store/play.store'
 import { useMetronomeStore } from '@renderer/store/metronome.store'
 import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store'
@@ -27,6 +30,7 @@ import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRout
 import { practiceContextKey } from '@renderer/views/practice/practiceContext'
 import { createPracticeNoteResultHighlight } from '@renderer/views/practice/practiceNoteResultHighlight'
 import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
+import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
 import empty from '@renderer/template/empty'
 
 /** 练习模式瀑布流 / 虚拟钢琴共用 midi 范围（88 键） */
@@ -58,6 +62,7 @@ const maxStaffCount = computed(() => {
   return max
 })
 
+const scoreScrollRef = ref<HTMLElement | null>(null)
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
 const pianoWaterfallRef = ref<PianoWaterfallPlaybackExpose | null>(null)
 const performSequence = ref<PerformSequence>({})
@@ -75,6 +80,14 @@ const staffDim = createPracticeStaffDim({
   findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
 })
 
+const scrollToPlayingNote = createScoreScrollToPlayingNote({
+  getScrollContainer: () => scoreScrollRef.value,
+  getVDomList: () => vDomList.value,
+  findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
+})
+
+let scrollProgressSubId: string | null = null
+
 const playback = useScorePagePlayback(musicScoreData, {
   musicScoreRef,
   waterfallRef: pianoWaterfallRef,
@@ -84,7 +97,10 @@ const playback = useScorePagePlayback(musicScoreData, {
     if (settings.metronomeDuringPlay) void metronomeStore.startLoop()
   },
   onPlaybackPaused: () => metronomeStore.stop(),
-  onPlaybackStopped: () => metronomeStore.stop(),
+  onPlaybackStopped: () => {
+    metronomeStore.stop()
+    scrollToPlayingNote.resetScroll()
+  },
   onClearPlayData: () => noteResultHighlight.clearAll()
 })
 
@@ -224,9 +240,14 @@ onMounted(async () => {
   settings.scoreVolume = playStore.volume
   metronomeStore.setVolume(settings.metronomeVolume)
   rebuildPracticeSequences(musicScoreData.value)
+
+  scrollProgressSubId = playback.subscribeProgressStart((_progress, data) => {
+    scrollToPlayingNote.handleProgressStart(data as PlayHighlightProgressData)
+  })
 })
 
 onBeforeUnmount(() => {
+  if (scrollProgressSubId) playback.unsubscribeProgressStart(scrollProgressSubId)
   playback.handleStop()
   metronomeStore.stop()
   noteResultHighlight.clearAll()
@@ -236,7 +257,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="practice-page">
-    <section class="practice-page__score">
+    <section ref="scoreScrollRef" class="practice-page__score hidden-scrollbar">
       <musicScoreVue
         ref="musicScoreRef"
         class="practice-page__score-svg"

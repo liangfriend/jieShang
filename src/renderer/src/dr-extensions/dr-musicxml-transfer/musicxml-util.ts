@@ -36,9 +36,13 @@ import {
 } from './xmlSymbolParse'
 import { buildMusicScoreToXml } from './musicScoreToXml'
 
+// MusicXML ↔ MusicScore 转换入口。
+// xmlToMusicScore 为当前主路径；文件末尾 rootSwitch/partSwitch 等为旧版 switch 骨架，逻辑已迁移到 xmlToMusicScore。
+
 /**
  * 使用fast-xml-parser解析musicxml文件成json数据
  */
+// preserveOrder: true → 解析结果为有序数组，子节点顺序与 XML 一致（measure 内 backup/note/attributes 顺序很重要）
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
   attributeNamePrefix: '@_',
@@ -48,6 +52,7 @@ const xmlParser = new XMLParser({
   ignoreDeclaration: true
 })
 
+/** 读取用户选择的 .xml/.musicxml 文件，校验后以 preserveOrder 结构返回 JSON */
 export async function getXmlJson(file: File) {
   if (!file) {
     return null
@@ -64,6 +69,11 @@ export async function getXmlJson(file: File) {
   return xmlParser.parse(text)
 }
 
+/**
+ * 遍历 fast-xml-parser preserveOrder 数组的每一项。
+ * 每个 item 形如 { measure: [...] } 或 { note: [...] }，对 item 的每个 key 调用 cb。
+ * 旧版 switch 解析（rootSwitch → partSwitch → measureSwitch）依赖此工具。
+ */
 function xmlDataFor(data: any[], cb: Function) {
   for (const index in data) {
     const item = data[index]
@@ -77,14 +87,17 @@ function xmlDataFor(data: any[], cb: Function) {
  * musicXml转musicScore
  */
 export function xmlToMusicScore(xmlData: any): MusicScore {
+  // score-partwise：按 part 组织；当前只读第一个 part，多 part 合奏尚未拆分
   const root = xmlData[0]['score-partwise']
   // 每行谱表当前信息
+  // staffStates[i] 跟踪第 i+1 号 staff 的谱号/调号/拍号/divisions，供音符落位与时值换算
   const staffStates = Array.from({ length: 10 }, (_, i) => ({
     curClef: i === 0 ? ClefTypeEnum.Treble : ClefTypeEnum.Bass,
     curKeySignature: KeySignatureTypeEnum.C,
     curTimeSignature: TimeSignatureTypeEnum['4_4'],
     divisions: 4
   }))
+  // 整体流程：0 建壳 → 1 预建 staff → 2 按 measure 数量铺空小节 → 3 填 attributes/音符 → 4 删空 staff → 5 每 4 小节换行
   /** 第零步：创建空 musicScore，并加入一个空复谱表（单谱表后续按 staff 数量再补） */
   const musicScore = createMusicScore({
     type: MusicScoreTypeEnum.StandardStaff,
@@ -130,9 +143,23 @@ export function xmlToMusicScore(xmlData: any): MusicScore {
    * 如果索引最后一项是attributes, 保存divisions, 解析key为所有该索引小节后置调号，解析time为所有该索引小节后置拍号，解析clef为小节后置谱号，clef用number属性判断属于哪个单谱表的该索引小节
    * 加三个辅助函数，解析xml中谱号，调号，拍号
    */
+  // divisions：四分音符占多少 duration 单位，来自 <attributes><divisions>
   let divisions = 1
   const grandStaff = musicScore.grandStaffs[0]
-  const pendingNoteClef: (ClefTypeEnum | undefined)[] = Array(10).fill(undefined)
+
+  /** 取 preserveOrder 节点的主标签名（忽略 :@ 属性节点） */
+  const getMeasureItemKey = (measureItem: Record<string, unknown>): string | undefined =>
+    Object.keys(measureItem).find((k) => k !== ':@')
+
+  /** 当前项之后第一个有效子节点的标签名；无则 undefined */
+  const getNextMeasureItemKey = (measureBlock: unknown[], index: number): string | undefined => {
+    for (let j = index + 1; j < measureBlock.length; j++) {
+      const key = getMeasureItemKey(measureBlock[j] as Record<string, unknown>)
+      if (key) return key
+    }
+    return undefined
+  }
+
   if (firstPart) {
     let measureIndex = 0
     for (const partItem of firstPart) {
@@ -140,6 +167,7 @@ export function xmlToMusicScore(xmlData: any): MusicScore {
 
       const measureBlock = partItem.measure
 
+      // 仅更新内存状态，不写回 measure 对象（供后续 note 解析用）
       const updateStaffStates = (attributesBlock: any[]) => {
         for (const attrItem of attributesBlock) {
           if (attrItem.divisions) {
@@ -173,7 +201,7 @@ export function xmlToMusicScore(xmlData: any): MusicScore {
         }
       }
 
-      const applyMeasureAttributes = (attributesBlock: any[], slot: 'f' | 'b') => {
+      const applyMeasureKeyTime = (attributesBlock: any[], slot: 'f' | 'b') => {
         for (const attrItem of attributesBlock) {
           if (attrItem.key) {
             const keySig = createKeySignature(xmlKeyToType(attrItem))
@@ -201,20 +229,39 @@ export function xmlToMusicScore(xmlData: any): MusicScore {
               else measure.timeSignature_b = timeSig
             }
           }
-          if (attrItem.clef) {
-            const clef = createClef(xmlClefToType(attrItem))
-            const staffNum = Number(attrItem[':@']?.['@_number'] ?? 1)
-            const measure = grandStaff.staves[staffNum - 1]?.measures[measureIndex]
-            if (!measure) continue
-            if (slot === 'f') measure.clef_f = clef
-            else measure.clef_b = clef
-          }
         }
       }
 
+      const applyMeasureClef = (attributesBlock: any[], slot: 'f' | 'b') => {
+        for (const attrItem of attributesBlock) {
+          if (!attrItem.clef) continue
+          const clef = createClef(xmlClefToType(attrItem))
+          const staffNum = Number(attrItem[':@']?.['@_number'] ?? 1)
+          const measure = grandStaff.staves[staffNum - 1]?.measures[measureIndex]
+          if (!measure) continue
+          if (slot === 'f') measure.clef_f = clef
+          else measure.clef_b = clef
+        }
+      }
+
+      // 尚未写入音符/休止符前遇到的 attributes：谱号/调号/拍号一律前置
+      // 已写入后：下一项为 note 则 clef 挂到下一颗音符；否则（无下一项或下一项非 note）全部后置
+      const pendingNoteClef: (ClefTypeEnum | undefined)[] = Array(10).fill(undefined)
+
+      const queueClefToNextNote = (attributesBlock: any[]) => {
+        for (const attrItem of attributesBlock) {
+          if (!attrItem.clef) continue
+          const staffIdx = Number(attrItem[':@']?.['@_number'] ?? 1) - 1
+          pendingNoteClef[staffIdx] = xmlClefToType(attrItem)
+        }
+      }
+
+      // MusicXML 用 divisions 累计拍位；backup 会回退 currentTime（多声部同小节）
       let currentTime = 0
+      // 各 staff 已写入的 divisions 终点，用于在音符前补休止符填空洞
       const staffWrittenDivisions = Array(10).fill(0)
 
+      // 若下一音符的 currentTime 晚于已写入位置，用休止符补齐（隐式休止）
       const appendRestGaps = (staffIdx: number, targetTime: number) => {
         const measure = grandStaff.staves[staffIdx]?.measures[measureIndex]
         if (!measure) return
@@ -229,6 +276,7 @@ export function xmlToMusicScore(xmlData: any): MusicScore {
         }
       }
 
+      // 把 pendingNoteClef 挂到即将插入的音符/休止符，并清空 pending
       const applyPendingClef = (
         slot: { clef?: ReturnType<typeof createClef> },
         staffIdx: number
@@ -240,9 +288,13 @@ export function xmlToMusicScore(xmlData: any): MusicScore {
         }
       }
 
+      let hasSeenNoteOrRest = false
+
+      // 按 XML 子节点顺序遍历：backup → attributes → note …
       for (let i = 0; i < measureBlock.length; i++) {
         const measureItem = measureBlock[i]
-        const itemKey = Object.keys(measureItem).find((k) => k !== ':@')
+        const itemKey = getMeasureItemKey(measureItem)
+        const nextKey = getNextMeasureItemKey(measureBlock, i)
 
         if (itemKey === 'backup') {
           for (const item of measureItem.backup as any[]) {
@@ -257,23 +309,22 @@ export function xmlToMusicScore(xmlData: any): MusicScore {
         if (itemKey === 'attributes') {
           const attributesBlock = measureItem.attributes
           updateStaffStates(attributesBlock)
-          if (i === 0) {
-            applyMeasureAttributes(attributesBlock, 'f')
-          } else if (i === measureBlock.length - 1) {
-            applyMeasureAttributes(attributesBlock, 'b')
+          if (!hasSeenNoteOrRest) {
+            applyMeasureKeyTime(attributesBlock, 'f')
+            applyMeasureClef(attributesBlock, 'f')
+          } else if (nextKey === 'note') {
+            applyMeasureKeyTime(attributesBlock, 'f')
+            queueClefToNextNote(attributesBlock)
           } else {
-            for (const attrItem of attributesBlock) {
-              if (attrItem.clef) {
-                const staffIdx = Number(attrItem[':@']?.['@_number'] ?? 1) - 1
-                pendingNoteClef[staffIdx] = xmlClefToType(attrItem)
-              }
-            }
+            applyMeasureKeyTime(attributesBlock, 'b')
+            applyMeasureClef(attributesBlock, 'b')
           }
           continue
         }
 
         if (itemKey !== 'note') continue
 
+        // pitch/rest/chord/beam/dot/staff 等统一在 xmlSymbolParse 中解析
         const parsed = parseXmlNoteBlock(measureItem.note, divisions)
         const staffIdx = parsed.staffNum - 1
         const state = staffStates[staffIdx]
@@ -282,7 +333,9 @@ export function xmlToMusicScore(xmlData: any): MusicScore {
 
         if (parsed.isRest) {
           if (parsed.isChord) continue
+          hasSeenNoteOrRest = true
           appendRestGaps(staffIdx, currentTime)
+          // 休止符不占和弦位，但会推进 currentTime
           const rest = createNoteRest({
             chronaxie: parsed.chronaxie,
             ...(parsed.dotCount > 0
@@ -304,8 +357,10 @@ export function xmlToMusicScore(xmlData: any): MusicScore {
         const midi = pitchToMidi(parsed.pitchBlock)
         if (midi == null) continue
 
+        hasSeenNoteOrRest = true
         if (!parsed.isChord) appendRestGaps(staffIdx, currentTime)
 
+        // midi → 五线谱 region；结合当前谱号、调号决定升/降记谱
         const priority = parsed.accidentalText
           ? xmlAccidentalToPriority(parsed.accidentalText)
           : AccidentalTypeEnum.Sharp
@@ -327,6 +382,7 @@ export function xmlToMusicScore(xmlData: any): MusicScore {
             : {})
         }
 
+        // <chord/>：与上一 note 同时发声，追加到同一 NoteSymbol 的 notesInfo
         if (parsed.isChord && measure.notes.length) {
           const last = measure.notes[measure.notes.length - 1]!
           if ('notesInfo' in last) {
@@ -366,6 +422,7 @@ export function xmlToMusicScore(xmlData: any): MusicScore {
    * 每隔四个小节分割，放到新的复谱表
    */
   const measureCount = grandStaff.staves[0]?.measures.length ?? 0
+  // 单行展示：每 4 小节切成一行复谱表（系统），保留 uSpace/dSpace/bracket/linkedStaff
   if (measureCount > 0) {
     const splitGrandStaffs = []
     for (let start = 0; start < measureCount; start += 4) {
@@ -396,6 +453,8 @@ export function musicScoreToXml(musicScore: MusicScore): File {
   return buildMusicScoreToXml(musicScore)
 }
 
+// ---------- 以下为旧版 switch 骨架，供对照 MusicXML 节点结构；实际导入走 xmlToMusicScore ----------
+
 function rootSwitch(rootData, musicScore: MusicScore) {
   const { key: rootItemKey, item: rootItem } = rootData
   switch (rootItemKey) {
@@ -414,6 +473,7 @@ function partSwitch(partData, musicScore: MusicScore) {
 
   switch (partItemKey) {
     case 'measure': {
+      // 旧路径：逐 measure 子节点分发；现由 xmlToMusicScore 第三步内联处理
       xmlDataFor(partItem[partItemKey], (measureData) => {
         measureSwitch(measureData)
       })
@@ -421,6 +481,7 @@ function partSwitch(partData, musicScore: MusicScore) {
       break
     }
     case 'sound': {
+      // <sound tempo="…"/> 写在 part 层级，对应 xmlToMusicScore 第二步的 bpm 读取
       musicScore.bpm = +partItem[partItemKey][0][':@']['@_tempo']
 
       break
@@ -428,6 +489,7 @@ function partSwitch(partData, musicScore: MusicScore) {
   }
 }
 
+/** 旧版 measure 子节点分发；note 分支主体逻辑已注释，见 xmlToMusicScore */
 function measureSwitch(measureData) {
   const { key: measureItemKey, item: measureItem } = measureData
   switch (measureItemKey) {
@@ -436,6 +498,7 @@ function measureSwitch(measureData) {
       break
     }
     case 'attributes': {
+      // 调号/拍号/谱号/staves 解析已迁移至 xmlToMusicScore 第三步 attributes 分支
       xmlDataFor(measureItem[measureItemKey], (attributesData) => {
         attributesSwitch(attributesData)
       })
@@ -526,6 +589,7 @@ function measureSwitch(measureData) {
   }
 }
 
+/** 旧版 attributes 子节点分发；各 case 内为历史 editor 插入逻辑，已注释 */
 function attributesSwitch(attributesData, musicScoreEditor) {
   const { key: attributesKey, item: attributesItem } = attributesData
   switch (attributesKey) {

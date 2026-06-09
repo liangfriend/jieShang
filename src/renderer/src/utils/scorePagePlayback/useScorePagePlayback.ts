@@ -13,7 +13,7 @@ import type { ScorePagePlaybackController, UseScorePagePlaybackOptions } from '.
 
 /**
  * 曲谱播放页编排：Pinia NPlayer + 可选 dr-play-highlight。
- * dr-play / dr-play-highlight 为平级扩展，此处负责页面级粘合。
+ * play / practice 等页面共用，与具体页面解耦。
  */
 export function useScorePagePlayback(
   musicScore: VueRef<MusicScore>,
@@ -28,13 +28,11 @@ export function useScorePagePlayback(
     bpm
   } = storeToRefs(playStore)
 
-  /** 预备拍阶段 */
   const countingIn = ref(false)
   let countInAborted = false
 
   const playDisabled = computed(() => storePlayDisabled.value || countingIn.value)
   const pauseDisabled = computed(() => storePauseDisabled.value || countingIn.value)
-  // 预备拍期间允许停止
   const stopDisabled = computed(() => storeStopDisabled.value && !countingIn.value)
 
   const highlight = options.musicScoreRef
@@ -71,7 +69,6 @@ export function useScorePagePlayback(
     })
   }
 
-  // 自然播放结束也要停止节拍器
   if (options.onPlaybackStopped) {
     stoppedSubId = playStore.subscribeOnEnd(() => {
       options.onPlaybackStopped?.()
@@ -97,7 +94,6 @@ export function useScorePagePlayback(
     if (playbackState.value !== 'paused') {
       playStore.setPlaySequence(sequence)
 
-      // 正式播放前先打一小节预备拍
       if (options.countIn) {
         countInAborted = false
         countingIn.value = true
@@ -106,7 +102,6 @@ export function useScorePagePlayback(
         } finally {
           countingIn.value = false
         }
-        // 预备拍期间被停止则中止本次播放
         if (countInAborted) {
           countInAborted = false
           return
@@ -131,7 +126,6 @@ export function useScorePagePlayback(
     playStore.stop()
     highlight?.handlePlaybackStop()
     waterfall()?.stop()
-    // 停止只暂停回到开头，不清空评分与已激活水柱（清空走「清空弹奏数据」）
     options.onPlaybackStopped?.()
   }
 
@@ -153,6 +147,10 @@ export function useScorePagePlayback(
     handleStop,
     handleClearPlayData: hasClearPlayData ? handleClearPlayData : undefined,
     handleRenderMusicScore: highlight?.handleRenderMusicScore,
-    setHighlightBpm: highlight?.setBpm
+    setHighlightBpm: highlight?.setBpm,
+    subscribeProgressStart: playStore.subscribeProgressStart,
+    unsubscribeProgressStart: playStore.unsubscribeProgressStart,
+    subscribeOnEnd: playStore.subscribeOnEnd,
+    unsubscribeOnEnd: playStore.unsubscribeOnEnd
   }
 }

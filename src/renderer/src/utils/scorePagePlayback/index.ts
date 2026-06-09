@@ -6,6 +6,7 @@ export {
   scorePagePlaybackKey,
   scorePlaybackKey,
   type PlaybackState,
+  type ProgressListener,
   type PianoWaterfallPlaybackExpose,
   type ScorePagePlaybackController,
   type UseScorePagePlaybackOptions

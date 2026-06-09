@@ -153,6 +153,42 @@ export function setMeasureTimeSignatureF(measure: Measure, type: TimeSignatureTy
   }
 }
 
+export function setMeasureClefB(measure: Measure, type: ClefTypeEnum | null): void {
+  if (type == null) {
+    delete measure.clef_b
+    return
+  }
+  if (measure.clef_b) {
+    measure.clef_b.type = type
+  } else {
+    measure.clef_b = createClef(type)
+  }
+}
+
+export function setMeasureKeySignatureB(measure: Measure, type: KeySignatureTypeEnum | null): void {
+  if (type == null) {
+    delete measure.keySignature_b
+    return
+  }
+  if (measure.keySignature_b) {
+    measure.keySignature_b.type = type
+  } else {
+    measure.keySignature_b = createKeySignature(type)
+  }
+}
+
+export function setMeasureTimeSignatureB(measure: Measure, type: TimeSignatureTypeEnum | null): void {
+  if (type == null) {
+    delete measure.timeSignature_b
+    return
+  }
+  if (measure.timeSignature_b) {
+    measure.timeSignature_b.type = type
+  } else {
+    measure.timeSignature_b = createTimeSignature(type)
+  }
+}
+
 export function setMeasureStartRepeat(measure: Measure, type: MeasureStartRepeatEnum | null): void {
   if (type == null) {
     delete measure.startRepeat

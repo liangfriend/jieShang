@@ -2,7 +2,7 @@
 import { Delete, Setting, VideoPause, VideoPlay } from '@element-plus/icons-vue'
 import { computed, inject, ref } from 'vue'
 import BackButton from '@renderer/components/BackButton.vue'
-import { scorePlaybackKey } from '@renderer/views/play/scorePagePlayback'
+import { scorePlaybackKey } from '@renderer/utils/scorePagePlayback'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
 import PracticeSettingsDialog from './PracticeSettingsDialog.vue'
 

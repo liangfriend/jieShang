@@ -2,7 +2,9 @@ import type { VDom } from 'deciphony-renderer'
 import type { PlaySequence } from 'deciphony-player'
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
-import type { PlaybackState } from '@renderer/store/play.store'
+import type { EndListener, PlaybackState, ProgressListener } from '@renderer/store/play.store'
+
+export type { ProgressListener }
 import type { WaterfallScoreStats } from '@renderer/types/types'
 
 export type { PlaybackState }
@@ -47,6 +49,12 @@ export type ScorePagePlaybackController = {
   handleClearPlayData?: () => void
   handleRenderMusicScore?: (list: VDom[]) => void
   setHighlightBpm?: (bpm: number) => void
+  /** 订阅播放进度开始（页面可二次订阅，做滚动等独有逻辑） */
+  subscribeProgressStart: (listener: ProgressListener) => string
+  unsubscribeProgressStart: (id: string) => void
+  /** 订阅播放结束（页面可二次订阅） */
+  subscribeOnEnd: (listener: EndListener) => string
+  unsubscribeOnEnd: (id: string) => void
 }
 
 export const scorePagePlaybackKey: InjectionKey<ScorePagePlaybackController> =

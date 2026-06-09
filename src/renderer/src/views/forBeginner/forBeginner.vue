@@ -17,13 +17,14 @@ import {
   toMidiBoxSequence,
   toPlaySequence,
   type MidiBoxSequence
-} from '@renderer/views/play/scorePagePlayback'
+} from '@renderer/utils/scorePagePlayback'
 import {
   beginnerPlaybackKey,
   useBeginnerPlayback,
   type PianoMidiBoxExpose
 } from '@renderer/views/forBeginner/beginnerPlayback'
 import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
+import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
 import {
   createBeginnerNoteProgressHighlight,
   type MidiBoxBatchPayload
@@ -51,6 +52,7 @@ const maxStaffCount = computed(() => {
   return max
 })
 
+const scoreScrollRef = ref<HTMLElement | null>(null)
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
 const pianoMidiBoxRef = ref<PianoMidiBoxExpose | null>(null)
 const playSequence = ref<PlaySequence>([])
@@ -63,6 +65,12 @@ const staffDim = createPracticeStaffDim({
 })
 
 const noteProgressHighlight = createBeginnerNoteProgressHighlight({
+  getVDomList: () => vDomList.value,
+  findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
+})
+
+const scrollToPlayingNote = createScoreScrollToPlayingNote({
+  getScrollContainer: () => scoreScrollRef.value,
   getVDomList: () => vDomList.value,
   findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
 })
@@ -80,6 +88,7 @@ const playback = useBeginnerPlayback({
   onPlaybackStopped: () => {
     metronomeStore.stop()
     noteProgressHighlight.clearAll()
+    scrollToPlayingNote.resetScroll()
   },
   hasSequence: () => hasMidiBoxSequence.value
 })
@@ -118,6 +127,8 @@ function handleMidiBoxBatchActive(payload: MidiBoxBatchPayload) {
     return
   }
   noteProgressHighlight.setCurrentBatch(payload.notes)
+  const noteId = payload.notes[0]?.info
+  if (noteId != null) scrollToPlayingNote.scrollToHorizontalCenter(String(noteId))
 }
 
 function countMeasures(score: MusicScore): number {
@@ -208,7 +219,7 @@ function handleMidiBoxFinished() {
 
 <template>
   <div class="beginner-page">
-    <section class="beginner-page__score">
+    <section ref="scoreScrollRef" class="beginner-page__score hidden-scrollbar">
       <musicScoreVue
         ref="musicScoreRef"
         class="beginner-page__score-svg"

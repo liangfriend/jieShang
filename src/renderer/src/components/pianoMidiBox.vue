@@ -18,7 +18,7 @@ defineOptions({
   name: 'DsPianoMidiBox'
 })
 
-import type { MidiBoxSequence } from '@renderer/views/play/scorePagePlayback/toMidiBoxSequence'
+import type { MidiBoxSequence } from '@renderer/utils/scorePagePlayback/toMidiBoxSequence'
 import type {
   BeginnerMidiBoxNote,
   MidiBoxBatchPayload

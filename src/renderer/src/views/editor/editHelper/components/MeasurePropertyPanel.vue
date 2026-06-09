@@ -15,10 +15,13 @@ import {
   removeVolta,
   setMeasureBarlineB,
   setMeasureBarlineF,
+  setMeasureClefB,
   setMeasureClefF,
   setMeasureEndRepeat,
+  setMeasureKeySignatureB,
   setMeasureKeySignatureF,
   setMeasureStartRepeat,
+  setMeasureTimeSignatureB,
   setMeasureTimeSignatureF,
   START_REPEAT_OPTIONS,
   TIME_SIGNATURE_OPTIONS,
@@ -57,6 +60,21 @@ const keySignatureF = computed({
 const timeSignatureF = computed({
   get: () => measure.value.timeSignature_f?.type ?? '',
   set: (v) => setMeasureTimeSignatureF(measure.value, v === '' ? null : v),
+})
+
+const clefB = computed({
+  get: () => measure.value.clef_b?.type ?? '',
+  set: (v) => setMeasureClefB(measure.value, v === '' ? null : v),
+})
+
+const keySignatureB = computed({
+  get: () => measure.value.keySignature_b?.type ?? '',
+  set: (v) => setMeasureKeySignatureB(measure.value, v === '' ? null : v),
+})
+
+const timeSignatureB = computed({
+  get: () => measure.value.timeSignature_b?.type ?? '',
+  set: (v) => setMeasureTimeSignatureB(measure.value, v === '' ? null : v),
 })
 
 const startRepeat = computed({
@@ -180,6 +198,42 @@ function onVoltaValueInput() {
     <section class="measure-props__section">
       <div class="measure-props__label">前置拍号</div>
       <el-select v-model="timeSignatureF" class="measure-props__select" clearable placeholder="无" size="small">
+        <el-option
+          v-for="opt in TIME_SIGNATURE_OPTIONS"
+          :key="opt.value"
+          :label="opt.label"
+          :value="opt.value"
+        />
+      </el-select>
+    </section>
+
+    <section class="measure-props__section">
+      <div class="measure-props__label">后置谱号</div>
+      <el-select v-model="clefB" class="measure-props__select" clearable placeholder="无" size="small">
+        <el-option
+          v-for="opt in CLEF_OPTIONS"
+          :key="opt.value"
+          :label="opt.label"
+          :value="opt.value"
+        />
+      </el-select>
+    </section>
+
+    <section class="measure-props__section">
+      <div class="measure-props__label">后置调号</div>
+      <el-select v-model="keySignatureB" class="measure-props__select" clearable placeholder="无" size="small">
+        <el-option
+          v-for="opt in KEY_SIGNATURE_OPTIONS"
+          :key="opt.value"
+          :label="opt.label"
+          :value="opt.value"
+        />
+      </el-select>
+    </section>
+
+    <section class="measure-props__section">
+      <div class="measure-props__label">后置拍号</div>
+      <el-select v-model="timeSignatureB" class="measure-props__select" clearable placeholder="无" size="small">
         <el-option
           v-for="opt in TIME_SIGNATURE_OPTIONS"
           :key="opt.value"

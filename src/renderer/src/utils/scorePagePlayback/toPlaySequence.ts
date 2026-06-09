@@ -2,7 +2,7 @@ import type { MusicScore } from 'deciphony-renderer'
 import type { PlaySequence } from 'deciphony-player'
 import { getDrPlaySequence } from '@renderer/dr-extensions/dr-play'
 import { PIANO_TONE_COLOR_NAME } from '@renderer/store/play.store'
-import { buildNoteStaveIndexMap } from '@renderer/views/practice/staffNotes'
+import { buildNoteStaveIndexMap } from '@renderer/utils/staffNotes'
 
 export type ToPlaySequenceOptions = {
   /** 跳过的单谱表行号（关闭的声部） */
