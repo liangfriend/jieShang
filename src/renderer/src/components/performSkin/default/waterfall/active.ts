@@ -28,7 +28,6 @@ export function getDefaultWaterfallKeyActiveBarStyle(input: {
     flexShrink: 0,
     height: input.active ? '6px' : '0.1px',
     borderRadius: '999px',
-    background: ACTIVE_COLOR,
     transform: 'translateY(-3px)',
     transition: 'height 0.1s ease',
     visibility: input.active ? 'visible' : 'hidden'

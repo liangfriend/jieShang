@@ -15,7 +15,7 @@ import { usePlayStore } from '@renderer/store/play.store'
 import { useMidiStore } from '@renderer/store/midi.store'
 import { useMetronomeStore } from '@renderer/store/metronome.store'
 import { initCollectionActiveStorage } from '@renderer/utils/collection/collectionActiveStorage'
-import { initDefaultVirtualPianoSkinSelection } from '@renderer/utils/collection/virtualPianoSkinLoader'
+import { initDefaultCollectionSelection } from '@renderer/utils/collection/initCollectionSelection'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -28,7 +28,7 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 
 async function bootstrap() {
   initCollectionActiveStorage()
-  await initDefaultVirtualPianoSkinSelection()
+  await initDefaultCollectionSelection()
   void usePlayStore().init()
   void useMidiStore().init()
   void useMetronomeStore().init()

@@ -29,6 +29,14 @@ defineOptions({
 
 const { skin, skinBgStyle, skinBaselineBgStyle } = usePerformSkin()
 
+function baselineMidiActiveBg(svg: string): CSSProperties {
+  return {
+    backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`,
+    backgroundSize: '100% 100%',
+    backgroundRepeat: 'no-repeat'
+  }
+}
+
 const emit = defineEmits<{
   /** 单个音符评分完成：评分结果、实时分、总分、第三个附加参数(noteInfo id) */
   (e: 'score', result: NoteScoreResult, realScore: number, totalScore: number, info: any): void
@@ -354,11 +362,13 @@ const keyStyle = computed(() => {
 })
 const midiEventStyle = computed(() => {
   return (midi: number): CSSProperties => {
-    const midiWidth = getMidiWidth(midi)
-    return skin.value.waterfall.keyActiveBar({
-      width: midiWidth + keyUnit.value,
-      active: activeKeys.value.has(midi)
+    const active = activeKeys.value.has(midi)
+    const layout = skin.value.waterfall.keyActiveBar({
+      width: getMidiWidth(midi),
+      active
     })
+    if (!active) return layout
+    return { ...layout, ...baselineMidiActiveBg(skin.value.baselineMidiActiveSvg) }
   }
 })
 
@@ -383,13 +393,29 @@ const waterColumnActiveStyle = computed(() => {
   }
 })
 
-const midiEventContainerStyle = computed((): CSSProperties => {
+const baselineLineStyle = computed((): CSSProperties => {
+  const { height, background: _bg, ...rest } = skin.value.baseline
   return {
     bottom: `${props.baseLineBottom}px`,
-    ...skin.value.baseline,
+    left: 0,
+    right: 0,
+    height: height ?? '3px',
+    zIndex: 3,
+    ...rest,
     ...skinBaselineBgStyle.value
   }
 })
+
+const midiEventContainerStyle = computed((): CSSProperties => ({
+  bottom: `${props.baseLineBottom - 4}px`,
+  left: 0,
+  right: 0,
+  height: '10px',
+  display: 'flex',
+  alignItems: 'flex-end',
+  zIndex: 4,
+  overflow: 'visible'
+}))
 
 /*
  * 评分机制
@@ -585,9 +611,8 @@ function handleMidiMessage(event: MIDIMessageEvent) {
 }
 function handleKeyDown(midi) {
   if (!midi) return
-  // 防止重复按下
   if (activeKeys.value.has(midi)) return
-  activeKeys.value.add(midi)
+  activeKeys.value = new Set(activeKeys.value).add(midi)
   if (state.value !== 'playing') return
   // 记录高亮部分
   const timeStamp = currentTime.value
@@ -603,7 +628,10 @@ function handleKeyDown(midi) {
 
 function handleKeyUp(midi) {
   if (!midi) return
-  activeKeys.value.delete(midi)
+  if (!activeKeys.value.has(midi)) return
+  const next = new Set(activeKeys.value)
+  next.delete(midi)
+  activeKeys.value = next
   if (state.value !== 'playing') return
   // 记录高亮部分
   const timeStamp = currentTime.value
@@ -756,12 +784,12 @@ defineExpose({
         ></div>
       </div>
     </div>
-    <div :style="midiEventContainerStyle" class="stackItem" comment="瀑布流容器,midi按下效果">
+    <div :style="baselineLineStyle" class="stackItem stackItem--layer" comment="基准线" />
+    <div :style="midiEventContainerStyle" class="stackItem stackItem--layer" comment="midi按下基准线高亮">
       <div
         v-for="midi in Array.from({ length: midi.max - midi.min + 1 }, (_, i) => midi.min + i)"
         :key="midi"
         :style="midiEventStyle(midi)"
-        comment="midi按下效果,后续改插槽自定义样式"
       ></div>
     </div>
   </div>
@@ -791,5 +819,10 @@ defineExpose({
   > * {
     pointer-events: auto;
   }
+}
+
+.stackItem--layer {
+  height: auto;
+  width: 100%;
 }
 </style>

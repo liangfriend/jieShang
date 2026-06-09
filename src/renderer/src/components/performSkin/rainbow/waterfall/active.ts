@@ -26,8 +26,6 @@ export function getRainbowWaterfallKeyActiveBarStyle(input: {
     flexShrink: 0,
     height: input.active ? '6px' : '0.1px',
     borderRadius: '999px',
-    background: 'linear-gradient(90deg, #ffd1e8, #ff9ec7, #c9b8ff)',
-    boxShadow: '0 0 10px 2px rgba(255, 143, 184, 0.85)',
     transform: 'translateY(-3px)',
     transition: 'height 0.1s ease',
     visibility: input.active ? 'visible' : 'hidden'

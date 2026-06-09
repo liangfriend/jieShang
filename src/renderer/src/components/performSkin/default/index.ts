@@ -1,5 +1,5 @@
 import type { PerformSkinPack } from '../types'
-import { bg, baseline } from './svg'
+import { bg, baseline, baselineMidiActive } from './svg'
 import { getDefaultMidiBoxActiveBlockStyle, getDefaultMidiBoxKeyActiveBarStyle } from './midiBox/active'
 import { getDefaultMidiBoxNormalBlockStyle } from './midiBox/normal'
 import {
@@ -32,5 +32,6 @@ export const defaultPerformSkin: PerformSkinPack = {
     alignItems: 'flex-end'
   },
   bgSvg: bg,
-  baselineSvg: baseline
+  baselineSvg: baseline,
+  baselineMidiActiveSvg: baselineMidiActive
 }

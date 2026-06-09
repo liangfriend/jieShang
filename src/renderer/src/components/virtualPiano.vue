@@ -28,6 +28,8 @@ defineOptions({
   name: 'DsPiano'
 })
 
+const midiStore = useMidiStore()
+
 const props = defineProps({
   /** whiteKeyWidth：固定白键宽度；fillParent：铺满父级并按 midi 范围均分白键宽 */
   layoutMode: {
@@ -264,11 +266,13 @@ function emitKey(type: 'keyUp' | 'keyDown', midi: number) {
   if (type === 'keyDown') {
     if (!setActiveKey(midi, true)) return
     emits('keyDown', midi)
+    midiStore.dispatchVirtualNote(midi, true)
     return
   }
 
   if (!setActiveKey(midi, false)) return
   emits('keyUp', midi)
+  midiStore.dispatchVirtualNote(midi, false)
 }
 
 function handlePointerDown(
@@ -693,8 +697,6 @@ function chordBoxPointerUp(event: PointerEvent) {
 }
 
 // MIDI 设备输入（设备列表由 midi store 统一管理）
-
-const midiStore = useMidiStore()
 
 function handleMidiMessage(event: MIDIMessageEvent) {
   const data = event.data

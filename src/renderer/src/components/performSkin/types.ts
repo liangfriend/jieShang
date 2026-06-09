@@ -45,5 +45,8 @@ export type PerformSkinPack = {
   /** 基准线容器样式（可与 baselineSvg 叠加） */
   baseline: CSSProperties
   bgSvg: string
+  /** 基准线常态 SVG */
   baselineSvg: string
+  /** midi 按下时基准线琴键位高亮 SVG（叠加在 keyActiveBar 容器上） */
+  baselineMidiActiveSvg: string
 }

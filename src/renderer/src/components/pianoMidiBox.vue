@@ -34,6 +34,14 @@ const emit = defineEmits<{
 
 const { skin, skinBgStyle, skinBaselineBgStyle } = usePerformSkin()
 
+function baselineMidiActiveBg(svg: string): CSSProperties {
+  return {
+    backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`,
+    backgroundSize: '100% 100%',
+    backgroundRepeat: 'no-repeat'
+  }
+}
+
 const props = defineProps({
   layoutMode: {
     type: String as PropType<'whiteKeyWidth' | 'fillParent'>,
@@ -292,18 +300,38 @@ const keyStyle = computed(() => {
 
 const midiEventStyle = computed(() => {
   return (midi: number): CSSProperties => {
-    const midiWidth = getMidiWidth(midi)
-    return skin.value.midiBox.keyActiveBar({
-      width: midiWidth + keyUnit.value,
-      active: activeKeys.value.has(midi)
+    const active = activeKeys.value.has(midi)
+    const layout = skin.value.midiBox.keyActiveBar({
+      width: getMidiWidth(midi),
+      active
     })
+    if (!active) return layout
+    return { ...layout, ...baselineMidiActiveBg(skin.value.baselineMidiActiveSvg) }
+  }
+})
+
+const baselineLineStyle = computed((): CSSProperties => {
+  const { height, background: _bg, ...rest } = skin.value.baseline
+  return {
+    bottom: `${props.baseLineBottom}px`,
+    left: 0,
+    right: 0,
+    height: height ?? '3px',
+    zIndex: 3,
+    ...rest,
+    ...skinBaselineBgStyle.value
   }
 })
 
 const midiEventContainerStyle = computed((): CSSProperties => ({
-  bottom: `${props.baseLineBottom}px`,
-  ...skin.value.baseline,
-  ...skinBaselineBgStyle.value
+  bottom: `${props.baseLineBottom - 4}px`,
+  left: 0,
+  right: 0,
+  height: '10px',
+  display: 'flex',
+  alignItems: 'flex-end',
+  zIndex: 4,
+  overflow: 'visible'
 }))
 
 function isCurrentBatchBlock(midi: number, batchIndex: number) {
@@ -513,7 +541,8 @@ defineExpose({
         />
       </div>
     </div>
-    <div :style="midiEventContainerStyle" class="stackItem">
+    <div :style="baselineLineStyle" class="stackItem stackItem--layer" />
+    <div :style="midiEventContainerStyle" class="stackItem stackItem--layer">
       <div
         v-for="noteMidi in Array.from({ length: midi.max - midi.min + 1 }, (_, i) => midi.min + i)"
         :key="noteMidi"
@@ -543,6 +572,11 @@ defineExpose({
   pointer-events: none;
   position: absolute;
   height: 100%;
+  width: 100%;
+}
+
+.stackItem--layer {
+  height: auto;
   width: 100%;
 }
 

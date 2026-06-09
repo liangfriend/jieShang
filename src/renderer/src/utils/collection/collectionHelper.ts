@@ -1,17 +1,14 @@
-import { normalizePerformSkinName } from '@renderer/components/performSkin/registry'
 import {
   COLLECTION_DB_TO_ENUM,
   COLLECTION_TYPE_LABEL,
   getBuiltinMeta
 } from '@renderer/constant/collection'
-import { CollectionTypeEnum, type CollectionDbType, type CollectionRecord } from '@renderer/types/collection'
+import { type CollectionDbType, type CollectionRecord } from '@renderer/types/collection'
 import {
   type ActiveCollectionSelection,
   loadActiveCollectionSelection,
-  setActiveCollectionByType,
-  setActivePerformSkin
+  setActiveCollectionByType
 } from '@renderer/utils/collection/collectionActiveStorage'
-
 type ApiListResult = { success?: boolean; data?: unknown }
 
 export function parseCollectionList(res: ApiListResult): CollectionRecord[] {
@@ -61,6 +58,11 @@ export function canDeleteCollection(record: CollectionRecord): boolean {
   return !record.is_built_in
 }
 
+/**
+ * TODO(藏品删除): 删除成功后，若 localStorage 中该类型的 active.id === 被删 id，
+ * 需将该类型重置为 default（id + name），逻辑与 initDefaultCollectionSelection
+ * 中 DEFAULT_COLLECTION_PICKERS 一致。当前仅 builtIn 不可删，此分支尚未实现。
+ */
 export async function deleteCollectionFromDatabase(id: number): Promise<void> {
   const res = await window.api.collection.delete(id)
   if (!res?.success) {
@@ -81,25 +83,14 @@ export function isCollectionRecordActive(
   const active = selection[enumType]
   if (!active) return false
 
-  if (enumType === CollectionTypeEnum.PerformSkin) {
-    const activeName = normalizePerformSkinName(active.name)
-    const recordName = normalizePerformSkinName(record.content)
-    if (activeName && activeName === recordName) return true
-    return active.id != null && active.id === record.id
-  }
-
-  return active.id != null && active.id === record.id
+  return active.id === record.id
 }
 
-/** 将藏品设为当前使用（写入 localStorage） */
+/** 将藏品设为当前使用（写入 localStorage，存 id + name） */
 export function activateCollectionRecord(record: CollectionRecord) {
   const enumType = COLLECTION_DB_TO_ENUM[record.type]
-  const displayName = resolveCollectionName(record)
-
-  if (enumType === CollectionTypeEnum.PerformSkin) {
-    setActivePerformSkin({ id: record.id, name: record.content })
-    return
-  }
-
-  setActiveCollectionByType(enumType, { id: record.id, name: displayName })
+  setActiveCollectionByType(enumType, {
+    id: record.id,
+    name: resolveCollectionName(record)
+  })
 }

@@ -1,5 +1,5 @@
 import type { PerformSkinPack } from '../types'
-import { bg, baseline } from './svg'
+import { bg, baseline, baselineMidiActive } from './svg'
 import { getRainbowMidiBoxActiveBlockStyle, getRainbowMidiBoxKeyActiveBarStyle } from './midiBox/active'
 import { getRainbowMidiBoxNormalBlockStyle } from './midiBox/normal'
 import {
@@ -32,5 +32,6 @@ export const rainbowPerformSkin: PerformSkinPack = {
     boxShadow: '0 0 12px 1px rgba(255, 158, 199, 0.6)'
   },
   bgSvg: bg,
-  baselineSvg: baseline
+  baselineSvg: baseline,
+  baselineMidiActiveSvg: baselineMidiActive
 }

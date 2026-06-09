@@ -1,18 +1,14 @@
 import { ref } from 'vue'
 import { CollectionTypeEnum } from '@renderer/types/collection'
-import {
-  DEFAULT_PERFORM_SKIN_NAME,
-  normalizePerformSkinName
-} from '@renderer/components/performSkin/registry'
 
 const STORAGE_KEY = 'collection-active-selection'
 
-const performSkinNameRef = ref(DEFAULT_PERFORM_SKIN_NAME)
+const performSkinIdRef = ref<number | null>(null)
 const virtualPianoSkinIdRef = ref<number | null>(null)
 
 export type ActiveCollectionRef = {
-  id?: number
-  name?: string
+  id: number
+  name: string
 }
 
 export type ActiveCollectionSelection = {
@@ -20,10 +16,6 @@ export type ActiveCollectionSelection = {
   [CollectionTypeEnum.ScoreSkin]?: ActiveCollectionRef
   [CollectionTypeEnum.VirtualPianoSkin]?: ActiveCollectionRef
   [CollectionTypeEnum.PerformSkin]?: ActiveCollectionRef
-}
-
-const DEFAULT_SELECTION: ActiveCollectionSelection = {
-  [CollectionTypeEnum.PerformSkin]: { name: DEFAULT_PERFORM_SKIN_NAME }
 }
 
 function readRaw(): ActiveCollectionSelection | null {
@@ -41,40 +33,32 @@ function writeRaw(selection: ActiveCollectionSelection) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(selection))
 }
 
-function syncPerformSkinNameRef(selection: ActiveCollectionSelection) {
-  performSkinNameRef.value = normalizePerformSkinName(
-    selection[CollectionTypeEnum.PerformSkin]?.name
-  )
+function syncPerformSkinIdRef(selection: ActiveCollectionSelection) {
+  performSkinIdRef.value = selection[CollectionTypeEnum.PerformSkin]?.id ?? null
 }
 
 function syncVirtualPianoSkinIdRef(selection: ActiveCollectionSelection) {
   virtualPianoSkinIdRef.value = selection[CollectionTypeEnum.VirtualPianoSkin]?.id ?? null
 }
 
-/** 启动时调用：无缓存则写入默认值 */
+function syncReactiveRefs(selection: ActiveCollectionSelection) {
+  syncPerformSkinIdRef(selection)
+  syncVirtualPianoSkinIdRef(selection)
+}
+
+/** 启动时调用：读取 localStorage 并同步 reactive ref（不写默认值，缺项由 initDefaultCollectionSelection 从数据库补全） */
 export function initCollectionActiveStorage(): ActiveCollectionSelection {
   const existing = readRaw()
   if (existing) {
-    const performName = existing[CollectionTypeEnum.PerformSkin]?.name
-    if (performName) {
-      existing[CollectionTypeEnum.PerformSkin] = {
-        ...existing[CollectionTypeEnum.PerformSkin],
-        name: normalizePerformSkinName(performName)
-      }
-      writeRaw(existing)
-    }
-    syncPerformSkinNameRef(existing)
-    syncVirtualPianoSkinIdRef(existing)
+    syncReactiveRefs(existing)
     return existing
   }
-  writeRaw(DEFAULT_SELECTION)
-  syncPerformSkinNameRef(DEFAULT_SELECTION)
-  syncVirtualPianoSkinIdRef(DEFAULT_SELECTION)
-  return { ...DEFAULT_SELECTION }
+  syncReactiveRefs({})
+  return {}
 }
 
-export function useActivePerformSkinName() {
-  return performSkinNameRef
+export function useActivePerformSkinId() {
+  return performSkinIdRef
 }
 
 export function useActiveVirtualPianoSkinId() {
@@ -82,36 +66,20 @@ export function useActiveVirtualPianoSkinId() {
 }
 
 export function loadActiveCollectionSelection(): ActiveCollectionSelection {
-  return readRaw() ?? { ...DEFAULT_SELECTION }
+  return readRaw() ?? {}
 }
 
 export function saveActiveCollectionSelection(selection: ActiveCollectionSelection) {
   writeRaw(selection)
-}
-
-export function getActivePerformSkinName(): string {
-  return performSkinNameRef.value
-}
-
-export function setActivePerformSkin(ref: ActiveCollectionRef) {
-  const selection = loadActiveCollectionSelection()
-  const name = normalizePerformSkinName(ref.name)
-  selection[CollectionTypeEnum.PerformSkin] = { ...ref, name }
-  saveActiveCollectionSelection(selection)
-  performSkinNameRef.value = name
+  syncReactiveRefs(selection)
 }
 
 export function setActiveCollectionByType(type: CollectionTypeEnum, ref: ActiveCollectionRef) {
   const selection = loadActiveCollectionSelection()
-  if (type === CollectionTypeEnum.PerformSkin) {
-    const name = normalizePerformSkinName(ref.name)
-    selection[type] = { ...ref, name }
-    performSkinNameRef.value = name
-  } else {
-    selection[type] = ref
-    if (type === CollectionTypeEnum.VirtualPianoSkin) {
-      virtualPianoSkinIdRef.value = ref.id ?? null
-    }
-  }
+  selection[type] = { id: ref.id, name: ref.name }
   saveActiveCollectionSelection(selection)
+}
+
+export function getActiveCollectionRef(type: CollectionTypeEnum): ActiveCollectionRef | undefined {
+  return loadActiveCollectionSelection()[type]
 }

@@ -184,6 +184,13 @@ export const useMidiStore = defineStore('midi', () => {
     messageListeners.delete(listener)
   }
 
+  /** 虚拟钢琴 UI 触键：广播给 waterfall / midiBox */
+  function dispatchVirtualNote(midi: number, on: boolean, velocity = 100) {
+    const status = on ? 0x90 : 0x80
+    const data = on ? [status, midi, velocity] : [status, midi, 0]
+    emitMessage({ data: new Uint8Array(data) } as MIDIMessageEvent, {} as MIDIInput)
+  }
+
   return {
     supported,
     accessGranted,
@@ -194,6 +201,7 @@ export const useMidiStore = defineStore('midi', () => {
     init,
     syncDevices,
     addMessageListener,
-    removeMessageListener
+    removeMessageListener,
+    dispatchVirtualNote
   }
 })
