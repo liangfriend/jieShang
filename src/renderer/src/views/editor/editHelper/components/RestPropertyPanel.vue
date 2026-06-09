@@ -6,8 +6,10 @@ import {AUGMENTATION_DOT_OPTIONS} from '../renderEditNoteHeadProperties'
 import {
   setNoteRestAugmentationDot,
   setNoteRestChronaxie,
+  setNoteRestRelativeX,
   type RestEditSlot,
 } from '../renderEditRestProperties'
+import RelativeXOffsetControl from './RelativeXOffsetControl.vue'
 
 const props = defineProps<{
   editSlot: RestEditSlot
@@ -23,6 +25,11 @@ const chronaxie = computed({
 const augmentationDot = computed({
   get: (): 0 | 1 | 2 | 3 => rest.value.augmentationDot?.count ?? 0,
   set: (v: 0 | 1 | 2 | 3) => setNoteRestAugmentationDot(rest.value, v),
+})
+
+const relativeX = computed({
+  get: () => rest.value.relativeX ?? 0,
+  set: (v: number) => setNoteRestRelativeX(rest.value, v),
 })
 </script>
 
@@ -53,6 +60,8 @@ const augmentationDot = computed({
         </el-radio-button>
       </el-radio-group>
     </section>
+
+    <RelativeXOffsetControl v-model="relativeX" />
   </div>
 </template>
 

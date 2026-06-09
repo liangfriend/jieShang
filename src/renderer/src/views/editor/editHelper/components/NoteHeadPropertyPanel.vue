@@ -13,9 +13,11 @@ import {
   setNotesInfoAugmentationDot,
   setNotesInfoBeamType,
   setNotesInfoChronaxie,
+  setNotesInfoRelativeX,
   type NoteHeadEditSlot,
 } from '../renderEditNoteHeadProperties'
 import {SLUR_SPAN_OPTIONS, tryAddSlurFromNoteHead, type SlurSpan} from '../renderEditSlurAdd'
+import RelativeXOffsetControl from './RelativeXOffsetControl.vue'
 
 const props = defineProps<{
   editSlot: NoteHeadEditSlot
@@ -48,6 +50,11 @@ const accidental = computed({
 const augmentationDot = computed({
   get: (): 0 | 1 | 2 | 3 => notesInfo.value.augmentationDot?.count ?? 0,
   set: (v: 0 | 1 | 2 | 3) => setNotesInfoAugmentationDot(notesInfo.value, v),
+})
+
+const relativeX = computed({
+  get: () => notesInfo.value.relativeX ?? 0,
+  set: (v: number) => setNotesInfoRelativeX(notesInfo.value, v),
 })
 
 function onAddSlur(span: SlurSpan) {
@@ -123,6 +130,8 @@ function onAddSlur(span: SlurSpan) {
         </el-radio-button>
       </el-radio-group>
     </section>
+
+    <RelativeXOffsetControl v-model="relativeX" />
 
     <section class="note-head-props__section">
       <div class="note-head-props__label">连音线</div>
