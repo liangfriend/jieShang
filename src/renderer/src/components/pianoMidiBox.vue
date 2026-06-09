@@ -13,6 +13,7 @@ import { parseAndFormatDimension } from '../utils/commonUtil'
 import { KeyCodeEnum } from '../../types/enum'
 import { defaultCodeConfig } from '../utils/constant'
 import { useMidiStore } from '@renderer/store/midi.store'
+import { usePerformSkin } from '@renderer/components/performSkin/usePerformSkin'
 
 defineOptions({
   name: 'DsPianoMidiBox'
@@ -31,17 +32,7 @@ const emit = defineEmits<{
   (e: 'batchActive', payload: MidiBoxBatchPayload): void
 }>()
 
-/** 相邻块不使用相近色 */
-const BLOCK_PALETTE = [
-  'hsl(350, 88%, 72%)',
-  'hsl(280, 78%, 72%)',
-  'hsl(200, 82%, 68%)',
-  'hsl(145, 70%, 62%)',
-  'hsl(45, 90%, 68%)',
-  'hsl(15, 85%, 68%)',
-  'hsl(320, 75%, 70%)',
-  'hsl(250, 70%, 72%)'
-] as const
+const { skin, skinBgStyle, skinBaselineBgStyle } = usePerformSkin()
 
 const props = defineProps({
   layoutMode: {
@@ -258,11 +249,6 @@ const isFinished = computed(
   () => state.value === 'playing' && currentBatchIndex.value > maxBatchIndex.value
 )
 
-function blockColor(midi: number, batchIndex: number) {
-  const idx = (batchIndex * 5 + midi) % BLOCK_PALETTE.length
-  return BLOCK_PALETTE[idx]
-}
-
 const totalWidth = computed(() => fixedWhiteKeyWidthNum.value * whiteKeyCount.value + keyUnit.value)
 
 const waterfallHeight = computed(() => {
@@ -276,11 +262,8 @@ const containerStyle = computed(
     height: props.height,
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: '0',
-    border: '1px solid rgba(255, 184, 208, 0.35)',
-    background:
-      'linear-gradient(180deg, rgba(255, 248, 252, 0.96) 0%, rgba(245, 238, 255, 0.94) 55%, rgba(234, 245, 255, 0.92) 100%)',
-    boxShadow: 'inset 0 2px 10px rgba(255, 192, 220, 0.18)'
+    ...skin.value.container,
+    ...skinBgStyle.value
   })
 )
 
@@ -310,30 +293,17 @@ const keyStyle = computed(() => {
 const midiEventStyle = computed(() => {
   return (midi: number): CSSProperties => {
     const midiWidth = getMidiWidth(midi)
-    const active = activeKeys.value.has(midi)
-    return {
+    return skin.value.midiBox.keyActiveBar({
       width: midiWidth + keyUnit.value,
-      flexShrink: 0,
-      height: active ? '6px' : '0.1px',
-      borderRadius: '999px',
-      background: 'linear-gradient(90deg, #ffd1e8, #ff9ec7, #c9b8ff)',
-      boxShadow: '0 0 10px 2px rgba(255, 143, 184, 0.85)',
-      transform: 'translateY(-3px)',
-      transition: 'height 0.1s ease',
-      visibility: active ? 'visible' : 'hidden'
-    }
+      active: activeKeys.value.has(midi)
+    })
   }
 })
 
 const midiEventContainerStyle = computed((): CSSProperties => ({
-  height: '3px',
   bottom: `${props.baseLineBottom}px`,
-  background:
-    'linear-gradient(90deg, transparent 0%, rgba(255, 158, 199, 0.45) 8%, rgba(255, 158, 199, 0.85) 50%, rgba(201, 184, 255, 0.45) 92%, transparent 100%)',
-  boxShadow: '0 0 12px 1px rgba(255, 158, 199, 0.6)',
-  borderRadius: '999px',
-  display: 'flex',
-  alignItems: 'flex-end'
+  ...skin.value.baseline,
+  ...skinBaselineBgStyle.value
 }))
 
 function isCurrentBatchBlock(midi: number, batchIndex: number) {
@@ -341,24 +311,20 @@ function isCurrentBatchBlock(midi: number, batchIndex: number) {
 }
 
 function blockStyle(midi: number, batchIndex: number): CSSProperties {
-  const color = blockColor(midi, batchIndex)
   const highlighted = isCurrentBatchBlock(midi, batchIndex)
-  const fallen = batchIndex < fallenBatchCount.value
-
-  return {
-    width: `${props.blockSize}px`,
-    height: `${props.blockSize}px`,
-    position: 'absolute',
-    flexShrink: 0,
-    borderRadius: '3px',
-    bottom: `${props.baseLineBottom + batchIndex * blockStride.value}px`,
-    background: highlighted
-      ? `linear-gradient(180deg, #fff 0%, ${color} 100%)`
-      : color,
-    boxShadow: highlighted ? '0 0 10px 2px rgba(46, 184, 166, 0.75)' : '0 2px 6px rgba(0, 0, 0, 0.12)',
-    opacity: fallen ? 0.35 : 1,
-    transition: `opacity ${props.fallDuration}s ease, box-shadow 0.1s ease`
+  const input = {
+    midi,
+    batchIndex,
+    blockSize: props.blockSize,
+    blockStride: blockStride.value,
+    baseLineBottom: props.baseLineBottom,
+    highlighted,
+    fallen: batchIndex < fallenBatchCount.value,
+    fallDuration: props.fallDuration
   }
+  return highlighted
+    ? skin.value.midiBox.activeBlock(input)
+    : skin.value.midiBox.normalBlock(input)
 }
 
 function resetProgress() {

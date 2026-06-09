@@ -15,6 +15,9 @@ import { ScoreController } from './controllers/scoreController'
 import { WorkRepository } from './repositories/workRepository'
 import { WorkService } from './services/workService'
 import { WorkController } from './controllers/workController'
+import { CollectionRepository } from './repositories/collectionRepository'
+import { CollectionService } from './services/collectionService'
+import { CollectionController } from './controllers/collectionController'
 import { FileService } from './services/fileService'
 import { FileController } from './controllers/fileController'
 import { ResourceService } from './services/resourceService'
@@ -49,6 +52,10 @@ export async function setupContainer() {
     workRepository: asClass(WorkRepository).singleton(),
     workService: asClass(WorkService).singleton(),
     workController: asClass(WorkController).singleton(),
+
+    collectionRepository: asClass(CollectionRepository).singleton(),
+    collectionService: asClass(CollectionService).singleton(),
+    collectionController: asClass(CollectionController).singleton(),
 
     resourceRepository: asClass(ResourceRepository).singleton(),
     resourceService: asClass(ResourceService).singleton(),

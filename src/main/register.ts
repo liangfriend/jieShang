@@ -5,6 +5,7 @@ export async function registerController() {
   container.resolve('gameController').register()
   container.resolve('scoreController').register()
   container.resolve('workController').register()
+  container.resolve('collectionController').register()
   container.resolve('resourceController').register()
   container.resolve('saveController').register()
   container.resolve('groupController').register()

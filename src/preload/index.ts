@@ -5,6 +5,7 @@ import { gameInvoke } from './invoke/game'
 import { resourceInvoke } from './invoke/resource'
 import { scoreInvoke } from './invoke/score'
 import { workInvoke } from './invoke/work'
+import { collectionInvoke } from './invoke/collection'
 import { fileInvoke } from './invoke/file'
 import { windowInvoke } from './invoke/window'
 import { groupInvoke } from './invoke/group'
@@ -20,6 +21,7 @@ if (process.contextIsolated) {
       save: saveInvoke,
       score: scoreInvoke,
       work: workInvoke,
+      collection: collectionInvoke,
       window: windowInvoke,
       group: groupInvoke
     })

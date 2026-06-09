@@ -7,6 +7,8 @@ import GroupModel from '../models/GroupModel'
 import MigrationModel from '../models/MigrationModel'
 import ScoreModel from '../models/ScoreModel'
 import WorkModel from '../models/WorkModel'
+import CollectionModel from '../models/CollectionModel'
+import { insertBuiltinPerformSkins } from './collectionBuiltinSeed'
 import sequelize from './connection'
 
 export interface Migrations {
@@ -87,6 +89,16 @@ export const migrations: Migrations[] = [
       if (table.thumbnail) {
         await sequelize.query('ALTER TABLE score DROP COLUMN thumbnail')
       }
+    }
+  },
+  {
+    id: '005-collection',
+    async up() {
+      await CollectionModel.sync()
+      await insertBuiltinPerformSkins()
+    },
+    async down() {
+      await CollectionModel.drop()
     }
   }
 ]

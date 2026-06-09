@@ -21,10 +21,13 @@ import { KeyCodeEnum } from '../../types/enum'
 import { defaultCodeConfig } from '../utils/constant'
 import { HighlightPolicy, NoteScoreResult } from '@/types/types'
 import { useMidiStore } from '@renderer/store/midi.store'
+import { usePerformSkin } from '@renderer/components/performSkin/usePerformSkin'
 
 defineOptions({
   name: 'DsPianoWaterfall'
 })
+
+const { skin, skinBgStyle, skinBaselineBgStyle } = usePerformSkin()
 
 const emit = defineEmits<{
   /** 单个音符评分完成：评分结果、实时分、总分、第三个附加参数(noteInfo id) */
@@ -306,11 +309,6 @@ function getMidiWidth(midi) {
 /*
  * 样式
  * */
-/** 按 midi 生成柔和的糖果色相 */
-function noteHue(midi: number) {
-  return (midi * 17 + 285) % 360
-}
-
 /** 样式 - 外容器（带滚动） */
 const pianoWaterfallContainerStyle = computed(
   (): CSSProperties => ({
@@ -318,11 +316,8 @@ const pianoWaterfallContainerStyle = computed(
     height: props.height,
     position: 'relative',
     overflow: 'hidden',
-    borderRadius: '0',
-    border: '1px solid rgba(255, 184, 208, 0.35)',
-    background:
-      'linear-gradient(180deg, rgba(255, 248, 252, 0.96) 0%, rgba(245, 238, 255, 0.94) 55%, rgba(234, 245, 255, 0.92) 100%)',
-    boxShadow: 'inset 0 2px 10px rgba(255, 192, 220, 0.18)'
+    ...skin.value.container,
+    ...skinBgStyle.value
   })
 )
 const waterfallStyle = computed((): CSSProperties => {
@@ -360,72 +355,39 @@ const keyStyle = computed(() => {
 const midiEventStyle = computed(() => {
   return (midi: number): CSSProperties => {
     const midiWidth = getMidiWidth(midi)
-    const active = activeKeys.value.has(midi)
-    const res: CSSProperties = {
+    return skin.value.waterfall.keyActiveBar({
       width: midiWidth + keyUnit.value,
-      flexShrink: 0,
-      height: active ? '6px' : '0.1px',
-      borderRadius: '999px',
-      background: 'linear-gradient(90deg, #ffd1e8, #ff9ec7, #c9b8ff)',
-      boxShadow: '0 0 10px 2px rgba(255, 143, 184, 0.85)',
-      transform: 'translateY(-3px)',
-      transition: 'height 0.1s ease',
-      visibility: active ? 'visible' : 'hidden'
-    }
-    return res
+      active: activeKeys.value.has(midi)
+    })
   }
 })
 
-// 水柱样式
 const waterColumnStyle = computed(() => {
   return (midi: number, item: [number, number, any?]) => {
-    const start = item[0]
-    const end = item[1]
-    const hue = noteHue(midi)
-    const res: CSSProperties = {
-      height: (end - start) * props.columnHeightConstant + 'px',
-      width: '14px',
-      background: `linear-gradient(180deg, hsla(${hue}, 100%, 84%, 0.98) 0%, hsla(${hue}, 85%, 70%, 0.96) 100%)`,
-      position: 'absolute',
-      flexShrink: 0,
-      borderRadius: '999px',
-      boxShadow: `0 2px 8px hsla(${hue}, 80%, 60%, 0.35), inset 0 2px 3px rgba(255, 255, 255, 0.55)`,
-      bottom: start * props.columnHeightConstant + 'px'
-    }
-    return res
+    return skin.value.waterfall.normalColumn({
+      midi,
+      start: item[0],
+      end: item[1],
+      columnHeightConstant: props.columnHeightConstant
+    })
   }
 })
-// 水柱激活样式
+
 const waterColumnActiveStyle = computed(() => {
   return (item: [number, number]): CSSProperties => {
-    const start = item[0]
-    const end = item[1]
-
-    return {
-      height: (end - start) * props.columnHeightConstant + 'px',
-      width: '14px',
-      background: 'linear-gradient(180deg, #7ee8fa 0%, #4dd4c4 50%, #2eb8a6 100%)',
-      opacity: 0.7,
-      position: 'absolute',
-      flexShrink: 0,
-      borderRadius: '999px',
-      bottom: start * props.columnHeightConstant + 'px'
-    }
+    return skin.value.waterfall.activeColumn({
+      start: item[0],
+      end: item[1],
+      columnHeightConstant: props.columnHeightConstant
+    })
   }
 })
-/** 按键交互 */
 
-// 高亮效果
 const midiEventContainerStyle = computed((): CSSProperties => {
   return {
-    height: '3px',
-    bottom: props.baseLineBottom + 'px',
-    background:
-      'linear-gradient(90deg, transparent 0%, rgba(255, 158, 199, 0.45) 8%, rgba(255, 158, 199, 0.85) 50%, rgba(201, 184, 255, 0.45) 92%, transparent 100%)',
-    boxShadow: '0 0 12px 1px rgba(255, 158, 199, 0.6)',
-    borderRadius: '999px',
-    display: 'flex',
-    alignItems: 'flex-end'
+    bottom: `${props.baseLineBottom}px`,
+    ...skin.value.baseline,
+    ...skinBaselineBgStyle.value
   }
 })
 

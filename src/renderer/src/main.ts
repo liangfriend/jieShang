@@ -14,12 +14,14 @@ import i18n from '@renderer/i18n'
 import { usePlayStore } from '@renderer/store/play.store'
 import { useMidiStore } from '@renderer/store/midi.store'
 import { useMetronomeStore } from '@renderer/store/metronome.store'
+import { initCollectionActiveStorage } from '@renderer/utils/collection/collectionActiveStorage'
 
 const app = createApp(App)
 const pinia = createPinia()
 
 app.use(pinia).use(ElementPlus).use(router).use(i18n)
 
+initCollectionActiveStorage()
 void usePlayStore().init()
 void useMidiStore().init()
 void useMetronomeStore().init()
