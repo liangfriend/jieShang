@@ -31,6 +31,7 @@ import {
 } from '@renderer/utils/scoreRoute'
 import { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from '@renderer/constant'
 import { useDataStore } from '@renderer/store/data.store'
+import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import '@renderer/styles/editor-cute.css'
 import empty from '@renderer/template/empty'
 
@@ -40,6 +41,7 @@ const scoreId = computed(() => resolveScoreId(route.query.scoreId))
 
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
 const musicScoreRef = ref<MusicScoreComponentExpose | null>(null)
+const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
 const fileBusy = ref(false)
 const musicXmlNoticeVisible = ref(false)
 
@@ -249,7 +251,8 @@ onBeforeUnmount(() => {
             class="score-page__svg"
             :data="musicScoreData"
             :slot-config="SCORE_SLOT_CONFIG"
-            skin-name="default"
+            :skin="scoreSkin"
+            :skin-name="scoreSkinName"
             @renderMusicScore="handleRenderMusicScore"
             @dr-click="handleDrClick"
             @dr-down="handleDrDown"

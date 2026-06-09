@@ -31,6 +31,7 @@ import { practiceContextKey } from '@renderer/views/practice/practiceContext'
 import { createPracticeNoteResultHighlight } from '@renderer/views/practice/practiceNoteResultHighlight'
 import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
 import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
+import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import empty from '@renderer/template/empty'
 
 /** 练习模式瀑布流 / 虚拟钢琴共用 midi 范围（88 键） */
@@ -53,6 +54,7 @@ const playStore = usePlayStore()
 const metronomeStore = useMetronomeStore()
 const settings = usePracticeSettingsStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
+const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
 
 const maxStaffCount = computed(() => {
   let max = 0
@@ -262,7 +264,8 @@ onBeforeUnmount(() => {
         ref="musicScoreRef"
         class="practice-page__score-svg"
         :data="musicScoreData"
-        skin-name="default"
+        :skin="scoreSkin"
+        :skin-name="scoreSkinName"
         @renderMusicScore="handleRenderMusicScore"
       />
     </section>

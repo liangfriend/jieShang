@@ -30,6 +30,7 @@ import {
   type MidiBoxBatchPayload
 } from '@renderer/views/forBeginner/beginnerNoteProgressHighlight'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
+import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import empty from '@renderer/template/empty'
 
 const MIDI_RANGE = { min: 21, max: 108 } as const
@@ -43,6 +44,7 @@ const playStore = usePlayStore()
 const metronomeStore = useMetronomeStore()
 const settings = useBeginnerSettingsStore()
 const musicScoreData = ref<MusicScore>(JSON.parse(JSON.stringify(empty)))
+const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
 
 const maxStaffCount = computed(() => {
   let max = 0
@@ -224,7 +226,8 @@ function handleMidiBoxFinished() {
         ref="musicScoreRef"
         class="beginner-page__score-svg"
         :data="musicScoreData"
-        skin-name="default"
+        :skin="scoreSkin"
+        :skin-name="scoreSkinName"
         @renderMusicScore="handleRenderMusicScore"
       />
     </section>

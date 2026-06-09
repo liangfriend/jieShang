@@ -8,12 +8,14 @@ import { PlayModeToolbar } from '@renderer/components/score-toolbar'
 import { scorePlaybackKey, useScorePagePlayback } from '@renderer/utils/scorePagePlayback'
 import { usePlayStore } from '@renderer/store/play.store'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
+import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import empty from '@renderer/template/empty'
 
 const route = useRoute()
 const playStore = usePlayStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
+const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
 const playback = useScorePagePlayback(musicScoreData, { musicScoreRef })
 
 provide(scorePlaybackKey, playback)
@@ -35,7 +37,8 @@ onMounted(async () => {
         class="score-page__svg"
         :data="musicScoreData"
         :slot-config="SCORE_SLOT_CONFIG"
-        skin-name="default"
+        :skin="scoreSkin"
+        :skin-name="scoreSkinName"
         @renderMusicScore="playback.handleRenderMusicScore"
       >
         <template #t="{ node }">

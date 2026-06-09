@@ -1,4 +1,5 @@
 import { DEFAULT_PERFORM_SKIN_NAME } from '@renderer/components/performSkin/registry'
+import { DEFAULT_SCORE_SKIN_NAME } from '@renderer/constant/scoreSkin'
 import { DEFAULT_VIRTUAL_PIANO_SKIN_NAME } from '@renderer/resources/virtualPianoSkins'
 import { CollectionTypeEnum, type CollectionDbType, type CollectionRecord } from '@renderer/types/collection'
 import {
@@ -19,6 +20,11 @@ const DEFAULT_COLLECTION_PICKERS: Partial<
     dbType: 'perform_skin',
     pick: (records) =>
       records.find((r) => r.content === DEFAULT_PERFORM_SKIN_NAME) ?? records[0]
+  },
+  [CollectionTypeEnum.ScoreSkin]: {
+    dbType: 'score_skin',
+    pick: (records) =>
+      records.find((r) => r.name === DEFAULT_SCORE_SKIN_NAME) ?? records[0]
   },
   [CollectionTypeEnum.VirtualPianoSkin]: {
     dbType: 'piano_skin',

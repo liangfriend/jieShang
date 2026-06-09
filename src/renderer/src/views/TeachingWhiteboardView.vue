@@ -14,6 +14,7 @@ import {
   clearAllWhiteboardNotes,
   resolveChronaxieFromHoldMs
 } from '@renderer/views/teachingWhiteboard/noteInput'
+import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 
 const WHITEBOARD_SLOT_CONFIG = {
   'g-l': { w: 50 },
@@ -22,6 +23,7 @@ const WHITEBOARD_SLOT_CONFIG = {
 
 const musicScoreData = ref(JSON.parse(JSON.stringify(buildTeachingWhiteboardScore)))
 const scoreSectionRef = ref<HTMLElement | null>(null)
+const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
 
 const whiteboardStore = useWhiteboardStore()
 const playStore = usePlayStore()
@@ -123,7 +125,8 @@ onBeforeUnmount(async () => {
         class="whiteboard__score-svg"
         :data="musicScoreData"
         :slot-config="WHITEBOARD_SLOT_CONFIG"
-        skin-name="default"
+        :skin="scoreSkin"
+        :skin-name="scoreSkinName"
       />
     </section>
 

@@ -35,6 +35,25 @@ export const VirtualPianoSkinBuiltinMeta = {
   }
 } satisfies Record<string, BuiltinCollectionMeta>
 
+/** 曲谱皮肤内置元数据（按 name 索引；content 存 SkinPack JSON） */
+export const ScoreSkinBuiltinMeta = {
+  默认曲谱皮肤: {
+    name: '默认曲谱皮肤',
+    howToGet: '买游戏就送',
+    description: '经典黑白五线谱符号，简洁清晰。'
+  },
+  冰川曲谱皮肤: {
+    name: '冰川曲谱皮肤',
+    howToGet: '完成主线剧情',
+    description: '冰蓝渐变与雪花点缀的曲谱主题。'
+  },
+  竹林曲谱皮肤: {
+    name: '竹林曲谱皮肤',
+    howToGet: '探索竹林关卡',
+    description: '竹绿自然风的曲谱主题。'
+  }
+} satisfies Record<string, BuiltinCollectionMeta>
+
 /**
  * 内置藏品元数据表：type → contentKey → meta
  * 二期社区下载的藏品不在此表，元数据来自数据库字段。
@@ -43,7 +62,8 @@ export const BUILTIN_COLLECTION_META: Partial<
   Record<CollectionDbType, Record<string, BuiltinCollectionMeta>>
 > = {
   perform_skin: PerformSkinNameList,
-  piano_skin: VirtualPianoSkinBuiltinMeta
+  piano_skin: VirtualPianoSkinBuiltinMeta,
+  score_skin: ScoreSkinBuiltinMeta
 }
 
 export const COLLECTION_ENUM_TO_DB: Record<CollectionTypeEnum, CollectionDbType> = {

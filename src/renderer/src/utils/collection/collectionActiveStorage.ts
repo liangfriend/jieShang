@@ -4,6 +4,7 @@ import { CollectionTypeEnum } from '@renderer/types/collection'
 const STORAGE_KEY = 'collection-active-selection'
 
 const performSkinIdRef = ref<number | null>(null)
+const scoreSkinIdRef = ref<number | null>(null)
 const virtualPianoSkinIdRef = ref<number | null>(null)
 
 export type ActiveCollectionRef = {
@@ -37,12 +38,17 @@ function syncPerformSkinIdRef(selection: ActiveCollectionSelection) {
   performSkinIdRef.value = selection[CollectionTypeEnum.PerformSkin]?.id ?? null
 }
 
+function syncScoreSkinIdRef(selection: ActiveCollectionSelection) {
+  scoreSkinIdRef.value = selection[CollectionTypeEnum.ScoreSkin]?.id ?? null
+}
+
 function syncVirtualPianoSkinIdRef(selection: ActiveCollectionSelection) {
   virtualPianoSkinIdRef.value = selection[CollectionTypeEnum.VirtualPianoSkin]?.id ?? null
 }
 
 function syncReactiveRefs(selection: ActiveCollectionSelection) {
   syncPerformSkinIdRef(selection)
+  syncScoreSkinIdRef(selection)
   syncVirtualPianoSkinIdRef(selection)
 }
 
@@ -59,6 +65,10 @@ export function initCollectionActiveStorage(): ActiveCollectionSelection {
 
 export function useActivePerformSkinId() {
   return performSkinIdRef
+}
+
+export function useActiveScoreSkinId() {
+  return scoreSkinIdRef
 }
 
 export function useActiveVirtualPianoSkinId() {

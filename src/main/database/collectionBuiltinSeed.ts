@@ -4,6 +4,7 @@ import {
   buildClassicPurePianoPack,
   buildMetalGlossPianoPack
 } from '../resources/virtualPianoSkins/builtinSkins'
+import { BUILTIN_SCORE_SKIN_SEEDS } from '../resources/scoreSkins/builtinScoreSkins'
 
 /** 内置演奏皮肤：content 存内置名称 key */
 const BUILTIN_PERFORM_SKINS = [
@@ -35,6 +36,17 @@ const BUILTIN_PIANO_SKINS = [
 
 /** 写入内置藏品（随 migration 001 只执行一次） */
 export async function insertBuiltinCollections() {
+  for (const item of BUILTIN_SCORE_SKIN_SEEDS) {
+    await CollectionModel.create({
+      type: COLLECTION_TYPE.SCORE_SKIN,
+      name: item.name,
+      content: item.content,
+      description: item.description,
+      is_built_in: true,
+      owned: true
+    })
+  }
+
   for (const item of BUILTIN_PERFORM_SKINS) {
     await CollectionModel.create({
       type: COLLECTION_TYPE.PERFORM_SKIN,
