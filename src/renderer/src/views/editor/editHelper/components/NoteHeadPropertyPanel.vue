@@ -1,12 +1,14 @@
 <script lang="ts" setup>
 import type {Chronaxie} from 'deciphony-renderer'
-import {AccidentalTypeEnum, BeamTypeEnum} from 'deciphony-renderer'
+import {AccidentalTypeEnum, BeamTypeEnum, ClefTypeEnum} from 'deciphony-renderer'
 import {computed} from 'vue'
 import {CHRONAXIE_OPTIONS} from '../renderEditAddNoteState'
 import {
   ACCIDENTAL_SELECT_OPTIONS,
   AUGMENTATION_DOT_OPTIONS,
   BEAM_TYPE_OPTIONS,
+  NOTE_CLEF_SELECT_OPTIONS,
+  setNoteClef,
   setNotesInfoAccidental,
   setNotesInfoAugmentationDot,
   setNotesInfoBeamType,
@@ -20,6 +22,12 @@ const props = defineProps<{
 }>()
 
 const notesInfo = computed(() => props.editSlot.info)
+const note = computed(() => props.editSlot.note)
+
+const noteClef = computed({
+  get: () => note.value.clef?.type ?? '',
+  set: (v: ClefTypeEnum | '') => setNoteClef(note.value, v),
+})
 
 const chronaxie = computed({
   get: () => notesInfo.value.chronaxie,
@@ -60,6 +68,18 @@ function onAddSlur(span: SlurSpan) {
           {{ opt.label }}
         </el-radio-button>
       </el-radio-group>
+    </section>
+
+    <section class="note-head-props__section">
+      <div class="note-head-props__label">音符前谱号</div>
+      <el-select v-model="noteClef" class="note-head-props__select" size="small">
+        <el-option
+          v-for="opt in NOTE_CLEF_SELECT_OPTIONS"
+          :key="opt.value || 'none'"
+          :label="opt.label"
+          :value="opt.value"
+        />
+      </el-select>
     </section>
 
     <section class="note-head-props__section">

@@ -1,6 +1,7 @@
 import type {Chronaxie, Measure, NoteSymbol, NotesInfo, SlotData} from 'deciphony-renderer'
-import {AccidentalTypeEnum, BeamTypeEnum} from 'deciphony-renderer'
-import {createAccidental, createAugmentationDot} from '@renderer/dr-extensions/dr-edit/score-builder'
+import {AccidentalTypeEnum, BeamTypeEnum, ClefTypeEnum} from 'deciphony-renderer'
+import {createAccidental, createAugmentationDot, createClef} from '@renderer/dr-extensions/dr-edit/score-builder'
+import {CLEF_OPTIONS} from './renderEditMeasureProperties'
 
 export type NoteHeadEditSlot = SlotData & {info: NotesInfo; note: NoteSymbol; measure: Measure}
 
@@ -30,6 +31,24 @@ export const AUGMENTATION_DOT_OPTIONS: {value: 0 | 1 | 2 | 3; label: string}[] =
   {value: 2, label: '双附点'},
   {value: 3, label: '三附点'},
 ]
+
+/** 音符前谱号选择器（含「无」= 删除 note.clef） */
+export const NOTE_CLEF_SELECT_OPTIONS: {value: ClefTypeEnum | ''; label: string}[] = [
+  {value: '', label: '无'},
+  ...CLEF_OPTIONS,
+]
+
+export function setNoteClef(note: NoteSymbol, type: ClefTypeEnum | ''): void {
+  if (type === '') {
+    delete note.clef
+    return
+  }
+  if (note.clef) {
+    note.clef.type = type
+  } else {
+    note.clef = createClef(type)
+  }
+}
 
 export function setNotesInfoChronaxie(info: NotesInfo, chronaxie: Chronaxie): void {
   info.chronaxie = chronaxie

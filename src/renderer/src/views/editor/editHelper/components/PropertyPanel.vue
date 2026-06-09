@@ -4,6 +4,7 @@ import type { SlotData } from 'deciphony-renderer'
 import type { PropertyPanelKind } from '../renderEditPropertyPanel'
 import MeasurePropertyPanel from './MeasurePropertyPanel.vue'
 import NoteHeadPropertyPanel from './NoteHeadPropertyPanel.vue'
+import RestPropertyPanel from './RestPropertyPanel.vue'
 import VoltaPropertyPanel from './VoltaPropertyPanel.vue'
 
 const props = defineProps<{
@@ -14,6 +15,7 @@ const props = defineProps<{
 const panelMeta: Record<Exclude<PropertyPanelKind, null>, { title: string; emoji: string }> = {
   measure: { title: '小节属性', emoji: '📏' },
   noteHead: { title: '音符属性', emoji: '♩' },
+  rest: { title: '休止符属性', emoji: '𝄽' },
   volta: { title: 'Volta 属性', emoji: '↺' }
 }
 
@@ -24,6 +26,9 @@ const hasContent = computed(() => {
   }
   if (props.kind === 'noteHead') {
     return Boolean(props.selected.info && props.selected.note && props.selected.measure)
+  }
+  if (props.kind === 'rest') {
+    return Boolean(props.selected.measure && props.selected.self)
   }
   return props.kind === 'volta'
 })
@@ -53,10 +58,14 @@ const headerMeta = computed(() => {
         "
         :edit-slot="selected"
       />
+      <RestPropertyPanel
+        v-else-if="kind === 'rest' && selected?.measure && selected.self"
+        :edit-slot="selected"
+      />
       <VoltaPropertyPanel v-else-if="kind === 'volta' && selected" :edit-slot="selected" />
       <div v-else class="property-panel__placeholder">
         <span class="property-panel__placeholder-emoji">🎼</span>
-        <p class="property-panel__placeholder-text">选中曲谱中的小节、音符或 Volta，这里会显示可编辑属性</p>
+        <p class="property-panel__placeholder-text">选中曲谱中的小节、音符、休止符或 Volta，这里会显示可编辑属性</p>
       </div>
     </div>
   </aside>
