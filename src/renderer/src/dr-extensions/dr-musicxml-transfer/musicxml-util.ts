@@ -544,15 +544,7 @@ function measureSwitch(measureData) {
       // // 根据当前单谱表的调号定位五线谱位置（同 midi 不同调号位置不同）
       // const diaoHao = getCurrentDiaoHao(danPuBiaoIndex);
       // const yinfuValue = musicScoreEditor.getYinFuValue(midi, diaoHao);
-      // console.log(
-      //   'chicken',
-      //   yinfuindex.fuPuBiaoIndex,
-      //   yinfuindex.danPuBiaoIndex,
-      //   yinfuindex.xiaoJieIndex,
-      //   yinfuindex.yinFuIndex,
-      //   curDanPuBiao.xiaoJieArray.length,
-      //   currentXiaoJieIndex
-      // );
+
       // const str =
       //   yinfuindex.fuPuBiaoIndex +
       //   '-' +

@@ -5,7 +5,6 @@ import tailwindcss from '@tailwindcss/vite'
 import path from 'path'
 const rendererSrc = path.resolve(__dirname, '../deciphony/packages/deciphony-renderer/src')
 const playerSrc = path.resolve(__dirname, '../deciphony/packages/deciphony-player/src')
-console.log('chicken', path.resolve(playerSrc, 'index.ts'))
 export default defineConfig({
   main: {
     plugins: [externalizeDepsPlugin()]

@@ -14,9 +14,14 @@ import {
 
 type ApiListResult = { success?: boolean; data?: unknown }
 
-function parseCollectionList(res: ApiListResult): CollectionRecord[] {
+export function parseCollectionList(res: ApiListResult): CollectionRecord[] {
   if (!res?.success || !Array.isArray(res.data)) return []
   return res.data as CollectionRecord[]
+}
+
+function resolveBuiltinMetaKey(record: CollectionRecord): string {
+  if (record.type === 'perform_skin') return record.content
+  return record.name?.trim() ?? ''
 }
 
 /** 仅拉取已拥有的藏品（列表页数据源） */
@@ -26,8 +31,10 @@ export async function fetchOwnedCollections(): Promise<CollectionRecord[]> {
 }
 
 export function resolveCollectionName(record: CollectionRecord): string {
+  const fromDb = record.name?.trim()
+  if (fromDb) return fromDb
   if (record.is_built_in) {
-    const meta = getBuiltinMeta(record.type, record.content)
+    const meta = getBuiltinMeta(record.type, resolveBuiltinMetaKey(record))
     if (meta?.name) return meta.name
   }
   const fromDescription = record.description?.trim()
@@ -39,7 +46,7 @@ export function resolveCollectionDescription(record: CollectionRecord): string {
   const fromDb = record.description?.trim()
   if (fromDb) return fromDb
   if (record.is_built_in) {
-    return getBuiltinMeta(record.type, record.content)?.description?.trim() ?? ''
+    return getBuiltinMeta(record.type, resolveBuiltinMetaKey(record))?.description?.trim() ?? ''
   }
   return ''
 }
@@ -47,7 +54,7 @@ export function resolveCollectionDescription(record: CollectionRecord): string {
 /** 内置藏品：从 constant 取获取条件；社区藏品无此字段 */
 export function resolveCollectionHowToGet(record: CollectionRecord): string | null {
   if (!record.is_built_in) return null
-  return getBuiltinMeta(record.type, record.content)?.howToGet?.trim() ?? null
+  return getBuiltinMeta(record.type, resolveBuiltinMetaKey(record))?.howToGet?.trim() ?? null
 }
 
 export function canDeleteCollection(record: CollectionRecord): boolean {

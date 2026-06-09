@@ -8,6 +8,7 @@ import {
 const STORAGE_KEY = 'collection-active-selection'
 
 const performSkinNameRef = ref(DEFAULT_PERFORM_SKIN_NAME)
+const virtualPianoSkinIdRef = ref<number | null>(null)
 
 export type ActiveCollectionRef = {
   id?: number
@@ -46,6 +47,10 @@ function syncPerformSkinNameRef(selection: ActiveCollectionSelection) {
   )
 }
 
+function syncVirtualPianoSkinIdRef(selection: ActiveCollectionSelection) {
+  virtualPianoSkinIdRef.value = selection[CollectionTypeEnum.VirtualPianoSkin]?.id ?? null
+}
+
 /** 启动时调用：无缓存则写入默认值 */
 export function initCollectionActiveStorage(): ActiveCollectionSelection {
   const existing = readRaw()
@@ -59,15 +64,21 @@ export function initCollectionActiveStorage(): ActiveCollectionSelection {
       writeRaw(existing)
     }
     syncPerformSkinNameRef(existing)
+    syncVirtualPianoSkinIdRef(existing)
     return existing
   }
   writeRaw(DEFAULT_SELECTION)
   syncPerformSkinNameRef(DEFAULT_SELECTION)
+  syncVirtualPianoSkinIdRef(DEFAULT_SELECTION)
   return { ...DEFAULT_SELECTION }
 }
 
 export function useActivePerformSkinName() {
   return performSkinNameRef
+}
+
+export function useActiveVirtualPianoSkinId() {
+  return virtualPianoSkinIdRef
 }
 
 export function loadActiveCollectionSelection(): ActiveCollectionSelection {
@@ -98,6 +109,9 @@ export function setActiveCollectionByType(type: CollectionTypeEnum, ref: ActiveC
     performSkinNameRef.value = name
   } else {
     selection[type] = ref
+    if (type === CollectionTypeEnum.VirtualPianoSkin) {
+      virtualPianoSkinIdRef.value = ref.id ?? null
+    }
   }
   saveActiveCollectionSelection(selection)
 }

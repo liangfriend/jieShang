@@ -376,7 +376,7 @@ onMounted(() => {
 }
 
 .collection-card--in-use {
-  border-color: rgba(76, 175, 80, 0.45);
+  //border-color: rgba(76, 175, 80, 0.45);
 }
 
 .collection-card--selected.collection-card--in-use {

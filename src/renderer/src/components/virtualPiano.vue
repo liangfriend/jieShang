@@ -18,6 +18,11 @@ import {
 } from 'deciphony-core'
 import vDrag from '@renderer/directivces/drag'
 import { useMidiStore } from '@renderer/store/midi.store'
+import { useActiveVirtualPianoSkinId } from '@renderer/utils/collection/collectionActiveStorage'
+import {
+  fetchActiveVirtualPianoPack
+} from '@renderer/utils/collection/virtualPianoSkinLoader'
+import type { VirtualPianoPack } from '@renderer/types/collection'
 
 defineOptions({
   name: 'DsPiano'
@@ -167,6 +172,30 @@ const containerHeightNum = computed(() => fixedContainerHeightNum.value)
 const blackKeyWidthNum = computed(() => whiteKeyWidthNum.value * props.blackKeyWidthRatio)
 const blackKeyHeightNum = computed(() => containerHeightNum.value * props.blackKeyHeightRatio)
 
+const activeVirtualPianoSkinId = useActiveVirtualPianoSkinId()
+const pianoSkinPack = ref<VirtualPianoPack | null>(null)
+
+async function loadVirtualPianoSkin() {
+  pianoSkinPack.value = await fetchActiveVirtualPianoPack()
+}
+
+/** 按 midi 取皮肤，content 已是可直接使用的 url（dataurl 或线上路径） */
+function keySkinStyle(midi: number): CSSProperties {
+  const skin = pianoSkinPack.value?.[midi]
+  if (!skin) return {}
+
+  const url = isKeyActive(midi) ? skin.press : skin.normal
+  if (!url) return {}
+
+  return {
+    backgroundImage: `url("${url}")`,
+    backgroundSize: '100% 100%',
+    backgroundRepeat: 'no-repeat',
+    backgroundColor: 'transparent',
+    border: 'none'
+  }
+}
+
 const totalWidth = computed(() => {
   const count = whiteKeys.value.length
   return `${count * fixedWhiteKeyWidthNum.value}${keyUnit.value}`
@@ -195,12 +224,6 @@ function dim(value: number) {
 
 /** 生成白键样式 left 值 */
 function leftForWhiteByIndex(whiteIndex: number) {
-  console.log(
-    'chicken',
-    whiteIndex,
-    whiteKeyWidthNum.value,
-    dim(whiteIndex * whiteKeyWidthNum.value)
-  )
   return dim(whiteIndex * whiteKeyWidthNum.value)
 }
 
@@ -715,9 +738,14 @@ watch(
   }
 )
 
-onMounted(() => {
+onMounted(async () => {
   observeContainer()
   midiStore.addMessageListener(handleMidiMessage)
+  await loadVirtualPianoSkin()
+})
+
+watch(activeVirtualPianoSkinId, () => {
+  void loadVirtualPianoSkin()
 })
 
 onBeforeUnmount(() => {
@@ -737,12 +765,13 @@ onBeforeUnmount(() => {
       <div
         v-for="wk in whiteKeys"
         :key="wk.midi"
-        :class="{ active: isKeyActive(wk.midi) }"
+        :class="{ active: isKeyActive(wk.midi), 'has-skin': !!pianoSkinPack }"
         :style="{
           width: isFillParentMode ? dim(whiteKeyWidthNum) : whiteKeyWidth,
           height: '100%',
           position: 'absolute',
-          left: leftForWhiteByIndex(wk.whiteIndex)
+          left: leftForWhiteByIndex(wk.whiteIndex),
+          ...keySkinStyle(wk.midi)
         }"
         class="white-key"
         @pointerdown="handlePointerDown($event, wk)"
@@ -761,11 +790,12 @@ onBeforeUnmount(() => {
       <div
         v-for="bk in blackKeys"
         :key="bk.midi"
-        :class="{ active: isKeyActive(bk.midi) }"
+        :class="{ active: isKeyActive(bk.midi), 'has-skin': !!pianoSkinPack }"
         :style="{
           width: dim(blackKeyWidthNum),
           height: dim(blackKeyHeightNum),
-          left: leftForBlackByMidi(bk.midi)
+          left: leftForBlackByMidi(bk.midi),
+          ...keySkinStyle(bk.midi)
         }"
         class="black-key"
         @pointerdown="handlePointerDown($event, bk)"
@@ -852,7 +882,7 @@ onBeforeUnmount(() => {
   cursor: pointer;
 }
 
-.white-key.active {
+.white-key.active:not(.has-skin) {
   background: #a8d8ff;
 }
 
@@ -882,7 +912,7 @@ onBeforeUnmount(() => {
   align-items: center;
 }
 
-.black-key.active {
+.black-key.active:not(.has-skin) {
   background: #3399ff;
 }
 

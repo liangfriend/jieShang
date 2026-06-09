@@ -10,6 +10,8 @@ import type { CollectionType } from '../constant/collection'
 export interface CollectionAttributes {
   id: number
   type: CollectionType
+  /** 藏品名称 */
+  name: string
   /** 藏品内容（TEXT） */
   content: string
   /** 藏品说明 */
@@ -29,6 +31,7 @@ export interface CollectionCreationAttributes
   extends Optional<
     CollectionAttributes,
     | 'id'
+    | 'name'
     | 'description'
     | 'is_built_in'
     | 'owned'
@@ -44,6 +47,7 @@ export class CollectionModel
 {
   declare id: number
   declare type: CollectionType
+  declare name: string
   declare content: string
   declare description: string | null
   declare is_built_in: boolean
@@ -64,6 +68,11 @@ CollectionModel.init(
     type: {
       type: DataTypes.STRING,
       allowNull: false
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: ''
     },
     content: {
       type: DataTypes.TEXT,

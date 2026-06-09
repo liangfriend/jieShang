@@ -500,7 +500,6 @@ function getRepeatJumpIndex(
   if (reapeatState.barLine && isEndRepeatBarline(measure.barline_b?.type)) {
     const barlineId = measure.barline_b?.id ?? `barline:${measureIndex}`
     if (!actived.has(barlineId) || hasNextVoltaRound) {
-      console.log('chicken', hasNextVoltaRound)
       actived.add(barlineId)
       increaseVoltaRound()
       return currentRepeatStartIndex

@@ -3,6 +3,7 @@ import type { CollectionType } from '../constant/collection'
 
 export type CollectionWritePayload = {
   type: CollectionType
+  name?: string
   content?: string
   description?: string | null
   is_built_in?: boolean
@@ -12,6 +13,7 @@ export type CollectionWritePayload = {
 
 export type CollectionUpdatePayload = Partial<{
   type: CollectionType
+  name: string
   content: string
   description: string | null
   is_built_in: boolean
@@ -30,6 +32,7 @@ export class CollectionRepository {
   async create(payload: CollectionWritePayload) {
     const result = await CollectionModel.create({
       type: payload.type,
+      name: payload.name ?? '',
       content: payload.content ?? '',
       description: payload.description ?? null,
       is_built_in: payload.is_built_in ?? false,

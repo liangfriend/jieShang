@@ -614,7 +614,7 @@ function handleKeyUp(midi) {
   if (last.length === 1) last.push(timeStamp)
 }
 
-// 高亮数据
+// 高亮数据：每个音符水柱最多一段激活高亮（与评分一致，只认首次有效按键）
 const highlightSegments = computed(() => {
   const result: Record<number, [number, number][]> = {}
 
@@ -624,31 +624,25 @@ const highlightSegments = computed(() => {
     const highlightParts: [number, number][] = []
 
     for (const [pStart, pEnd] of seq) {
-      // 根据策略计算允许的触发区间
       const validStart = pStart - policy.value.startTriggerThreshold
       const validEnd = pStart + policy.value.postTriggerThreshold
 
-      // 若不允许重复，则只取第一个激活区间
-      const parts = activeSeq
-
-      for (const part of parts) {
+      for (const part of activeSeq) {
         const aStart = part[0]
-        const aEnd = part[1] ?? currentTime.value // 若还未抬键，则动态增长
+        const aEnd = part[1] ?? currentTime.value
 
-        // 若整个按下区间完全不在允许区间内，则跳过
         if (aStart < validStart || aStart > validEnd) continue
 
-        // 有效交集
         const overlapStart = Math.max(pStart, aStart)
         const overlapEnd = Math.min(pEnd, aEnd)
-
         if (overlapStart < overlapEnd) {
           highlightParts.push([overlapStart, overlapEnd])
         }
+        // 同一音符只取第一次有效按键（与 recordScore 只评一次一致）
+        break
       }
     }
 
-    // 若有高亮区间，则存入结果
     if (highlightParts.length > 0) {
       result[midi] = highlightParts
     }

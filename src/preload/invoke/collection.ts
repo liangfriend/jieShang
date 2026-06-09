@@ -8,6 +8,7 @@ export type CollectionType =
 
 export type CollectionCreatePayload = {
   type: CollectionType
+  name?: string
   content?: string
   description?: string | null
   is_built_in?: boolean
@@ -17,6 +18,7 @@ export type CollectionCreatePayload = {
 
 export type CollectionUpdatePayload = Partial<{
   type: CollectionType
+  name: string
   content: string
   description: string | null
   is_built_in: boolean

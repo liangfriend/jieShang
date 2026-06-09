@@ -24,7 +24,6 @@ onMounted(async () => {
     musicScoreData.value = loaded
   }
   await playStore.restorePlaybackDefaults(musicScoreData.value)
-  console.log('chicken', musicScoreData.value)
 })
 </script>
 

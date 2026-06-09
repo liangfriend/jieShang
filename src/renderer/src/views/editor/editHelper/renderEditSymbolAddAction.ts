@@ -152,7 +152,6 @@ export function restYFromChronaxie(chronaxie: Chronaxie): number {
   const h = REST_PREVIEW_HEIGHT[chronaxie] ?? 8
   if (chronaxie === 256) return MEASURE_HEIGHT / 4
   if (chronaxie === 128) return MEASURE_HEIGHT / 2 - h
-  console.log('chicken', chronaxie)
   return (MEASURE_HEIGHT - h) / 2
 }
 

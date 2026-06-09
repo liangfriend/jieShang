@@ -21,6 +21,20 @@ export const PerformSkinNameList = {
   }
 } satisfies Record<string, BuiltinCollectionMeta>
 
+/** 钢琴皮肤内置元数据（按 name 索引；content 存皮肤本体 JSON） */
+export const VirtualPianoSkinBuiltinMeta = {
+  经典纯色: {
+    name: '经典纯色',
+    howToGet: '买游戏就送',
+    description: '黑白纯色矩形琴键，简洁清晰。'
+  },
+  金属质感: {
+    name: '金属质感',
+    howToGet: '完成新手教程',
+    description: '金属渐变与高光，更有质感。'
+  }
+} satisfies Record<string, BuiltinCollectionMeta>
+
 /**
  * 内置藏品元数据表：type → contentKey → meta
  * 二期社区下载的藏品不在此表，元数据来自数据库字段。
@@ -28,7 +42,8 @@ export const PerformSkinNameList = {
 export const BUILTIN_COLLECTION_META: Partial<
   Record<CollectionDbType, Record<string, BuiltinCollectionMeta>>
 > = {
-  perform_skin: PerformSkinNameList
+  perform_skin: PerformSkinNameList,
+  piano_skin: VirtualPianoSkinBuiltinMeta
 }
 
 export const COLLECTION_ENUM_TO_DB: Record<CollectionTypeEnum, CollectionDbType> = {
