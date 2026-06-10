@@ -23,7 +23,7 @@ import { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from '@renderer/consta
  *
  * 加载优先级（loadScoreFromRoute）：tempId 缓存 > scoreId 查库 > template 模版。
  * 同时有 scoreId 与 tempId 时优先用 tempId 对应缓存；查库结果写入 curPlayScore。
- * tempId 常量见 @renderer/constant/score.ts（editNewScore / curPlayScore）。
+ * tempId 常量见 @renderer/constant/score.ts（editNewScore / curPlayScore / curPlayScoreTrans）。
  */
 
 export type ScoreTemplateKey =

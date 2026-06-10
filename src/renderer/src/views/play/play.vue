@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import musicScoreVue from 'deciphony-renderer'
-import { onMounted, provide, ref } from 'vue'
+import { ElMessage } from 'element-plus'
+import { MusicScoreTypeEnum } from 'deciphony-renderer'
+import { computed, onMounted, provide, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
@@ -9,21 +11,40 @@ import { scorePlaybackKey, useScorePagePlayback } from '@renderer/utils/scorePag
 import { usePlayStore } from '@renderer/store/play.store'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
+import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotationDisplay'
 import empty from '@renderer/template/empty'
 
 const route = useRoute()
 const playStore = usePlayStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
+const displayType = ref<MusicScoreTypeEnum>(MusicScoreTypeEnum.StandardStaff)
 const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
 const playback = useScorePagePlayback(musicScoreData, { musicScoreRef })
+const { initAfterLoad, applyDisplayType } = usePlayScoreNotationDisplay(musicScoreData, displayType)
+
+const notationTypeDisabled = computed(
+  () => playback.playbackState.value !== 'stopped' || playback.countingIn.value
+)
 
 provide(scorePlaybackKey, playback)
+
+function onNotationTypeChange(targetType: MusicScoreTypeEnum) {
+  if (targetType === displayType.value) return
+
+  playback.handleStop()
+
+  try {
+    applyDisplayType(targetType)
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '曲谱类型切换失败')
+  }
+}
 
 onMounted(async () => {
   const loaded = await loadScoreFromRoute(route)
   if (loaded) {
-    musicScoreData.value = loaded
+    initAfterLoad(loaded)
   }
   await playStore.restorePlaybackDefaults(musicScoreData.value)
 })
@@ -51,7 +72,11 @@ onMounted(async () => {
         </template>
       </musicScoreVue>
     </div>
-    <PlayModeToolbar />
+    <PlayModeToolbar
+      :notation-type="displayType"
+      :notation-type-disabled="notationTypeDisabled"
+      @notation-type-change="onNotationTypeChange"
+    />
   </div>
 </template>
 

@@ -14,8 +14,10 @@ import {
 } from '@renderer/constant/play'
 import { usePlayStore } from '@renderer/store/play.store'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
+import ScoreNotationTypeSelector from './ScoreNotationTypeSelector.vue'
 import ScoreToneColorAdjuster from './ScoreToneColorAdjuster.vue'
 import { buildScoreRouteQuery } from '@renderer/utils/scoreRoute'
+import type { MusicScoreTypeEnum } from 'deciphony-renderer'
 
 const route = useRoute()
 const router = useRouter()
@@ -26,6 +28,15 @@ const { volume, bpm } = storeToRefs(playStore)
 if (!playback) {
   throw new Error('PlayModeToolbar requires scorePlayback from play.vue')
 }
+
+defineProps<{
+  notationType: MusicScoreTypeEnum
+  notationTypeDisabled?: boolean
+}>()
+
+const emit = defineEmits<{
+  'notation-type-change': [value: MusicScoreTypeEnum]
+}>()
 
 const { playDisabled, pauseDisabled, stopDisabled, handlePlay, handlePause, handleStop } = playback
 
@@ -149,6 +160,11 @@ function goForBeginner() {
         </div>
       </div>
       <ScoreToneColorAdjuster />
+      <ScoreNotationTypeSelector
+        :model-value="notationType"
+        :disabled="notationTypeDisabled"
+        @change="emit('notation-type-change', $event)"
+      />
       <button type="button" class="score-toolbar__btn" @click="goPractice">
         <span>练习模式</span>
       </button>

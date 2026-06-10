@@ -1,4 +1,5 @@
 export { default as MusicXmlNoticeDialog } from './MusicXmlNoticeDialog.vue'
+export { default as ScoreNotationTypeSelector } from './ScoreNotationTypeSelector.vue'
 export { default as BeginnerModeToolbar } from './BeginnerModeToolbar.vue'
 export { default as EditModeToolbar } from './EditModeToolbar.vue'
 export { default as PlayModeToolbar } from './PlayModeToolbar.vue'

@@ -2,6 +2,8 @@
 import type { MusicScore, VDom } from 'deciphony-renderer'
 import type { PlaySequence } from 'deciphony-player'
 import musicScoreVue from 'deciphony-renderer'
+import { ElMessage } from 'element-plus'
+import { MusicScoreTypeEnum } from 'deciphony-renderer'
 import { onBeforeUnmount, onMounted, provide, ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
@@ -32,6 +34,7 @@ import { createPracticeNoteResultHighlight } from '@renderer/views/practice/prac
 import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
 import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
+import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotationDisplay'
 import empty from '@renderer/template/empty'
 
 /** 练习模式瀑布流 / 虚拟钢琴共用 midi 范围（88 键） */
@@ -54,7 +57,9 @@ const playStore = usePlayStore()
 const metronomeStore = useMetronomeStore()
 const settings = usePracticeSettingsStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
+const displayType = ref<MusicScoreTypeEnum>(MusicScoreTypeEnum.StandardStaff)
 const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
+const { initAfterLoad, applyDisplayType } = usePlayScoreNotationDisplay(musicScoreData, displayType)
 
 const maxStaffCount = computed(() => {
   let max = 0
@@ -107,6 +112,10 @@ const playback = useScorePagePlayback(musicScoreData, {
 })
 
 provide(scorePlaybackKey, playback)
+
+const notationTypeDisabled = computed(
+  () => playback.playbackState.value !== 'stopped' || playback.countingIn.value
+)
 
 const noteResultColor = NOTE_RESULT_COLOR
 
@@ -200,6 +209,28 @@ function applyPracticeScoreLayout(score: MusicScore) {
   }
 }
 
+function preparePracticeScore(score: MusicScore) {
+  const cloned = JSON.parse(JSON.stringify(score)) as MusicScore
+  mergeGrandStaff(cloned)
+  applyPracticeScoreLayout(cloned)
+  return cloned
+}
+
+function onNotationTypeChange(targetType: MusicScoreTypeEnum) {
+  if (targetType === displayType.value) return
+
+  playback.handleStop()
+
+  try {
+    applyDisplayType(targetType)
+    musicScoreData.value = preparePracticeScore(musicScoreData.value)
+    noteResultHighlight.clearAll()
+    rebuildPracticeSequences(musicScoreData.value)
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '曲谱类型切换失败')
+  }
+}
+
 function rebuildPracticeSequences(score: MusicScore) {
   const bpm = settings.bpm
   practiceBpm.value = bpm
@@ -237,10 +268,8 @@ watch(
 onMounted(async () => {
   const loaded = await loadScoreFromRoute(route)
   if (loaded) {
-    const cloned = JSON.parse(JSON.stringify(loaded))
-    mergeGrandStaff(cloned)
-    applyPracticeScoreLayout(cloned)
-    musicScoreData.value = cloned
+    initAfterLoad(loaded)
+    musicScoreData.value = preparePracticeScore(musicScoreData.value)
   } else {
     applyPracticeScoreLayout(musicScoreData.value)
   }
@@ -329,7 +358,11 @@ onBeforeUnmount(() => {
       />
     </section>
 
-    <PracticeModeToolbar />
+    <PracticeModeToolbar
+      :notation-type="displayType"
+      :notation-type-disabled="notationTypeDisabled"
+      @notation-type-change="onNotationTypeChange"
+    />
   </div>
 </template>
 

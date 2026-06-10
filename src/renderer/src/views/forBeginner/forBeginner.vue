@@ -2,6 +2,8 @@
 import type { MusicScore, VDom } from 'deciphony-renderer'
 import type { PlaySequence } from 'deciphony-player'
 import musicScoreVue from 'deciphony-renderer'
+import { ElMessage } from 'element-plus'
+import { MusicScoreTypeEnum } from 'deciphony-renderer'
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { BeginnerModeToolbar } from '@renderer/components/score-toolbar'
@@ -31,6 +33,7 @@ import {
 } from '@renderer/views/forBeginner/beginnerNoteProgressHighlight'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
+import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotationDisplay'
 import empty from '@renderer/template/empty'
 
 const MIDI_RANGE = { min: 21, max: 108 } as const
@@ -44,7 +47,9 @@ const playStore = usePlayStore()
 const metronomeStore = useMetronomeStore()
 const settings = useBeginnerSettingsStore()
 const musicScoreData = ref<MusicScore>(JSON.parse(JSON.stringify(empty)))
+const displayType = ref<MusicScoreTypeEnum>(MusicScoreTypeEnum.StandardStaff)
 const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
+const { initAfterLoad, applyDisplayType } = usePlayScoreNotationDisplay(musicScoreData, displayType)
 
 const maxStaffCount = computed(() => {
   let max = 0
@@ -96,6 +101,10 @@ const playback = useBeginnerPlayback({
 })
 
 provide(beginnerPlaybackKey, playback)
+
+const notationTypeDisabled = computed(
+  () => playback.playbackState.value !== 'stopped' || playback.countingIn.value
+)
 
 watch(
   () => settings.metronomeVolume,
@@ -187,6 +196,28 @@ function applyScoreLayout(score: MusicScore) {
   }
 }
 
+function prepareBeginnerScore(score: MusicScore) {
+  const cloned = JSON.parse(JSON.stringify(score)) as MusicScore
+  mergeGrandStaff(cloned)
+  applyScoreLayout(cloned)
+  return cloned
+}
+
+function onNotationTypeChange(targetType: MusicScoreTypeEnum) {
+  if (targetType === displayType.value) return
+
+  playback.handleStop()
+
+  try {
+    applyDisplayType(targetType)
+    musicScoreData.value = prepareBeginnerScore(musicScoreData.value)
+    noteProgressHighlight.clearAll()
+    rebuildSequences(musicScoreData.value)
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : '曲谱类型切换失败')
+  }
+}
+
 function rebuildSequences(score: MusicScore) {
   const passSingleStaffIndex = settings.disabledStaffIndexes
   playSequence.value = toPlaySequence(score, { passSingleStaffIndex })
@@ -210,10 +241,8 @@ watch(
 onMounted(async () => {
   const loaded = await loadScoreFromRoute(route)
   if (loaded) {
-    const cloned = JSON.parse(JSON.stringify(loaded)) as MusicScore
-    mergeGrandStaff(cloned)
-    applyScoreLayout(cloned)
-    musicScoreData.value = cloned
+    initAfterLoad(loaded)
+    musicScoreData.value = prepareBeginnerScore(musicScoreData.value)
   } else {
     applyScoreLayout(musicScoreData.value)
   }
@@ -284,7 +313,11 @@ function handleMidiBoxFinished() {
       />
     </section>
 
-    <BeginnerModeToolbar />
+    <BeginnerModeToolbar
+      :notation-type="displayType"
+      :notation-type-disabled="notationTypeDisabled"
+      @notation-type-change="onNotationTypeChange"
+    />
   </div>
 </template>
 

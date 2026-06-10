@@ -3,3 +3,6 @@ export const EDIT_NEW_SCORE_TEMP_ID = 'editNewScore' as const
 
 /** 已有曲谱 play/edit 切换时的临时键（与 scoreId 同现，保存为更新已有） */
 export const CUR_PLAY_SCORE_TEMP_ID = 'curPlayScore' as const
+
+/** 播放页展示用转换谱（不影响 curPlayScore 中的原谱） */
+export const CUR_PLAY_SCORE_TRANS_TEMP_ID = 'curPlayScoreTrans' as const

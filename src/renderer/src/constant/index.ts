@@ -1,4 +1,14 @@
-export { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from './score'
+export {
+  CUR_PLAY_SCORE_TEMP_ID,
+  CUR_PLAY_SCORE_TRANS_TEMP_ID,
+  EDIT_NEW_SCORE_TEMP_ID
+} from './score'
+export {
+  SCORE_NOTATION_TYPE_OPTIONS,
+  isSupportedScoreNotationType,
+  resolveScoreNotationTypeLabel,
+  type ScoreNotationTypeOption
+} from './scoreNotationType'
 export { PLAY_BPM_MAX, PLAY_BPM_MIN, PLAY_DEFAULT_BPM, PLAY_DEFAULT_VOLUME, PLAY_VOLUME_MAX, PLAY_VOLUME_MIN, resolvePlayBpm } from './play'
 export {
   WHITEBOARD_DEFAULT_KEY_COUNT,

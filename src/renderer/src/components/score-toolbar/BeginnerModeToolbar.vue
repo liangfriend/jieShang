@@ -7,9 +7,20 @@ import VerticalDragSlider from '@renderer/components/VerticalDragSlider.vue'
 import { PLAY_VOLUME_MAX, PLAY_VOLUME_MIN } from '@renderer/constant/play'
 import { usePlayStore } from '@renderer/store/play.store'
 import { beginnerPlaybackKey } from '@renderer/views/forBeginner/beginnerPlayback'
+import type { MusicScoreTypeEnum } from 'deciphony-renderer'
+import ScoreNotationTypeSelector from './ScoreNotationTypeSelector.vue'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
 import ScoreToneColorAdjuster from './ScoreToneColorAdjuster.vue'
 import BeginnerSettingsDialog from './BeginnerSettingsDialog.vue'
+
+defineProps<{
+  notationType: MusicScoreTypeEnum
+  notationTypeDisabled?: boolean
+}>()
+
+const emit = defineEmits<{
+  'notation-type-change': [value: MusicScoreTypeEnum]
+}>()
 
 const playback = inject(beginnerPlaybackKey)
 const playStore = usePlayStore()
@@ -101,6 +112,11 @@ onBeforeUnmount(() => {
         </div>
       </div>
       <ScoreToneColorAdjuster />
+      <ScoreNotationTypeSelector
+        :model-value="notationType"
+        :disabled="notationTypeDisabled"
+        @change="emit('notation-type-change', $event)"
+      />
     </template>
   </ScoreToolbarShell>
 

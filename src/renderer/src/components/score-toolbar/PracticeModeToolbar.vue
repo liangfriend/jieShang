@@ -3,9 +3,20 @@ import { Delete, Setting, VideoPause, VideoPlay } from '@element-plus/icons-vue'
 import { computed, inject, ref } from 'vue'
 import BackButton from '@renderer/components/BackButton.vue'
 import { scorePlaybackKey } from '@renderer/utils/scorePagePlayback'
+import type { MusicScoreTypeEnum } from 'deciphony-renderer'
+import ScoreNotationTypeSelector from './ScoreNotationTypeSelector.vue'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
 import ScoreToneColorAdjuster from './ScoreToneColorAdjuster.vue'
 import PracticeSettingsDialog from './PracticeSettingsDialog.vue'
+
+defineProps<{
+  notationType: MusicScoreTypeEnum
+  notationTypeDisabled?: boolean
+}>()
+
+const emit = defineEmits<{
+  'notation-type-change': [value: MusicScoreTypeEnum]
+}>()
 
 const playback = inject(scorePlaybackKey)
 
@@ -81,6 +92,11 @@ function clearPlayData() {
         <span>停止</span>
       </button>
       <ScoreToneColorAdjuster />
+      <ScoreNotationTypeSelector
+        :model-value="notationType"
+        :disabled="notationTypeDisabled"
+        @change="emit('notation-type-change', $event)"
+      />
       <button
         type="button"
         class="score-toolbar__btn"
