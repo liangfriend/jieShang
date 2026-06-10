@@ -97,7 +97,9 @@ export function getKeySignatureAccidental(
   return alteration.kind === 'sharp' ? AccidentalTypeEnum.Sharp : AccidentalTypeEnum.Flat
 }
 
-/** clef + region + accidental → midi（getNoteRegion 的反向） */
+/** clef + region + accidental → midi（getNoteRegion 的反向）
+ * 注意这里的accidental别忘了考虑调号上的或者前方音符的accidental
+ * */
 export function getNoteMidi(
   clef: ClefTypeEnum,
   region: number,
@@ -500,6 +502,7 @@ function getRepeatJumpIndex(
   if (reapeatState.barLine && isEndRepeatBarline(measure.barline_b?.type)) {
     const barlineId = measure.barline_b?.id ?? `barline:${measureIndex}`
     if (!actived.has(barlineId) || hasNextVoltaRound) {
+      console.log('chicken', hasNextVoltaRound)
       actived.add(barlineId)
       increaseVoltaRound()
       return currentRepeatStartIndex
@@ -973,4 +976,61 @@ export function mergeGrandStaff(musicScore: MusicScore): MusicScore {
   )
   regenerateScoreStructureIds(musicScore)
   return musicScore
+}
+
+/** 黑键 → 自然音级（0=C…6=B）；升号优先取低邻音，降号优先取高邻音 */
+const SHARP_SPELLING_DEGREE: Partial<Record<number, number>> = { 1: 0, 3: 1, 6: 3, 8: 4, 10: 5 }
+const FLAT_SPELLING_DEGREE: Partial<Record<number, number>> = { 1: 1, 3: 2, 6: 4, 8: 5, 10: 6 }
+
+/**
+ * midi → 简谱唱名与八度点（固定调 C=do，不考虑谱号/调号）。
+ * octave 对应 NotesNumberInfo.octaveDot：C4(midi 60) → 0。
+ * 黑键按 priority 决定归属唱名与变音记号。
+ */
+export function getOctaveAndSyllable(
+  midi: number,
+  priority: AccidentalTypeEnum.Sharp | AccidentalTypeEnum.Flat = AccidentalTypeEnum.Sharp
+): {
+  octave: number
+  syllable: number
+  accidental: AccidentalTypeEnum | null
+} {
+  const pitch = Math.round(midi)
+  const semitone = ((pitch % 12) + 12) % 12
+  const octave = Math.floor(pitch / 12) - 5
+
+  const naturalDegree = DIATONIC_SEMITONES.indexOf(semitone)
+  if (naturalDegree >= 0) {
+    return { octave, syllable: naturalDegree + 1, accidental: null }
+  }
+
+  const spellingMap =
+    priority === AccidentalTypeEnum.Sharp ? SHARP_SPELLING_DEGREE : FLAT_SPELLING_DEGREE
+  const degree = spellingMap[semitone] ?? 0
+  const accidental =
+    priority === AccidentalTypeEnum.Sharp ? AccidentalTypeEnum.Sharp : AccidentalTypeEnum.Flat
+  return { octave, syllable: degree + 1, accidental }
+}
+
+/** NotesNumberInfo → midi（固定调 C=do，与 getOctaveAndSyllable 互逆） */
+export function getNoteNumberMidi(noteNumberInfo: NotesNumberInfo): number {
+  const { syllable, accidental } = noteNumberInfo
+  if (syllable === 0 || syllable === 'X') {
+    throw new Error('休止符或节奏音符无 midi 音高')
+  }
+
+  const degree = syllable - 1
+  const baseSemitone = DIATONIC_SEMITONES[degree]
+  if (baseSemitone == null) {
+    throw new Error(`无效唱名 syllable=${syllable}`)
+  }
+
+  let accOffset = 0
+  if (accidental && accidental.type !== AccidentalTypeEnum.Natural) {
+    accOffset = ACC_OFFSET_MAP[accidental.type as AlteredAccidental] ?? 0
+  }
+
+  const octaveDot = noteNumberInfo.octaveDot ?? 0
+  const semitone = (((baseSemitone + accOffset) % 12) + 12) % 12
+  return (octaveDot + 5) * 12 + semitone
 }

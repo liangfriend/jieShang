@@ -18,10 +18,23 @@ const mockScripts = [
   { id: 4, title: '星轨序曲', color: '#fff0c9' }
 ]
 
-const templates = [
-  { key: 'empty', label: '空', emoji: '✨' },
-  { key: 'single', label: '单声部', emoji: '🎵' },
-  { key: 'double', label: '双声部', emoji: '🎶' }
+const templateGroups = [
+  {
+    title: '线谱',
+    items: [
+      { key: 'empty', label: '空', emoji: '✨' },
+      { key: 'single', label: '单声部', emoji: '🎵' },
+      { key: 'double', label: '双声部', emoji: '🎶' }
+    ]
+  },
+  {
+    title: '简谱',
+    items: [
+      { key: 'jianpuEmpty', label: '空', emoji: '✨' },
+      { key: 'jianpuSingle', label: '单声部', emoji: '🎵' },
+      { key: 'jianpuDouble', label: '双声部', emoji: '🎶' }
+    ]
+  }
 ]
 
 const hasSave = true
@@ -173,23 +186,28 @@ function goToLiteracyCamp() {
     <el-dialog
       v-model="templateVisible"
       title="选择模版"
-      width="420px"
+      width="480px"
       class="cute-dialog"
       append-to-body
       align-center
     >
       <p class="dialog-desc">选好模版后，就可以进入曲谱编辑啦</p>
-      <div class="template-list">
-        <button
-          v-for="tpl in templates"
-          :key="tpl.key"
-          type="button"
-          class="template-item"
-          @click="onTemplateSelect(tpl.key)"
-        >
-          <span class="template-emoji">{{ tpl.emoji }}</span>
-          <span>{{ tpl.label }}</span>
-        </button>
+      <div class="template-groups">
+        <section v-for="group in templateGroups" :key="group.title" class="template-group">
+          <h3 class="template-group__title">{{ group.title }}</h3>
+          <div class="template-list">
+            <button
+              v-for="tpl in group.items"
+              :key="tpl.key"
+              type="button"
+              class="template-item"
+              @click="onTemplateSelect(tpl.key)"
+            >
+              <span class="template-emoji">{{ tpl.emoji }}</span>
+              <span>{{ tpl.label }}</span>
+            </button>
+          </div>
+        </section>
       </div>
     </el-dialog>
 
@@ -664,10 +682,23 @@ function goToLiteracyCamp() {
   text-align: center;
 }
 
+.template-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.template-group__title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #8a5a72;
+}
+
 .template-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
 }
 
 .template-item {

@@ -2,8 +2,11 @@ import type { MusicScore } from 'deciphony-renderer'
 import type { RouteLocationNormalizedLoaded } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import emptyTemplate from '@renderer/template/empty'
+import emptyJianpuTemplate from '@renderer/template/emptyJianpu'
 import singleVoiceTemplate from '@renderer/template/singleVoice'
+import singleVoiceJianpuTemplate from '@renderer/template/singleVoiceJianpu'
 import doubleVoiceTemplate from '@renderer/template/doubleVoice'
+import doubleVoiceJianpuTemplate from '@renderer/template/doubleVoiceJianpu'
 import { useDataStore } from '@renderer/store/data.store'
 import { loadScoreFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper'
 import { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from '@renderer/constant'
@@ -23,18 +26,30 @@ import { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from '@renderer/consta
  * tempId 常量见 @renderer/constant/score.ts（editNewScore / curPlayScore）。
  */
 
-export type ScoreTemplateKey = 'empty' | 'singleVoice' | 'DoubleVoice'
+export type ScoreTemplateKey =
+  | 'empty'
+  | 'singleVoice'
+  | 'DoubleVoice'
+  | 'emptyJianpu'
+  | 'singleVoiceJianpu'
+  | 'doubleVoiceJianpu'
 
 const TEMPLATE_LOADERS: Record<ScoreTemplateKey, () => MusicScore> = {
   empty: () => JSON.parse(JSON.stringify(emptyTemplate)) as MusicScore,
   singleVoice: () => JSON.parse(JSON.stringify(singleVoiceTemplate)) as MusicScore,
-  DoubleVoice: () => JSON.parse(JSON.stringify(doubleVoiceTemplate)) as MusicScore
+  DoubleVoice: () => JSON.parse(JSON.stringify(doubleVoiceTemplate)) as MusicScore,
+  emptyJianpu: () => JSON.parse(JSON.stringify(emptyJianpuTemplate)) as MusicScore,
+  singleVoiceJianpu: () => JSON.parse(JSON.stringify(singleVoiceJianpuTemplate)) as MusicScore,
+  doubleVoiceJianpu: () => JSON.parse(JSON.stringify(doubleVoiceJianpuTemplate)) as MusicScore
 }
 
 export const HOME_TEMPLATE_TO_ROUTE: Record<string, ScoreTemplateKey> = {
   empty: 'empty',
   single: 'singleVoice',
-  double: 'DoubleVoice'
+  double: 'DoubleVoice',
+  jianpuEmpty: 'emptyJianpu',
+  jianpuSingle: 'singleVoiceJianpu',
+  jianpuDouble: 'doubleVoiceJianpu'
 }
 
 export function resolveScoreId(raw: unknown): string | null {
@@ -49,7 +64,7 @@ export function resolveTempId(raw: unknown): string | null {
 
 export function resolveTemplateKey(raw: unknown): ScoreTemplateKey {
   const key = Array.isArray(raw) ? raw[0] : raw
-  if (key === 'singleVoice' || key === 'DoubleVoice') return key
+  if (key && key in TEMPLATE_LOADERS) return key as ScoreTemplateKey
   return 'empty'
 }
 
@@ -57,6 +72,23 @@ function hasTemplateQuery(route: RouteLocationNormalizedLoaded): boolean {
   const template = route.query.template
   if (template == null || template === '') return false
   return true
+}
+
+/** 编辑器首屏同步初始化（tempId 缓存 / template），保证 useRenderEdit 按正确 type 分发 */
+export function initEditorScoreFromRoute(route: RouteLocationNormalizedLoaded): MusicScore {
+  const dataStore = useDataStore()
+  const tempId = resolveTempId(route.query.tempId)
+  if (tempId) {
+    const cached = dataStore.getTempScore(tempId)
+    if (cached) return JSON.parse(JSON.stringify(cached)) as MusicScore
+  }
+  if (hasTemplateQuery(route)) {
+    const template = resolveTemplateKey(route.query.template)
+    const score = TEMPLATE_LOADERS[template]()
+    dataStore.setTempScore(EDIT_NEW_SCORE_TEMP_ID, score)
+    return JSON.parse(JSON.stringify(score)) as MusicScore
+  }
+  return JSON.parse(JSON.stringify(emptyTemplate)) as MusicScore
 }
 
 /** 按路由 query 加载曲谱，见文件顶部路由规则表 */

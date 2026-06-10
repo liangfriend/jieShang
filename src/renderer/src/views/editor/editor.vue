@@ -1,14 +1,17 @@
 <script lang="ts" setup>
 import musicScoreVue from 'deciphony-renderer'
 import { ElMessage } from 'element-plus'
+import { MusicScoreTypeEnum } from 'deciphony-renderer'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import type { MusicScoreComponentExpose } from '@renderer/views/editor/editHelper/useRenderEdit'
 import {
   AddNoteStatePanel,
+  AddNumberStatePanel,
   EditSlotGdButtons,
   EditSlotSdButtons,
   GhostNotePreview,
+  GhostNumberPreview,
   PropertyPanel,
   SlurDragHandles,
   VoltaDragHandles,
@@ -24,6 +27,7 @@ import {
 } from '@renderer/utils/fileHelper'
 import { EditModeToolbar, MusicXmlNoticeDialog } from '@renderer/components/score-toolbar'
 import {
+  initEditorScoreFromRoute,
   loadScoreFromRoute,
   resolveScoreId,
   resolveTempId,
@@ -33,14 +37,15 @@ import { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from '@renderer/consta
 import { useDataStore } from '@renderer/store/data.store'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import '@renderer/styles/editor-cute.css'
-import empty from '@renderer/template/empty'
-
 const route = useRoute()
 const router = useRouter()
 const scoreId = computed(() => resolveScoreId(route.query.scoreId))
 
-const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
+const musicScoreData = ref(initEditorScoreFromRoute(route))
 const musicScoreRef = ref<MusicScoreComponentExpose | null>(null)
+const isNumberNotation = computed(
+  () => musicScoreData.value.type === MusicScoreTypeEnum.NumberNotation
+)
 const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
 const fileBusy = ref(false)
 const musicXmlNoticeVisible = ref(false)
@@ -204,7 +209,12 @@ onBeforeUnmount(() => {
 <template>
   <div class="score-page editor-cute">
     <header class="editor-top-bar">
-      <AddNoteStatePanel v-model="addNoteState" class="editor-top-bar__note" />
+      <AddNumberStatePanel
+        v-if="isNumberNotation"
+        v-model="addNoteState as any"
+        class="editor-top-bar__note"
+      />
+      <AddNoteStatePanel v-else v-model="addNoteState" class="editor-top-bar__note" />
       <div class="editor-top-bar__files">
         <el-button class="toolbar-btn" size="small" @click="musicXmlNoticeVisible = true">
           需知
@@ -286,10 +296,17 @@ onBeforeUnmount(() => {
                 fill-opacity="0.01"
                 pointer-events="none"
               />
-              <GhostNotePreview
+              <GhostNumberPreview
+                v-if="isNumberNotation"
                 :measure-id="selectedItem?.measure?.id"
                 :node="node"
-                :preview="activeGhostPreview"
+                :preview="activeGhostPreview as any"
+              />
+              <GhostNotePreview
+                v-else
+                :measure-id="selectedItem?.measure?.id"
+                :node="node"
+                :preview="activeGhostPreview as any"
               />
             </template>
           </musicScoreVue>

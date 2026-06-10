@@ -1,11 +1,11 @@
-import {isNoteSymbol} from '@/index'
+import {isNoteSymbol} from 'deciphony-renderer'
 import type {
     MusicScore,
     NoteNumber,
     NoteSymbol,
     SlotData,
     VDom,
-} from '@/index'
+} from 'deciphony-renderer'
 import {
     locateGrandStaff,
     locateMeasure,

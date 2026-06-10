@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import type {Chronaxie} from 'deciphony-renderer'
 import {computed} from 'vue'
-import {REST_CHRONAXIE_OPTIONS} from '../renderEditAddNoteState'
+import {REST_CHRONAXIE_OPTIONS} from '../../renderEditAddNoteState'
 import {AUGMENTATION_DOT_OPTIONS} from '../renderEditNoteHeadProperties'
 import {
   setNoteRestAugmentationDot,
