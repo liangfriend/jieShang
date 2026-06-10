@@ -4,6 +4,7 @@ import { computed, inject, ref } from 'vue'
 import BackButton from '@renderer/components/BackButton.vue'
 import { scorePlaybackKey } from '@renderer/utils/scorePagePlayback'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
+import ScoreToneColorAdjuster from './ScoreToneColorAdjuster.vue'
 import PracticeSettingsDialog from './PracticeSettingsDialog.vue'
 
 const playback = inject(scorePlaybackKey)
@@ -79,6 +80,7 @@ function clearPlayData() {
         <span class="score-toolbar__stop-icon" aria-hidden="true" />
         <span>停止</span>
       </button>
+      <ScoreToneColorAdjuster />
       <button
         type="button"
         class="score-toolbar__btn"

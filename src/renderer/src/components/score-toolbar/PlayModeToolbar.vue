@@ -14,6 +14,7 @@ import {
 } from '@renderer/constant/play'
 import { usePlayStore } from '@renderer/store/play.store'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
+import ScoreToneColorAdjuster from './ScoreToneColorAdjuster.vue'
 import { buildScoreRouteQuery } from '@renderer/utils/scoreRoute'
 
 const route = useRoute()
@@ -147,6 +148,7 @@ function goForBeginner() {
           />
         </div>
       </div>
+      <ScoreToneColorAdjuster />
       <button type="button" class="score-toolbar__btn" @click="goPractice">
         <span>练习模式</span>
       </button>

@@ -1,5 +1,28 @@
 import { CollectionTypeEnum, type CollectionDbType } from '@renderer/types/collection'
 
+/** 写入 localStorage 的藏品类型（音色默认可用全部，不存当前使用 id） */
+export type StorableCollectionType =
+  | CollectionTypeEnum.ScoreSkin
+  | CollectionTypeEnum.VirtualPianoSkin
+  | CollectionTypeEnum.PerformSkin
+
+/**
+ * 各类型默认使用藏品 id（与 migration 种子 BUILTIN_COLLECTION_SEED_IDS 一致）
+ * toneColor 仅作约定/文档，不写入 localStorage
+ */
+export const DEFAULT_COLLECTION_USAGE_IDS: Record<CollectionTypeEnum, number> = {
+  [CollectionTypeEnum.ToneColor]: 1,
+  [CollectionTypeEnum.ScoreSkin]: 7,
+  [CollectionTypeEnum.PerformSkin]: 10,
+  [CollectionTypeEnum.VirtualPianoSkin]: 12
+}
+
+export const STORABLE_COLLECTION_TYPES: readonly StorableCollectionType[] = [
+  CollectionTypeEnum.ScoreSkin,
+  CollectionTypeEnum.VirtualPianoSkin,
+  CollectionTypeEnum.PerformSkin
+]
+
 /** 内置藏品元数据（名称、获取条件等，不存数据库） */
 export type BuiltinCollectionMeta = {
   name: string
@@ -35,6 +58,40 @@ export const VirtualPianoSkinBuiltinMeta = {
   }
 } satisfies Record<string, BuiltinCollectionMeta>
 
+/** 音色内置元数据（按 name 索引；content 存 NPlayer 音色 JSON） */
+export const ToneColorBuiltinMeta = {
+  三角钢琴: {
+    name: '三角钢琴',
+    howToGet: '买游戏就送',
+    description: '温暖饱满的三角钢琴音色。'
+  },
+  亮音钢琴: {
+    name: '亮音钢琴',
+    howToGet: '买游戏就送',
+    description: '更明亮、穿透力更强的钢琴音色。'
+  },
+  电钢琴: {
+    name: '电钢琴',
+    howToGet: '完成新手教程',
+    description: '经典电钢琴音色，适合流行与爵士。'
+  },
+  尼龙弦吉他: {
+    name: '尼龙弦吉他',
+    howToGet: '探索森林关卡',
+    description: '柔和的尼龙弦古典吉他音色。'
+  },
+  小提琴: {
+    name: '小提琴',
+    howToGet: '完成主线剧情',
+    description: '抒情细腻的小提琴音色。'
+  },
+  八音盒: {
+    name: '八音盒',
+    howToGet: '完成主线剧情',
+    description: '清脆梦幻的八音盒音色。'
+  }
+} satisfies Record<string, BuiltinCollectionMeta>
+
 /** 曲谱皮肤内置元数据（按 name 索引；content 存 SkinPack JSON） */
 export const ScoreSkinBuiltinMeta = {
   默认曲谱皮肤: {
@@ -61,6 +118,7 @@ export const ScoreSkinBuiltinMeta = {
 export const BUILTIN_COLLECTION_META: Partial<
   Record<CollectionDbType, Record<string, BuiltinCollectionMeta>>
 > = {
+  tone_color: ToneColorBuiltinMeta,
   perform_skin: PerformSkinNameList,
   piano_skin: VirtualPianoSkinBuiltinMeta,
   score_skin: ScoreSkinBuiltinMeta

@@ -1,5 +1,5 @@
 import { CollectionTypeEnum, type VirtualPianoPack } from '@renderer/types/collection'
-import { loadActiveCollectionSelection } from '@renderer/utils/collection/collectionActiveStorage'
+import { fetchActiveCollectionUsageId } from '@renderer/utils/collection/initCollectionSelection'
 
 /** 解析 piano_skin 的 content：按 midi 分的皮肤包 */
 export function parseVirtualPianoPack(raw: string): VirtualPianoPack | null {
@@ -15,7 +15,7 @@ export function parseVirtualPianoPack(raw: string): VirtualPianoPack | null {
 }
 
 export async function fetchActiveVirtualPianoPack(): Promise<VirtualPianoPack | null> {
-  const skinId = loadActiveCollectionSelection()[CollectionTypeEnum.VirtualPianoSkin]?.id
+  const skinId = await fetchActiveCollectionUsageId(CollectionTypeEnum.VirtualPianoSkin)
   if (!skinId) return null
 
   const res = await window.api.collection.get(skinId)

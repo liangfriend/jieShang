@@ -30,10 +30,9 @@ import {
   PLAY_VOLUME_MAX,
   PLAY_VOLUME_MIN
 } from '@renderer/constant/play'
-import { TONE_COLOR_OPTIONS, resolveToneColorLabel } from '@renderer/constant/toneColor'
 import { usePlayStore } from '@renderer/store/play.store'
 import { useWhiteboardStore } from '@renderer/store/whiteboard.store'
-import type { ToneColorId } from '@renderer/types/toneColor'
+import ScoreToneColorAdjuster from '@renderer/components/score-toolbar/ScoreToneColorAdjuster.vue'
 import '../score-toolbar/score-toolbar.css'
 
 type ActivePanel =
@@ -42,7 +41,6 @@ type ActivePanel =
   | 'widthType'
   | 'whiteKeyWidth'
   | 'pitchNotation'
-  | 'toneColor'
   | 'volume'
   | 'targetClef'
   | 'noteBpm'
@@ -63,7 +61,6 @@ const {
   widthType,
   whiteKeyWidth,
   pitchNotation,
-  toneColorId,
   groupEnabled,
   chordBoxEnabled,
   intervalRulerEnabled,
@@ -81,7 +78,6 @@ const activePanel = ref<ActivePanel>(null)
 const keyCountLabel = computed(() => resolveWhiteboardKeyCountLabel(keyCount.value))
 const widthTypeLabel = computed(() => resolveWhiteboardWidthTypeLabel(widthType.value))
 const pitchNotationLabel = computed(() => resolveWhiteboardPitchNotationLabel(pitchNotation.value))
-const toneColorLabel = computed(() => resolveToneColorLabel(toneColorId.value))
 const volumeLabel = computed(() => `${Math.round(volume.value * 100)}%`)
 const targetClefLabel = computed(() => resolveWhiteboardClefLabel(targetClef.value))
 const keySignatureLabel = computed(() => resolveWhiteboardKeySignatureLabel(keySignature.value))
@@ -118,12 +114,6 @@ function onWidthTypeChange(event: Event) {
 function onPitchNotationChange(event: Event) {
   const value = (event.target as HTMLSelectElement).value as WhiteboardPitchNotation
   whiteboardStore.setPitchNotation(value)
-}
-
-async function onToneColorChange(event: Event) {
-  const value = (event.target as HTMLSelectElement).value as ToneColorId
-  whiteboardStore.setToneColorId(value)
-  await playStore.setToneColor(value)
 }
 
 function onTargetClefChange(event: Event) {
@@ -264,25 +254,7 @@ function formatBpm(value: number) {
         </div>
       </div>
 
-      <div class="score-toolbar__adjuster">
-        <button
-          type="button"
-          class="score-toolbar__btn whiteboard-toolbar__btn--stable"
-          @click="togglePanel('toneColor')"
-        >
-          音色 {{ toneColorLabel }}
-        </button>
-        <div v-if="activePanel === 'toneColor'" class="score-toolbar__popup" @pointerdown.stop>
-          <div class="whiteboard-toolbar__field">
-            <span class="whiteboard-toolbar__field-label">音色</span>
-            <select class="whiteboard-toolbar__select" :value="toneColorId" @change="onToneColorChange">
-              <option v-for="item in TONE_COLOR_OPTIONS" :key="item.id" :value="item.id">
-                {{ item.labelZh }}
-              </option>
-            </select>
-          </div>
-        </div>
-      </div>
+      <ScoreToneColorAdjuster />
 
       <div class="score-toolbar__adjuster">
         <button

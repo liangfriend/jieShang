@@ -225,6 +225,15 @@ watch(
   { deep: true }
 )
 
+watch(
+  () => playStore.collectionToneColorId,
+  () => {
+    if (playback.playbackState.value === 'stopped') {
+      rebuildPracticeSequences(musicScoreData.value)
+    }
+  }
+)
+
 onMounted(async () => {
   const loaded = await loadScoreFromRoute(route)
   if (loaded) {

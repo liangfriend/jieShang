@@ -1,7 +1,7 @@
 import type { MusicScore } from 'deciphony-renderer'
 import type { PlaySequence } from 'deciphony-player'
 import { getDrPlaySequence } from '@renderer/dr-extensions/dr-play'
-import { PIANO_TONE_COLOR_NAME } from '@renderer/store/play.store'
+import { usePlayStore } from '@renderer/store/play.store'
 import { buildNoteStaveIndexMap } from '@renderer/utils/staffNotes'
 
 export type ToPlaySequenceOptions = {
@@ -25,6 +25,8 @@ export function toPlaySequence(
     })
   }
 
+  const toneColor = usePlayStore().getActiveToneColorKey()
+
   let curPlayTime = -Infinity
   const playSeq = drSeq.map((it) => {
     let start = false
@@ -37,7 +39,7 @@ export function toPlaySequence(
       midi: it.real_duration === 0 ? 0 : it.midi,
       duration: it.real_duration ? it.real_duration : it.duration,
       playTime: it.playTime,
-      toneColor: PIANO_TONE_COLOR_NAME,
+      toneColor,
       data: {
         note_id: it.note_id,
         duration: it.duration,

@@ -1,9 +1,7 @@
 import type { SkinPack } from 'deciphony-renderer'
 import { CollectionTypeEnum } from '@renderer/types/collection'
-import {
-  loadActiveCollectionSelection,
-  useActiveScoreSkinId
-} from '@renderer/utils/collection/collectionActiveStorage'
+import { useActiveScoreSkinId } from '@renderer/utils/collection/collectionActiveStorage'
+import { fetchActiveCollectionUsageId } from '@renderer/utils/collection/initCollectionSelection'
 
 export function parseScoreSkinPack(raw: string): SkinPack | null {
   try {
@@ -18,16 +16,16 @@ export function parseScoreSkinPack(raw: string): SkinPack | null {
 
 /** 按 localStorage 中 scoreSkin id 查库，返回 { id, pack } 供 musicScore :skin / :skin-name */
 export async function fetchActiveScoreSkin(): Promise<{ id: string; pack: SkinPack } | null> {
-  const active = loadActiveCollectionSelection()[CollectionTypeEnum.ScoreSkin]
-  if (!active?.id) return null
+  const skinId = await fetchActiveCollectionUsageId(CollectionTypeEnum.ScoreSkin)
+  if (!skinId) return null
 
-  const res = await window.api.collection.get(active.id)
+  const res = await window.api.collection.get(skinId)
   if (!res?.success || !res.data?.content) return null
 
   const pack = parseScoreSkinPack(res.data.content)
   if (!pack) return null
 
-  return { id: String(active.id), pack }
+  return { id: String(skinId), pack }
 }
 
 export { useActiveScoreSkinId }

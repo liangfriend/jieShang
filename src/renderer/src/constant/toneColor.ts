@@ -24,6 +24,9 @@ export const TONE_COLOR_OPTIONS = Object.values(TONE_COLOR_MAP)
 
 export const DEFAULT_TONE_COLOR_ID: ToneColorId = 'accoustic_grand_piano'
 
+/** 与内置藏品 name 一致，用于 localStorage 默认选取 */
+export const DEFAULT_TONE_COLOR_NAME = '三角钢琴'
+
 export function resolveToneColorLabel(id: ToneColorId): string {
   return TONE_COLOR_MAP[id]?.labelZh ?? id
 }

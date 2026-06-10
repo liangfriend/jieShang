@@ -109,6 +109,23 @@ watch(
   }
 )
 
+watch(
+  () => playStore.volume,
+  (value) => {
+    if (value <= 0) playStore.releaseAllHeldNotes()
+  }
+)
+
+async function onPianoKeyDown(midi: number) {
+  if (playStore.volume <= 0) return
+  await playStore.ensureCollectionToneColorInitialized()
+  void playStore.triggerNote(midi)
+}
+
+function onPianoKeyUp(midi: number) {
+  playStore.releaseNote(midi)
+}
+
 function handleRenderMusicScore(list: VDom[]) {
   vDomList.value = list
   staffDim.rebindAfterRender()
@@ -210,6 +227,7 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   playback.handleStop()
   metronomeStore.stop()
+  playStore.releaseAllHeldNotes()
   staffDim.clearAll()
   noteProgressHighlight.clearAll()
 })
@@ -261,6 +279,8 @@ function handleMidiBoxFinished() {
         :height="PIANO_HEIGHT"
         :midi="MIDI_RANGE"
         pitch-notation="None"
+        @key-down="onPianoKeyDown"
+        @key-up="onPianoKeyUp"
       />
     </section>
 

@@ -36,7 +36,6 @@ const {
   chordBoxEnabled,
   intervalRulerEnabled,
   pitchNotation,
-  toneColorId,
   addNoteEnabled,
   targetClef,
   noteInputBpm,
@@ -108,13 +107,12 @@ onMounted(async () => {
   }
 
   await playStore.waitReady()
-  await playStore.setToneColor(toneColorId.value)
+  await playStore.ensureCollectionToneColorInitialized()
 })
 
-onBeforeUnmount(async () => {
+onBeforeUnmount(() => {
   scoreResizeObserver?.disconnect()
   playStore.releaseAllHeldNotes()
-  await playStore.resetToneColorToDefault()
 })
 </script>
 

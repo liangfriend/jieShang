@@ -7,6 +7,12 @@ import piano from '@renderer/toneColor/accoustic_grand_piano'
 import { DEFAULT_TONE_COLOR_ID, TONE_COLOR_MAP } from '@renderer/constant/toneColor'
 import { WHITEBOARD_NOTE_HOLD_DURATION_SEC } from '@renderer/constant/whiteboard'
 import type { ToneColorId } from '@renderer/types/toneColor'
+import type { CollectionRecord } from '@renderer/types/collection'
+import {
+  DEFAULT_TONE_COLOR_COLLECTION_ID,
+  parseToneColorContent,
+  toneColorKey
+} from '@renderer/utils/collection/toneColorUsage'
 import {
   PLAY_BPM_MAX,
   PLAY_BPM_MIN,
@@ -34,9 +40,12 @@ export const usePlayStore = defineStore('play', () => {
   const volume = ref(PLAY_DEFAULT_VOLUME)
   const bpm = ref(PLAY_DEFAULT_BPM)
   const toneColorId = ref<ToneColorId>('accoustic_grand_piano')
+  const collectionToneColorId = ref(DEFAULT_TONE_COLOR_COLLECTION_ID)
+  const collectionToneColorLoading = ref(false)
 
   let nplayer: NPlayer | null = null
   let initPromise: Promise<void> | null = null
+  let collectionToneColorInitPromise: Promise<void> | null = null
   let listenerSeq = 0
   const heldNoteIds = new Map<number, string>()
 
@@ -161,16 +170,59 @@ export const usePlayStore = defineStore('play', () => {
     await setToneColor(DEFAULT_TONE_COLOR_ID)
   }
 
-  async function triggerNote(midi: number) {
+  function getActiveToneColorKey() {
+    return toneColorKey(collectionToneColorId.value)
+  }
+
+  async function setCollectionToneColor(id: number) {
+    await waitReady()
+    if (!nplayer) return
+
+    collectionToneColorLoading.value = true
+    try {
+      const res = await window.api.collection.get(id)
+      if (!res?.success || !res.data) {
+        throw new Error('音色不存在')
+      }
+      const record = res.data as CollectionRecord
+      if (record.type !== 'tone_color' || !record.owned) {
+        throw new Error('音色不可用')
+      }
+
+      const toneData = parseToneColorContent(record.content)
+      const key = toneColorKey(id)
+      await nplayer.addToneColor(key, toneData)
+      collectionToneColorId.value = id
+    } finally {
+      collectionToneColorLoading.value = false
+    }
+  }
+
+  async function ensureCollectionToneColorInitialized() {
+    if (collectionToneColorInitPromise) return collectionToneColorInitPromise
+
+    collectionToneColorInitPromise = (async () => {
+      try {
+        await setCollectionToneColor(DEFAULT_TONE_COLOR_COLLECTION_ID)
+      } catch {
+        collectionToneColorInitPromise = null
+        throw new Error('默认音色加载失败')
+      }
+    })()
+
+    return collectionToneColorInitPromise
+  }
+
+  async function triggerNote(midi: number, options?: { volume?: number }) {
     await waitReady()
     if (!nplayer || heldNoteIds.has(midi)) return
     await activeContext()
-    const id = `whiteboard-${midi}`
+    const id = `preview-${midi}`
     nplayer.trigger({
       id,
       midi,
-      toneColor: PIANO_TONE_COLOR_NAME,
-      volume: volume.value,
+      toneColor: getActiveToneColorKey(),
+      volume: options?.volume ?? volume.value,
       duration: WHITEBOARD_NOTE_HOLD_DURATION_SEC
     })
     heldNoteIds.set(midi, id)
@@ -235,6 +287,11 @@ export const usePlayStore = defineStore('play', () => {
     volume,
     bpm,
     toneColorId,
+    collectionToneColorId,
+    collectionToneColorLoading,
+    getActiveToneColorKey,
+    setCollectionToneColor,
+    ensureCollectionToneColorInitialized,
     playDisabled,
     pauseDisabled,
     stopDisabled,

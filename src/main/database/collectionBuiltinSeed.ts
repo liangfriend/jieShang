@@ -1,10 +1,13 @@
 import { COLLECTION_TYPE } from '../constant/collection'
+import { BUILTIN_COLLECTION_MAX_SEED_ID, BUILTIN_COLLECTION_SEED_IDS } from '../constant/collectionSeedIds'
 import CollectionModel from '../models/CollectionModel'
+import sequelize from './connection'
 import {
   buildClassicPurePianoPack,
   buildMetalGlossPianoPack
 } from '../resources/virtualPianoSkins/builtinSkins'
 import { BUILTIN_SCORE_SKIN_SEEDS } from '../resources/scoreSkins/builtinScoreSkins'
+import { BUILTIN_TONE_COLOR_SEEDS } from '../resources/toneColors/builtinToneColors'
 
 /** 内置演奏皮肤：content 存内置名称 key */
 const BUILTIN_PERFORM_SKINS = [
@@ -34,10 +37,31 @@ const BUILTIN_PIANO_SKINS = [
   }
 ] as const
 
+async function syncCollectionAutoIncrement() {
+  await sequelize.query(
+    `INSERT OR REPLACE INTO sqlite_sequence (name, seq) VALUES ('collection', ${BUILTIN_COLLECTION_MAX_SEED_ID})`
+  )
+}
+
 /** 写入内置藏品（随 migration 001 只执行一次） */
 export async function insertBuiltinCollections() {
-  for (const item of BUILTIN_SCORE_SKIN_SEEDS) {
+  for (const item of BUILTIN_TONE_COLOR_SEEDS) {
+    const id = BUILTIN_COLLECTION_SEED_IDS.toneColor[item.name as keyof typeof BUILTIN_COLLECTION_SEED_IDS.toneColor]
     await CollectionModel.create({
+      id,
+      type: COLLECTION_TYPE.TONE_COLOR,
+      name: item.name,
+      content: item.content,
+      description: item.description,
+      is_built_in: true,
+      owned: true
+    })
+  }
+
+  for (const item of BUILTIN_SCORE_SKIN_SEEDS) {
+    const id = BUILTIN_COLLECTION_SEED_IDS.scoreSkin[item.name as keyof typeof BUILTIN_COLLECTION_SEED_IDS.scoreSkin]
+    await CollectionModel.create({
+      id,
       type: COLLECTION_TYPE.SCORE_SKIN,
       name: item.name,
       content: item.content,
@@ -48,7 +72,9 @@ export async function insertBuiltinCollections() {
   }
 
   for (const item of BUILTIN_PERFORM_SKINS) {
+    const id = BUILTIN_COLLECTION_SEED_IDS.performSkin[item.name as keyof typeof BUILTIN_COLLECTION_SEED_IDS.performSkin]
     await CollectionModel.create({
+      id,
       type: COLLECTION_TYPE.PERFORM_SKIN,
       name: item.name,
       content: item.content,
@@ -59,7 +85,9 @@ export async function insertBuiltinCollections() {
   }
 
   for (const item of BUILTIN_PIANO_SKINS) {
+    const id = BUILTIN_COLLECTION_SEED_IDS.pianoSkin[item.name as keyof typeof BUILTIN_COLLECTION_SEED_IDS.pianoSkin]
     await CollectionModel.create({
+      id,
       type: COLLECTION_TYPE.PIANO_SKIN,
       name: item.name,
       content: JSON.stringify(item.buildContent()),
@@ -68,4 +96,6 @@ export async function insertBuiltinCollections() {
       owned: true
     })
   }
+
+  await syncCollectionAutoIncrement()
 }

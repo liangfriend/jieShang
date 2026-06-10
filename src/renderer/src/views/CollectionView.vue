@@ -14,7 +14,8 @@ import {
   isCollectionRecordActive,
   resolveCollectionDescription,
   resolveCollectionHowToGet,
-  resolveCollectionName
+  resolveCollectionName,
+  supportsCollectionUsage
 } from '@renderer/utils/collection/collectionHelper'
 import {
   loadActiveCollectionSelection,
@@ -53,6 +54,9 @@ const selectedHowToGet = computed(() =>
 )
 const selectedDeletable = computed(() =>
   selectedItem.value ? canDeleteCollection(selectedItem.value) : false
+)
+const selectedSupportsUsage = computed(() =>
+  selectedItem.value ? supportsCollectionUsage(selectedItem.value) : false
 )
 const selectedInUse = computed(() =>
   selectedItem.value ? isCollectionRecordActive(selectedItem.value, activeSelection.value) : false
@@ -228,6 +232,7 @@ onMounted(() => {
           </section>
 
           <button
+            v-if="selectedSupportsUsage"
             type="button"
             class="collection-detail__use"
             :class="{ 'collection-detail__use--active': selectedInUse }"

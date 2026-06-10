@@ -27,6 +27,7 @@ const metronomeVolumePercent = computed({
   get: () => Math.round(metronomeVolume.value * 100),
   set: (value: number) => (metronomeVolume.value = value / 100)
 })
+
 </script>
 
 <template>

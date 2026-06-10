@@ -1,4 +1,8 @@
 import { ref } from 'vue'
+import {
+  STORABLE_COLLECTION_TYPES,
+  type StorableCollectionType
+} from '@renderer/constant/collection'
 import { CollectionTypeEnum } from '@renderer/types/collection'
 
 const STORAGE_KEY = 'collection-active-selection'
@@ -7,24 +11,29 @@ const performSkinIdRef = ref<number | null>(null)
 const scoreSkinIdRef = ref<number | null>(null)
 const virtualPianoSkinIdRef = ref<number | null>(null)
 
-export type ActiveCollectionRef = {
-  id: number
-  name: string
-}
-
-export type ActiveCollectionSelection = {
-  [CollectionTypeEnum.ToneColor]?: ActiveCollectionRef
-  [CollectionTypeEnum.ScoreSkin]?: ActiveCollectionRef
-  [CollectionTypeEnum.VirtualPianoSkin]?: ActiveCollectionRef
-  [CollectionTypeEnum.PerformSkin]?: ActiveCollectionRef
-}
+/** localStorage 仅存各类型当前使用藏品 id（不含音色） */
+export type ActiveCollectionSelection = Partial<Record<StorableCollectionType, number>>
 
 function readRaw(): ActiveCollectionSelection | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return null
-    const parsed = JSON.parse(raw) as ActiveCollectionSelection
-    return parsed && typeof parsed === 'object' ? parsed : null
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    if (!parsed || typeof parsed !== 'object') return null
+
+    const selection: ActiveCollectionSelection = {}
+    for (const type of STORABLE_COLLECTION_TYPES) {
+      const value = parsed[type]
+      if (typeof value === 'number' && Number.isFinite(value)) {
+        selection[type] = value
+        continue
+      }
+      // 兼容旧版 { id, name } 结构
+      if (value && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'number') {
+        selection[type] = (value as { id: number }).id
+      }
+    }
+    return selection
   } catch {
     return null
   }
@@ -35,15 +44,15 @@ function writeRaw(selection: ActiveCollectionSelection) {
 }
 
 function syncPerformSkinIdRef(selection: ActiveCollectionSelection) {
-  performSkinIdRef.value = selection[CollectionTypeEnum.PerformSkin]?.id ?? null
+  performSkinIdRef.value = selection[CollectionTypeEnum.PerformSkin] ?? null
 }
 
 function syncScoreSkinIdRef(selection: ActiveCollectionSelection) {
-  scoreSkinIdRef.value = selection[CollectionTypeEnum.ScoreSkin]?.id ?? null
+  scoreSkinIdRef.value = selection[CollectionTypeEnum.ScoreSkin] ?? null
 }
 
 function syncVirtualPianoSkinIdRef(selection: ActiveCollectionSelection) {
-  virtualPianoSkinIdRef.value = selection[CollectionTypeEnum.VirtualPianoSkin]?.id ?? null
+  virtualPianoSkinIdRef.value = selection[CollectionTypeEnum.VirtualPianoSkin] ?? null
 }
 
 function syncReactiveRefs(selection: ActiveCollectionSelection) {
@@ -52,7 +61,7 @@ function syncReactiveRefs(selection: ActiveCollectionSelection) {
   syncVirtualPianoSkinIdRef(selection)
 }
 
-/** 启动时调用：读取 localStorage 并同步 reactive ref（不写默认值，缺项由 initDefaultCollectionSelection 从数据库补全） */
+/** 启动时调用：读取 localStorage 并同步 reactive ref */
 export function initCollectionActiveStorage(): ActiveCollectionSelection {
   const existing = readRaw()
   if (existing) {
@@ -84,12 +93,12 @@ export function saveActiveCollectionSelection(selection: ActiveCollectionSelecti
   syncReactiveRefs(selection)
 }
 
-export function setActiveCollectionByType(type: CollectionTypeEnum, ref: ActiveCollectionRef) {
+export function setActiveCollectionId(type: StorableCollectionType, id: number) {
   const selection = loadActiveCollectionSelection()
-  selection[type] = { id: ref.id, name: ref.name }
+  selection[type] = id
   saveActiveCollectionSelection(selection)
 }
 
-export function getActiveCollectionRef(type: CollectionTypeEnum): ActiveCollectionRef | undefined {
+export function getActiveCollectionId(type: StorableCollectionType): number | undefined {
   return loadActiveCollectionSelection()[type]
 }

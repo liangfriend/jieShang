@@ -1,8 +1,6 @@
 import { KeySignatureTypeEnum } from 'deciphony-renderer'
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
-import { DEFAULT_TONE_COLOR_ID, TONE_COLOR_MAP } from '@renderer/constant/toneColor'
-import type { ToneColorId } from '@renderer/types/toneColor'
 import {
   WHITEBOARD_CLEF_OPTIONS,
   WHITEBOARD_DEFAULT_ADD_NOTE,
@@ -37,7 +35,6 @@ interface WhiteboardSettings {
   widthType: WhiteboardWidthType
   whiteKeyWidth: number
   pitchNotation: WhiteboardPitchNotation
-  toneColorId: ToneColorId
   groupEnabled: boolean
   chordBoxEnabled: boolean
   intervalRulerEnabled: boolean
@@ -53,7 +50,6 @@ const DEFAULT_SETTINGS: WhiteboardSettings = {
   widthType: WHITEBOARD_DEFAULT_WIDTH_TYPE,
   whiteKeyWidth: WHITEBOARD_WHITE_KEY_WIDTH_DEFAULT,
   pitchNotation: WHITEBOARD_DEFAULT_PITCH_NOTATION,
-  toneColorId: DEFAULT_TONE_COLOR_ID,
   groupEnabled: false,
   chordBoxEnabled: false,
   intervalRulerEnabled: false,
@@ -107,10 +103,6 @@ function loadSettings(): WhiteboardSettings {
       pitchNotation: isWhiteboardPitchNotation(parsed.pitchNotation)
         ? parsed.pitchNotation
         : DEFAULT_SETTINGS.pitchNotation,
-      toneColorId:
-        parsed.toneColorId && parsed.toneColorId in TONE_COLOR_MAP
-          ? parsed.toneColorId
-          : DEFAULT_SETTINGS.toneColorId,
       groupEnabled: parsed.groupEnabled ?? DEFAULT_SETTINGS.groupEnabled,
       chordBoxEnabled: parsed.chordBoxEnabled ?? DEFAULT_SETTINGS.chordBoxEnabled,
       intervalRulerEnabled: parsed.intervalRulerEnabled ?? DEFAULT_SETTINGS.intervalRulerEnabled,
@@ -144,7 +136,6 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
   const widthType = ref<WhiteboardWidthType>(initial.widthType)
   const whiteKeyWidth = ref(initial.whiteKeyWidth)
   const pitchNotation = ref<WhiteboardPitchNotation>(initial.pitchNotation)
-  const toneColorId = ref<ToneColorId>(initial.toneColorId)
   const groupEnabled = ref(initial.groupEnabled)
   const chordBoxEnabled = ref(initial.chordBoxEnabled)
   const intervalRulerEnabled = ref(initial.intervalRulerEnabled)
@@ -168,7 +159,6 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
       widthType: widthType.value,
       whiteKeyWidth: whiteKeyWidth.value,
       pitchNotation: pitchNotation.value,
-      toneColorId: toneColorId.value,
       groupEnabled: groupEnabled.value,
       chordBoxEnabled: chordBoxEnabled.value,
       intervalRulerEnabled: intervalRulerEnabled.value,
@@ -201,10 +191,6 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
 
   function setPitchNotation(value: WhiteboardPitchNotation) {
     pitchNotation.value = value
-  }
-
-  function setToneColorId(value: ToneColorId) {
-    toneColorId.value = value
   }
 
   function toggleGroup() {
@@ -242,7 +228,6 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
       widthType,
       whiteKeyWidth,
       pitchNotation,
-      toneColorId,
       groupEnabled,
       chordBoxEnabled,
       intervalRulerEnabled,
@@ -260,7 +245,6 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     widthType,
     whiteKeyWidth,
     pitchNotation,
-    toneColorId,
     groupEnabled,
     chordBoxEnabled,
     intervalRulerEnabled,
@@ -278,7 +262,6 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     setWidthType,
     setWhiteKeyWidth,
     setPitchNotation,
-    setToneColorId,
     toggleGroup,
     toggleChordBox,
     toggleIntervalRuler,

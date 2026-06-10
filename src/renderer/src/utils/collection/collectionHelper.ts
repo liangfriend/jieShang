@@ -3,12 +3,14 @@ import {
   COLLECTION_TYPE_LABEL,
   getBuiltinMeta
 } from '@renderer/constant/collection'
-import { type CollectionDbType, type CollectionRecord } from '@renderer/types/collection'
+import { CollectionTypeEnum, type CollectionDbType, type CollectionRecord } from '@renderer/types/collection'
 import {
   type ActiveCollectionSelection,
   loadActiveCollectionSelection,
-  setActiveCollectionByType
+  setActiveCollectionId
 } from '@renderer/utils/collection/collectionActiveStorage'
+import { collectionTypeToStorable } from '@renderer/utils/collection/initCollectionSelection'
+
 type ApiListResult = { success?: boolean; data?: unknown }
 
 export function parseCollectionList(res: ApiListResult): CollectionRecord[] {
@@ -58,11 +60,11 @@ export function canDeleteCollection(record: CollectionRecord): boolean {
   return !record.is_built_in
 }
 
-/**
- * TODO(藏品删除): 删除成功后，若 localStorage 中该类型的 active.id === 被删 id，
- * 需将该类型重置为 default（id + name），逻辑与 initDefaultCollectionSelection
- * 中 DEFAULT_COLLECTION_PICKERS 一致。当前仅 builtIn 不可删，此分支尚未实现。
- */
+/** 音色不写入 localStorage，无「使用中」概念 */
+export function supportsCollectionUsage(record: CollectionRecord): boolean {
+  return collectionTypeToStorable(record.type) != null
+}
+
 export async function deleteCollectionFromDatabase(id: number): Promise<void> {
   const res = await window.api.collection.delete(id)
   if (!res?.success) {
@@ -74,23 +76,19 @@ export function collectionTypeLabel(type: CollectionDbType): string {
   return COLLECTION_TYPE_LABEL[type]
 }
 
-/** 判断藏品是否为 localStorage 中当前使用的项 */
+/** 判断藏品是否为 localStorage 中当前使用的项（音色恒为 false） */
 export function isCollectionRecordActive(
   record: CollectionRecord,
   selection: ActiveCollectionSelection = loadActiveCollectionSelection()
 ): boolean {
-  const enumType = COLLECTION_DB_TO_ENUM[record.type]
-  const active = selection[enumType]
-  if (!active) return false
-
-  return active.id === record.id
+  const storable = collectionTypeToStorable(record.type)
+  if (!storable) return false
+  return selection[storable] === record.id
 }
 
-/** 将藏品设为当前使用（写入 localStorage，存 id + name） */
+/** 将藏品设为当前使用（写入 localStorage，仅存 id） */
 export function activateCollectionRecord(record: CollectionRecord) {
-  const enumType = COLLECTION_DB_TO_ENUM[record.type]
-  setActiveCollectionByType(enumType, {
-    id: record.id,
-    name: resolveCollectionName(record)
-  })
+  const storable = collectionTypeToStorable(record.type)
+  if (!storable) return
+  setActiveCollectionId(storable, record.id)
 }
