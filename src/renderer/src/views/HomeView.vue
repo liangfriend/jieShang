@@ -2,21 +2,39 @@
 import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { Document, EditPen, Reading, VideoPlay } from '@element-plus/icons-vue'
+import { Document, EditPen, Setting } from '@element-plus/icons-vue'
+import HomeSettingsDialog from '@renderer/components/HomeSettingsDialog.vue'
 import { HOME_TEMPLATE_TO_ROUTE } from '@renderer/utils/scoreRoute'
 import { useMidiStore } from '@renderer/store/midi.store'
 
 const router = useRouter()
 const { hasConnectedInput } = storeToRefs(useMidiStore())
-const storyVisible = ref(false)
 const templateVisible = ref(false)
+const settingsVisible = ref(false)
 
-const mockScripts = [
-  { id: 1, title: '初遇之章', color: '#ffd6e8' },
-  { id: 2, title: '和声之城', color: '#e8d5ff' },
-  { id: 3, title: '晚风与旧歌', color: '#d4f0ff' },
-  { id: 4, title: '星轨序曲', color: '#fff0c9' }
-]
+const gameModes = [
+  {
+    route: 'noteSliceArcade',
+    title: '街机模式',
+    desc: '60 秒限时，冲高分',
+    emoji: '⚡',
+    tint: '#fff0c9'
+  },
+  {
+    route: 'noteSliceEndless',
+    title: '无限模式',
+    desc: '三条命，看你能撑多久',
+    emoji: '♾',
+    tint: '#d4f0ff'
+  },
+  {
+    route: 'noteSliceExtreme',
+    title: '极限模式',
+    desc: '不准漏音，挑战存活',
+    emoji: '🔥',
+    tint: '#ffd6e8'
+  }
+] as const
 
 const templateGroups = [
   {
@@ -37,9 +55,9 @@ const templateGroups = [
   }
 ]
 
-const hasSave = true
-const saveTitle = '和声之城'
-const saveProgress = 58
+function goToGameMode(routeName: (typeof gameModes)[number]['route']) {
+  router.push({ name: routeName })
+}
 
 function onTemplateSelect(key: string) {
   templateVisible.value = false
@@ -82,45 +100,24 @@ function goToLiteracyCamp() {
         <span class="logo-face">♪</span>
         <div>
           <h1 class="title">谱旅之章</h1>
-          <p class="subtitle">在旋律里，遇见你的故事</p>
+          <p class="subtitle">切准音符，闯出高分</p>
         </div>
       </div>
     </header>
 
     <main class="home-main">
       <section class="play-zone">
-        <button type="button" class="story-card" @click="storyVisible = true">
-          <span class="card-badge">剧情</span>
-          <div class="story-icon">
-            <el-icon><Reading /></el-icon>
-          </div>
-          <h2>选择剧本</h2>
-          <p>翻开正方形的小故事，开始一段新的谱旅</p>
-          <span class="card-hint">点击查看全部剧本 →</span>
-        </button>
-
         <button
+          v-for="mode in gameModes"
+          :key="mode.route"
           type="button"
-          class="continue-card"
-          :class="{ 'is-empty': !hasSave }"
-          :disabled="!hasSave"
+          class="mode-card"
+          :style="{ '--card-tint': mode.tint }"
+          @click="goToGameMode(mode.route)"
         >
-          <div class="continue-icon">
-            <el-icon><VideoPlay /></el-icon>
-          </div>
-          <div class="continue-body">
-            <h2>继续游戏</h2>
-            <template v-if="hasSave">
-              <p class="save-name">{{ saveTitle }}</p>
-              <div class="progress-wrap">
-                <div class="progress-bar">
-                  <div class="progress-fill" :style="{ width: saveProgress + '%' }" />
-                </div>
-                <span class="progress-text">{{ saveProgress }}%</span>
-              </div>
-            </template>
-            <p v-else class="empty-tip">还没有存档哦，先去选个剧本吧～</p>
-          </div>
+          <span class="mode-card__emoji">{{ mode.emoji }}</span>
+          <h2 class="mode-card__title">{{ mode.title }}</h2>
+          <p class="mode-card__desc">{{ mode.desc }}</p>
         </button>
       </section>
 
@@ -154,34 +151,6 @@ function goToLiteracyCamp() {
       </section>
     </main>
 
-    <!-- 剧情弹窗 UI -->
-    <el-dialog
-      v-model="storyVisible"
-      title="选择剧本"
-      width="520px"
-      class="cute-dialog"
-      append-to-body
-      align-center
-    >
-      <p class="dialog-desc">悬停剧本卡片，即可看到「开始游戏」</p>
-      <div class="script-grid">
-        <div
-          v-for="script in mockScripts"
-          :key="script.id"
-          class="script-card"
-          :style="{ '--card-tint': script.color }"
-        >
-          <div class="script-cover">
-            <span class="script-emoji">📖</span>
-          </div>
-          <div class="script-hover">
-            <span>开始游戏</span>
-          </div>
-          <p class="script-title">{{ script.title }}</p>
-        </div>
-      </div>
-    </el-dialog>
-
     <!-- 曲谱模版弹窗 UI -->
     <el-dialog
       v-model="templateVisible"
@@ -210,6 +179,18 @@ function goToLiteracyCamp() {
         </section>
       </div>
     </el-dialog>
+
+    <HomeSettingsDialog v-model="settingsVisible" />
+
+    <button
+      type="button"
+      class="home-settings-btn"
+      title="设置"
+      aria-label="设置"
+      @click="settingsVisible = true"
+    >
+      <el-icon class="home-settings-btn__icon"><Setting /></el-icon>
+    </button>
 
     <div
       class="midi-status"
@@ -384,158 +365,45 @@ function goToLiteracyCamp() {
 
 .play-zone {
   display: grid;
-  grid-template-columns: 1.2fr 1fr;
-  gap: 16px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
 }
 
-.story-card,
-.continue-card {
+.mode-card {
   border: 2px solid rgba(255, 255, 255, 0.9);
-  background: var(--card);
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, var(--card-tint) 100%);
   border-radius: 24px;
   box-shadow: var(--shadow);
   cursor: pointer;
-  text-align: left;
+  text-align: center;
   color: inherit;
+  padding: 22px 16px;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
 }
 
-.story-card:hover,
-.continue-card:not(:disabled):hover {
+.mode-card:hover {
   transform: translateY(-3px);
   box-shadow: 0 12px 40px rgba(200, 140, 180, 0.28);
 }
 
-.story-card {
-  position: relative;
-  padding: 24px 22px;
-  overflow: hidden;
+.mode-card__emoji {
+  display: block;
+  font-size: 32px;
+  margin-bottom: 10px;
 }
 
-.story-card::before {
-  content: '';
-  position: absolute;
-  top: -40px;
-  right: -40px;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(255, 184, 208, 0.35), rgba(201, 184, 255, 0.25));
-}
-
-.card-badge {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 11px;
-  font-weight: 700;
-  color: #fff;
-  background: linear-gradient(90deg, var(--pink-deep), var(--lavender));
-  margin-bottom: 14px;
-}
-
-.story-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  color: var(--pink-deep);
-  background: rgba(255, 184, 208, 0.25);
-  margin-bottom: 12px;
-}
-
-.story-card h2 {
+.mode-card__title {
   margin: 0 0 8px;
-  font-size: 20px;
-  font-weight: 700;
-}
-
-.story-card p {
-  margin: 0;
-  font-size: 13px;
-  line-height: 1.6;
-  color: var(--text-soft);
-}
-
-.card-hint {
-  display: inline-block;
-  margin-top: 16px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--pink-deep);
-}
-
-.continue-card {
-  padding: 20px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.continue-card.is-empty {
-  opacity: 0.72;
-  cursor: not-allowed;
-}
-
-.continue-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 18px;
-  color: #fff;
-  background: linear-gradient(135deg, var(--lavender), var(--sky));
-}
-
-.continue-body h2 {
-  margin: 0 0 6px;
   font-size: 17px;
   font-weight: 700;
 }
 
-.save-name {
-  margin: 0 0 10px;
-  font-size: 13px;
-  color: var(--text-soft);
-}
-
-.progress-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.progress-bar {
-  flex: 1;
-  height: 8px;
-  border-radius: 999px;
-  background: rgba(201, 184, 255, 0.25);
-  overflow: hidden;
-}
-
-.progress-fill {
-  height: 100%;
-  border-radius: 999px;
-  background: linear-gradient(90deg, var(--pink), var(--lavender));
-}
-
-.progress-text {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--lavender);
-  min-width: 32px;
-}
-
-.empty-tip {
+.mode-card__desc {
   margin: 0;
   font-size: 12px;
+  line-height: 1.5;
   color: var(--text-soft);
 }
 
@@ -616,69 +484,6 @@ function goToLiteracyCamp() {
   margin: 0 0 16px;
   font-size: 13px;
   color: var(--text-soft);
-  text-align: center;
-}
-
-.script-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
-}
-
-.script-card {
-  position: relative;
-  cursor: pointer;
-}
-
-.script-cover {
-  aspect-ratio: 1;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--card-tint);
-  border: 2px solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 4px 16px rgba(180, 140, 200, 0.15);
-  transition: transform 0.2s ease;
-}
-
-.script-emoji {
-  font-size: 36px;
-}
-
-.script-hover {
-  position: absolute;
-  inset: 0;
-  border-radius: 16px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(92, 74, 106, 0.55);
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.script-hover span {
-  padding: 8px 16px;
-  border-radius: 999px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #fff;
-  background: linear-gradient(90deg, var(--pink-deep), var(--lavender));
-}
-
-.script-card:hover .script-cover {
-  transform: scale(1.02);
-}
-
-.script-card:hover .script-hover {
-  opacity: 1;
-}
-
-.script-title {
-  margin: 8px 0 0;
-  font-size: 13px;
-  font-weight: 600;
   text-align: center;
 }
 
@@ -779,6 +584,40 @@ function goToLiteracyCamp() {
   50% {
     transform: translateY(-5px);
   }
+}
+
+.home-settings-btn {
+  position: fixed;
+  left: 22px;
+  bottom: 22px;
+  z-index: 20;
+  width: 46px;
+  height: 46px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgba(255, 255, 255, 0.92);
+  box-shadow: 0 6px 20px rgba(92, 74, 106, 0.16);
+  cursor: pointer;
+  color: #5c4a6a;
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.96), rgba(243, 235, 255, 0.94));
+  animation: midi-float 2.8s ease-in-out infinite;
+  animation-delay: -1.4s;
+  transition:
+    background 0.35s ease,
+    box-shadow 0.35s ease,
+    transform 0.2s ease;
+}
+
+.home-settings-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(201, 184, 255, 0.35);
+  background: linear-gradient(145deg, rgba(255, 248, 251, 0.98), rgba(232, 213, 255, 0.96));
+}
+
+.home-settings-btn__icon {
+  font-size: 22px;
 }
 </style>
 

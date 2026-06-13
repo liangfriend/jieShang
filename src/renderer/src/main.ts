@@ -14,6 +14,7 @@ import i18n from '@renderer/i18n'
 import { usePlayStore } from '@renderer/store/play.store'
 import { useMidiStore } from '@renderer/store/midi.store'
 import { useMetronomeStore } from '@renderer/store/metronome.store'
+import { useGameSettingsStore } from '@renderer/store/gameSettings.store'
 import { initCollectionActiveStorage } from '@renderer/utils/collection/collectionActiveStorage'
 import { initDefaultCollectionSelection } from '@renderer/utils/collection/initCollectionSelection'
 
@@ -32,6 +33,7 @@ async function bootstrap() {
   void usePlayStore().init()
   void useMidiStore().init()
   void useMetronomeStore().init()
+  useGameSettingsStore().init()
   app.mount('#app')
 }
 
