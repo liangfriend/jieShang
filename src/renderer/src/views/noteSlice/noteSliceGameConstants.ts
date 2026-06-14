@@ -2,19 +2,9 @@
 export const NOTE_SLICE_GAME_WIDTH = 1920
 export const NOTE_SLICE_GAME_HEIGHT = 1080
 
-/** 音符块生成时的 midi 范围（含边界） */
+/** 音符块生成时的 midi 范围（含边界，标准难度默认值） */
 export const NOTE_SLICE_SPAWN_MIDI_MIN = 38
 export const NOTE_SLICE_SPAWN_MIDI_MAX = 83
-
-/**
- * 测试模式开关。
- * 开启后仅生成高音谱号、midi 60-72 的音符块，便于 MIDI 输入调试。
- */
-export const NOTE_SLICE_TEST_MODE = true
-
-/** 测试模式下的 midi 范围（含边界） */
-export const NOTE_SLICE_TEST_SPAWN_MIDI_MIN = 60
-export const NOTE_SLICE_TEST_SPAWN_MIDI_MAX = 61
 
 /** 音符块完全可见的维持时间（秒） */
 export const NOTE_SLICE_BLOCK_SOLID_SECONDS = 2

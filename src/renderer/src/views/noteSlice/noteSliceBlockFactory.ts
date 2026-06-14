@@ -1,31 +1,21 @@
 import type { MusicScore } from 'deciphony-renderer'
-import { ClefTypeEnum } from 'deciphony-renderer'
 import {
-  generateRandomMidiBrickScore,
-  MIDI_BRICK_CLEFS,
-  type MidiBrickClef
+  generateRandomMidiBrickScore
 } from '@renderer/views/noteSlice/midiBrickBuilder'
 import {
   NOTE_SLICE_BLOCK_SHELL_HEIGHT,
   NOTE_SLICE_BLOCK_SHELL_WIDTH,
-  NOTE_SLICE_BOMB_BATCH,
-  NOTE_SLICE_TEST_MODE
+  NOTE_SLICE_BOMB_BATCH
 } from '@renderer/views/noteSlice/noteSliceGameConstants'
+import { getActiveNoteSliceDifficultyConfig } from '@renderer/views/noteSlice/noteSliceDifficultyConfig'
 import { applyNoteSliceBrickScoreLayout } from '@renderer/views/noteSlice/noteSliceBrickLayout'
+import { randomNoteSliceSpawnMidiExcluding } from '@renderer/views/noteSlice/noteSliceMidiBlacklist'
 import {
-  randomNoteSliceSpawnMidiExcluding,
-  resolveNoteSliceSpawnMidiRange
-} from '@renderer/views/noteSlice/noteSliceMidiBlacklist'
+  NOTE_SLICE_SPAWN_CLEF_MIDI_RANGES,
+  resolveSpawnClefsForMidi
+} from '@renderer/views/noteSlice/noteSliceSpawnClefs'
 
-/** 各谱号可用于生成的 midi 范围（含边界） */
-export const NOTE_SLICE_SPAWN_CLEF_MIDI_RANGES: Record<
-  MidiBrickClef,
-  { min: number; max: number }
-> = {
-  [ClefTypeEnum.Bass]: { min: 38, max: 62 },
-  [ClefTypeEnum.Alto]: { min: 48, max: 72 },
-  [ClefTypeEnum.Treble]: { min: 59, max: 83 }
-}
+export { NOTE_SLICE_SPAWN_CLEF_MIDI_RANGES, resolveSpawnClefsForMidi }
 
 export type NoteSliceBlockType = 'normal' | 'bomb'
 
@@ -54,17 +44,6 @@ export type BuildRandomNoteSliceBlockOptions = {
   excludedMidis?: ReadonlySet<number>
 }
 
-/** 按 midi 约束筛选可用谱号 */
-export function resolveSpawnClefsForMidi(midi: number): MidiBrickClef[] {
-  if (NOTE_SLICE_TEST_MODE) {
-    return [ClefTypeEnum.Treble]
-  }
-  return MIDI_BRICK_CLEFS.filter((clef) => {
-    const range = NOTE_SLICE_SPAWN_CLEF_MIDI_RANGES[clef]
-    return midi >= range.min && midi <= range.max
-  })
-}
-
 /** 指定 midi 生成音符块（用于乱按惩罚炸弹等）；无法渲染时返回 null */
 export function buildNoteSliceBlockWithMidi(
   id: string,
@@ -73,13 +52,19 @@ export function buildNoteSliceBlockWithMidi(
 ): Omit<NoteSliceActiveBlock, 'slotIndex' | 'batch' | 'x' | 'y' | 'ageMs'> | null {
   const random = options.random ?? Math.random
   const type = options.type ?? 'normal'
-  const { min, max } = resolveNoteSliceSpawnMidiRange()
-  if (midi < min || midi > max) return null
+  const { midiMin, midiMax } = getActiveNoteSliceDifficultyConfig()
+  if (midi < midiMin || midi > midiMax) return null
 
   const clefs = resolveSpawnClefsForMidi(midi)
   if (clefs.length === 0) return null
 
-  const brick = generateRandomMidiBrickScore(midi, { random, clefs })
+  const { allowDoubleAccidentals } = getActiveNoteSliceDifficultyConfig()
+  let brick
+  try {
+    brick = generateRandomMidiBrickScore(midi, { random, clefs, allowDoubleAccidentals })
+  } catch {
+    return null
+  }
   const musicScore = JSON.parse(JSON.stringify(brick.score)) as MusicScore
   applyNoteSliceBrickScoreLayout(musicScore, brick.keySignature)
 

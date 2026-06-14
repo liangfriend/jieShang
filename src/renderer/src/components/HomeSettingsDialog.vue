@@ -35,7 +35,7 @@ const visible = computed({
     <el-form label-position="top" class="home-settings-form">
       <section class="home-settings-section">
         <h3 class="home-settings-section__title">游戏</h3>
-        <p class="home-settings-section__hint">影响音符切切等模式的出题与判定（后续接入）</p>
+        <p class="home-settings-section__hint">影响音符切切的 MIDI 范围、谱号、变音记号与生成速度</p>
         <el-radio-group v-model="difficulty" class="home-settings-difficulty">
           <label
             v-for="opt in GAME_DIFFICULTY_OPTIONS"

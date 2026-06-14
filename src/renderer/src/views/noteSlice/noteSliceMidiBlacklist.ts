@@ -1,32 +1,19 @@
-import {
-  NOTE_SLICE_SPAWN_MIDI_MAX,
-  NOTE_SLICE_SPAWN_MIDI_MIN,
-  NOTE_SLICE_TEST_MODE,
-  NOTE_SLICE_TEST_SPAWN_MIDI_MAX,
-  NOTE_SLICE_TEST_SPAWN_MIDI_MIN
-} from '@renderer/views/noteSlice/noteSliceGameConstants'
+import { getActiveNoteSliceDifficultyConfig } from '@renderer/views/noteSlice/noteSliceDifficultyConfig'
+import { resolveSpawnClefsForMidi } from '@renderer/views/noteSlice/noteSliceSpawnClefs'
 
 export function resolveNoteSliceSpawnMidiRange(): { min: number; max: number } {
-  if (NOTE_SLICE_TEST_MODE) {
-    return {
-      min: NOTE_SLICE_TEST_SPAWN_MIDI_MIN,
-      max: NOTE_SLICE_TEST_SPAWN_MIDI_MAX
-    }
-  }
-  return {
-    min: NOTE_SLICE_SPAWN_MIDI_MIN,
-    max: NOTE_SLICE_SPAWN_MIDI_MAX
-  }
+  const { midiMin, midiMax } = getActiveNoteSliceDifficultyConfig()
+  return { min: midiMin, max: midiMax }
 }
 
-/** 当前 spawn 范围内、且不在黑名单中的 midi 列表 */
+/** 当前 spawn 范围内、且不在黑名单中、且至少有一种可用谱号的 midi 列表 */
 export function listNoteSliceSpawnableMidis(excludedMidis: ReadonlySet<number>): number[] {
   const { min, max } = resolveNoteSliceSpawnMidiRange()
   const candidates: number[] = []
   for (let midi = min; midi <= max; midi++) {
-    if (!excludedMidis.has(midi)) {
-      candidates.push(midi)
-    }
+    if (excludedMidis.has(midi)) continue
+    if (resolveSpawnClefsForMidi(midi).length === 0) continue
+    candidates.push(midi)
   }
   return candidates
 }

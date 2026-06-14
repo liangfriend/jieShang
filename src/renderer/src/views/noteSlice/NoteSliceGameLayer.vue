@@ -12,13 +12,11 @@ import {
 } from '@renderer/views/noteSlice/noteSliceBlockFactory'
 import {
   getNoteSliceBlockLifetimeMs,
-  NOTE_SLICE_BOMB_SPAWN_AVG_SECONDS,
   NOTE_SLICE_GAME_HEIGHT,
   NOTE_SLICE_GAME_WIDTH,
-  NOTE_SLICE_SPAWN_AVG_SECONDS,
-  NOTE_SLICE_SPAWN_COOLDOWN_SECONDS,
   resolveNoteSliceBlockOpacity
 } from '@renderer/views/noteSlice/noteSliceGameConstants'
+import { getActiveNoteSliceDifficultyConfig } from '@renderer/views/noteSlice/noteSliceDifficultyConfig'
 import {
   getNoteSliceSlotPosition,
   listEmptyNoteSliceSlots,
@@ -80,7 +78,7 @@ function bindSlotExplosionEffect(slotIndex: number, el: unknown): void {
 }
 
 function applySpawnCooldown(): void {
-  spawnCooldownMs = NOTE_SLICE_SPAWN_COOLDOWN_SECONDS * 1000
+  spawnCooldownMs = getActiveNoteSliceDifficultyConfig().spawnCooldownSeconds * 1000
 }
 
 /** 炸弹消失后解除对应 midi 的黑名单 */
@@ -282,12 +280,13 @@ function tick(timestamp: number): void {
   }
 
   // 随机数判断是否要生成炸弹块（平均间隔更长）
-  if (shouldSpawnByInterval(NOTE_SLICE_BOMB_SPAWN_AVG_SECONDS, deltaMs)) {
+  const { bombSpawnAvgSeconds, spawnAvgSeconds } = getActiveNoteSliceDifficultyConfig()
+  if (shouldSpawnByInterval(bombSpawnAvgSeconds, deltaMs)) {
     trySpawnBomb()
   }
 
   // 随机数判断是否要生成普通音符块
-  if (shouldSpawnByInterval(NOTE_SLICE_SPAWN_AVG_SECONDS, deltaMs)) {
+  if (shouldSpawnByInterval(spawnAvgSeconds, deltaMs)) {
     trySpawnBlock()
   }
 
