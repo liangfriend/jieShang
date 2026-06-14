@@ -76,7 +76,25 @@ export function resolveNoteSliceDifficultyConfig(
 }
 
 /** 读取首页设置中当前选中的难度配置 */
+let boundGameDifficulty: GameDifficulty | null = null
+
+/** 本局游戏开始时绑定难度，避免与 store 读取不同步 */
+export function bindNoteSliceGameDifficulty(difficulty: GameDifficulty): void {
+  boundGameDifficulty = difficulty
+}
+
+export function clearNoteSliceGameDifficulty(): void {
+  boundGameDifficulty = null
+}
+
+export function getActiveNoteSliceDifficulty(): GameDifficulty {
+  if (boundGameDifficulty !== null) {
+    return boundGameDifficulty
+  }
+  return useGameSettingsStore().difficulty
+}
+
+/** 读取当前生效的难度生成配置 */
 export function getActiveNoteSliceDifficultyConfig(): NoteSliceDifficultySpawnConfig {
-  const { difficulty } = useGameSettingsStore()
-  return resolveNoteSliceDifficultyConfig(difficulty.value)
+  return resolveNoteSliceDifficultyConfig(getActiveNoteSliceDifficulty())
 }

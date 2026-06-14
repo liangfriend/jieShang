@@ -34,20 +34,18 @@ const visible = computed({
   >
     <el-form label-position="top" class="home-settings-form">
       <section class="home-settings-section">
-        <h3 class="home-settings-section__title">游戏</h3>
-        <p class="home-settings-section__hint">影响音符切切的 MIDI 范围、谱号、变音记号与生成速度</p>
-        <el-radio-group v-model="difficulty" class="home-settings-difficulty">
-          <label
-            v-for="opt in GAME_DIFFICULTY_OPTIONS"
-            :key="opt.value"
-            class="home-settings-difficulty__item"
-          >
-            <el-radio :label="opt.value">
-              <span class="home-settings-difficulty__label">{{ opt.label }}</span>
-              <small>{{ opt.desc }}</small>
+        <div class="home-settings-difficulty-row">
+          <span class="home-settings-difficulty-row__label">街机/无限模式难度：</span>
+          <el-radio-group v-model="difficulty" class="home-settings-difficulty">
+            <el-radio
+              v-for="opt in GAME_DIFFICULTY_OPTIONS"
+              :key="opt.value"
+              :value="opt.value"
+            >
+              {{ opt.label }}
             </el-radio>
-          </label>
-        </el-radio-group>
+          </el-radio-group>
+        </div>
       </section>
     </el-form>
 
@@ -66,68 +64,36 @@ const visible = computed({
   gap: 4px;
 }
 
-.home-settings-section__title {
-  margin: 0 0 6px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #5c4a6a;
+.home-settings-difficulty-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
-.home-settings-section__hint {
-  margin: 0 0 12px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #9a8aa8;
+.home-settings-difficulty-row__label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #5c4a6a;
+  white-space: nowrap;
 }
 
 .home-settings-difficulty {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  width: 100%;
+  flex-wrap: nowrap;
+  gap: 16px;
 }
 
-.home-settings-difficulty__item {
-  display: block;
-  padding: 12px 14px;
-  border-radius: 14px;
-  border: 2px solid rgba(255, 184, 208, 0.35);
-  background: rgba(255, 255, 255, 0.72);
-  cursor: pointer;
-  transition:
-    border-color 0.15s ease,
-    background 0.15s ease;
-}
-
-.home-settings-difficulty__item:hover {
-  border-color: rgba(255, 143, 184, 0.55);
-  background: rgba(255, 248, 251, 0.95);
-}
-
-.home-settings-difficulty__item :deep(.el-radio) {
-  align-items: flex-start;
+.home-settings-difficulty :deep(.el-radio) {
+  margin-right: 0;
   height: auto;
-  white-space: normal;
 }
 
-.home-settings-difficulty__item :deep(.el-radio__label) {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding-left: 8px;
-  line-height: 1.45;
-  color: #5c4a6a;
-}
-
-.home-settings-difficulty__label {
+.home-settings-difficulty :deep(.el-radio__label) {
+  padding-left: 6px;
   font-size: 14px;
-  font-weight: 700;
-}
-
-.home-settings-difficulty__item small {
-  font-size: 12px;
-  color: #9a8aa8;
-  font-weight: 400;
+  font-weight: 600;
+  color: #5c4a6a;
 }
 
 .home-settings-dialog__btn {

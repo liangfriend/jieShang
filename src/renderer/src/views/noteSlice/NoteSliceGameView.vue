@@ -1,13 +1,18 @@
 <script lang="ts" setup>
-import { ref, watch } from 'vue'
+import { onUnmounted, ref, watch } from 'vue'
 import NoteSliceGameHud from '@renderer/views/noteSlice/NoteSliceGameHud.vue'
 import NoteSliceGameLayer from '@renderer/views/noteSlice/NoteSliceGameLayer.vue'
 import NoteSliceStarfield from '@renderer/views/noteSlice/NoteSliceStarfield.vue'
 import NoteSliceStartCountdown from '@renderer/views/noteSlice/NoteSliceStartCountdown.vue'
+import { useGameSettingsStore } from '@renderer/store/gameSettings.store'
 import type {
   NoteSliceGameEndPayload,
   NoteSliceGameMode
 } from '@renderer/views/noteSlice/noteSliceGameMode'
+import {
+  bindNoteSliceGameDifficulty,
+  clearNoteSliceGameDifficulty
+} from '@renderer/views/noteSlice/noteSliceDifficultyConfig'
 import { provideNoteSliceGameSession } from '@renderer/views/noteSlice/useNoteSliceGameSession'
 
 const props = defineProps<{
@@ -17,6 +22,19 @@ const props = defineProps<{
 const emit = defineEmits<{
   gameEnd: [payload: NoteSliceGameEndPayload]
 }>()
+
+const gameSettings = useGameSettingsStore()
+
+function syncGameDifficultyFromSettings(): void {
+  gameSettings.init()
+  bindNoteSliceGameDifficulty(gameSettings.difficulty)
+}
+
+syncGameDifficultyFromSettings()
+
+onUnmounted(() => {
+  clearNoteSliceGameDifficulty()
+})
 
 const session = provideNoteSliceGameSession(props.mode)
 

@@ -7,29 +7,16 @@ import {
   type AchievementListItem
 } from '@renderer/utils/achievementHelper'
 import {
+  buildNoteSliceHighScoreMatrix,
   fetchNoteSliceHighScores,
-  NOTE_SLICE_HIGH_SCORE_MODE_LABELS,
-  type NoteSliceHighScoreMode,
   type NoteSliceHighScoreRecord
 } from '@renderer/utils/noteSliceHighScoreHelper'
-
-const NOTE_SLICE_HIGH_SCORE_MODES: NoteSliceHighScoreMode[] = ['arcade', 'endless', 'extreme']
 
 const loading = ref(true)
 const achievements = ref<AchievementListItem[]>([])
 const highScores = ref<NoteSliceHighScoreRecord[]>([])
 
-const highScoreCards = computed(() => {
-  const scoreMap = new Map(highScores.value.map((item) => [item.mode, item.high_score]))
-  return NOTE_SLICE_HIGH_SCORE_MODES.map((mode) => ({
-    mode,
-    high_score: scoreMap.get(mode) ?? 0
-  }))
-})
-
-function resolveHighScoreLabel(mode: NoteSliceHighScoreRecord['mode']): string {
-  return NOTE_SLICE_HIGH_SCORE_MODE_LABELS[mode]
-}
+const highScoreMatrix = computed(() => buildNoteSliceHighScoreMatrix(highScores.value))
 
 onMounted(async () => {
   loading.value = true
@@ -56,17 +43,33 @@ onMounted(async () => {
     <main class="achievements-page__main">
       <section class="achievements-page__scores">
         <h2 class="achievements-page__section-title">历史最高分</h2>
-        <div class="achievements-page__score-grid">
-          <div
-            v-for="item in highScoreCards"
-            :key="item.mode"
-            class="achievements-page__score-card"
-          >
-            <span class="achievements-page__score-mode">{{ resolveHighScoreLabel(item.mode) }}</span>
-            <span class="achievements-page__score-value">{{ item.high_score }}</span>
+
+        <div
+          v-for="modeRow in highScoreMatrix"
+          :key="modeRow.mode"
+          class="achievements-page__mode-block"
+          :class="{ 'achievements-page__mode-block--single': modeRow.singleScore != null }"
+        >
+          <span class="achievements-page__mode-title">{{ modeRow.modeLabel }}</span>
+
+          <div v-if="modeRow.scores" class="achievements-page__score-grid">
+            <div
+              v-for="scoreItem in modeRow.scores"
+              :key="`${modeRow.mode}-${scoreItem.difficulty}`"
+              class="achievements-page__score-card"
+            >
+              <span class="achievements-page__score-difficulty">{{
+                scoreItem.difficultyLabel
+              }}</span>
+              <span class="achievements-page__score-value">{{ scoreItem.high_score }}</span>
+            </div>
           </div>
+
+          <span v-else class="achievements-page__single-score">{{ modeRow.singleScore ?? 0 }}</span>
         </div>
       </section>
+
+      <h2 class="achievements-page__section-title">全部成就</h2>
 
       <p v-if="loading" class="achievements-page__status">加载中…</p>
 
@@ -93,7 +96,7 @@ onMounted(async () => {
               <span v-if="item.completed" class="achievement-card__badge">已达成</span>
             </div>
             <p class="achievement-card__desc">{{ item.description }}</p>
-            <p class="achievement-card__how">如何获得：{{ item.howToGet }}</p>
+            <p class="achievement-card__reward">奖励：{{ item.reward }}</p>
             <p v-if="item.completed && item.completedAt" class="achievement-card__time">
               完成于 {{ formatAchievementCompletedAt(item.completedAt) }}
             </p>
@@ -106,18 +109,21 @@ onMounted(async () => {
 
 <style scoped>
 .achievements-page {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: #fff8fb;
 }
 
 .achievements-page__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 16px 20px;
   border-bottom: 1px solid rgba(255, 184, 208, 0.35);
+  background: #fff8fb;
 }
 
 .achievements-page__title {
@@ -129,6 +135,8 @@ onMounted(async () => {
 
 .achievements-page__main {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
   width: 100%;
   max-width: 720px;
   margin: 0 auto;
@@ -144,35 +152,64 @@ onMounted(async () => {
 }
 
 .achievements-page__scores {
-  margin-bottom: 24px;
+  margin-bottom: 28px;
+}
+
+.achievements-page__mode-block {
+  display: grid;
+  grid-template-columns: 72px 1fr;
+  align-items: center;
+  gap: 12px;
+}
+
+.achievements-page__mode-block + .achievements-page__mode-block {
+  margin-top: 10px;
+}
+
+.achievements-page__mode-block--single {
+  grid-template-columns: 72px auto;
+}
+
+.achievements-page__mode-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #7a688a;
 }
 
 .achievements-page__score-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .achievements-page__score-card {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  padding: 12px;
-  border-radius: 14px;
+  gap: 4px;
+  padding: 10px 8px;
+  border-radius: 12px;
   border: 2px solid rgba(255, 184, 208, 0.35);
   background: rgba(255, 255, 255, 0.82);
   text-align: center;
 }
 
-.achievements-page__score-mode {
+.achievements-page__single-score {
+  font-size: 22px;
+  font-weight: 800;
+  color: #5c4a6a;
+  font-variant-numeric: tabular-nums;
+}
+
+.achievements-page__score-difficulty {
   font-size: 12px;
   color: #9a8aa8;
 }
 
 .achievements-page__score-value {
-  font-size: 24px;
+  font-size: 22px;
   font-weight: 800;
   color: #5c4a6a;
+  font-variant-numeric: tabular-nums;
 }
 
 .achievements-page__status {
@@ -273,7 +310,7 @@ onMounted(async () => {
   color: #5c4a6a;
 }
 
-.achievement-card__how {
+.achievement-card__reward {
   margin: 0;
   font-size: 12px;
   line-height: 1.5;

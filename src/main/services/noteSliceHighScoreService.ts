@@ -1,4 +1,7 @@
-import type { NoteSliceHighScoreMode } from '../models/NoteSliceHighScoreModel'
+import type {
+  NoteSliceHighScoreDifficulty,
+  NoteSliceHighScoreMode
+} from '../models/NoteSliceHighScoreModel'
 import { NoteSliceHighScoreRepository } from '../repositories/noteSliceHighScoreRepository'
 
 export class NoteSliceHighScoreService {
@@ -13,8 +16,12 @@ export class NoteSliceHighScoreService {
     return { success: true, data }
   }
 
-  async upsertIfHigher(mode: NoteSliceHighScoreMode, score: number) {
-    const data = await this.noteSliceHighScoreRepository.upsertIfHigher(mode, score)
+  async upsertIfHigher(
+    mode: NoteSliceHighScoreMode,
+    difficulty: NoteSliceHighScoreDifficulty,
+    score: number
+  ) {
+    const data = await this.noteSliceHighScoreRepository.upsertIfHigher(mode, difficulty, score)
     return { success: true, data }
   }
 }

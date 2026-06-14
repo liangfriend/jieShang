@@ -119,10 +119,16 @@ declare global {
       noteSliceHighScore: {
         list(): Promise<{
           success: boolean
-          data?: Array<{ id: number; mode: 'arcade' | 'endless' | 'extreme'; high_score: number }>
+          data?: Array<{
+            id: number
+            mode: 'arcade' | 'endless' | 'extreme'
+            difficulty: 'easy' | 'standard' | 'hard'
+            high_score: number
+          }>
         }>
         upsertIfHigher(
           mode: 'arcade' | 'endless' | 'extreme',
+          difficulty: 'easy' | 'standard' | 'hard',
           score: number
         ): Promise<any>
       }

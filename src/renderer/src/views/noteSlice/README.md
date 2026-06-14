@@ -262,7 +262,7 @@ NoteSliceExtremeView.vue                             极限模式占位（暂未
 
 ### 8. 游戏难度（首页设置 → localStorage `game.settings`）
 
-难度由 `useGameSettingsStore` 持久化，生成逻辑通过 `getActiveNoteSliceDifficultyConfig()` 读取。
+难度由 `useGameSettingsStore` 持久化。**进入一局游戏时** `NoteSliceGameView` 会 `init()` 并重绑 `bindNoteSliceGameDifficulty`；生成逻辑通过 `getActiveNoteSliceDifficultyConfig()` 读取本局难度。
 
 | 难度 | MIDI | 谱号 | 变音记号 | 生成间隔 / 冷却 / 炸弹 |
 | --- | --- | --- | --- | --- |

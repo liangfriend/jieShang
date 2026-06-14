@@ -11,6 +11,7 @@ import CollectionModel from '../models/CollectionModel'
 import AchievementProgressModel from '../models/AchievementProgressModel'
 import NoteSliceHighScoreModel from '../models/NoteSliceHighScoreModel'
 import { insertBuiltinCollections } from './collectionBuiltinSeed'
+import sequelize from '../database/connection'
 
 export interface Migrations {
   id: string
@@ -52,6 +53,43 @@ export const migrations: Migrations[] = [
     async down() {
       await NoteSliceHighScoreModel.drop()
       await AchievementProgressModel.drop()
+    }
+  },
+  {
+    id: '003-high-score-by-difficulty',
+    async up() {
+      const qi = sequelize.getQueryInterface()
+      const table = await qi.describeTable('note_slice_high_score').catch(() => null)
+      if (!table) {
+        await NoteSliceHighScoreModel.sync()
+        return
+      }
+      if ('difficulty' in table) {
+        return
+      }
+
+      await sequelize.query(`
+        CREATE TABLE note_slice_high_score_new (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          mode VARCHAR(255) NOT NULL,
+          difficulty VARCHAR(255) NOT NULL DEFAULT 'standard',
+          high_score INTEGER NOT NULL DEFAULT 0,
+          created_at DATETIME NOT NULL,
+          updated_at DATETIME NOT NULL,
+          deleted_at DATETIME,
+          UNIQUE(mode, difficulty)
+        )
+      `)
+      await sequelize.query(`
+        INSERT INTO note_slice_high_score_new (id, mode, difficulty, high_score, created_at, updated_at, deleted_at)
+        SELECT id, mode, 'standard', high_score, created_at, updated_at, deleted_at
+        FROM note_slice_high_score
+      `)
+      await sequelize.query(`DROP TABLE note_slice_high_score`)
+      await sequelize.query(`ALTER TABLE note_slice_high_score_new RENAME TO note_slice_high_score`)
+    },
+    async down() {
+      await sequelize.query(`DROP TABLE IF EXISTS note_slice_high_score`)
     }
   }
 ]

@@ -41,6 +41,10 @@ export const useGameSettingsStore = defineStore('gameSettings', () => {
 
   watch(difficulty, persist)
 
+  function setDifficulty(value: GameDifficulty): void {
+    difficulty.value = value
+  }
+
   function init() {
     const latest = loadPersistedSettings()
     difficulty.value = isGameDifficulty(latest.difficulty)
@@ -48,5 +52,5 @@ export const useGameSettingsStore = defineStore('gameSettings', () => {
       : DEFAULT_GAME_DIFFICULTY
   }
 
-  return { difficulty, init }
+  return { difficulty, init, setDifficulty, persist }
 })
