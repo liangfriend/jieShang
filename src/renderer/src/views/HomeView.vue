@@ -128,12 +128,16 @@ function goToLiteracyCamp() {
         </button>
 
         <button type="button" class="action-btn action-compose" @click="templateVisible = true">
-          <span class="action-icon"><el-icon><EditPen /></el-icon></span>
+          <span class="action-icon"
+            ><el-icon><EditPen /></el-icon
+          ></span>
           <span class="action-label">曲谱制作</span>
         </button>
 
         <button type="button" class="action-btn action-scores" @click="goToScores">
-          <span class="action-icon"><el-icon><Document /></el-icon></span>
+          <span class="action-icon"
+            ><el-icon><Document /></el-icon
+          ></span>
           <span class="action-label">我的曲谱</span>
         </button>
       </section>

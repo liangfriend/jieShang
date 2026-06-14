@@ -18,6 +18,12 @@ import {
   createNoteSymbol,
   createSingleStaff
 } from '@renderer/dr-extensions/dr-edit/score-builder'
+import {
+  NOTE_SLICE_BRICK_GRAND_STAFF_SPACING,
+  NOTE_SLICE_BRICK_SCORE_HEIGHT,
+  NOTE_SLICE_BRICK_SCORE_SPACE,
+  NOTE_SLICE_BRICK_SINGLE_STAFF_SPACING
+} from '@renderer/views/noteSlice/noteSliceBrickLayout'
 import { getAllNoteRegion, type NoteRegionsByAccidental } from '@renderer/dr-extensions/scoreUtil'
 
 /** 音符块可用的谱号（不含次中音） */
@@ -178,10 +184,17 @@ export function buildMidiBrickScore(
 
   const score = createMusicScore({
     width: layout?.scoreWidth ?? 320,
-    height: layout?.scoreHeight ?? 240
+    height: layout?.scoreHeight ?? NOTE_SLICE_BRICK_SCORE_HEIGHT,
+    topSpaceHeight: NOTE_SLICE_BRICK_SCORE_SPACE
   })
-  const grandStaff = createGrandStaff({ withDefaultStaff: false })
-  const staff = createSingleStaff({ withDefaultMeasure: false })
+  const grandStaff = createGrandStaff({
+    withDefaultStaff: false,
+    ...NOTE_SLICE_BRICK_GRAND_STAFF_SPACING
+  })
+  const staff = createSingleStaff({
+    withDefaultMeasure: false,
+    ...NOTE_SLICE_BRICK_SINGLE_STAFF_SPACING
+  })
   staff.measures.push(measure)
   grandStaff.staves.push(staff)
   score.grandStaffs.push(grandStaff)
