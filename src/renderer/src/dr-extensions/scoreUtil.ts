@@ -236,6 +236,82 @@ export function getNoteRegionAndAccidental(
   return { region, accidental: priority }
 }
 
+/** 给定 midi 下所有可达的 (region, 有效变音) 拼写 */
+function enumeratePitchCandidates(
+  clef: ClefTypeEnum,
+  midi: number
+): { region: number; needed: AlteredAccidental | null }[] {
+  const neededOptions: (AlteredAccidental | null)[] = [
+    null,
+    AccidentalTypeEnum.Sharp,
+    AccidentalTypeEnum.Flat,
+    AccidentalTypeEnum.Double_sharp,
+    AccidentalTypeEnum.Double_flat
+  ]
+  const candidates: { region: number; needed: AlteredAccidental | null }[] = []
+  for (const needed of neededOptions) {
+    const region = getNoteRegion(clef, midi, needed)
+    if (region === null) continue
+    if (getNoteMidi(clef, region, needed) !== midi) continue
+    candidates.push({ region, needed })
+  }
+  return candidates
+}
+
+const ALL_WRITTEN_ACCIDENTALS: AccidentalTypeEnum[] = [
+  AccidentalTypeEnum.Natural,
+  AccidentalTypeEnum.Sharp,
+  AccidentalTypeEnum.Flat,
+  AccidentalTypeEnum.Double_sharp,
+  AccidentalTypeEnum.Double_flat
+]
+
+export type NoteRegionsByAccidental = {
+  [K in AccidentalTypeEnum]: number | null
+} & {
+  /** 不写变音号（accidental 省略，非还原号） */
+  none: number | null
+}
+
+/**
+ * 给定 clef、midi、调号，列出每种谱面写法对应的 region。
+ *
+ * - 各 AccidentalTypeEnum：在该 region 上写该变音号时，音高为 midi
+ * - none：省略变音号时音高为 midi 的 region（调号已覆盖或自然音）
+ * - 无对应写法时为 null
+ */
+export function getAllNoteRegion(
+  clef: ClefTypeEnum,
+  midi: number,
+  keySignature: KeySignatureTypeEnum = KeySignatureTypeEnum.C
+): NoteRegionsByAccidental {
+  const result = {} as NoteRegionsByAccidental
+
+  for (const written of ALL_WRITTEN_ACCIDENTALS) {
+    if (written === AccidentalTypeEnum.Natural) {
+      const region = getNoteRegion(clef, midi, null)
+      result[written] =
+        region !== null && getNoteMidi(clef, region, null) === midi ? region : null
+      continue
+    }
+    const needed = written as AlteredAccidental
+    const region = getNoteRegion(clef, midi, needed)
+    result[written] =
+      region !== null && getNoteMidi(clef, region, needed) === midi ? region : null
+  }
+
+  result.none = null
+  for (const { region, needed } of enumeratePitchCandidates(clef, midi)) {
+    const keySigAcc = getKeySignatureAccidental(clef, keySignature, region)
+    if (needed === keySigAcc) {
+      result.none = region
+      break
+    }
+  }
+
+  return result
+}
+
 /**
  * 小节音符变调函数
  * 传入小节, 当前调号，目标调号，返回音符变调后的小节（原地修改）
