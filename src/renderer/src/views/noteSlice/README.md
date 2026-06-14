@@ -112,6 +112,12 @@ NoteSliceExtremeView.vue                             极限模式占位（暂未
 
 | `useNoteSliceMidiInput.ts` | 监听 MIDI note on |
 
+| **持久化（见 `doc/成就.md`）** | |
+
+| `utils/noteSliceHighScoreHelper.ts` | 模式最高分 IPC；街机/无限结束时 upsert |
+
+| `utils/achievementHelper.ts` | 成就列表合并与 unlock（埋点待接） |
+
 
 
 ## 核心逻辑
@@ -325,9 +331,9 @@ NoteSliceGameLayer.tick()  （isRunning 时）
 
 ## 待实现（见 `doc/游戏功能.md`）
 
+播音线、冰冻/加倍/治疗、极限模式玩法、**成就解锁埋点**（`achievement:unlock`）等。
 
-
-播音线、冰冻/加倍/治疗、极限模式、成就等。
+成就与最高分见 `doc/成就.md`。
 
 
 

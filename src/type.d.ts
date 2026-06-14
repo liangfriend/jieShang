@@ -112,6 +112,20 @@ declare global {
           type: 'tone_color' | 'score_skin' | 'piano_skin' | 'perform_skin'
         ): Promise<any>
       }
+      achievement: {
+        list(): Promise<{ success: boolean; data?: Array<{ id: number; key: string; completed_at: string }> }>
+        unlock(payload: { key: string; completed_at?: string }): Promise<any>
+      }
+      noteSliceHighScore: {
+        list(): Promise<{
+          success: boolean
+          data?: Array<{ id: number; mode: 'arcade' | 'endless' | 'extreme'; high_score: number }>
+        }>
+        upsertIfHigher(
+          mode: 'arcade' | 'endless' | 'extreme',
+          score: number
+        ): Promise<any>
+      }
       window: {
         open(name: string, route: string, options?: Record<string, unknown>): void
         close(name: string): void

@@ -8,6 +8,8 @@ import MigrationModel from '../models/MigrationModel'
 import ScoreModel from '../models/ScoreModel'
 import WorkModel from '../models/WorkModel'
 import CollectionModel from '../models/CollectionModel'
+import AchievementProgressModel from '../models/AchievementProgressModel'
+import NoteSliceHighScoreModel from '../models/NoteSliceHighScoreModel'
 import { insertBuiltinCollections } from './collectionBuiltinSeed'
 
 export interface Migrations {
@@ -39,6 +41,17 @@ export const migrations: Migrations[] = [
       await ResourceModel.drop()
       await SaveModel.drop()
       await GameModel.drop()
+    }
+  },
+  {
+    id: '002-achievement-and-high-score',
+    async up() {
+      await AchievementProgressModel.sync()
+      await NoteSliceHighScoreModel.sync()
+    },
+    async down() {
+      await NoteSliceHighScoreModel.drop()
+      await AchievementProgressModel.drop()
     }
   }
 ]

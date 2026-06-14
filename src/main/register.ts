@@ -9,6 +9,8 @@ export async function registerController() {
   container.resolve('resourceController').register()
   container.resolve('saveController').register()
   container.resolve('groupController').register()
+  container.resolve('achievementProgressController').register()
+  container.resolve('noteSliceHighScoreController').register()
   container.resolve('fileController').register()
   container.resolve('windowController').register()
 }

@@ -27,6 +27,12 @@ import { GroupService } from './services/groupService'
 import { GroupController } from './controllers/groupController'
 import { GroupRepository } from './repositories/groupRepository'
 import { WindowController } from './controllers/windowController'
+import { AchievementProgressRepository } from './repositories/achievementProgressRepository'
+import { AchievementProgressService } from './services/achievementProgressService'
+import { AchievementProgressController } from './controllers/achievementProgressController'
+import { NoteSliceHighScoreRepository } from './repositories/noteSliceHighScoreRepository'
+import { NoteSliceHighScoreService } from './services/noteSliceHighScoreService'
+import { NoteSliceHighScoreController } from './controllers/noteSliceHighScoreController'
 
 export const container = createContainer()
 
@@ -64,6 +70,14 @@ export async function setupContainer() {
     groupRepository: asClass(GroupRepository).singleton(),
     groupService: asClass(GroupService).singleton(),
     groupController: asClass(GroupController).singleton(),
+
+    achievementProgressRepository: asClass(AchievementProgressRepository).singleton(),
+    achievementProgressService: asClass(AchievementProgressService).singleton(),
+    achievementProgressController: asClass(AchievementProgressController).singleton(),
+
+    noteSliceHighScoreRepository: asClass(NoteSliceHighScoreRepository).singleton(),
+    noteSliceHighScoreService: asClass(NoteSliceHighScoreService).singleton(),
+    noteSliceHighScoreController: asClass(NoteSliceHighScoreController).singleton(),
 
     windowController: asClass(WindowController).singleton(),
 

@@ -9,6 +9,8 @@ import { collectionInvoke } from './invoke/collection'
 import { fileInvoke } from './invoke/file'
 import { windowInvoke } from './invoke/window'
 import { groupInvoke } from './invoke/group'
+import { achievementInvoke } from './invoke/achievement'
+import { noteSliceHighScoreInvoke } from './invoke/noteSliceHighScore'
 
 const api = {}
 
@@ -22,6 +24,8 @@ if (process.contextIsolated) {
       score: scoreInvoke,
       work: workInvoke,
       collection: collectionInvoke,
+      achievement: achievementInvoke,
+      noteSliceHighScore: noteSliceHighScoreInvoke,
       window: windowInvoke,
       group: groupInvoke
     })

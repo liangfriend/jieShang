@@ -3,6 +3,7 @@ import { ref } from 'vue'
 import NoteSliceEndlessGameOverDialog from '@renderer/views/noteSlice/NoteSliceEndlessGameOverDialog.vue'
 import NoteSliceGameView from '@renderer/views/noteSlice/NoteSliceGameView.vue'
 import type { NoteSliceGameEndPayload } from '@renderer/views/noteSlice/noteSliceGameMode'
+import { upsertNoteSliceHighScoreIfHigher } from '@renderer/utils/noteSliceHighScoreHelper'
 
 const gameKey = ref(0)
 const dialogVisible = ref(false)
@@ -11,6 +12,7 @@ const endPayload = ref<NoteSliceGameEndPayload | null>(null)
 function onGameEnd(payload: NoteSliceGameEndPayload): void {
   endPayload.value = payload
   dialogVisible.value = true
+  void upsertNoteSliceHighScoreIfHigher('endless', payload.score)
 }
 
 function onPlayAgain(): void {
