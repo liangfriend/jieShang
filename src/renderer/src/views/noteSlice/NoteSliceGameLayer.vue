@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onUnmounted, ref } from 'vue'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import NoteSliceBlockContent from '@renderer/views/noteSlice/NoteSliceBlockContent.vue'
 import NoteSliceSlotClearEffect from '@renderer/views/noteSlice/NoteSliceSlotClearEffect.vue'
@@ -37,10 +37,13 @@ type SlotEffectExpose = {
 /** 存活在屏幕上的音符块 */
 const blocks = ref<NoteSliceActiveBlock[]>([])
 
-/** 计分 / 连击 / 生成批次 / midi 黑名单 */
+/** 计分 / 连击 / 生成批次 / midi 黑名单 / 模式状态 */
 const {
+  isRunning,
   nextBatch,
   onBlocksCleared,
+  onBombCleared,
+  tickModeState,
   resetCombo,
   addBlacklistedMidi,
   removeBlacklistedMidi,
@@ -143,6 +146,7 @@ function processPendingPenaltyBombs(): void {
 
 /** 乱按：连击清零并将该 midi 加入惩罚炸弹队列 */
 function punishWrongMidiPress(midi: number): void {
+  if (!isRunning.value) return
   resetCombo()
   if (isMidiOnField(midi)) return
   penaltyBombQueue.enqueue(midi)
@@ -150,6 +154,8 @@ function punishWrongMidiPress(midi: number): void {
 
 /** 按下 midi 后，清除所有匹配块并触发对应格子特效 */
 function clearBlocksByMidi(midi: number): void {
+  if (!isRunning.value) return
+
   const targets = blocks.value.filter((block) => block.midi === midi)
   if (targets.length === 0) {
     punishWrongMidiPress(midi)
@@ -175,6 +181,10 @@ function clearBlocksByMidi(midi: number): void {
     if (normalTargets.some((block) => block.slotIndex === slotIndex)) {
       slotClearEffects[slotIndex]?.play()
     }
+  }
+
+  if (bombTargets.length > 0) {
+    onBombCleared()
   }
 }
 
@@ -238,6 +248,8 @@ function trySpawnBomb(): void {
 }
 
 function tick(timestamp: number): void {
+  if (!isRunning.value) return
+
   if (lastTimestamp === 0) {
     lastTimestamp = timestamp
   }
@@ -257,6 +269,13 @@ function tick(timestamp: number): void {
   // 乱按惩罚炸弹：优先于随机 spawn，且不占用 spawn 冷却
   processPendingPenaltyBombs()
 
+  // 街机倒计时等模式逻辑
+  tickModeState(deltaMs)
+  if (!isRunning.value) {
+    stopTick()
+    return
+  }
+
   // 如果生成音符的冷却时间存在，更新冷却时间
   if (spawnCooldownMs > 0) {
     spawnCooldownMs = Math.max(0, spawnCooldownMs - deltaMs)
@@ -275,12 +294,27 @@ function tick(timestamp: number): void {
   rafId = window.requestAnimationFrame(tick)
 }
 
-onMounted(() => {
+function startTick(): void {
+  stopTick()
+  lastTimestamp = 0
   rafId = window.requestAnimationFrame(tick)
+}
+
+function stopTick(): void {
+  if (rafId !== 0) {
+    window.cancelAnimationFrame(rafId)
+    rafId = 0
+  }
+  lastTimestamp = 0
+}
+
+defineExpose({
+  startTick,
+  stopTick
 })
 
 onUnmounted(() => {
-  window.cancelAnimationFrame(rafId)
+  stopTick()
 })
 </script>
 

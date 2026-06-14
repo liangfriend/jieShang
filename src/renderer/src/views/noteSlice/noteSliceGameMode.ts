@@ -1,0 +1,32 @@
+/** 已实现的游戏模式（极限模式暂未接入） */
+export type NoteSliceGameMode = 'arcade' | 'endless'
+
+export type NoteSliceGameEndReason = 'time_up' | 'no_lives'
+
+export type NoteSliceGameEndPayload = {
+  score: number
+  reason: NoteSliceGameEndReason
+}
+
+/** 开局倒计时文案（共 4 步，每步 1s） */
+export const NOTE_SLICE_START_COUNTDOWN_LABELS = ['3', '2', '1', '开始!'] as const
+
+/** 开局倒计时单步时长（ms） */
+export const NOTE_SLICE_START_COUNTDOWN_STEP_MS = 1000
+
+/** 街机模式限时（秒） */
+export const NOTE_SLICE_ARCADE_DURATION_SECONDS = 60
+
+/** 街机模式切炸弹扣分 */
+export const NOTE_SLICE_ARCADE_BOMB_PENALTY = 10
+
+/** 无限模式初始生命数 */
+export const NOTE_SLICE_ENDLESS_LIVES = 3
+
+/** 将剩余毫秒格式化为 M:SS（向上取整到秒） */
+export function formatNoteSliceArcadeTimeRemaining(timeRemainingMs: number): string {
+  const totalSeconds = Math.max(0, Math.ceil(timeRemainingMs / 1000))
+  const minutes = Math.floor(totalSeconds / 60)
+  const seconds = totalSeconds % 60
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}

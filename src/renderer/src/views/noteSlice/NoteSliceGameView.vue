@@ -1,11 +1,50 @@
 <script lang="ts" setup>
+import { ref, watch } from 'vue'
 import NoteSliceGameHud from '@renderer/views/noteSlice/NoteSliceGameHud.vue'
 import NoteSliceGameLayer from '@renderer/views/noteSlice/NoteSliceGameLayer.vue'
 import NoteSliceStarfield from '@renderer/views/noteSlice/NoteSliceStarfield.vue'
+import NoteSliceStartCountdown from '@renderer/views/noteSlice/NoteSliceStartCountdown.vue'
+import type {
+  NoteSliceGameEndPayload,
+  NoteSliceGameMode
+} from '@renderer/views/noteSlice/noteSliceGameMode'
 import { provideNoteSliceGameSession } from '@renderer/views/noteSlice/useNoteSliceGameSession'
 
-// 页面级 session：分数、连击、音符块生成批次
-provideNoteSliceGameSession()
+const props = defineProps<{
+  mode: NoteSliceGameMode
+}>()
+
+const emit = defineEmits<{
+  gameEnd: [payload: NoteSliceGameEndPayload]
+}>()
+
+const session = provideNoteSliceGameSession(props.mode)
+
+type GameLayerExpose = {
+  startTick: () => void
+  stopTick: () => void
+}
+
+const gameLayerRef = ref<GameLayerExpose | null>(null)
+const showStartCountdown = ref(true)
+
+function onStartCountdownComplete(): void {
+  showStartCountdown.value = false
+  session.startGame()
+  gameLayerRef.value?.startTick()
+}
+
+watch(
+  () => session.isGameOver.value,
+  (isGameOver) => {
+    if (!isGameOver || session.gameEndReason.value === null) return
+    gameLayerRef.value?.stopTick()
+    emit('gameEnd', {
+      score: session.score.value,
+      reason: session.gameEndReason.value
+    })
+  }
+)
 </script>
 
 <template>
@@ -18,13 +57,16 @@ provideNoteSliceGameSession()
 
       <!-- 游戏层：音符块 + 清除特效 -->
       <div class="stackItem stackItem--game">
-        <NoteSliceGameLayer />
+        <NoteSliceGameLayer ref="gameLayerRef" />
       </div>
 
-      <!-- UI 层：返回、分数、连击 -->
+      <!-- UI 层：返回、分数、连击、模式信息 -->
       <div class="stackItem stackItem--ui">
         <NoteSliceGameHud />
       </div>
+
+      <!-- 开局倒计时：结束后手动 startTick -->
+      <NoteSliceStartCountdown v-if="showStartCountdown" @complete="onStartCountdownComplete" />
     </div>
   </div>
 </template>

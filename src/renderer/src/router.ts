@@ -58,19 +58,19 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/note-slice/arcade',
     name: 'noteSliceArcade',
-    component: () => import('./views/noteSlice/NoteSliceGameView.vue'),
+    component: () => import('./views/noteSlice/NoteSliceArcadeView.vue'),
     meta: { title: '街机模式' }
   },
   {
     path: '/note-slice/endless',
     name: 'noteSliceEndless',
-    component: () => import('./views/noteSlice/NoteSliceGameView.vue'),
+    component: () => import('./views/noteSlice/NoteSliceEndlessView.vue'),
     meta: { title: '无限模式' }
   },
   {
     path: '/note-slice/extreme',
     name: 'noteSliceExtreme',
-    component: () => import('./views/noteSlice/NoteSliceGameView.vue'),
+    component: () => import('./views/noteSlice/NoteSliceExtremeView.vue'),
     meta: { title: '极限模式' }
   }
 ]
