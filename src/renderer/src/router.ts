@@ -50,6 +50,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '素养训练营' }
   },
   {
+    path: '/achievements',
+    name: 'achievements',
+    component: () => import('./views/AchievementsView.vue'),
+    meta: { title: '成就' }
+  },
+  {
     path: '/collection',
     name: 'collection',
     component: () => import('./views/CollectionView.vue'),

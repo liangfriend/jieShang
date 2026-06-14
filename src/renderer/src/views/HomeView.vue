@@ -84,8 +84,8 @@ function goToWhiteboard() {
   router.push({ name: 'whiteboard' })
 }
 
-function goToLiteracyCamp() {
-  router.push({ name: 'literacyCamp' })
+function goToAchievements() {
+  router.push({ name: 'achievements' })
 }
 </script>
 
@@ -153,9 +153,9 @@ function goToLiteracyCamp() {
           <span class="action-label">教学白板</span>
         </button>
 
-        <button type="button" class="action-btn action-training" @click="goToLiteracyCamp">
-          <span class="action-emoji">🎯</span>
-          <span class="action-label">素养训练营</span>
+        <button type="button" class="action-btn action-achievements" @click="goToAchievements">
+          <span class="action-emoji">🏆</span>
+          <span class="action-label">成就</span>
         </button>
       </section>
     </main>
@@ -464,8 +464,8 @@ function goToLiteracyCamp() {
   background: rgba(232, 213, 255, 0.92);
 }
 
-.action-training:hover {
-  background: rgba(200, 248, 218, 0.92);
+.action-achievements:hover {
+  background: rgba(255, 232, 180, 0.92);
 }
 
 .action-emoji {
