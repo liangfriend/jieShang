@@ -16,6 +16,7 @@ import {
 } from '@renderer/views/noteSlice/noteSliceDifficultyConfig'
 import { createExtremeSpawnConfigManager } from '@renderer/views/noteSlice/noteSliceSpawnConfigManager'
 import { provideNoteSliceGameSession } from '@renderer/views/noteSlice/useNoteSliceGameSession'
+import { persistNoteSliceGameScore } from '@renderer/utils/noteSliceHighScoreHelper'
 
 const props = defineProps<{
   mode: NoteSliceGameMode
@@ -62,11 +63,15 @@ watch(
   () => session.isGameOver.value,
   (isGameOver) => {
     if (!isGameOver || session.gameEndReason.value === null) return
-    const survivalMs =
+    const score =
       props.mode === 'extreme' ? session.finalSurvivalMs.value : session.score.value
     gameLayerRef.value?.stopTick()
+    if (props.mode !== 'extreme') {
+      gameSettings.init()
+    }
+    void persistNoteSliceGameScore(props.mode, score, gameSettings.difficulty)
     emit('gameEnd', {
-      score: survivalMs,
+      score,
       reason: session.gameEndReason.value
     })
   }

@@ -109,37 +109,44 @@ export const ACHIEVEMENT_DEFINITIONS: readonly AchievementDefinition[] = [
     illustrationUrl: ''
   },
   {
-    key: 'note_slice_extreme_10s',
-    name: '勉强应对',
-    description: '极限模式存活10秒',
+    key: 'note_slice_extreme_30s',
+    name: '运气而已',
+    description: '极限模式存活30秒',
     reward: '无',
     illustrationUrl: ''
   },
   {
-    key: 'note_slice_extreme_30s',
-    name: '掌握规律',
-    description: '极限模式存活30秒',
-    reward: '曲谱皮肤-冰川',
-    illustrationUrl: ''
-  },
-  {
     key: 'note_slice_extreme_60s',
-    name: '视听进化',
-    description: '极限模式存活1分钟',
-    reward: '瀑布流-水银',
-    illustrationUrl: ''
-  },
-  {
-    key: 'note_slice_extreme_90s',
-    name: '人琴合一',
-    description: '极限模式存活1分30秒',
-    reward: '瀑布流-斑马线',
+    name: '勉强应对',
+    description: '极限模式存活60秒',
+    reward: '无',
     illustrationUrl: ''
   },
   {
     key: 'note_slice_extreme_120s',
+    name: '掌握规律',
+    description: '极限模式存活120秒',
+    reward: '曲谱皮肤-冰川',
+    illustrationUrl: ''
+  },
+  {
+    key: 'note_slice_extreme_150s',
+    name: '视听进化',
+    description: '极限模式存活150秒',
+    reward: '瀑布流-水银',
+    illustrationUrl: ''
+  },
+  {
+    key: 'note_slice_extreme_180s',
+    name: '人琴合一',
+    description: '极限模式存活180秒',
+    reward: '瀑布流-斑马线',
+    illustrationUrl: ''
+  },
+  {
+    key: 'note_slice_extreme_200s',
     name: '关了吧',
-    description: '极限模式存活2分钟',
+    description: '极限模式存活200秒',
     reward: '曲谱皮肤-虚无',
     illustrationUrl: ''
   }

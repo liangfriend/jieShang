@@ -1,4 +1,5 @@
 import type { GameDifficulty } from '@renderer/constant/gameSettings'
+import type { NoteSliceGameMode } from '@renderer/views/noteSlice/noteSliceGameMode'
 
 export type NoteSliceHighScoreMode = 'arcade' | 'endless' | 'extreme'
 
@@ -64,6 +65,21 @@ export async function upsertNoteSliceHighScoreIfHigher(
 /** 极限模式存活时间入榜（不受首页难度设置影响） */
 export async function upsertNoteSliceExtremeHighScoreIfHigher(survivalMs: number): Promise<void> {
   await window.api.noteSliceHighScore.upsertIfHigher('extreme', 'standard', survivalMs)
+}
+
+/** 一局结束时写入数据库（街机/无限按难度更新最高分；极限写入存活时间） */
+export async function persistNoteSliceGameScore(
+  mode: NoteSliceGameMode,
+  score: number,
+  difficulty?: GameDifficulty
+): Promise<void> {
+  const normalizedScore = Math.max(0, Math.floor(score))
+  if (mode === 'extreme') {
+    await upsertNoteSliceExtremeHighScoreIfHigher(normalizedScore)
+    return
+  }
+  if (!difficulty || !isRankedDifficulty(difficulty)) return
+  await upsertNoteSliceHighScoreIfHigher(mode, difficulty, normalizedScore)
 }
 
 export type NoteSliceHighScoreMatrixRow = {

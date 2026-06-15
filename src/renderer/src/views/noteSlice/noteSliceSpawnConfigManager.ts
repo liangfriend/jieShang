@@ -131,13 +131,13 @@ type ExtremeKeyUnlock = {
 
 /** 调号按时间逐步解锁（累积） */
 const EXTREME_KEY_UNLOCKS: ExtremeKeyUnlock[] = [
-  { fromMs: 10_000, keys: [KeySignatureTypeEnum.F, KeySignatureTypeEnum.G] },
-  { fromMs: 15_000, keys: [KeySignatureTypeEnum.D, KeySignatureTypeEnum.B_flat] },
-  { fromMs: 20_000, keys: [KeySignatureTypeEnum.A, KeySignatureTypeEnum.E_flat] },
-  { fromMs: 25_000, keys: [KeySignatureTypeEnum.E, KeySignatureTypeEnum.A_flat] },
-  { fromMs: 30_000, keys: [KeySignatureTypeEnum.B, KeySignatureTypeEnum.D_flat] },
-  { fromMs: 35_000, keys: [KeySignatureTypeEnum.F_sharp, KeySignatureTypeEnum.G_flat] },
-  { fromMs: 40_000, keys: [KeySignatureTypeEnum.C_sharp, KeySignatureTypeEnum.C_flat] }
+  { fromMs: 20_000, keys: [KeySignatureTypeEnum.F, KeySignatureTypeEnum.G] },
+  { fromMs: 30_000, keys: [KeySignatureTypeEnum.D, KeySignatureTypeEnum.B_flat] },
+  { fromMs: 40_000, keys: [KeySignatureTypeEnum.A, KeySignatureTypeEnum.E_flat] },
+  { fromMs: 50_000, keys: [KeySignatureTypeEnum.E, KeySignatureTypeEnum.A_flat] },
+  { fromMs: 60_000, keys: [KeySignatureTypeEnum.B, KeySignatureTypeEnum.D_flat] },
+  { fromMs: 70_000, keys: [KeySignatureTypeEnum.F_sharp, KeySignatureTypeEnum.G_flat] },
+  { fromMs: 80_000, keys: [KeySignatureTypeEnum.C_sharp, KeySignatureTypeEnum.C_flat] }
 ]
 
 function resolveExtremeAllowedKeySignatures(passTimeMs: number): KeySignatureTypeEnum[] {
@@ -153,18 +153,18 @@ function resolveExtremeAllowedKeySignatures(passTimeMs: number): KeySignatureTyp
 }
 
 function resolveExtremeAllowedClefs(passTimeMs: number): MidiBrickClef[] {
-  if (passTimeMs >= 40_000) {
+  if (passTimeMs >= 80_000) {
     return [...MIDI_BRICK_CLEFS]
   }
   return [...TREBLE_BASS]
 }
 
 function resolveExtremeAllowDoubleAccidentals(passTimeMs: number): boolean {
-  return passTimeMs >= 30_000
+  return passTimeMs >= 60_000
 }
 
 function resolveExtremeAllowSingleAccidentals(passTimeMs: number): boolean {
-  return passTimeMs >= 5_000
+  return passTimeMs >= 10_000
 }
 
 function scaleSpawnSeconds(value: number, decay: number): number {
