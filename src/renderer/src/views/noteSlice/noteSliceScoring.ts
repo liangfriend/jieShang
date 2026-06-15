@@ -53,19 +53,21 @@ export function resolveNoteSliceClearComboState(
   }
 }
 
-/** 根据清除的音符块更新分数与连击 */
+/** 根据清除的音符块更新分数与连击；scoreMultiplier 为加倍增益等额外倍率 */
 export function applyNoteSliceClearScore(
   state: NoteSliceScoreState,
-  clearedBlocks: readonly NoteSliceClearedBlockScoreInput[]
+  clearedBlocks: readonly NoteSliceClearedBlockScoreInput[],
+  scoreMultiplier = 1
 ): NoteSliceScoreState {
   if (clearedBlocks.length === 0) return state
 
   const basePoints = clearedBlocks.reduce((sum, block) => sum + block.noteCount, 0)
   const { combo, lastClearedBatch } = resolveNoteSliceClearComboState(state, clearedBlocks)
   const multiplier = resolveNoteSliceComboMultiplier(combo)
+  const extraMultiplier = Math.max(1, scoreMultiplier)
 
   return {
-    score: state.score + basePoints * multiplier,
+    score: state.score + basePoints * multiplier * extraMultiplier,
     combo,
     lastClearedBatch
   }

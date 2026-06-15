@@ -1,90 +1,59 @@
-import { ClefTypeEnum } from 'deciphony-renderer'
 import {
   DEFAULT_GAME_DIFFICULTY,
   type GameDifficulty
 } from '@renderer/constant/gameSettings'
 import { useGameSettingsStore } from '@renderer/store/gameSettings.store'
-import { MIDI_BRICK_CLEFS, type MidiBrickClef } from '@renderer/views/noteSlice/midiBrickBuilder'
 import {
-  NOTE_SLICE_BOMB_SPAWN_AVG_SECONDS,
-  NOTE_SLICE_SPAWN_AVG_SECONDS,
-  NOTE_SLICE_SPAWN_COOLDOWN_SECONDS
-} from '@renderer/views/noteSlice/noteSliceGameConstants'
+  bindNoteSliceSpawnConfigManager,
+  clearNoteSliceSpawnConfigManager,
+  createPresetSpawnConfigManager,
+  getActiveSpawnConfig,
+  resolvePresetSpawnRuntimeConfig,
+  type NoteSliceSpawnConfigManager
+} from '@renderer/views/noteSlice/noteSliceSpawnConfigManager'
+import type { NoteSliceSpawnRuntimeConfig } from '@renderer/views/noteSlice/noteSliceSpawnRuntimeConfig'
 
-export type NoteSliceDifficultySpawnConfig = {
-  midiMin: number
-  midiMax: number
-  /** 允许参与随机选谱号的列表 */
-  allowedClefs: readonly MidiBrickClef[]
-  allowDoubleAccidentals: boolean
-  /** 平均多少秒尝试生成一个普通音符块 */
-  spawnAvgSeconds: number
-  /** 每次成功生成后的冷却（秒） */
-  spawnCooldownSeconds: number
-  /** 平均多少秒尝试生成一个炸弹块 */
-  bombSpawnAvgSeconds: number
-}
+export type { NoteSliceSpawnRuntimeConfig as NoteSliceDifficultySpawnConfig }
 
-const TREBLE_ONLY: readonly MidiBrickClef[] = [ClefTypeEnum.Treble]
-const TREBLE_BASS: readonly MidiBrickClef[] = [ClefTypeEnum.Treble, ClefTypeEnum.Bass]
-
-/** 各难度对应的音符块生成预制参数 */
-export const NOTE_SLICE_DIFFICULTY_CONFIG: Record<GameDifficulty, NoteSliceDifficultySpawnConfig> =
-  {
-    test: {
-      midiMin: 60,
-      midiMax: 61,
-      allowedClefs: TREBLE_ONLY,
-      allowDoubleAccidentals: true,
-      spawnAvgSeconds: NOTE_SLICE_SPAWN_AVG_SECONDS,
-      spawnCooldownSeconds: NOTE_SLICE_SPAWN_COOLDOWN_SECONDS,
-      bombSpawnAvgSeconds: NOTE_SLICE_BOMB_SPAWN_AVG_SECONDS
-    },
-    easy: {
-      midiMin: 38,
-      midiMax: 83,
-      allowedClefs: TREBLE_BASS,
-      allowDoubleAccidentals: false,
-      spawnAvgSeconds: 0.65,
-      spawnCooldownSeconds: 0.55,
-      bombSpawnAvgSeconds: 5.5
-    },
-    standard: {
-      midiMin: 38,
-      midiMax: 83,
-      allowedClefs: MIDI_BRICK_CLEFS,
-      allowDoubleAccidentals: true,
-      spawnAvgSeconds: NOTE_SLICE_SPAWN_AVG_SECONDS,
-      spawnCooldownSeconds: NOTE_SLICE_SPAWN_COOLDOWN_SECONDS,
-      bombSpawnAvgSeconds: NOTE_SLICE_BOMB_SPAWN_AVG_SECONDS
-    },
-    hard: {
-      midiMin: 21,
-      midiMax: 108,
-      allowedClefs: MIDI_BRICK_CLEFS,
-      allowDoubleAccidentals: true,
-      spawnAvgSeconds: 0.35,
-      spawnCooldownSeconds: 0.4,
-      bombSpawnAvgSeconds: 4
-    }
+/** @deprecated 使用 resolvePresetSpawnRuntimeConfig */
+export const NOTE_SLICE_DIFFICULTY_CONFIG = {
+  get test() {
+    return resolvePresetSpawnRuntimeConfig('test')
+  },
+  get easy() {
+    return resolvePresetSpawnRuntimeConfig('easy')
+  },
+  get standard() {
+    return resolvePresetSpawnRuntimeConfig('standard')
+  },
+  get hard() {
+    return resolvePresetSpawnRuntimeConfig('hard')
   }
+} as Record<GameDifficulty, NoteSliceSpawnRuntimeConfig>
 
 export function resolveNoteSliceDifficultyConfig(
   difficulty: GameDifficulty
-): NoteSliceDifficultySpawnConfig {
-  return NOTE_SLICE_DIFFICULTY_CONFIG[difficulty] ?? NOTE_SLICE_DIFFICULTY_CONFIG[DEFAULT_GAME_DIFFICULTY]
+): NoteSliceSpawnRuntimeConfig {
+  return resolvePresetSpawnRuntimeConfig(difficulty)
 }
 
-/** 读取首页设置中当前选中的难度配置 */
 let boundGameDifficulty: GameDifficulty | null = null
 
-/** 本局游戏开始时绑定难度，避免与 store 读取不同步 */
+/** 本局游戏开始时绑定难度，并挂载对应参数管理器 */
 export function bindNoteSliceGameDifficulty(difficulty: GameDifficulty): void {
   boundGameDifficulty = difficulty
+  bindNoteSliceSpawnConfigManager(createPresetSpawnConfigManager(difficulty))
+}
+
+/** 绑定自定义参数管理器（极限模式等） */
+export function bindNoteSliceSpawnManager(manager: NoteSliceSpawnConfigManager): void {
+  boundGameDifficulty = null
+  bindNoteSliceSpawnConfigManager(manager)
 }
 
 export function clearNoteSliceGameDifficulty(): void {
   boundGameDifficulty = null
+  clearNoteSliceSpawnConfigManager()
 }
 
 export function getActiveNoteSliceDifficulty(): GameDifficulty {
@@ -94,7 +63,9 @@ export function getActiveNoteSliceDifficulty(): GameDifficulty {
   return useGameSettingsStore().difficulty
 }
 
-/** 读取当前生效的难度生成配置 */
-export function getActiveNoteSliceDifficultyConfig(): NoteSliceDifficultySpawnConfig {
-  return resolveNoteSliceDifficultyConfig(getActiveNoteSliceDifficulty())
+/** 读取当前生效的生成配置（使用 tick 写入的 passTime，或显式传入） */
+export function getActiveNoteSliceDifficultyConfig(
+  passTimeMs?: number
+): NoteSliceSpawnRuntimeConfig {
+  return getActiveSpawnConfig(passTimeMs)
 }

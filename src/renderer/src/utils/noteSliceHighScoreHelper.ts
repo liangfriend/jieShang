@@ -61,6 +61,11 @@ export async function upsertNoteSliceHighScoreIfHigher(
   await window.api.noteSliceHighScore.upsertIfHigher(mode, difficulty, score)
 }
 
+/** 极限模式存活时间入榜（不受首页难度设置影响） */
+export async function upsertNoteSliceExtremeHighScoreIfHigher(survivalMs: number): Promise<void> {
+  await window.api.noteSliceHighScore.upsertIfHigher('extreme', 'standard', survivalMs)
+}
+
 export type NoteSliceHighScoreMatrixRow = {
   mode: NoteSliceHighScoreMode
   modeLabel: string

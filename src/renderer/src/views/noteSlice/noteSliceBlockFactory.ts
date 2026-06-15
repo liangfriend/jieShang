@@ -5,7 +5,10 @@ import {
 import {
   NOTE_SLICE_BLOCK_SHELL_HEIGHT,
   NOTE_SLICE_BLOCK_SHELL_WIDTH,
-  NOTE_SLICE_BOMB_BATCH
+  NOTE_SLICE_BOMB_BATCH,
+  NOTE_SLICE_DOUBLE_BATCH,
+  NOTE_SLICE_FREEZE_BATCH,
+  NOTE_SLICE_HEAL_BATCH
 } from '@renderer/views/noteSlice/noteSliceGameConstants'
 import { getActiveNoteSliceDifficultyConfig } from '@renderer/views/noteSlice/noteSliceDifficultyConfig'
 import { applyNoteSliceBrickScoreLayout } from '@renderer/views/noteSlice/noteSliceBrickLayout'
@@ -17,7 +20,7 @@ import {
 
 export { NOTE_SLICE_SPAWN_CLEF_MIDI_RANGES, resolveSpawnClefsForMidi }
 
-export type NoteSliceBlockType = 'normal' | 'bomb'
+export type NoteSliceBlockType = 'normal' | 'bomb' | 'heal' | 'freeze' | 'double'
 
 export type NoteSliceActiveBlock = {
   id: string
@@ -52,16 +55,22 @@ export function buildNoteSliceBlockWithMidi(
 ): Omit<NoteSliceActiveBlock, 'slotIndex' | 'batch' | 'x' | 'y' | 'ageMs'> | null {
   const random = options.random ?? Math.random
   const type = options.type ?? 'normal'
-  const { midiMin, midiMax } = getActiveNoteSliceDifficultyConfig()
+  const { midiMin, midiMax, allowDoubleAccidentals, allowSingleAccidentals, allowedKeySignatures } =
+    getActiveNoteSliceDifficultyConfig()
   if (midi < midiMin || midi > midiMax) return null
 
   const clefs = resolveSpawnClefsForMidi(midi)
   if (clefs.length === 0) return null
 
-  const { allowDoubleAccidentals } = getActiveNoteSliceDifficultyConfig()
   let brick
   try {
-    brick = generateRandomMidiBrickScore(midi, { random, clefs, allowDoubleAccidentals })
+    brick = generateRandomMidiBrickScore(midi, {
+      random,
+      clefs,
+      keySignatures: allowedKeySignatures,
+      allowSingleAccidentals,
+      allowDoubleAccidentals
+    })
   } catch {
     return null
   }
@@ -92,4 +101,4 @@ export function buildRandomNoteSliceBlock(
   return buildNoteSliceBlockWithMidi(id, midi, { type, random })
 }
 
-export { NOTE_SLICE_BOMB_BATCH }
+export { NOTE_SLICE_BOMB_BATCH, NOTE_SLICE_DOUBLE_BATCH, NOTE_SLICE_FREEZE_BATCH, NOTE_SLICE_HEAL_BATCH }

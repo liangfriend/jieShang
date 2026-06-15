@@ -11,8 +11,10 @@ import type {
 } from '@renderer/views/noteSlice/noteSliceGameMode'
 import {
   bindNoteSliceGameDifficulty,
+  bindNoteSliceSpawnManager,
   clearNoteSliceGameDifficulty
 } from '@renderer/views/noteSlice/noteSliceDifficultyConfig'
+import { createExtremeSpawnConfigManager } from '@renderer/views/noteSlice/noteSliceSpawnConfigManager'
 import { provideNoteSliceGameSession } from '@renderer/views/noteSlice/useNoteSliceGameSession'
 
 const props = defineProps<{
@@ -25,12 +27,16 @@ const emit = defineEmits<{
 
 const gameSettings = useGameSettingsStore()
 
-function syncGameDifficultyFromSettings(): void {
+function syncSpawnConfigManager(): void {
+  if (props.mode === 'extreme') {
+    bindNoteSliceSpawnManager(createExtremeSpawnConfigManager())
+    return
+  }
   gameSettings.init()
   bindNoteSliceGameDifficulty(gameSettings.difficulty)
 }
 
-syncGameDifficultyFromSettings()
+syncSpawnConfigManager()
 
 onUnmounted(() => {
   clearNoteSliceGameDifficulty()
@@ -58,7 +64,7 @@ watch(
     if (!isGameOver || session.gameEndReason.value === null) return
     gameLayerRef.value?.stopTick()
     emit('gameEnd', {
-      score: session.score.value,
+      score: props.mode === 'extreme' ? session.passTimeMs.value : session.score.value,
       reason: session.gameEndReason.value
     })
   }

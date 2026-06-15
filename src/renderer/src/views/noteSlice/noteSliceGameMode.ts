@@ -1,5 +1,5 @@
-/** 已实现的游戏模式（极限模式暂未接入） */
-export type NoteSliceGameMode = 'arcade' | 'endless'
+/** 已实现的游戏模式 */
+export type NoteSliceGameMode = 'arcade' | 'endless' | 'extreme'
 
 export type NoteSliceGameEndReason = 'time_up' | 'no_lives'
 
@@ -20,8 +20,10 @@ export const NOTE_SLICE_ARCADE_DURATION_SECONDS = 60
 /** 街机模式切炸弹扣分 */
 export const NOTE_SLICE_ARCADE_BOMB_PENALTY = 10
 
-/** 无限模式初始生命数 */
+/** 无限 / 极限模式初始生命数 */
 export const NOTE_SLICE_ENDLESS_LIVES = 3
+
+export const NOTE_SLICE_EXTREME_LIVES = NOTE_SLICE_ENDLESS_LIVES
 
 /** 将剩余毫秒格式化为 M:SS（向上取整到秒） */
 export function formatNoteSliceArcadeTimeRemaining(timeRemainingMs: number): string {
@@ -29,4 +31,12 @@ export function formatNoteSliceArcadeTimeRemaining(timeRemainingMs: number): str
   const minutes = Math.floor(totalSeconds / 60)
   const seconds = totalSeconds % 60
   return `${minutes}:${seconds.toString().padStart(2, '0')}`
+}
+
+/** 极限模式已过时间：秒.毫秒，如 127.251 表示 127 秒 251 毫秒 */
+export function formatNoteSliceExtremeElapsed(passTimeMs: number): string {
+  const totalMs = Math.max(0, Math.floor(passTimeMs))
+  const seconds = Math.floor(totalMs / 1000)
+  const ms = totalMs % 1000
+  return `${seconds}.${ms.toString().padStart(3, '0')}`
 }

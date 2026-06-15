@@ -64,6 +64,8 @@ export type GenerateMidiBrickOptions = {
   keySignatures?: readonly KeySignatureTypeEnum[]
   /** 是否允许重升号 / 重降号，默认 true */
   allowDoubleAccidentals?: boolean
+  /** 是否允许升号 / 降号，默认 true */
+  allowSingleAccidentals?: boolean
   /** 随机源，默认 Math.random */
   random?: () => number
   measureWidthRatio?: number
@@ -116,11 +118,15 @@ type WrittenAccidentalChoice = 'none' | AccidentalTypeEnum
 
 function collectValidPlacements(
   map: NoteRegionsByAccidental,
+  allowSingleAccidentals: boolean,
   allowDoubleAccidentals: boolean
 ): { choice: WrittenAccidentalChoice; region: number }[] {
   const list: { choice: WrittenAccidentalChoice; region: number }[] = []
   if (map.none != null) {
     list.push({ choice: 'none', region: map.none })
+  }
+  if (!allowSingleAccidentals) {
+    return list
   }
   for (const accidental of WRITTEN_ACCIDENTAL_CHOICES) {
     if (
@@ -142,11 +148,17 @@ function pickNotePlacement(
   clef: MidiBrickClef,
   midi: number,
   keySignature: KeySignatureTypeEnum,
-  options?: { random?: () => number; allowDoubleAccidentals?: boolean }
+  options?: {
+    random?: () => number
+    allowSingleAccidentals?: boolean
+    allowDoubleAccidentals?: boolean
+  }
 ): { region: number; accidental: AccidentalTypeEnum | null } {
+  const allowSingleAccidentals = options?.allowSingleAccidentals ?? true
   const allowDoubleAccidentals = options?.allowDoubleAccidentals ?? true
   const choices = collectValidPlacements(
     getAllNoteRegion(clef, midi, keySignature),
+    allowSingleAccidentals,
     allowDoubleAccidentals
   )
   if (choices.length === 0) {
@@ -166,13 +178,15 @@ export function buildMidiBrickScore(
   keySignature: KeySignatureTypeEnum,
   layout?: Pick<
     GenerateMidiBrickOptions,
-    'measureWidthRatio' | 'scoreWidth' | 'scoreHeight' | 'random' | 'allowDoubleAccidentals'
+    'measureWidthRatio' | 'scoreWidth' | 'scoreHeight' | 'random' | 'allowSingleAccidentals' | 'allowDoubleAccidentals'
   >
 ): GeneratedMidiBrick {
   const normalizedMidi = clampMidi(midi)
+  const allowSingleAccidentals = layout?.allowSingleAccidentals ?? true
   const allowDoubleAccidentals = layout?.allowDoubleAccidentals ?? true
   const { region, accidental } = pickNotePlacement(clef, normalizedMidi, keySignature, {
     random: layout?.random,
+    allowSingleAccidentals,
     allowDoubleAccidentals
   })
 
@@ -242,7 +256,13 @@ export function generateRandomMidiBrickScore(
 
   const clef = pickRandom(clefCandidates, random)
   const keySignature = pickRandom(keyCandidates, random)
+  const allowSingleAccidentals = options.allowSingleAccidentals ?? true
   const allowDoubleAccidentals = options.allowDoubleAccidentals ?? true
 
-  return buildMidiBrickScore(midi, clef, keySignature, { ...options, random, allowDoubleAccidentals })
+  return buildMidiBrickScore(midi, clef, keySignature, {
+    ...options,
+    random,
+    allowSingleAccidentals,
+    allowDoubleAccidentals
+  })
 }

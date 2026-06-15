@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { Document, EditPen, Setting } from '@element-plus/icons-vue'
-import { ElMessage } from 'element-plus'
 import HomeSettingsDialog from '@renderer/components/HomeSettingsDialog.vue'
 import { HOME_TEMPLATE_TO_ROUTE } from '@renderer/utils/scoreRoute'
 import { useMidiStore } from '@renderer/store/midi.store'
@@ -57,10 +56,6 @@ const templateGroups = [
 ]
 
 function goToGameMode(routeName: (typeof gameModes)[number]['route']) {
-  if (routeName === 'noteSliceExtreme') {
-    ElMessage.info('加紧开发中...')
-    return
-  }
   router.push({ name: routeName })
 }
 
