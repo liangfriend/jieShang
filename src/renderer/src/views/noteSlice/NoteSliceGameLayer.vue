@@ -579,13 +579,6 @@ function stopTick(): void {
     rafId = 0
   }
   lastTimestamp = 0
-  elapsedMs = 0
-  passTimeMs.value = 0
-  spawnCooldownMs = 0
-  bombSpawnCooldownMs = 0
-  freezeSpawnCooldownMs = 0
-  doubleSpawnCooldownMs = 0
-  healSpawnCooldownMs = 0
 }
 
 defineExpose({

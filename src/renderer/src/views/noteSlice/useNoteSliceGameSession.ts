@@ -23,6 +23,8 @@ export type NoteSliceGameSession = {
   isRunning: Ref<boolean>
   /** 开局后经过的时间（ms），由 GameLayer tick 写入 */
   passTimeMs: Ref<number>
+  /** 极限模式结束时锁定的存活时间（ms），用于结算展示 */
+  finalSurvivalMs: Ref<number>
   isGameOver: Ref<boolean>
   gameEndReason: Ref<NoteSliceGameEndReason | null>
   /** 倒计时结束后调用，开始计时 / 启用输入 */
@@ -74,6 +76,7 @@ export function provideNoteSliceGameSession(mode: NoteSliceGameMode): NoteSliceG
   )
   const isRunning = ref(false)
   const passTimeMs = ref(0)
+  const finalSurvivalMs = ref(0)
   const isGameOver = ref(false)
   const gameEndReason = ref<NoteSliceGameEndReason | null>(null)
   const isFrozen = ref(false)
@@ -89,6 +92,9 @@ export function provideNoteSliceGameSession(mode: NoteSliceGameMode): NoteSliceG
 
   function endGame(reason: NoteSliceGameEndReason): void {
     if (isGameOver.value) return
+    if (mode === 'extreme') {
+      finalSurvivalMs.value = passTimeMs.value
+    }
     isRunning.value = false
     isGameOver.value = true
     gameEndReason.value = reason
@@ -97,6 +103,7 @@ export function provideNoteSliceGameSession(mode: NoteSliceGameMode): NoteSliceG
   function startGame(): void {
     isRunning.value = true
     passTimeMs.value = 0
+    finalSurvivalMs.value = 0
     isGameOver.value = false
     gameEndReason.value = null
     isFrozen.value = false
@@ -223,6 +230,7 @@ export function provideNoteSliceGameSession(mode: NoteSliceGameMode): NoteSliceG
     lives,
     isRunning,
     passTimeMs,
+    finalSurvivalMs,
     isGameOver,
     gameEndReason,
     startGame,

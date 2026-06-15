@@ -62,9 +62,11 @@ watch(
   () => session.isGameOver.value,
   (isGameOver) => {
     if (!isGameOver || session.gameEndReason.value === null) return
+    const survivalMs =
+      props.mode === 'extreme' ? session.finalSurvivalMs.value : session.score.value
     gameLayerRef.value?.stopTick()
     emit('gameEnd', {
-      score: props.mode === 'extreme' ? session.passTimeMs.value : session.score.value,
+      score: survivalMs,
       reason: session.gameEndReason.value
     })
   }
