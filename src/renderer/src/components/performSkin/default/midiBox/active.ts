@@ -1,16 +1,18 @@
 import type { CSSProperties } from 'vue'
-import type { MidiBoxBlockStyleInput } from '../../types'
-import { getDefaultMidiBoxNormalBlockStyle } from './normal'
+import type { MidiBoxBlockCanvasCommand } from '../../types'
+import { drawSolidLayerBackground } from '../../canvas/simpleFillEffect'
 
 const ACTIVE_COLOR = '#2196f3'
 
-export function getDefaultMidiBoxActiveBlockStyle(input: MidiBoxBlockStyleInput): CSSProperties {
-  const base = getDefaultMidiBoxNormalBlockStyle(input)
-  return {
-    ...base,
-    background: ACTIVE_COLOR,
-    boxShadow: '0 0 8px 2px rgba(33, 150, 243, 0.65)'
-  }
+export const defaultMidiBoxActiveBlock: MidiBoxBlockCanvasCommand = {
+  drawBackground(ctx, input) {
+    drawSolidLayerBackground(ctx, ACTIVE_COLOR, input)
+  },
+  getShape: (input) => ({
+    width: input.blockSize,
+    borderRadius: 3,
+    opacity: input.fallen ? 0.35 : 1
+  })
 }
 
 export function getDefaultMidiBoxKeyActiveBarStyle(input: {

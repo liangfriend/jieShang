@@ -17,25 +17,26 @@ import { useMidiStore } from '@renderer/store/midi.store'
 import { usePerformSkin } from '@renderer/components/performSkin/usePerformSkin'
 import {
   buildMidiColumnLayouts,
-  drawWaterfallFrame,
-  parseColumnVisual,
+  drawWaterfallActiveLayer,
+  drawWaterfallNormalLayer,
   type WaterfallHighlightDraw,
   type WaterfallNoteDraw
 } from '@renderer/utils/pianoWaterfallCanvasRenderer'
+import {
+  drawPerformBackgroundLayer,
+  syncPerformCanvasStack,
+  type PerformCanvasContexts
+} from '@renderer/utils/performCanvasStack'
+import {
+  drawPerformOverlayLayer,
+  preloadPerformOverlayAssets
+} from '@renderer/utils/performCanvasOverlayRenderer'
 
 defineOptions({
   name: 'DsPianoWaterfallCanvas'
 })
 
-const { skin, skinBgStyle, skinBaselineBgStyle } = usePerformSkin()
-
-function baselineMidiActiveBg(svg: string): CSSProperties {
-  return {
-    backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`,
-    backgroundSize: '100% 100%',
-    backgroundRepeat: 'no-repeat'
-  }
-}
+const { skin, skinBgStyle } = usePerformSkin()
 
 const emit = defineEmits<{
   /** 单个音符评分完成：评分结果、实时分、总分、第三个附加参数(noteInfo id) */
@@ -302,44 +303,6 @@ const pianoWaterfallContainerStyle = computed(
   })
 )
 
-const midiEventStyle = computed(() => {
-  return (midi: number): CSSProperties => {
-    const active = activeKeys.value.has(midi)
-    const layout = skin.value.waterfall.keyActiveBar({
-      width: getMidiWidth(midi),
-      active
-    })
-    if (!active) return layout
-    return { ...layout, ...baselineMidiActiveBg(skin.value.baselineMidiActiveSvg) }
-  }
-})
-
-const baselineLineStyle = computed((): CSSProperties => {
-  const { height, background: _bg, ...rest } = skin.value.baseline
-  return {
-    bottom: `${props.baseLineBottom}px`,
-    left: 0,
-    right: 0,
-    height: height ?? '3px',
-    zIndex: 3,
-    ...rest,
-    ...skinBaselineBgStyle.value
-  }
-})
-
-const midiEventContainerStyle = computed(
-  (): CSSProperties => ({
-    bottom: `${props.baseLineBottom - 4}px`,
-    left: 0,
-    right: 0,
-    height: '10px',
-    display: 'flex',
-    alignItems: 'flex-end',
-    zIndex: 4,
-    overflow: 'visible'
-  })
-)
-
 const defaultHighlightPolicy: HighlightPolicy = {
   startTriggerThreshold: 200,
   postTriggerThreshold: 200,
@@ -517,58 +480,78 @@ const drawHighlights = computed<WaterfallHighlightDraw[]>(() => {
   return list
 })
 
-let canvasCtx: CanvasRenderingContext2D | null = null
-let canvasDpr = 1
+const bgCanvasRef = ref<HTMLCanvasElement | null>(null)
+const normalCanvasRef = ref<HTMLCanvasElement | null>(null)
+const activeCanvasRef = ref<HTMLCanvasElement | null>(null)
+const overlayCanvasRef = ref<HTMLCanvasElement | null>(null)
+let canvasStack: PerformCanvasContexts | null = null
 
 function syncCanvasSize() {
-  const canvas = canvasRef.value
-  const container = containerRef.value
-  if (!canvas || !container) return
-
-  const rect = container.getBoundingClientRect()
-  const width = Math.max(1, Math.floor(rect.width))
-  const height = Math.max(1, Math.floor(rect.height))
-  const dpr = window.devicePixelRatio || 1
-
-  canvasDpr = dpr
-  canvas.width = Math.floor(width * dpr)
-  canvas.height = Math.floor(height * dpr)
-  canvas.style.width = `${width}px`
-  canvas.style.height = `${height}px`
-
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-  canvasCtx = ctx
+  if (!containerRef.value) return
+  canvasStack = syncPerformCanvasStack(
+    {
+      bg: bgCanvasRef.value,
+      normal: normalCanvasRef.value,
+      active: activeCanvasRef.value,
+      overlay: overlayCanvasRef.value
+    },
+    containerRef.value
+  )
 }
 
 function drawFrame() {
-  if (!canvasCtx || !containerSize.value.width) return
+  if (!canvasStack?.normal || !canvasStack.active || !canvasStack.overlay || !containerSize.value.width)
+    return
 
-  const width = containerSize.value.width
-  const height = containerSize.value.height
-
-  drawWaterfallFrame({
-    ctx: canvasCtx,
+  const { bg, normal, active, overlay, width, height, dpr } = canvasStack
+  const layerBase = {
     width,
     height,
+    dpr,
     baseLineBottom: props.baseLineBottom,
     columnHeightConstant: props.columnHeightConstant,
     currentTime: currentTime.value,
-    midiLayouts: midiColumnLayouts.value,
+    midiLayouts: midiColumnLayouts.value
+  }
+
+  if (bg) drawPerformBackgroundLayer(bg, width, height)
+
+  drawWaterfallNormalLayer({
+    ctx: normal,
+    ...layerBase,
     notes: drawNotes.value,
-    highlights: drawHighlights.value,
-    getNormalVisual: (input) => {
-      const style = skin.value.waterfall.normalColumn(input)
-      const noteHeight = (input.end - input.start) * input.columnHeightConstant
-      return parseColumnVisual(style, noteHeight)
-    },
-    getActiveVisual: (input) => {
-      const style = skin.value.waterfall.activeColumn(input)
-      const noteHeight = (input.end - input.start) * input.columnHeightConstant
-      return parseColumnVisual(style, noteHeight)
-    }
+    command: skin.value.waterfall.normalColumn
   })
+
+  drawWaterfallActiveLayer({
+    ctx: active,
+    ...layerBase,
+    highlights: drawHighlights.value,
+    command: skin.value.waterfall.activeColumn
+  })
+
+  drawPerformOverlayLayer({
+    ctx: overlay,
+    width,
+    height,
+    baseLineBottom: props.baseLineBottom,
+    midiMin: props.midi.min,
+    midiMax: props.midi.max,
+    activeKeys: activeKeys.value,
+    midiLayouts: midiColumnLayouts.value,
+    baselineSvg: skin.value.baselineSvg,
+    baselineMidiActiveSvg: skin.value.baselineMidiActiveSvg,
+    baselineStyle: skin.value.baseline,
+    getKeyActiveBarStyle: (input) => skin.value.waterfall.keyActiveBar(input)
+  })
+}
+
+async function preloadOverlayAssets() {
+  await preloadPerformOverlayAssets({
+    baselineSvg: skin.value.baselineSvg,
+    baselineMidiActiveSvg: skin.value.baselineMidiActiveSvg
+  })
+  drawFrame()
 }
 
 let resizeObserver: ResizeObserver | null = null
@@ -600,13 +583,21 @@ watch(
   }
 )
 
+watch(activeKeys, () => drawFrame())
+
+watch(
+  () => [skin.value.baselineSvg, skin.value.baselineMidiActiveSvg] as const,
+  () => {
+    void preloadOverlayAssets()
+  }
+)
+
 watch(
   [
     () => props.performSequence,
     () => props.midi,
     () => props.columnHeightConstant,
     () => props.prepareTime,
-    () => skin.value,
     drawHighlights,
     () => state.value
   ],
@@ -621,7 +612,7 @@ onMounted(async () => {
   await nextTick()
   observeContainer()
   syncCanvasSize()
-  drawFrame()
+  await preloadOverlayAssets()
   window.addEventListener('keydown', keyBoardKeyDown)
   window.addEventListener('keyup', keyBoardKeyUp)
   midiStore.addMessageListener(handleMidiMessage)
@@ -757,19 +748,22 @@ defineExpose({
     class="hide-scrollbar stack"
     comment="滚动容器"
   >
-    <canvas ref="canvasRef" class="waterfall-canvas stackItem" comment="瀑布流 canvas" />
-    <div :style="baselineLineStyle" class="stackItem stackItem--layer" comment="基准线" />
-    <div
-      :style="midiEventContainerStyle"
-      class="stackItem stackItem--layer"
-      comment="midi按下基准线高亮"
-    >
-      <div
-        v-for="midi in Array.from({ length: midi.max - midi.min + 1 }, (_, i) => midi.min + i)"
-        :key="midi"
-        :style="midiEventStyle(midi)"
-      ></div>
-    </div>
+    <canvas ref="bgCanvasRef" class="perform-layer perform-layer--bg" comment="第一层：背景占位" />
+    <canvas
+      ref="normalCanvasRef"
+      class="perform-layer perform-layer--normal"
+      comment="第二层：normal 水柱"
+    />
+    <canvas
+      ref="activeCanvasRef"
+      class="perform-layer perform-layer--active"
+      comment="第三层：active 水柱"
+    />
+    <canvas
+      ref="overlayCanvasRef"
+      class="perform-layer perform-layer--overlay"
+      comment="第四层：基准线与琴键高亮"
+    />
   </div>
 </template>
 
@@ -789,26 +783,16 @@ defineExpose({
   width: 100%;
 }
 
-.waterfall-canvas {
+.perform-layer {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   pointer-events: none;
 }
 
-.stackItem {
-  pointer-events: none;
-  position: absolute;
-  height: 100%;
-  width: 100%;
-
-  > * {
-    pointer-events: auto;
-  }
-}
-
-.stackItem--layer {
-  height: auto;
-  width: 100%;
+.perform-layer--overlay {
+  z-index: 4;
 }
 </style>

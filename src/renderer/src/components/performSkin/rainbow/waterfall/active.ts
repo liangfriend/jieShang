@@ -1,20 +1,14 @@
 import type { CSSProperties } from 'vue'
-import type { WaterfallActiveColumnStyleInput } from '../../types'
+import type { WaterfallActiveColumnCanvasCommand } from '../../types'
+import { drawRainbowActiveLayerBackground } from '../../canvas/rainbowGradientEffect'
 
-export function getRainbowWaterfallActiveColumnStyle(
-  input: WaterfallActiveColumnStyleInput
-): CSSProperties {
-  const height = (input.end - input.start) * input.columnHeightConstant
-  return {
-    height: `${height}px`,
-    width: '14px',
-    background: 'linear-gradient(180deg, #7ee8fa 0%, #4dd4c4 50%, #2eb8a6 100%)',
-    opacity: 0.7,
-    position: 'absolute',
-    flexShrink: 0,
-    borderRadius: '999px',
-    bottom: `${input.start * input.columnHeightConstant}px`
-  }
+export const rainbowWaterfallActiveColumn: WaterfallActiveColumnCanvasCommand = {
+  drawBackground: drawRainbowActiveLayerBackground,
+  getShape: () => ({
+    width: 14,
+    borderRadius: 999,
+    opacity: 0.85
+  })
 }
 
 export function getRainbowWaterfallKeyActiveBarStyle(input: {

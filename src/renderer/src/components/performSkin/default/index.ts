@@ -1,12 +1,9 @@
 import type { PerformSkinPack } from '../types'
 import { bg, baseline, baselineMidiActive } from './svg'
-import { getDefaultMidiBoxActiveBlockStyle, getDefaultMidiBoxKeyActiveBarStyle } from './midiBox/active'
-import { getDefaultMidiBoxNormalBlockStyle } from './midiBox/normal'
-import {
-  getDefaultWaterfallActiveColumnStyle,
-  getDefaultWaterfallKeyActiveBarStyle
-} from './waterfall/active'
-import { getDefaultWaterfallNormalColumnStyle } from './waterfall/normal'
+import { defaultMidiBoxActiveBlock, getDefaultMidiBoxKeyActiveBarStyle } from './midiBox/active'
+import { defaultMidiBoxNormalBlock } from './midiBox/normal'
+import { defaultWaterfallActiveColumn, getDefaultWaterfallKeyActiveBarStyle } from './waterfall/active'
+import { defaultWaterfallNormalColumn } from './waterfall/normal'
 
 export const defaultPerformSkin: PerformSkinPack = {
   container: {
@@ -15,13 +12,13 @@ export const defaultPerformSkin: PerformSkinPack = {
     background: '#ffffff'
   },
   midiBox: {
-    normalBlock: getDefaultMidiBoxNormalBlockStyle,
-    activeBlock: getDefaultMidiBoxActiveBlockStyle,
+    normalBlock: defaultMidiBoxNormalBlock,
+    activeBlock: defaultMidiBoxActiveBlock,
     keyActiveBar: getDefaultMidiBoxKeyActiveBarStyle
   },
   waterfall: {
-    normalColumn: getDefaultWaterfallNormalColumnStyle,
-    activeColumn: getDefaultWaterfallActiveColumnStyle,
+    normalColumn: defaultWaterfallNormalColumn,
+    activeColumn: defaultWaterfallActiveColumn,
     keyActiveBar: getDefaultWaterfallKeyActiveBarStyle
   },
   baseline: {

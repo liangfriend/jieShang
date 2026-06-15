@@ -29,24 +29,51 @@ export type KeyActiveBarStyleInput = {
   active: boolean
 }
 
+/** 整层背景绘制入参（每层每帧调用一次） */
+export type PerformLayerBackgroundInput = {
+  width: number
+  height: number
+  dpr: number
+  /** 与播放进度同步的毫秒时间（0 = 未播放/已停止） */
+  time: number
+}
+
+export type WaterfallColumnShape = {
+  width: number
+  borderRadius: number
+  opacity: number
+}
+
+/** canvas 渲染指令：整层背景 + 水柱几何（用于统一 clip） */
+export type WaterfallColumnCanvasCommand = {
+  drawBackground: (ctx: CanvasRenderingContext2D, input: PerformLayerBackgroundInput) => void
+  getShape: (input: WaterfallColumnStyleInput) => WaterfallColumnShape
+}
+
+export type WaterfallActiveColumnCanvasCommand = {
+  drawBackground: (ctx: CanvasRenderingContext2D, input: PerformLayerBackgroundInput) => void
+  getShape: (input: WaterfallActiveColumnStyleInput) => WaterfallColumnShape
+}
+
+export type MidiBoxBlockCanvasCommand = {
+  drawBackground: (ctx: CanvasRenderingContext2D, input: PerformLayerBackgroundInput) => void
+  getShape: (input: MidiBoxBlockStyleInput) => WaterfallColumnShape
+}
+
 export type PerformSkinPack = {
-  /** 演奏区域外容器（背景由 bgSvg 叠加） */
   container: CSSProperties
   midiBox: {
-    normalBlock: (input: MidiBoxBlockStyleInput) => CSSProperties
-    activeBlock: (input: MidiBoxBlockStyleInput) => CSSProperties
+    normalBlock: MidiBoxBlockCanvasCommand
+    activeBlock: MidiBoxBlockCanvasCommand
     keyActiveBar: (input: KeyActiveBarStyleInput) => CSSProperties
   }
   waterfall: {
-    normalColumn: (input: WaterfallColumnStyleInput) => CSSProperties
-    activeColumn: (input: WaterfallActiveColumnStyleInput) => CSSProperties
+    normalColumn: WaterfallColumnCanvasCommand
+    activeColumn: WaterfallActiveColumnCanvasCommand
     keyActiveBar: (input: KeyActiveBarStyleInput) => CSSProperties
   }
-  /** 基准线容器样式（可与 baselineSvg 叠加） */
   baseline: CSSProperties
   bgSvg: string
-  /** 基准线常态 SVG */
   baselineSvg: string
-  /** midi 按下时基准线琴键位高亮 SVG（叠加在 keyActiveBar 容器上） */
   baselineMidiActiveSvg: string
 }

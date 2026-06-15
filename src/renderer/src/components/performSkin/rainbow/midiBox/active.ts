@@ -1,15 +1,14 @@
 import type { CSSProperties } from 'vue'
-import type { MidiBoxBlockStyleInput } from '../../types'
-import { getRainbowMidiBoxNormalBlockStyle } from './normal'
+import type { MidiBoxBlockCanvasCommand } from '../../types'
+import { drawRainbowMidiBoxActiveLayerBackground } from '../../canvas/rainbowGradientEffect'
 
-export function getRainbowMidiBoxActiveBlockStyle(input: MidiBoxBlockStyleInput): CSSProperties {
-  const base = getRainbowMidiBoxNormalBlockStyle(input)
-  const color = (base.background as string) ?? '#fff'
-  return {
-    ...base,
-    background: `linear-gradient(180deg, #fff 0%, ${color} 100%)`,
-    boxShadow: '0 0 10px 2px rgba(46, 184, 166, 0.75)'
-  }
+export const rainbowMidiBoxActiveBlock: MidiBoxBlockCanvasCommand = {
+  drawBackground: drawRainbowMidiBoxActiveLayerBackground,
+  getShape: (input) => ({
+    width: input.blockSize,
+    borderRadius: 3,
+    opacity: input.fallen ? 0.35 : 1
+  })
 }
 
 export function getRainbowMidiBoxKeyActiveBarStyle(input: {

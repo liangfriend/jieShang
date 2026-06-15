@@ -1,4 +1,4 @@
-<!-- 样式实现见同目录 normal.ts，由 performSkin/registry 统一注册 -->
+<!-- canvas 渲染指令见同目录 normal.ts -->
 <script lang="ts">
-export { getRainbowMidiBoxNormalBlockStyle } from './normal'
+export { rainbowMidiBoxNormalBlock } from './normal'
 </script>

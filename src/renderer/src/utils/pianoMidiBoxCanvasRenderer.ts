@@ -1,9 +1,9 @@
-import type { MidiBoxBlockStyleInput } from '@renderer/components/performSkin/types'
+import type { MidiBoxBlockCanvasCommand, MidiBoxBlockStyleInput } from '@renderer/components/performSkin/types'
 import {
   buildMidiColumnLayouts,
-  type ColumnVisual,
   type MidiColumnLayout
 } from '@renderer/utils/pianoWaterfallCanvasRenderer'
+import { drawLayerWithUnifiedColumnClip, type LayerColumnClip } from '@renderer/utils/performLayerBackground'
 
 export type MidiBoxBlockDraw = {
   midi: number
@@ -12,70 +12,56 @@ export type MidiBoxBlockDraw = {
   fallen: boolean
 }
 
-export { buildMidiColumnLayouts, type MidiColumnLayout, type ColumnVisual }
+export { buildMidiColumnLayouts, type MidiColumnLayout }
 
-function createFill(
-  ctx: CanvasRenderingContext2D,
-  visual: ColumnVisual,
-  x: number,
-  y: number,
-  width: number,
-  height: number
-): string | CanvasGradient {
-  if (visual.fill.type === 'solid') return visual.fill.color
-  const gradient = ctx.createLinearGradient(x, y, x, y + height)
-  for (const stop of visual.fill.stops) {
-    gradient.addColorStop(stop.offset, stop.color)
+function buildStyleInput(
+  block: MidiBoxBlockDraw,
+  blockSize: number,
+  blockStride: number,
+  baseLineBottom: number,
+  highlighted: boolean,
+  fallen: boolean
+): MidiBoxBlockStyleInput {
+  return {
+    midi: block.midi,
+    batchIndex: block.batchIndex,
+    blockSize,
+    blockStride,
+    baseLineBottom,
+    highlighted,
+    fallen,
+    fallDuration: 0
   }
-  return gradient
 }
 
-function drawRoundedRect(
-  ctx: CanvasRenderingContext2D,
-  x: number,
-  y: number,
-  width: number,
-  height: number,
-  radius: number
-) {
-  const r = Math.min(radius, width / 2, height / 2)
-  if (r <= 0) {
-    ctx.rect(x, y, width, height)
-    return
+function collectMidiBoxColumnClips(
+  blocks: Array<{ block: MidiBoxBlockDraw; top: number; styleInput: MidiBoxBlockStyleInput }>,
+  midiLayouts: Map<number, MidiColumnLayout>,
+  command: MidiBoxBlockCanvasCommand
+): LayerColumnClip[] {
+  const columns: LayerColumnClip[] = []
+
+  for (const { block, top, styleInput } of blocks) {
+    const layout = midiLayouts.get(block.midi)
+    if (!layout) continue
+
+    const shape = command.getShape(styleInput)
+    const x = layout.x + (layout.width - shape.width) / 2
+
+    columns.push({
+      x,
+      y: top,
+      width: shape.width,
+      height: styleInput.blockSize,
+      borderRadius: shape.borderRadius,
+      opacity: shape.opacity
+    })
   }
-  ctx.beginPath()
-  ctx.moveTo(x + r, y)
-  ctx.lineTo(x + width - r, y)
-  ctx.quadraticCurveTo(x + width, y, x + width, y + r)
-  ctx.lineTo(x + width, y + height - r)
-  ctx.quadraticCurveTo(x + width, y + height, x + width - r, y + height)
-  ctx.lineTo(x + r, y + height)
-  ctx.quadraticCurveTo(x, y + height, x, y + height - r)
-  ctx.lineTo(x, y + r)
-  ctx.quadraticCurveTo(x, y, x + r, y)
-  ctx.closePath()
+
+  return columns
 }
 
-function drawBlock(
-  ctx: CanvasRenderingContext2D,
-  layout: MidiColumnLayout,
-  visual: ColumnVisual,
-  top: number,
-  size: number
-) {
-  const blockWidth = visual.columnWidth
-  const x = layout.x + (layout.width - blockWidth) / 2
-  const fill = createFill(ctx, visual, x, top, blockWidth, size)
-
-  ctx.save()
-  ctx.globalAlpha = visual.opacity
-  drawRoundedRect(ctx, x, top, blockWidth, size, visual.borderRadius)
-  ctx.fillStyle = fill
-  ctx.fill()
-  ctx.restore()
-}
-
-export type DrawMidiBoxFrameInput = {
+type MidiBoxLayerBaseInput = {
   ctx: CanvasRenderingContext2D
   width: number
   height: number
@@ -83,13 +69,24 @@ export type DrawMidiBoxFrameInput = {
   blockSize: number
   blockStride: number
   fallScrollOffset: number
+  dpr: number
   midiLayouts: Map<number, MidiColumnLayout>
-  blocks: MidiBoxBlockDraw[]
-  getNormalVisual: (input: MidiBoxBlockStyleInput) => ColumnVisual
-  getActiveVisual: (input: MidiBoxBlockStyleInput) => ColumnVisual
+  /** 与本次 play 同步的毫秒时间，停止时为 0 */
+  layerTime: number
 }
 
-export function drawMidiBoxFrame(input: DrawMidiBoxFrameInput) {
+export type DrawMidiBoxNormalLayerInput = MidiBoxLayerBaseInput & {
+  blocks: MidiBoxBlockDraw[]
+  command: MidiBoxBlockCanvasCommand
+}
+
+export type DrawMidiBoxActiveLayerInput = MidiBoxLayerBaseInput & {
+  blocks: MidiBoxBlockDraw[]
+  command: MidiBoxBlockCanvasCommand
+}
+
+/** 第二层：整层背景一次 + 所有 normal 方块统一 clip */
+export function drawMidiBoxNormalLayer(input: DrawMidiBoxNormalLayerInput) {
   const {
     ctx,
     width,
@@ -98,39 +95,77 @@ export function drawMidiBoxFrame(input: DrawMidiBoxFrameInput) {
     blockSize,
     blockStride,
     fallScrollOffset,
+    dpr,
     midiLayouts,
     blocks,
-    getNormalVisual,
-    getActiveVisual
+    command,
+    layerTime
   } = input
 
-  ctx.clearRect(0, 0, width, height)
   const baselineY = height - baseLineBottom
+  const time = layerTime
+  const visible: Array<{ block: MidiBoxBlockDraw; top: number; styleInput: MidiBoxBlockStyleInput }> = []
 
   for (const block of blocks) {
-    const layout = midiLayouts.get(block.midi)
-    if (!layout) continue
+    const blockBottom = baselineY - block.batchIndex * blockStride + fallScrollOffset
+    const blockTop = blockBottom - blockSize
+
+    if (blockBottom < 0 || blockTop > height) continue
+
+    visible.push({
+      block,
+      top: blockTop,
+      styleInput: buildStyleInput(
+        block,
+        blockSize,
+        blockStride,
+        baseLineBottom,
+        block.highlighted,
+        block.fallen
+      )
+    })
+  }
+
+  const columns = collectMidiBoxColumnClips(visible, midiLayouts, command)
+  drawLayerWithUnifiedColumnClip(ctx, width, height, dpr, time, columns, command.drawBackground)
+}
+
+/** 第三层：整层背景一次 + 所有 active 方块统一 clip */
+export function drawMidiBoxActiveLayer(input: DrawMidiBoxActiveLayerInput) {
+  const {
+    ctx,
+    width,
+    height,
+    baseLineBottom,
+    blockSize,
+    blockStride,
+    fallScrollOffset,
+    dpr,
+    midiLayouts,
+    blocks,
+    command,
+    layerTime
+  } = input
+
+  const baselineY = height - baseLineBottom
+  const time = layerTime
+  const visible: Array<{ block: MidiBoxBlockDraw; top: number; styleInput: MidiBoxBlockStyleInput }> = []
+
+  for (const block of blocks) {
+    if (!block.highlighted) continue
 
     const blockBottom = baselineY - block.batchIndex * blockStride + fallScrollOffset
     const blockTop = blockBottom - blockSize
 
     if (blockBottom < 0 || blockTop > height) continue
 
-    const styleInput: MidiBoxBlockStyleInput = {
-      midi: block.midi,
-      batchIndex: block.batchIndex,
-      blockSize,
-      blockStride,
-      baseLineBottom,
-      highlighted: block.highlighted,
-      fallen: block.fallen,
-      fallDuration: 0
-    }
-
-    const visual = block.highlighted
-      ? getActiveVisual(styleInput)
-      : getNormalVisual(styleInput)
-
-    drawBlock(ctx, layout, visual, blockTop, blockSize)
+    visible.push({
+      block,
+      top: blockTop,
+      styleInput: buildStyleInput(block, blockSize, blockStride, baseLineBottom, true, block.fallen)
+    })
   }
+
+  const columns = collectMidiBoxColumnClips(visible, midiLayouts, command)
+  drawLayerWithUnifiedColumnClip(ctx, width, height, dpr, time, columns, command.drawBackground)
 }

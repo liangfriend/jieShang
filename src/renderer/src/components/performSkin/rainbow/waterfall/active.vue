@@ -1,7 +1,4 @@
-<!-- 样式实现见同目录 active.ts -->
+<!-- canvas 渲染指令见同目录 active.ts -->
 <script lang="ts">
-export {
-  getRainbowWaterfallActiveColumnStyle,
-  getRainbowWaterfallKeyActiveBarStyle
-} from './active'
+export { rainbowWaterfallActiveColumn, getRainbowWaterfallKeyActiveBarStyle } from './active'
 </script>

@@ -1,22 +1,18 @@
 import type { CSSProperties } from 'vue'
-import type { WaterfallActiveColumnStyleInput } from '../../types'
+import type { WaterfallActiveColumnCanvasCommand } from '../../types'
+import { drawSolidLayerBackground } from '../../canvas/simpleFillEffect'
 
 const ACTIVE_COLOR = '#2196f3'
 
-export function getDefaultWaterfallActiveColumnStyle(
-  input: WaterfallActiveColumnStyleInput
-): CSSProperties {
-  const height = (input.end - input.start) * input.columnHeightConstant
-  return {
-    height: `${height}px`,
-    width: '14px',
-    background: ACTIVE_COLOR,
-    opacity: 0.85,
-    position: 'absolute',
-    flexShrink: 0,
-    borderRadius: '999px',
-    bottom: `${input.start * input.columnHeightConstant}px`
-  }
+export const defaultWaterfallActiveColumn: WaterfallActiveColumnCanvasCommand = {
+  drawBackground(ctx, input) {
+    drawSolidLayerBackground(ctx, ACTIVE_COLOR, input)
+  },
+  getShape: () => ({
+    width: 14,
+    borderRadius: 999,
+    opacity: 0.85
+  })
 }
 
 export function getDefaultWaterfallKeyActiveBarStyle(input: {

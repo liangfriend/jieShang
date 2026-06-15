@@ -19,12 +19,21 @@ import type {
   BeginnerMidiBoxNote,
   MidiBoxBatchPayload
 } from '@renderer/views/forBeginner/beginnerNoteProgressHighlight'
-import { parseColumnVisual } from '@renderer/utils/pianoWaterfallCanvasRenderer'
 import {
   buildMidiColumnLayouts,
-  drawMidiBoxFrame,
+  drawMidiBoxActiveLayer,
+  drawMidiBoxNormalLayer,
   type MidiBoxBlockDraw
 } from '@renderer/utils/pianoMidiBoxCanvasRenderer'
+import {
+  drawPerformBackgroundLayer,
+  syncPerformCanvasStack,
+  type PerformCanvasContexts
+} from '@renderer/utils/performCanvasStack'
+import {
+  drawPerformOverlayLayer,
+  preloadPerformOverlayAssets
+} from '@renderer/utils/performCanvasOverlayRenderer'
 
 defineOptions({
   name: 'DsPianoMidiBoxCanvas'
@@ -37,15 +46,7 @@ const emit = defineEmits<{
   (e: 'batchActive', payload: MidiBoxBatchPayload): void
 }>()
 
-const { skin, skinBgStyle, skinBaselineBgStyle } = usePerformSkin()
-
-function baselineMidiActiveBg(svg: string): CSSProperties {
-  return {
-    backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`,
-    backgroundSize: '100% 100%',
-    backgroundRepeat: 'no-repeat'
-  }
-}
+const { skin, skinBgStyle } = usePerformSkin()
 
 const props = defineProps({
   layoutMode: {
@@ -271,44 +272,6 @@ const containerStyle = computed(
   })
 )
 
-const midiEventStyle = computed(() => {
-  return (midi: number): CSSProperties => {
-    const active = activeKeys.value.has(midi)
-    const layout = skin.value.midiBox.keyActiveBar({
-      width: getMidiWidth(midi),
-      active
-    })
-    if (!active) return layout
-    return { ...layout, ...baselineMidiActiveBg(skin.value.baselineMidiActiveSvg) }
-  }
-})
-
-const baselineLineStyle = computed((): CSSProperties => {
-  const { height, background: _bg, ...rest } = skin.value.baseline
-  return {
-    bottom: `${props.baseLineBottom}px`,
-    left: 0,
-    right: 0,
-    height: height ?? '3px',
-    zIndex: 3,
-    ...rest,
-    ...skinBaselineBgStyle.value
-  }
-})
-
-const midiEventContainerStyle = computed(
-  (): CSSProperties => ({
-    bottom: `${props.baseLineBottom - 4}px`,
-    left: 0,
-    right: 0,
-    height: '10px',
-    display: 'flex',
-    alignItems: 'flex-end',
-    zIndex: 4,
-    overflow: 'visible'
-  })
-)
-
 const midiColumnLayouts = computed(() =>
   buildMidiColumnLayouts(props.midi.min, props.midi.max, getMidiWidth)
 )
@@ -329,59 +292,88 @@ const drawBlocks = computed<MidiBoxBlockDraw[]>(() => {
   return blocks
 })
 
-let canvasCtx: CanvasRenderingContext2D | null = null
+const bgCanvasRef = ref<HTMLCanvasElement | null>(null)
+const normalCanvasRef = ref<HTMLCanvasElement | null>(null)
+const activeCanvasRef = ref<HTMLCanvasElement | null>(null)
+const overlayCanvasRef = ref<HTMLCanvasElement | null>(null)
+let canvasStack: PerformCanvasContexts | null = null
 let fallAnimRaf: number | null = null
 let skipFallAnimation = false
+/** 本次 play 的起始时刻，背景动效与播放同步 */
+let playStartedAt = 0
+
+function getLayerPlaybackTime() {
+  return state.value === 'playing' ? performance.now() - playStartedAt : 0
+}
 
 function syncCanvasSize() {
-  const canvas = canvasRef.value
-  const container = containerRef.value
-  if (!canvas || !container) return
-
-  const rect = container.getBoundingClientRect()
-  const width = Math.max(1, Math.floor(rect.width))
-  const height = Math.max(1, Math.floor(rect.height))
-  const dpr = window.devicePixelRatio || 1
-
-  canvas.width = Math.floor(width * dpr)
-  canvas.height = Math.floor(height * dpr)
-  canvas.style.width = `${width}px`
-  canvas.style.height = `${height}px`
-
-  const ctx = canvas.getContext('2d')
-  if (!ctx) return
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
-  canvasCtx = ctx
+  if (!containerRef.value) return
+  canvasStack = syncPerformCanvasStack(
+    {
+      bg: bgCanvasRef.value,
+      normal: normalCanvasRef.value,
+      active: activeCanvasRef.value,
+      overlay: overlayCanvasRef.value
+    },
+    containerRef.value
+  )
 }
 
 function drawFrame() {
-  if (!canvasCtx || !containerSize.value.width) return
+  if (!canvasStack?.normal || !canvasStack.active || !canvasStack.overlay || !containerSize.value.width)
+    return
 
-  drawMidiBoxFrame({
-    ctx: canvasCtx,
-    width: containerSize.value.width,
-    height: containerSize.value.height,
+  const { bg, normal, active, overlay, width, height, dpr } = canvasStack
+  const layerBase = {
+    width,
+    height,
+    dpr,
     baseLineBottom: props.baseLineBottom,
     blockSize: props.blockSize,
     blockStride: blockStride.value,
     fallScrollOffset: fallScrollOffset.value,
     midiLayouts: midiColumnLayouts.value,
+    layerTime: getLayerPlaybackTime()
+  }
+
+  if (bg) drawPerformBackgroundLayer(bg, width, height)
+
+  drawMidiBoxNormalLayer({
+    ctx: normal,
+    ...layerBase,
     blocks: drawBlocks.value,
-    getNormalVisual: (input) => {
-      const style = skin.value.midiBox.normalBlock({
-        ...input,
-        fallDuration: props.fallDuration
-      })
-      return parseColumnVisual(style, input.blockSize)
-    },
-    getActiveVisual: (input) => {
-      const style = skin.value.midiBox.activeBlock({
-        ...input,
-        fallDuration: props.fallDuration
-      })
-      return parseColumnVisual(style, input.blockSize)
-    }
+    command: skin.value.midiBox.normalBlock
   })
+
+  drawMidiBoxActiveLayer({
+    ctx: active,
+    ...layerBase,
+    blocks: drawBlocks.value,
+    command: skin.value.midiBox.activeBlock
+  })
+
+  drawPerformOverlayLayer({
+    ctx: overlay,
+    width,
+    height,
+    baseLineBottom: props.baseLineBottom,
+    midiMin: props.midi.min,
+    midiMax: props.midi.max,
+    activeKeys: activeKeys.value,
+    midiLayouts: midiColumnLayouts.value,
+    baselineSvg: skin.value.baselineSvg,
+    baselineMidiActiveSvg: skin.value.baselineMidiActiveSvg,
+    baselineStyle: skin.value.baseline,
+    getKeyActiveBarStyle: (input) => skin.value.midiBox.keyActiveBar(input)
+  })
+}
+
+async function preloadOverlayAssets() {
+  await preloadPerformOverlayAssets({
+    baselineSvg: skin.value.baselineSvg,
+    baselineMidiActiveSvg: skin.value.baselineMidiActiveSvg
+  })
+  drawFrame()
 }
 
 function animateFallScroll(from: number, to: number) {
@@ -486,6 +478,7 @@ function tryAdvanceBatch() {
 
 function play() {
   if (state.value === 'playing') return
+  playStartedAt = performance.now()
   resetProgress()
   emit('progressReset')
   state.value = 'playing'
@@ -532,18 +525,28 @@ watch(
   }
 )
 
+watch(activeKeys, () => drawFrame())
+
+watch(
+  () => [skin.value.baselineSvg, skin.value.baselineMidiActiveSvg] as const,
+  () => {
+    void preloadOverlayAssets()
+  }
+)
+
 watch(
   [
     () => props.performSequence,
     () => props.midi,
     () => props.blockSize,
     () => props.blockGap,
-    () => skin.value,
     activeKeys,
     currentBatchIndex,
     () => state.value
   ],
-  () => drawFrame(),
+  () => {
+    if (state.value !== 'playing') drawFrame()
+  },
   { deep: true }
 )
 
@@ -594,7 +597,7 @@ onMounted(async () => {
   await nextTick()
   observeContainer()
   syncCanvasSize()
-  drawFrame()
+  await preloadOverlayAssets()
   window.addEventListener('keydown', keyBoardKeyDown)
   window.addEventListener('keyup', keyBoardKeyUp)
   midiStore.addMessageListener(handleMidiMessage)
@@ -621,15 +624,10 @@ defineExpose({
 
 <template>
   <div ref="containerRef" :style="containerStyle" class="hide-scrollbar stack">
-    <canvas ref="canvasRef" class="midi-box-canvas stackItem" />
-    <div :style="baselineLineStyle" class="stackItem stackItem--layer" />
-    <div :style="midiEventContainerStyle" class="stackItem stackItem--layer">
-      <div
-        v-for="noteMidi in Array.from({ length: midi.max - midi.min + 1 }, (_, i) => midi.min + i)"
-        :key="noteMidi"
-        :style="midiEventStyle(noteMidi)"
-      />
-    </div>
+    <canvas ref="bgCanvasRef" class="perform-layer perform-layer--bg" />
+    <canvas ref="normalCanvasRef" class="perform-layer perform-layer--normal" />
+    <canvas ref="activeCanvasRef" class="perform-layer perform-layer--active" />
+    <canvas ref="overlayCanvasRef" class="perform-layer perform-layer--overlay" />
   </div>
 </template>
 
@@ -649,26 +647,16 @@ defineExpose({
   width: 100%;
 }
 
-.midi-box-canvas {
+.perform-layer {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   pointer-events: none;
 }
 
-.stackItem {
-  pointer-events: none;
-  position: absolute;
-  height: 100%;
-  width: 100%;
-}
-
-.stackItem--layer {
-  height: auto;
-  width: 100%;
-}
-
-.stackItem > * {
-  pointer-events: auto;
+.perform-layer--overlay {
+  z-index: 4;
 }
 </style>

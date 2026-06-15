@@ -1,12 +1,9 @@
 import type { PerformSkinPack } from '../types'
 import { bg, baseline, baselineMidiActive } from './svg'
-import { getRainbowMidiBoxActiveBlockStyle, getRainbowMidiBoxKeyActiveBarStyle } from './midiBox/active'
-import { getRainbowMidiBoxNormalBlockStyle } from './midiBox/normal'
-import {
-  getRainbowWaterfallActiveColumnStyle,
-  getRainbowWaterfallKeyActiveBarStyle
-} from './waterfall/active'
-import { getRainbowWaterfallNormalColumnStyle } from './waterfall/normal'
+import { rainbowMidiBoxActiveBlock, getRainbowMidiBoxKeyActiveBarStyle } from './midiBox/active'
+import { rainbowMidiBoxNormalBlock } from './midiBox/normal'
+import { rainbowWaterfallActiveColumn, getRainbowWaterfallKeyActiveBarStyle } from './waterfall/active'
+import { rainbowWaterfallNormalColumn } from './waterfall/normal'
 
 export const rainbowPerformSkin: PerformSkinPack = {
   container: {
@@ -15,13 +12,13 @@ export const rainbowPerformSkin: PerformSkinPack = {
     boxShadow: 'inset 0 2px 10px rgba(255, 192, 220, 0.18)'
   },
   midiBox: {
-    normalBlock: getRainbowMidiBoxNormalBlockStyle,
-    activeBlock: getRainbowMidiBoxActiveBlockStyle,
+    normalBlock: rainbowMidiBoxNormalBlock,
+    activeBlock: rainbowMidiBoxActiveBlock,
     keyActiveBar: getRainbowMidiBoxKeyActiveBarStyle
   },
   waterfall: {
-    normalColumn: getRainbowWaterfallNormalColumnStyle,
-    activeColumn: getRainbowWaterfallActiveColumnStyle,
+    normalColumn: rainbowWaterfallNormalColumn,
+    activeColumn: rainbowWaterfallActiveColumn,
     keyActiveBar: getRainbowWaterfallKeyActiveBarStyle
   },
   baseline: {
