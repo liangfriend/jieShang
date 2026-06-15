@@ -83,7 +83,9 @@ const effectiveSpawnConfig = computed(() =>
     : currentSpawnConfig.value
 )
 
-let elapsedMs = 0
+let tickStartMs = 0
+/** 上一帧已累计的墙钟毫秒，用于算 delta */
+let lastElapsedMs = 0
 
 /** 15 个格子各对应一个清除特效组件 */
 const slotClearEffects: (SlotEffectExpose | null)[] = NOTE_SLICE_GRID_SLOT_INDICES.map(() => null)
@@ -104,7 +106,6 @@ const slotDoubleEffects: (SlotEffectExpose | null)[] = NOTE_SLICE_GRID_SLOT_INDI
 
 let blockIdSeq = 0
 let rafId = 0
-let lastTimestamp = 0
 /** 成功生成音符块后的冷却剩余时间（ms） */
 let spawnCooldownMs = 0
 /** 各类特殊块独立生成冷却（ms） */
@@ -480,15 +481,12 @@ function handleExpiringBlocks(expiringBlocks: readonly NoteSliceActiveBlock[]): 
   }
 }
 
-function tick(timestamp: number): void {
+function tick(): void {
   if (!isRunning.value) return
 
-  if (lastTimestamp === 0) {
-    lastTimestamp = timestamp
-  }
-  const deltaMs = Math.min(48, timestamp - lastTimestamp)
-  lastTimestamp = timestamp
-  elapsedMs += deltaMs
+  const elapsedMs = performance.now() - tickStartMs
+  const deltaMs = Math.max(0, elapsedMs - lastElapsedMs)
+  lastElapsedMs = elapsedMs
   passTimeMs.value = elapsedMs
 
   setSpawnConfigPassTime(elapsedMs)
@@ -560,7 +558,8 @@ function tick(timestamp: number): void {
 
 function startTick(): void {
   stopTick()
-  elapsedMs = 0
+  tickStartMs = performance.now()
+  lastElapsedMs = 0
   passTimeMs.value = 0
   spawnCooldownMs = 0
   bombSpawnCooldownMs = 0
@@ -569,7 +568,6 @@ function startTick(): void {
   healSpawnCooldownMs = 0
   currentSpawnConfig.value = getActiveNoteSliceDifficultyConfig(0)
   setSpawnConfigPassTime(0)
-  lastTimestamp = 0
   rafId = window.requestAnimationFrame(tick)
 }
 
@@ -578,7 +576,6 @@ function stopTick(): void {
     window.cancelAnimationFrame(rafId)
     rafId = 0
   }
-  lastTimestamp = 0
 }
 
 defineExpose({

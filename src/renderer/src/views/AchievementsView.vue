@@ -9,6 +9,7 @@ import {
 import {
   buildNoteSliceHighScoreMatrix,
   fetchNoteSliceHighScores,
+  formatNoteSliceExtremeHighScore,
   type NoteSliceHighScoreRecord
 } from '@renderer/utils/noteSliceHighScoreHelper'
 
@@ -65,7 +66,9 @@ onMounted(async () => {
             </div>
           </div>
 
-          <span v-else class="achievements-page__single-score">{{ modeRow.singleScore ?? 0 }}</span>
+          <span v-else class="achievements-page__single-score">{{
+            formatNoteSliceExtremeHighScore(modeRow.singleScore ?? 0)
+          }}</span>
         </div>
       </section>
 

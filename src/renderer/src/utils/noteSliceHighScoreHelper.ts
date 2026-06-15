@@ -1,4 +1,5 @@
 import type { GameDifficulty } from '@renderer/constant/gameSettings'
+import { formatNoteSliceExtremeElapsed } from '@renderer/views/noteSlice/noteSliceGameMode'
 import type { NoteSliceGameMode } from '@renderer/views/noteSlice/noteSliceGameMode'
 
 export type NoteSliceHighScoreMode = 'arcade' | 'endless' | 'extreme'
@@ -80,6 +81,11 @@ export async function persistNoteSliceGameScore(
   }
   if (!difficulty || !isRankedDifficulty(difficulty)) return
   await upsertNoteSliceHighScoreIfHigher(mode, difficulty, normalizedScore)
+}
+
+/** 成就页等展示：极限模式存活时间（ms → 秒.毫秒，如 127.251） */
+export function formatNoteSliceExtremeHighScore(survivalMs: number): string {
+  return formatNoteSliceExtremeElapsed(survivalMs)
 }
 
 export type NoteSliceHighScoreMatrixRow = {
