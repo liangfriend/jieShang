@@ -8,7 +8,7 @@ import { onBeforeUnmount, onMounted, provide, ref, computed, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
 import { PracticeModeToolbar } from '@renderer/components/score-toolbar'
-import PianoWaterfall from '@renderer/components/pianoWaterfall.vue'
+import PianoWaterfall from '@renderer/components/pianoWaterfallCanvas.vue'
 import VirtualPiano from '@renderer/components/virtualPiano.vue'
 import {
   scorePlaybackKey,
