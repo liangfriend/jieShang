@@ -51,16 +51,68 @@ function parseBorderRadius(value: string | number | undefined, height: number): 
   return raw
 }
 
+function splitCssCommaList(value: string): string[] {
+  const parts: string[] = []
+  let current = ''
+  let depth = 0
+  for (const ch of value) {
+    if (ch === '(') depth++
+    else if (ch === ')') depth--
+    else if (ch === ',' && depth === 0) {
+      parts.push(current.trim())
+      current = ''
+      continue
+    }
+    current += ch
+  }
+  if (current.trim()) parts.push(current.trim())
+  return parts
+}
+
+function extractCssFunctionBody(source: string, fnName: string): string | null {
+  const marker = `${fnName}(`
+  const startIdx = source.indexOf(marker)
+  if (startIdx === -1) return null
+
+  let depth = 0
+  const bodyStart = startIdx + marker.length
+  for (let i = bodyStart; i < source.length; i++) {
+    const ch = source[i]
+    if (ch === '(') depth++
+    else if (ch === ')') {
+      if (depth === 0) return source.slice(bodyStart, i)
+      depth--
+    }
+  }
+  return null
+}
+
+function isLinearGradientDirection(part: string): boolean {
+  return /^\d+(?:\.\d+)?deg$/.test(part) || /^to\s+/i.test(part)
+}
+
+const CSS_COLOR_PATTERN = '(#[0-9a-fA-F]{3,8}|rgba?\\([^)]+\\)|hsla?\\([^)]+\\))'
+
 function parseLinearGradient(background: string): ColumnVisual['fill'] | null {
-  const match = background.match(/linear-gradient\(([^)]+)\)/)
-  if (!match) return null
-  const body = match[1]
-  const colorStops = [...body.matchAll(/(#[0-9a-fA-F]{3,8}|rgba?\([^)]+\)|hsla?\([^)]+\))\s*(\d+%)?/g)]
-  if (!colorStops.length) return null
-  const stops = colorStops.map((item, index) => ({
-    offset: item[2] ? parseFloat(item[2]) / 100 : index / Math.max(colorStops.length - 1, 1),
-    color: item[1]
-  }))
+  const body = extractCssFunctionBody(background, 'linear-gradient')
+  if (!body) return null
+
+  const parts = splitCssCommaList(body).filter((part) => !isLinearGradientDirection(part))
+  if (!parts.length) return null
+
+  const stopPattern = new RegExp(`^${CSS_COLOR_PATTERN}\\s*(\\d+(?:\\.\\d+)?%)?$`)
+  const stops: { offset: number; color: string }[] = []
+
+  for (let index = 0; index < parts.length; index++) {
+    const match = parts[index].match(stopPattern)
+    if (!match) continue
+    stops.push({
+      offset: match[2] ? parseFloat(match[2]) / 100 : index / Math.max(parts.length - 1, 1),
+      color: match[1]
+    })
+  }
+
+  if (!stops.length) return null
   return { type: 'linear', stops }
 }
 
@@ -148,7 +200,6 @@ function drawColumn(
   const x = layout.x + (layout.width - columnWidth) / 2
   const y = top
   const fill = createFill(ctx, visual, x, y, columnWidth, height)
-
   ctx.save()
   ctx.globalAlpha = visual.opacity
   drawRoundedRect(ctx, x, y, columnWidth, height, visual.borderRadius)

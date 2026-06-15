@@ -505,7 +505,7 @@ const drawNotes = computed<WaterfallNoteDraw[]>(() => {
   }
   return notes
 })
-
+// 这段代码实际就是把highlightSegments.value平铺一下
 const drawHighlights = computed<WaterfallHighlightDraw[]>(() => {
   const list: WaterfallHighlightDraw[] = []
   for (const [midiStr, segments] of Object.entries(highlightSegments.value)) {
