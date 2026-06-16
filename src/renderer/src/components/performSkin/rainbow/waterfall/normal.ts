@@ -1,11 +1,8 @@
 import type { WaterfallColumnCanvasCommand } from '../../types'
+import { PERFORM_WATERFALL_COLUMN_SHAPE } from '../../shapePresets'
 import { drawRainbowNormalLayerBackground } from '../../canvas/rainbowGradientEffect'
 
 export const rainbowWaterfallNormalColumn: WaterfallColumnCanvasCommand = {
   drawBackground: drawRainbowNormalLayerBackground,
-  getShape: () => ({
-    width: 14,
-    borderRadius: 999,
-    opacity: 1
-  })
+  getShape: () => PERFORM_WATERFALL_COLUMN_SHAPE
 }

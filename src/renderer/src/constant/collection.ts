@@ -41,6 +41,21 @@ export const PerformSkinNameList = {
     name: '彩虹演奏皮肤',
     howToGet: '完成主线剧情',
     description: '完成主线后解锁的炫彩演奏主题。'
+  },
+  Binary: {
+    name: '二进制演奏皮肤',
+    howToGet: '完成进阶挑战',
+    description: '矩阵字符瀑布，黑客终端风格。'
+  },
+  StarRiver: {
+    name: '星河演奏皮肤',
+    howToGet: '探索星空关卡',
+    description: '深空星野与星云，白金色高亮如星屑喷发。'
+  },
+  ZebraCrossing: {
+    name: '斑马线演奏皮肤',
+    howToGet: '完成节奏挑战',
+    description: '倾斜黑白条纹水柱，警示黄高亮。'
   }
 } satisfies Record<string, BuiltinCollectionMeta>
 

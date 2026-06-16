@@ -114,8 +114,14 @@ export type MidiBoxBlockCanvasCommand = {
   getShape: (input: MidiBoxBlockStyleInput) => WaterfallColumnShape
 }
 
+/** 四层结构第一层 canvas 背景（与各皮肤 normal / active 水柱内容独立） */
+export type PerformBackgroundCanvasCommand = {
+  drawBackground: (ctx: CanvasRenderingContext2D, input: PerformLayerBackgroundInput) => void
+}
+
 export type PerformSkinPack = {
   container: CSSProperties
+  background: PerformBackgroundCanvasCommand
   midiBox: {
     normalBlock: MidiBoxBlockCanvasCommand
     activeBlock: MidiBoxBlockCanvasCommand

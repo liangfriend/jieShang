@@ -1,11 +1,8 @@
 import type { MidiBoxBlockCanvasCommand } from '../../types'
+import { getPerformMidiBoxBlockShape } from '../../shapePresets'
 import { drawRainbowMidiBoxActiveLayerBackground } from '../../canvas/rainbowGradientEffect'
 
 export const rainbowMidiBoxActiveBlock: MidiBoxBlockCanvasCommand = {
   drawBackground: drawRainbowMidiBoxActiveLayerBackground,
-  getShape: (input) => ({
-    width: input.blockSize,
-    borderRadius: 3,
-    opacity: input.fallen ? 0.35 : 1
-  })
+  getShape: (input) => getPerformMidiBoxBlockShape(input.blockSize, input.fallen)
 }

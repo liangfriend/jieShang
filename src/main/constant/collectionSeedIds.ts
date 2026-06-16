@@ -18,7 +18,10 @@ export const BUILTIN_COLLECTION_SEED_IDS = {
   },
   performSkin: {
     默认演奏皮肤: 10,
-    彩虹演奏皮肤: 11
+    彩虹演奏皮肤: 11,
+    二进制演奏皮肤: 14,
+    星河演奏皮肤: 15,
+    斑马线演奏皮肤: 16
   },
   pianoSkin: {
     经典纯色: 12,
@@ -27,4 +30,4 @@ export const BUILTIN_COLLECTION_SEED_IDS = {
 } as const
 
 /** 种子写入后 sqlite 自增序列续号起点 */
-export const BUILTIN_COLLECTION_MAX_SEED_ID = 13
+export const BUILTIN_COLLECTION_MAX_SEED_ID = 16

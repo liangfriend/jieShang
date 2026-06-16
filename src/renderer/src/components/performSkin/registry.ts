@@ -1,12 +1,21 @@
 import { defaultPerformSkin } from './default'
 import { rainbowPerformSkin } from './rainbow'
+import { binaryPerformSkin } from './binary'
+import { starRiverPerformSkin } from './starRiver'
+import { zebraCrossingPerformSkin } from './zebraCrossing'
 import type { PerformSkinPack } from './types'
 
 /** content 字段 → 本地皮肤包（与数据库 PerformSkinNameList key 一致） */
 export const PERFORM_SKIN_REGISTRY: Record<string, PerformSkinPack> = {
   default: defaultPerformSkin,
   RainBow: rainbowPerformSkin,
-  rainBow: rainbowPerformSkin
+  rainBow: rainbowPerformSkin,
+  Binary: binaryPerformSkin,
+  binary: binaryPerformSkin,
+  StarRiver: starRiverPerformSkin,
+  starRiver: starRiverPerformSkin,
+  ZebraCrossing: zebraCrossingPerformSkin,
+  zebraCrossing: zebraCrossingPerformSkin
 }
 
 export const DEFAULT_PERFORM_SKIN_NAME = 'default'

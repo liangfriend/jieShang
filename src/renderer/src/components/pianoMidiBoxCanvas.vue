@@ -368,7 +368,13 @@ function drawFrame(now = performance.now()) {
     layerTime: getLayerTime()
   }
 
-  if (bg) drawPerformBackgroundLayer(bg, width, height)
+  if (bg) {
+    drawPerformBackgroundLayer(
+      bg,
+      { width, height, dpr, time: layerBase.layerTime },
+      skin.value.background
+    )
+  }
 
   drawMidiBoxNormalLayer({
     ctx: normal,

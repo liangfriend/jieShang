@@ -20,6 +20,21 @@ const BUILTIN_PERFORM_SKINS = [
     name: '彩虹演奏皮肤',
     content: 'RainBow',
     description: '彩虹演奏皮肤：糖果色瀑布与渐变背景。'
+  },
+  {
+    name: '二进制演奏皮肤',
+    content: 'Binary',
+    description: '二进制演奏皮肤：矩阵字符瀑布，白灰高亮与绿色字符喷发。'
+  },
+  {
+    name: '星河演奏皮肤',
+    content: 'StarRiver',
+    description: '星河演奏皮肤：深空星野星云，白金色高亮与星屑喷发。'
+  },
+  {
+    name: '斑马线演奏皮肤',
+    content: 'ZebraCrossing',
+    description: '斑马线演奏皮肤：倾斜黑白条纹，警示黄 active 高亮。'
   }
 ] as const
 

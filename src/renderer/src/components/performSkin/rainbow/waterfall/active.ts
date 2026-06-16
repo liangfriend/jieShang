@@ -1,11 +1,8 @@
 import type { WaterfallActiveColumnCanvasCommand } from '../../types'
+import { getPerformWaterfallActiveColumnShape } from '../../shapePresets'
 import { drawRainbowActiveLayerBackground } from '../../canvas/rainbowGradientEffect'
 
 export const rainbowWaterfallActiveColumn: WaterfallActiveColumnCanvasCommand = {
   drawBackground: drawRainbowActiveLayerBackground,
-  getShape: () => ({
-    width: 14,
-    borderRadius: 999,
-    opacity: 0.85
-  })
+  getShape: () => getPerformWaterfallActiveColumnShape(0.85)
 }

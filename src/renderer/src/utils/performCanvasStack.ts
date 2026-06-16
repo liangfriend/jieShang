@@ -1,3 +1,8 @@
+import type {
+  PerformBackgroundCanvasCommand,
+  PerformLayerBackgroundInput
+} from '@renderer/components/performSkin/types'
+
 export type PerformCanvasLayerRefs = {
   bg: HTMLCanvasElement | null
   normal: HTMLCanvasElement | null
@@ -65,11 +70,11 @@ export function syncPerformCanvasStack(
   }
 }
 
-/** 第一层：演奏区 canvas 背景（占位，未来可接粒子/动态底图） */
+/** 第一层：由当前演奏皮肤的 background 指令绘制 */
 export function drawPerformBackgroundLayer(
   ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number
+  input: PerformLayerBackgroundInput,
+  command: PerformBackgroundCanvasCommand
 ) {
-  ctx.clearRect(0, 0, width, height)
+  command.drawBackground(ctx, input)
 }
