@@ -558,7 +558,12 @@ function syncCanvasSize() {
 }
 
 function drawFrame(now = performance.now()) {
-  if (!canvasStack?.normal || !canvasStack.active || !canvasStack.overlay || !containerSize.value.width)
+  if (
+    !canvasStack?.normal ||
+    !canvasStack.active ||
+    !canvasStack.overlay ||
+    !containerSize.value.width
+  )
     return
 
   const deltaMs = getOverlayDeltaMs(now)

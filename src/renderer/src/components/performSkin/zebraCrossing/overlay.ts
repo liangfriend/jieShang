@@ -1,8 +1,8 @@
 import type { PerformOverlayCanvasCommand } from '../types'
-import { drawFilledRoundedBar } from '../canvas/overlayDraw'
+import { drawTrafficLightHighlight } from '../canvas/overlayDraw'
 
 const BASELINE_HEIGHT = 4
-const KEY_ACTIVE_HEIGHT = 7
+const KEY_ACTIVE_HEIGHT = 24
 
 export const zebraCrossingPerformOverlay: PerformOverlayCanvasCommand = {
   getBaselineHeight: () => BASELINE_HEIGHT,
@@ -33,15 +33,12 @@ export const zebraCrossingPerformOverlay: PerformOverlayCanvasCommand = {
     if (!input.active) return null
     return {
       height: KEY_ACTIVE_HEIGHT,
-      borderRadius: 999,
-      gapAboveBaseline: 0
+      borderRadius: 5,
+      gapAboveBaseline: 1
     }
   },
 
   drawKeyActiveBar(ctx, rect) {
-    ctx.fillStyle = '#ffeb3b'
-    drawFilledRoundedBar(ctx, rect, '#ffeb3b')
-    ctx.fillStyle = '#1a1a1a'
-    ctx.fillRect(rect.x, rect.y + rect.height - 1.5, rect.width, 1.5)
+    drawTrafficLightHighlight(ctx, rect)
   }
 }

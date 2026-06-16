@@ -1,6 +1,8 @@
 import type { PerformBackgroundCanvasCommand } from '../types'
-import { drawPerformAmbientBackground } from '../canvas/performAmbientBackground'
+import { drawSolidLayerBackground } from '../canvas/simpleFillEffect'
 
 export const defaultPerformBackground: PerformBackgroundCanvasCommand = {
-  drawBackground: drawPerformAmbientBackground
+  drawBackground(ctx, input) {
+    drawSolidLayerBackground(ctx, '#ffffff', input)
+  }
 }
