@@ -85,7 +85,6 @@ onMounted(async () => {
   height: 100vh;
   display: flex;
   flex-direction: column;
-  padding-bottom: 72px;
   box-sizing: border-box;
 }
 

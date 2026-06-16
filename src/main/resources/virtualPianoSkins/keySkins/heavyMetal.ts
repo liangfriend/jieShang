@@ -32,17 +32,17 @@ const METAL_WHITE: KeySkinSvg = {
     </linearGradient>
     <filter id="hmWnSoft" x="-30%" y="-10%" width="160%" height="120%"><feGaussianBlur stdDeviation="0.9"/></filter>
   </defs>
-  <path d="M0 82 H20 V96.5 Q20 100 17 100 H3 Q0 100 0 96.5 Z" fill="url(#hmWnFront)"/>
-  <rect x="0" y="82" width="1.3" height="18" fill="url(#hmWnEdgeL)"/>
-  <rect x="18.7" y="82" width="1.3" height="18" fill="url(#hmWnEdgeR)"/>
-  <rect x="0" y="0" width="20" height="82" fill="url(#hmWnTop)"/>
-  <rect x="0" y="0" width="20" height="82" fill="url(#hmWnForm)"/>
-  <polygon points="4,-2 7.5,-2 2.5,84 -1,84" fill="rgba(255,255,255,0.55)" filter="url(#hmWnSoft)"/>
-  <polygon points="13,-2 14.5,-2 11,84 9.5,84" fill="rgba(255,255,255,0.3)" filter="url(#hmWnSoft)"/>
+  <path d="M0 91 H20 V98.25 Q20 100 17 100 H3 Q0 100 0 98.25 Z" fill="url(#hmWnFront)"/>
+  <rect x="0" y="91" width="1.3" height="9" fill="url(#hmWnEdgeL)"/>
+  <rect x="18.7" y="91" width="1.3" height="9" fill="url(#hmWnEdgeR)"/>
+  <rect x="0" y="0" width="20" height="91" fill="url(#hmWnTop)"/>
+  <rect x="0" y="0" width="20" height="91" fill="url(#hmWnForm)"/>
+  <polygon points="4,-2 7.5,-2 2.5,91 -1,91" fill="rgba(255,255,255,0.55)" filter="url(#hmWnSoft)"/>
+  <polygon points="13,-2 14.5,-2 11,91 9.5,91" fill="rgba(255,255,255,0.3)" filter="url(#hmWnSoft)"/>
   <rect x="0" y="0" width="20" height="1.2" fill="rgba(255,255,255,0.7)"/>
   <line x1="20" y1="0" x2="20" y2="100" stroke="rgba(0,0,0,0.28)" stroke-width="0.5"/>
-  <line x1="0" y1="82" x2="20" y2="82" stroke="rgba(0,0,0,0.18)" stroke-width="0.4"/>
-  <line x1="0" y1="82.5" x2="20" y2="82.5" stroke="rgba(255,255,255,0.2)" stroke-width="0.3"/>`
+  <line x1="0" y1="91" x2="20" y2="91" stroke="rgba(0,0,0,0.18)" stroke-width="0.4"/>
+  <line x1="0" y1="91.5" x2="20" y2="91.5" stroke="rgba(255,255,255,0.2)" stroke-width="0.3"/>`
   ),
   press: wrapKeySkinSvg(
     '0 0 20 100',
@@ -72,14 +72,14 @@ const METAL_WHITE: KeySkinSvg = {
       <stop offset="0%" stop-color="#5e6672"/><stop offset="100%" stop-color="#424a54"/>
     </linearGradient>
   </defs>
-  <path d="M0 87 H20 V96.5 Q20 100 17 100 H3 Q0 100 0 96.5 Z" fill="url(#hmWpFront)"/>
-  <rect x="0" y="87" width="1.3" height="13" fill="url(#hmWpEdgeL)"/>
-  <rect x="18.7" y="87" width="1.3" height="13" fill="url(#hmWpEdgeR)"/>
-  <rect x="0" y="0" width="20" height="87" fill="url(#hmWpTop)"/>
-  <rect x="0" y="0" width="20" height="87" fill="url(#hmWpForm)"/>
-  <rect x="0" y="84" width="20" height="3" fill="rgba(0,0,0,0.2)"/>
+  <path d="M0 93.5 H20 V98.25 Q20 100 17 100 H3 Q0 100 0 98.25 Z" fill="url(#hmWpFront)"/>
+  <rect x="0" y="93.5" width="1.3" height="6.5" fill="url(#hmWpEdgeL)"/>
+  <rect x="18.7" y="93.5" width="1.3" height="6.5" fill="url(#hmWpEdgeR)"/>
+  <rect x="0" y="0" width="20" height="93.5" fill="url(#hmWpTop)"/>
+  <rect x="0" y="0" width="20" height="93.5" fill="url(#hmWpForm)"/>
+  <rect x="0" y="90.5" width="20" height="3" fill="rgba(0,0,0,0.2)"/>
   <line x1="20" y1="0" x2="20" y2="100" stroke="rgba(0,0,0,0.32)" stroke-width="0.5"/>
-  <line x1="0" y1="87" x2="20" y2="87" stroke="rgba(0,0,0,0.25)" stroke-width="0.5"/>`
+  <line x1="0" y1="93.5" x2="20" y2="93.5" stroke="rgba(0,0,0,0.25)" stroke-width="0.5"/>`
   )
 }
 
@@ -117,15 +117,15 @@ const METAL_BLACK: KeySkinSvg = {
     </filter>
   </defs>
   <g filter="url(#hmBnShadow)">
-    <path d="M0 46 H12 V57 Q12 59.5 10 59.5 H2 Q0 59.5 0 57 Z" fill="url(#hmBnFront)"/>
-    <rect x="0" y="46" width="0.9" height="13.5" fill="url(#hmBnEdgeL)"/>
-    <rect x="11.1" y="46" width="0.9" height="13.5" fill="url(#hmBnEdgeR)"/>
-    <rect x="0" y="0" width="12" height="46" fill="url(#hmBnTop)"/>
-    <rect x="0" y="0" width="12" height="46" fill="url(#hmBnForm)"/>
-    <polygon points="3,-1 4.6,-1 2,47 0.6,47" fill="rgba(225,240,255,0.6)" filter="url(#hmBnSoft)"/>
+    <path d="M0 53 H12 V58.5 Q12 59.5 10 59.5 H2 Q0 59.5 0 58.5 Z" fill="url(#hmBnFront)"/>
+    <rect x="0" y="53" width="0.9" height="6.5" fill="url(#hmBnEdgeL)"/>
+    <rect x="11.1" y="53" width="0.9" height="6.5" fill="url(#hmBnEdgeR)"/>
+    <rect x="0" y="0" width="12" height="53" fill="url(#hmBnTop)"/>
+    <rect x="0" y="0" width="12" height="53" fill="url(#hmBnForm)"/>
+    <polygon points="3,-1 4.6,-1 2,53 0.6,53" fill="rgba(225,240,255,0.6)" filter="url(#hmBnSoft)"/>
     <circle cx="5" cy="6" r="0.9" fill="rgba(235,245,255,0.85)" filter="url(#hmBnSoft)"/>
     <rect x="0" y="0" width="12" height="0.9" fill="rgba(210,230,255,0.4)"/>
-    <line x1="0" y1="46" x2="12" y2="46" stroke="rgba(200,220,255,0.15)" stroke-width="0.35"/>
+    <line x1="0" y1="53" x2="12" y2="53" stroke="rgba(200,220,255,0.15)" stroke-width="0.35"/>
   </g>`
   ),
   press: wrapKeySkinSvg(
@@ -155,14 +155,14 @@ const METAL_BLACK: KeySkinSvg = {
       <stop offset="0%" stop-color="#1c2026"/><stop offset="100%" stop-color="#0a0c10"/>
     </linearGradient>
   </defs>
-  <path d="M0 52 H12 V57 Q12 59.5 10 59.5 H2 Q0 59.5 0 57 Z" fill="url(#hmBpFront)"/>
-  <rect x="0" y="52" width="0.9" height="7.5" fill="url(#hmBpEdgeL)"/>
-  <rect x="11.1" y="52" width="0.9" height="7.5" fill="url(#hmBpEdgeR)"/>
-  <rect x="0" y="0" width="12" height="52" fill="url(#hmBpTop)"/>
-  <rect x="0" y="0" width="12" height="52" fill="url(#hmBpForm)"/>
-  <rect x="0" y="50" width="12" height="2.5" fill="rgba(0,0,0,0.35)"/>
-  <line x1="0" y1="52" x2="12" y2="52" stroke="rgba(0,0,0,0.65)" stroke-width="0.55"/>
-  <line x1="0" y1="52.5" x2="12" y2="52.5" stroke="rgba(190,210,245,0.08)" stroke-width="0.35"/>`
+  <path d="M0 56 H12 V58.5 Q12 59.5 10 59.5 H2 Q0 59.5 0 58.5 Z" fill="url(#hmBpFront)"/>
+  <rect x="0" y="56" width="0.9" height="3.75" fill="url(#hmBpEdgeL)"/>
+  <rect x="11.1" y="56" width="0.9" height="3.75" fill="url(#hmBpEdgeR)"/>
+  <rect x="0" y="0" width="12" height="56" fill="url(#hmBpTop)"/>
+  <rect x="0" y="0" width="12" height="56" fill="url(#hmBpForm)"/>
+  <rect x="0" y="53.5" width="12" height="2.5" fill="rgba(0,0,0,0.35)"/>
+  <line x1="0" y1="56" x2="12" y2="56" stroke="rgba(0,0,0,0.65)" stroke-width="0.55"/>
+  <line x1="0" y1="56.5" x2="12" y2="56.5" stroke="rgba(190,210,245,0.08)" stroke-width="0.35"/>`
   )
 }
 

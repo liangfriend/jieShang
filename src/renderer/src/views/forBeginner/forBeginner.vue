@@ -327,7 +327,6 @@ function handleMidiBoxFinished() {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  padding-bottom: 72px;
   background: #fff8fb;
   overflow: hidden;
 }

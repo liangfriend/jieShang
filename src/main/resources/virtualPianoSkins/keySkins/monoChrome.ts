@@ -22,12 +22,12 @@ const MONO_WHITE: KeySkinSvg = {
       <stop offset="100%" stop-color="#bcbcc8"/>
     </linearGradient>
   </defs>
-  <path d="M0 82 H20 V96.5 Q20 100 17 100 H3 Q0 100 0 96.5 Z" fill="url(#mcWnFront)"/>
-  <rect x="0" y="82" width="1.3" height="18" fill="url(#mcWnEdgeL)"/>
-  <rect x="18.7" y="82" width="1.3" height="18" fill="url(#mcWnEdgeR)"/>
-  <rect x="0" y="0" width="20" height="82" fill="url(#mcWnTop)"/>
+  <path d="M0 91 H20 V98.25 Q20 100 17 100 H3 Q0 100 0 98.25 Z" fill="url(#mcWnFront)"/>
+  <rect x="0" y="91" width="1.3" height="9" fill="url(#mcWnEdgeL)"/>
+  <rect x="18.7" y="91" width="1.3" height="9" fill="url(#mcWnEdgeR)"/>
+  <rect x="0" y="0" width="20" height="91" fill="url(#mcWnTop)"/>
   <line x1="20" y1="0" x2="20" y2="100" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>
-  <line x1="0" y1="82" x2="20" y2="82" stroke="rgba(0,0,0,0.08)" stroke-width="0.5"/>`
+  <line x1="0" y1="91" x2="20" y2="91" stroke="rgba(0,0,0,0.08)" stroke-width="0.5"/>`
   ),
   press: wrapKeySkinSvg(
     '0 0 20 100',
@@ -49,12 +49,12 @@ const MONO_WHITE: KeySkinSvg = {
       <stop offset="100%" stop-color="#a4a4b0"/>
     </linearGradient>
   </defs>
-  <path d="M0 87 H20 V96.5 Q20 100 17 100 H3 Q0 100 0 96.5 Z" fill="url(#mcWpFront)"/>
-  <rect x="0" y="87" width="1.3" height="13" fill="url(#mcWpEdgeL)"/>
-  <rect x="18.7" y="87" width="1.3" height="13" fill="url(#mcWpEdgeR)"/>
-  <rect x="0" y="0" width="20" height="87" fill="url(#mcWpTop)"/>
+  <path d="M0 93.5 H20 V98.25 Q20 100 17 100 H3 Q0 100 0 98.25 Z" fill="url(#mcWpFront)"/>
+  <rect x="0" y="93.5" width="1.3" height="6.5" fill="url(#mcWpEdgeL)"/>
+  <rect x="18.7" y="93.5" width="1.3" height="6.5" fill="url(#mcWpEdgeR)"/>
+  <rect x="0" y="0" width="20" height="93.5" fill="url(#mcWpTop)"/>
   <line x1="20" y1="0" x2="20" y2="100" stroke="rgba(0,0,0,0.15)" stroke-width="0.5"/>
-  <line x1="0" y1="87" x2="20" y2="87" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>`
+  <line x1="0" y1="93.5" x2="20" y2="93.5" stroke="rgba(0,0,0,0.12)" stroke-width="0.5"/>`
   )
 }
 
@@ -83,12 +83,12 @@ const MONO_BLACK: KeySkinSvg = {
     </filter>
   </defs>
   <g filter="url(#mcBnShadow)">
-    <path d="M0 46 H12 V57 Q12 59.5 10 59.5 H2 Q0 59.5 0 57 Z" fill="url(#mcBnFront)"/>
-    <rect x="0" y="46" width="0.9" height="13.5" fill="url(#mcBnEdgeL)"/>
-    <rect x="11.1" y="46" width="0.9" height="13.5" fill="url(#mcBnEdgeR)"/>
-    <rect x="0" y="0" width="12" height="46" fill="url(#mcBnTop)"/>
-    <rect x="0.6" y="1" width="0.5" height="42" fill="rgba(255,255,255,0.1)"/>
-    <line x1="0" y1="46" x2="12" y2="46" stroke="rgba(0,0,0,0.2)" stroke-width="0.35"/>
+    <path d="M0 53 H12 V58.5 Q12 59.5 10 59.5 H2 Q0 59.5 0 58.5 Z" fill="url(#mcBnFront)"/>
+    <rect x="0" y="53" width="0.9" height="6.5" fill="url(#mcBnEdgeL)"/>
+    <rect x="11.1" y="53" width="0.9" height="6.5" fill="url(#mcBnEdgeR)"/>
+    <rect x="0" y="0" width="12" height="53" fill="url(#mcBnTop)"/>
+    <rect x="0.6" y="1" width="0.5" height="49" fill="rgba(255,255,255,0.1)"/>
+    <line x1="0" y1="53" x2="12" y2="53" stroke="rgba(0,0,0,0.2)" stroke-width="0.35"/>
   </g>`
   ),
   press: wrapKeySkinSvg(
@@ -111,13 +111,13 @@ const MONO_BLACK: KeySkinSvg = {
       <stop offset="100%" stop-color="#060608"/>
     </linearGradient>
   </defs>
-  <path d="M0 52 H12 V57 Q12 59.5 10 59.5 H2 Q0 59.5 0 57 Z" fill="url(#mcBpFront)"/>
-  <rect x="0" y="52" width="0.9" height="7.5" fill="url(#mcBpEdgeL)"/>
-  <rect x="11.1" y="52" width="0.9" height="7.5" fill="url(#mcBpEdgeR)"/>
-  <rect x="0" y="0" width="12" height="52" fill="url(#mcBpTop)"/>
-  <rect x="0" y="50" width="12" height="2.5" fill="rgba(0,0,0,0.22)"/>
-  <line x1="0" y1="52" x2="12" y2="52" stroke="rgba(0,0,0,0.55)" stroke-width="0.55"/>
-  <line x1="0" y1="52.5" x2="12" y2="52.5" stroke="rgba(255,255,255,0.06)" stroke-width="0.35"/>`
+  <path d="M0 56 H12 V58.5 Q12 59.5 10 59.5 H2 Q0 59.5 0 58.5 Z" fill="url(#mcBpFront)"/>
+  <rect x="0" y="56" width="0.9" height="3.75" fill="url(#mcBpEdgeL)"/>
+  <rect x="11.1" y="56" width="0.9" height="3.75" fill="url(#mcBpEdgeR)"/>
+  <rect x="0" y="0" width="12" height="56" fill="url(#mcBpTop)"/>
+  <rect x="0" y="53.5" width="12" height="2.5" fill="rgba(0,0,0,0.22)"/>
+  <line x1="0" y1="56" x2="12" y2="56" stroke="rgba(0,0,0,0.55)" stroke-width="0.55"/>
+  <line x1="0" y1="56.5" x2="12" y2="56.5" stroke="rgba(255,255,255,0.06)" stroke-width="0.35"/>`
   )
 }
 

@@ -161,7 +161,6 @@ onBeforeUnmount(() => {
   flex-direction: column;
   background: #fff8fb;
   box-sizing: border-box;
-  padding-bottom: 120px;
 }
 
 .whiteboard__score {
@@ -181,8 +180,7 @@ onBeforeUnmount(() => {
 }
 
 .whiteboard__piano {
-  flex: 1;
-  min-height: 0;
+  flex-shrink: 0;
   display: flex;
   align-items: flex-end;
   padding: 8px 12px;

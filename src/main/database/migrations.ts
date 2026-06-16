@@ -165,5 +165,25 @@ export const migrations: Migrations[] = [
     async down() {
       await CollectionModel.update({ owned: false }, { where: { id: [BUILTIN_COLLECTION_SEED_IDS.pianoSkin.黑白, BUILTIN_COLLECTION_SEED_IDS.pianoSkin.木板] } })
     }
+  },
+  {
+    id: '006-piano-skin-side-half',
+    async up() {
+      await CollectionModel.update(
+        { content: JSON.stringify(buildHeavyMetalPianoPack()) },
+        { where: { id: BUILTIN_COLLECTION_SEED_IDS.pianoSkin.重金属 } }
+      )
+      await CollectionModel.update(
+        { content: JSON.stringify(buildMonoChromePianoPack()) },
+        { where: { id: BUILTIN_COLLECTION_SEED_IDS.pianoSkin.黑白 } }
+      )
+      await CollectionModel.update(
+        { content: JSON.stringify(buildWoodBoardPianoPack()) },
+        { where: { id: BUILTIN_COLLECTION_SEED_IDS.pianoSkin.木板 } }
+      )
+    },
+    async down() {
+      // SVG 几何不可无损回滚，跳过
+    }
   }
 ]
