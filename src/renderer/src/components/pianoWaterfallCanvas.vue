@@ -28,8 +28,8 @@ import {
   type PerformCanvasContexts
 } from '@renderer/utils/performCanvasStack'
 import {
-  drawPerformOverlayLayer,
-  preloadPerformOverlayAssets
+  createPerformOverlayHost,
+  drawPerformOverlayLayer
 } from '@renderer/utils/performCanvasOverlayRenderer'
 
 defineOptions({
@@ -319,6 +319,7 @@ const activeParts = ref(new Map<number, Array<Array<number>>>())
 
 const currentTime = ref(0)
 const state = ref<'stopped' | 'playing' | 'paused'>('stopped')
+let sessionStartedAt = 0
 let lastTimestamp = 0
 let rafId: number | null = null
 
@@ -458,6 +459,15 @@ const midiColumnLayouts = computed(() =>
   buildMidiColumnLayouts(props.midi.min, props.midi.max, getMidiWidth)
 )
 
+const waterfallKeyActiveBarWidth = computed(
+  () =>
+    skin.value.waterfall.activeColumn.getShape({
+      start: 0,
+      end: 0,
+      columnHeightConstant: props.columnHeightConstant
+    }).width
+)
+
 const drawNotes = computed<WaterfallNoteDraw[]>(() => {
   const notes: WaterfallNoteDraw[] = []
   for (const [midiStr, seq] of Object.entries(performSequenceComputed.value)) {
@@ -480,6 +490,55 @@ const drawHighlights = computed<WaterfallHighlightDraw[]>(() => {
   return list
 })
 
+const overlayHost = createPerformOverlayHost()
+let overlayLastNow = 0
+
+function getLayerTime(): number {
+  return sessionStartedAt ? performance.now() - sessionStartedAt : 0
+}
+
+function getOverlayDeltaMs(now: number): number {
+  const deltaMs = overlayLastNow ? now - overlayLastNow : 16.67
+  overlayLastNow = now
+  return deltaMs
+}
+
+function startRenderLoop() {
+  if (rafId != null) return
+  sessionStartedAt = performance.now()
+  overlayLastNow = 0
+  lastTimestamp = 0
+
+  const step = (timestamp: number) => {
+    if (state.value === 'playing') {
+      const delta = lastTimestamp ? timestamp - lastTimestamp : 0
+      lastTimestamp = timestamp
+      if (delta > 0) {
+        currentTime.value += delta
+        evaluateMisses(currentTime.value)
+        if (currentTime.value >= duration.value) {
+          currentTime.value = duration.value
+          state.value = 'stopped'
+        }
+      }
+    }
+
+    drawFrame(timestamp)
+    rafId = requestAnimationFrame(step)
+  }
+
+  rafId = requestAnimationFrame(step)
+}
+
+function stopRenderLoop() {
+  if (rafId != null) {
+    cancelAnimationFrame(rafId)
+    rafId = null
+  }
+  overlayLastNow = 0
+  sessionStartedAt = 0
+}
+
 const bgCanvasRef = ref<HTMLCanvasElement | null>(null)
 const normalCanvasRef = ref<HTMLCanvasElement | null>(null)
 const activeCanvasRef = ref<HTMLCanvasElement | null>(null)
@@ -499,9 +558,11 @@ function syncCanvasSize() {
   )
 }
 
-function drawFrame() {
+function drawFrame(now = performance.now()) {
   if (!canvasStack?.normal || !canvasStack.active || !canvasStack.overlay || !containerSize.value.width)
     return
+
+  const deltaMs = getOverlayDeltaMs(now)
 
   const { bg, normal, active, overlay, width, height, dpr } = canvasStack
   const layerBase = {
@@ -511,6 +572,7 @@ function drawFrame() {
     baseLineBottom: props.baseLineBottom,
     columnHeightConstant: props.columnHeightConstant,
     currentTime: currentTime.value,
+    layerTime: getLayerTime(),
     midiLayouts: midiColumnLayouts.value
   }
 
@@ -539,19 +601,12 @@ function drawFrame() {
     midiMax: props.midi.max,
     activeKeys: activeKeys.value,
     midiLayouts: midiColumnLayouts.value,
-    baselineSvg: skin.value.baselineSvg,
-    baselineMidiActiveSvg: skin.value.baselineMidiActiveSvg,
-    baselineStyle: skin.value.baseline,
-    getKeyActiveBarStyle: (input) => skin.value.waterfall.keyActiveBar(input)
+    keyActiveBarWidth: waterfallKeyActiveBarWidth.value,
+    command: skin.value.overlay,
+    host: overlayHost,
+    now,
+    deltaMs
   })
-}
-
-async function preloadOverlayAssets() {
-  await preloadPerformOverlayAssets({
-    baselineSvg: skin.value.baselineSvg,
-    baselineMidiActiveSvg: skin.value.baselineMidiActiveSvg
-  })
-  drawFrame()
 }
 
 let resizeObserver: ResizeObserver | null = null
@@ -583,36 +638,12 @@ watch(
   }
 )
 
-watch(activeKeys, () => drawFrame())
-
-watch(
-  () => [skin.value.baselineSvg, skin.value.baselineMidiActiveSvg] as const,
-  () => {
-    void preloadOverlayAssets()
-  }
-)
-
-watch(
-  [
-    () => props.performSequence,
-    () => props.midi,
-    () => props.columnHeightConstant,
-    () => props.prepareTime,
-    drawHighlights,
-    () => state.value
-  ],
-  () => {
-    if (state.value !== 'playing') drawFrame()
-  },
-  { deep: true }
-)
-
 const midiStore = useMidiStore()
 onMounted(async () => {
   await nextTick()
   observeContainer()
   syncCanvasSize()
-  await preloadOverlayAssets()
+  startRenderLoop()
   window.addEventListener('keydown', keyBoardKeyDown)
   window.addEventListener('keyup', keyBoardKeyUp)
   midiStore.addMessageListener(handleMidiMessage)
@@ -620,7 +651,8 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
-  if (rafId) cancelAnimationFrame(rafId)
+  stopRenderLoop()
+  overlayHost.runtime?.reset()
   window.removeEventListener('keydown', keyBoardKeyDown)
   window.removeEventListener('keyup', keyBoardKeyUp)
   midiStore.removeMessageListener(handleMidiMessage)
@@ -687,49 +719,25 @@ function play() {
   }
   state.value = 'playing'
   lastTimestamp = performance.now()
-  requestFrame()
 }
 
 function pause() {
   if (state.value !== 'playing') return
   state.value = 'paused'
-  if (rafId) cancelAnimationFrame(rafId)
-  drawFrame()
 }
 
 function stop() {
-  if (state.value === 'stopped') return
+  if (state.value === 'stopped' && currentTime.value === 0) return
   state.value = 'stopped'
-  if (rafId) cancelAnimationFrame(rafId)
   currentTime.value = 0
-  drawFrame()
 }
 
 function clearActiveParts() {
   activeParts.value = new Map<number, Array<Array<number>>>()
   activeKeys.value = new Set<number>()
   noteScores.value = new Map<string, NoteScoreResult>()
-  drawFrame()
-}
-
-function requestFrame() {
-  rafId = requestAnimationFrame((timestamp) => {
-    if (state.value !== 'playing') return
-
-    const delta = timestamp - lastTimestamp
-    lastTimestamp = timestamp
-    currentTime.value += delta
-
-    evaluateMisses(currentTime.value)
-    drawFrame()
-
-    if (currentTime.value >= duration.value) {
-      if (rafId) cancelAnimationFrame(rafId)
-      return
-    }
-
-    requestFrame()
-  })
+  overlayHost.runtime?.reset()
+  overlayHost.prevActiveKeys = new Set()
 }
 
 defineExpose({

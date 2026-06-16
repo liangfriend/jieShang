@@ -82,7 +82,10 @@ type WaterfallLayerBaseInput = {
   height: number
   baseLineBottom: number
   columnHeightConstant: number
+  /** 音符下落进度（仅播放时递增） */
   currentTime: number
+  /** 背景动效时间（进入页面起持续递增） */
+  layerTime: number
   dpr: number
   midiLayouts: Map<number, MidiColumnLayout>
 }
@@ -106,6 +109,7 @@ export function drawWaterfallNormalLayer(input: DrawWaterfallNormalLayerInput) {
     baseLineBottom,
     columnHeightConstant: chc,
     currentTime,
+    layerTime,
     dpr,
     midiLayouts,
     notes,
@@ -113,7 +117,7 @@ export function drawWaterfallNormalLayer(input: DrawWaterfallNormalLayerInput) {
   } = input
 
   const baselineY = height - baseLineBottom
-  const time = currentTime
+  const time = layerTime
   const visibleItems: Array<{
     midi: number
     top: number
@@ -157,6 +161,7 @@ export function drawWaterfallActiveLayer(input: DrawWaterfallActiveLayerInput) {
     baseLineBottom,
     columnHeightConstant: chc,
     currentTime,
+    layerTime,
     dpr,
     midiLayouts,
     highlights,
@@ -164,7 +169,7 @@ export function drawWaterfallActiveLayer(input: DrawWaterfallActiveLayerInput) {
   } = input
 
   const baselineY = height - baseLineBottom
-  const time = currentTime
+  const time = layerTime
   const visibleItems: Array<{
     midi: number
     top: number

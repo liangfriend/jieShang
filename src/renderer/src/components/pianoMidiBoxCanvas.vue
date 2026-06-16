@@ -31,8 +31,8 @@ import {
   type PerformCanvasContexts
 } from '@renderer/utils/performCanvasStack'
 import {
-  drawPerformOverlayLayer,
-  preloadPerformOverlayAssets
+  createPerformOverlayHost,
+  drawPerformOverlayLayer
 } from '@renderer/utils/performCanvasOverlayRenderer'
 
 defineOptions({
@@ -276,6 +276,43 @@ const midiColumnLayouts = computed(() =>
   buildMidiColumnLayouts(props.midi.min, props.midi.max, getMidiWidth)
 )
 
+const overlayHost = createPerformOverlayHost()
+let sessionStartedAt = 0
+let rafId: number | null = null
+let overlayLastNow = 0
+
+function getLayerTime(): number {
+  return sessionStartedAt ? performance.now() - sessionStartedAt : 0
+}
+
+function getOverlayDeltaMs(now: number): number {
+  const deltaMs = overlayLastNow ? now - overlayLastNow : 16.67
+  overlayLastNow = now
+  return deltaMs
+}
+
+function startRenderLoop() {
+  if (rafId != null) return
+  sessionStartedAt = performance.now()
+  overlayLastNow = 0
+
+  const step = (timestamp: number) => {
+    drawFrame(timestamp)
+    rafId = requestAnimationFrame(step)
+  }
+
+  rafId = requestAnimationFrame(step)
+}
+
+function stopRenderLoop() {
+  if (rafId != null) {
+    cancelAnimationFrame(rafId)
+    rafId = null
+  }
+  overlayLastNow = 0
+  sessionStartedAt = 0
+}
+
 const drawBlocks = computed<MidiBoxBlockDraw[]>(() => {
   const blocks: MidiBoxBlockDraw[] = []
   for (const [midiStr, seq] of Object.entries(props.performSequence)) {
@@ -299,12 +336,6 @@ const overlayCanvasRef = ref<HTMLCanvasElement | null>(null)
 let canvasStack: PerformCanvasContexts | null = null
 let fallAnimRaf: number | null = null
 let skipFallAnimation = false
-/** 本次 play 的起始时刻，背景动效与播放同步 */
-let playStartedAt = 0
-
-function getLayerPlaybackTime() {
-  return state.value === 'playing' ? performance.now() - playStartedAt : 0
-}
 
 function syncCanvasSize() {
   if (!containerRef.value) return
@@ -319,9 +350,11 @@ function syncCanvasSize() {
   )
 }
 
-function drawFrame() {
+function drawFrame(now = performance.now()) {
   if (!canvasStack?.normal || !canvasStack.active || !canvasStack.overlay || !containerSize.value.width)
     return
+
+  const deltaMs = getOverlayDeltaMs(now)
 
   const { bg, normal, active, overlay, width, height, dpr } = canvasStack
   const layerBase = {
@@ -333,7 +366,7 @@ function drawFrame() {
     blockStride: blockStride.value,
     fallScrollOffset: fallScrollOffset.value,
     midiLayouts: midiColumnLayouts.value,
-    layerTime: getLayerPlaybackTime()
+    layerTime: getLayerTime()
   }
 
   if (bg) drawPerformBackgroundLayer(bg, width, height)
@@ -361,19 +394,12 @@ function drawFrame() {
     midiMax: props.midi.max,
     activeKeys: activeKeys.value,
     midiLayouts: midiColumnLayouts.value,
-    baselineSvg: skin.value.baselineSvg,
-    baselineMidiActiveSvg: skin.value.baselineMidiActiveSvg,
-    baselineStyle: skin.value.baseline,
-    getKeyActiveBarStyle: (input) => skin.value.midiBox.keyActiveBar(input)
+    keyActiveBarWidth: props.blockSize,
+    command: skin.value.overlay,
+    host: overlayHost,
+    now,
+    deltaMs
   })
-}
-
-async function preloadOverlayAssets() {
-  await preloadPerformOverlayAssets({
-    baselineSvg: skin.value.baselineSvg,
-    baselineMidiActiveSvg: skin.value.baselineMidiActiveSvg
-  })
-  drawFrame()
 }
 
 function animateFallScroll(from: number, to: number) {
@@ -382,7 +408,6 @@ function animateFallScroll(from: number, to: number) {
   const durationMs = props.fallDuration * 1000
   if (durationMs <= 0 || from === to) {
     fallScrollOffset.value = to
-    drawFrame()
     return
   }
 
@@ -392,7 +417,6 @@ function animateFallScroll(from: number, to: number) {
     const t = Math.min(1, (now - startAt) / durationMs)
     const eased = 1 - (1 - t) ** 3
     fallScrollOffset.value = from + (to - from) * eased
-    drawFrame()
     if (t < 1) {
       fallAnimRaf = requestAnimationFrame(step)
     } else {
@@ -421,8 +445,9 @@ function resetProgress() {
   fallenBatchCount.value = 0
   fallScrollOffset.value = 0
   activeKeys.value = new Set()
+  overlayHost.runtime?.reset()
+  overlayHost.prevActiveKeys = new Set()
   skipEmptyBatches()
-  drawFrame()
 }
 
 function skipEmptyBatches() {
@@ -478,12 +503,10 @@ function tryAdvanceBatch() {
 
 function play() {
   if (state.value === 'playing') return
-  playStartedAt = performance.now()
   resetProgress()
   emit('progressReset')
   state.value = 'playing'
   emitBatchActive()
-  drawFrame()
 }
 
 function stop() {
@@ -494,7 +517,6 @@ function stop() {
 
 function clearActiveParts() {
   activeKeys.value = new Set()
-  drawFrame()
 }
 
 let resizeObserver: ResizeObserver | null = null
@@ -523,31 +545,6 @@ watch(
     await nextTick()
     observeContainer()
   }
-)
-
-watch(activeKeys, () => drawFrame())
-
-watch(
-  () => [skin.value.baselineSvg, skin.value.baselineMidiActiveSvg] as const,
-  () => {
-    void preloadOverlayAssets()
-  }
-)
-
-watch(
-  [
-    () => props.performSequence,
-    () => props.midi,
-    () => props.blockSize,
-    () => props.blockGap,
-    activeKeys,
-    currentBatchIndex,
-    () => state.value
-  ],
-  () => {
-    if (state.value !== 'playing') drawFrame()
-  },
-  { deep: true }
 )
 
 const midiStore = useMidiStore()
@@ -597,7 +594,7 @@ onMounted(async () => {
   await nextTick()
   observeContainer()
   syncCanvasSize()
-  await preloadOverlayAssets()
+  startRenderLoop()
   window.addEventListener('keydown', keyBoardKeyDown)
   window.addEventListener('keyup', keyBoardKeyUp)
   midiStore.addMessageListener(handleMidiMessage)
@@ -606,6 +603,8 @@ onMounted(async () => {
 onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   if (fallAnimRaf) cancelAnimationFrame(fallAnimRaf)
+  stopRenderLoop()
+  overlayHost.runtime?.reset()
   window.removeEventListener('keydown', keyBoardKeyDown)
   window.removeEventListener('keyup', keyBoardKeyUp)
   midiStore.removeMessageListener(handleMidiMessage)

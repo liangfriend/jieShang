@@ -33,7 +33,6 @@ export function usePerformSkin() {
 
   const skin = computed<PerformSkinPack>(() => resolvePerformSkinPack(skinContentKey.value))
   const skinBgStyle = computed(() => svgToBackgroundStyle(skin.value.bgSvg))
-  const skinBaselineBgStyle = computed(() => svgToBackgroundStyle(skin.value.baselineSvg))
 
-  return { performSkinId, skin, skinBgStyle, skinBaselineBgStyle }
+  return { performSkinId, skin, skinBgStyle }
 }

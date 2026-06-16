@@ -71,7 +71,7 @@ type MidiBoxLayerBaseInput = {
   fallScrollOffset: number
   dpr: number
   midiLayouts: Map<number, MidiColumnLayout>
-  /** 与本次 play 同步的毫秒时间，停止时为 0 */
+  /** 背景动效时间（进入页面起持续递增，与播放进度无关） */
   layerTime: number
 }
 

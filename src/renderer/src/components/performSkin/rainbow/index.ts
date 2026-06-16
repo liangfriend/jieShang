@@ -1,9 +1,10 @@
 import type { PerformSkinPack } from '../types'
-import { bg, baseline, baselineMidiActive } from './svg'
-import { rainbowMidiBoxActiveBlock, getRainbowMidiBoxKeyActiveBarStyle } from './midiBox/active'
+import { bg } from './svg'
+import { rainbowMidiBoxActiveBlock } from './midiBox/active'
 import { rainbowMidiBoxNormalBlock } from './midiBox/normal'
-import { rainbowWaterfallActiveColumn, getRainbowWaterfallKeyActiveBarStyle } from './waterfall/active'
+import { rainbowWaterfallActiveColumn } from './waterfall/active'
 import { rainbowWaterfallNormalColumn } from './waterfall/normal'
+import { rainbowPerformOverlay } from './overlay'
 
 export const rainbowPerformSkin: PerformSkinPack = {
   container: {
@@ -13,22 +14,12 @@ export const rainbowPerformSkin: PerformSkinPack = {
   },
   midiBox: {
     normalBlock: rainbowMidiBoxNormalBlock,
-    activeBlock: rainbowMidiBoxActiveBlock,
-    keyActiveBar: getRainbowMidiBoxKeyActiveBarStyle
+    activeBlock: rainbowMidiBoxActiveBlock
   },
   waterfall: {
     normalColumn: rainbowWaterfallNormalColumn,
-    activeColumn: rainbowWaterfallActiveColumn,
-    keyActiveBar: getRainbowWaterfallKeyActiveBarStyle
+    activeColumn: rainbowWaterfallActiveColumn
   },
-  baseline: {
-    height: '3px',
-    borderRadius: '999px',
-    display: 'flex',
-    alignItems: 'flex-end',
-    boxShadow: '0 0 12px 1px rgba(255, 158, 199, 0.6)'
-  },
-  bgSvg: bg,
-  baselineSvg: baseline,
-  baselineMidiActiveSvg: baselineMidiActive
+  overlay: rainbowPerformOverlay,
+  bgSvg: bg
 }

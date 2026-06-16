@@ -1,39 +1,42 @@
-import type { CSSProperties } from 'vue'
-import type { KeyActiveBarStyleInput } from '@renderer/components/performSkin/types'
+import type {
+  PerformOverlayCanvasCommand,
+  PerformOverlayRuntime
+} from '@renderer/components/performSkin/types'
 import type { MidiColumnLayout } from '@renderer/utils/pianoWaterfallCanvasRenderer'
 
-const svgImageCache = new Map<string, HTMLImageElement>()
-
-function parsePx(value: string | number | undefined, fallback: number): number {
-  if (typeof value === 'number') return value
-  if (!value) return fallback
-  const n = parseFloat(String(value))
-  return Number.isFinite(n) ? n : fallback
+export type PerformOverlayHost = {
+  command: PerformOverlayCanvasCommand | null
+  runtime: PerformOverlayRuntime | null
+  prevActiveKeys: Set<number>
 }
 
-function loadSvgImage(svg: string): Promise<HTMLImageElement> {
-  const cached = svgImageCache.get(svg)
-  if (cached) return Promise.resolve(cached)
-
-  return new Promise((resolve, reject) => {
-    const img = new Image()
-    img.onload = () => {
-      svgImageCache.set(svg, img)
-      resolve(img)
-    }
-    img.onerror = reject
-    img.src = `data:image/svg+xml,${encodeURIComponent(svg)}`
-  })
+export function createPerformOverlayHost(): PerformOverlayHost {
+  return {
+    command: null,
+    runtime: null,
+    prevActiveKeys: new Set()
+  }
 }
 
-export async function preloadPerformOverlayAssets(input: {
-  baselineSvg: string
-  baselineMidiActiveSvg: string
-}): Promise<void> {
-  await Promise.all([
-    loadSvgImage(input.baselineSvg),
-    loadSvgImage(input.baselineMidiActiveSvg)
-  ])
+function activeKeysChanged(prev: ReadonlySet<number>, next: ReadonlySet<number>): boolean {
+  if (prev.size !== next.size) return true
+  for (const midi of next) {
+    if (!prev.has(midi)) return true
+  }
+  return false
+}
+
+export function syncPerformOverlayRuntime(
+  host: PerformOverlayHost,
+  command: PerformOverlayCanvasCommand
+): PerformOverlayRuntime | null {
+  if (host.command !== command) {
+    host.runtime?.reset()
+    host.command = command
+    host.runtime = command.createRuntime?.() ?? null
+    host.prevActiveKeys = new Set()
+  }
+  return host.runtime
 }
 
 export type DrawPerformOverlayInput = {
@@ -45,13 +48,14 @@ export type DrawPerformOverlayInput = {
   midiMax: number
   activeKeys: ReadonlySet<number>
   midiLayouts: Map<number, MidiColumnLayout>
-  baselineSvg: string
-  baselineMidiActiveSvg: string
-  baselineStyle: CSSProperties
-  getKeyActiveBarStyle: (input: KeyActiveBarStyleInput) => CSSProperties
+  keyActiveBarWidth: number
+  command: PerformOverlayCanvasCommand
+  host: PerformOverlayHost
+  now: number
+  deltaMs: number
 }
 
-/** 第四层：基准线 + 琴键按下高亮 */
+/** 第四层：基准线 + 琴键按下高亮（横坐标与 waterfall / midiBox 共用 midiLayouts） */
 export function drawPerformOverlayLayer(input: DrawPerformOverlayInput) {
   const {
     ctx,
@@ -62,27 +66,39 @@ export function drawPerformOverlayLayer(input: DrawPerformOverlayInput) {
     midiMax,
     activeKeys,
     midiLayouts,
-    baselineSvg,
-    baselineMidiActiveSvg,
-    baselineStyle,
-    getKeyActiveBarStyle
+    keyActiveBarWidth,
+    command,
+    host,
+    now,
+    deltaMs
   } = input
+
+  const runtime = syncPerformOverlayRuntime(host, command)
+
+  if (runtime && activeKeysChanged(host.prevActiveKeys, activeKeys)) {
+    runtime.onKeysChanged?.(host.prevActiveKeys, activeKeys)
+    host.prevActiveKeys = new Set(activeKeys)
+  }
+
+  const baselineY = height - baseLineBottom
+  const baselineHeight = command.getBaselineHeight()
+
+  if (runtime) {
+    runtime.tick({
+      now,
+      deltaMs,
+      baselineY,
+      midiMin,
+      midiMax,
+      activeKeys,
+      midiLayouts,
+      keyActiveBarWidth
+    })
+  }
 
   ctx.clearRect(0, 0, width, height)
 
-  const baselineHeight = parsePx(baselineStyle.height, 3)
-  const baselineY = height - baseLineBottom
-  const baselineImage = svgImageCache.get(baselineSvg)
-
-  if (baselineImage) {
-    ctx.drawImage(baselineImage, 0, baselineY, width, baselineHeight)
-  } else if (typeof baselineStyle.background === 'string' && baselineStyle.background) {
-    ctx.fillStyle = baselineStyle.background
-    ctx.fillRect(0, baselineY, width, baselineHeight)
-  }
-
-  const activeImage = svgImageCache.get(baselineMidiActiveSvg)
-  const barContainerBottom = height - baseLineBottom + 4
+  command.drawBaseline(ctx, { width, baselineY, baselineHeight })
 
   for (let midi = midiMin; midi <= midiMax; midi++) {
     if (!activeKeys.has(midi)) continue
@@ -90,33 +106,21 @@ export function drawPerformOverlayLayer(input: DrawPerformOverlayInput) {
     const layout = midiLayouts.get(midi)
     if (!layout) continue
 
-    const barStyle = getKeyActiveBarStyle({ width: layout.width, active: true })
-    const barHeight = parsePx(barStyle.height, 6)
-    const barY = barContainerBottom - barHeight - 3
+    const shape = command.getKeyActiveBarShape({ active: true })
+    if (!shape) continue
 
-    if (activeImage) {
-      ctx.drawImage(activeImage, layout.x, barY, layout.width, barHeight)
-      continue
-    }
+    const barWidth = keyActiveBarWidth
+    const barX = layout.x + (layout.width - barWidth) / 2
+    const barY = baselineY - shape.gapAboveBaseline - shape.height
 
-    ctx.fillStyle = '#2196f3'
-    const radius = Math.min(barHeight / 2, layout.width / 2)
-    ctx.beginPath()
-    ctx.moveTo(layout.x + radius, barY)
-    ctx.lineTo(layout.x + layout.width - radius, barY)
-    ctx.quadraticCurveTo(layout.x + layout.width, barY, layout.x + layout.width, barY + radius)
-    ctx.lineTo(layout.x + layout.width, barY + barHeight - radius)
-    ctx.quadraticCurveTo(
-      layout.x + layout.width,
-      barY + barHeight,
-      layout.x + layout.width - radius,
-      barY + barHeight
-    )
-    ctx.lineTo(layout.x + radius, barY + barHeight)
-    ctx.quadraticCurveTo(layout.x, barY + barHeight, layout.x, barY + barHeight - radius)
-    ctx.lineTo(layout.x, barY + radius)
-    ctx.quadraticCurveTo(layout.x, barY, layout.x + radius, barY)
-    ctx.closePath()
-    ctx.fill()
+    command.drawKeyActiveBar(ctx, {
+      x: barX,
+      y: barY,
+      width: barWidth,
+      height: shape.height,
+      borderRadius: shape.borderRadius
+    })
   }
+
+  runtime?.draw(ctx)
 }

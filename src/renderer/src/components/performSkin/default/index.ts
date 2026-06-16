@@ -1,9 +1,10 @@
 import type { PerformSkinPack } from '../types'
-import { bg, baseline, baselineMidiActive } from './svg'
-import { defaultMidiBoxActiveBlock, getDefaultMidiBoxKeyActiveBarStyle } from './midiBox/active'
+import { bg } from './svg'
+import { defaultMidiBoxActiveBlock } from './midiBox/active'
 import { defaultMidiBoxNormalBlock } from './midiBox/normal'
-import { defaultWaterfallActiveColumn, getDefaultWaterfallKeyActiveBarStyle } from './waterfall/active'
+import { defaultWaterfallActiveColumn } from './waterfall/active'
 import { defaultWaterfallNormalColumn } from './waterfall/normal'
+import { defaultPerformOverlay } from './overlay'
 
 export const defaultPerformSkin: PerformSkinPack = {
   container: {
@@ -13,22 +14,12 @@ export const defaultPerformSkin: PerformSkinPack = {
   },
   midiBox: {
     normalBlock: defaultMidiBoxNormalBlock,
-    activeBlock: defaultMidiBoxActiveBlock,
-    keyActiveBar: getDefaultMidiBoxKeyActiveBarStyle
+    activeBlock: defaultMidiBoxActiveBlock
   },
   waterfall: {
     normalColumn: defaultWaterfallNormalColumn,
-    activeColumn: defaultWaterfallActiveColumn,
-    keyActiveBar: getDefaultWaterfallKeyActiveBarStyle
+    activeColumn: defaultWaterfallActiveColumn
   },
-  baseline: {
-    height: '3px',
-    background: '#ff0000',
-    borderRadius: '0',
-    display: 'flex',
-    alignItems: 'flex-end'
-  },
-  bgSvg: bg,
-  baselineSvg: baseline,
-  baselineMidiActiveSvg: baselineMidiActive
+  overlay: defaultPerformOverlay,
+  bgSvg: bg
 }
