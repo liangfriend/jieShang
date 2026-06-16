@@ -46,7 +46,7 @@ const emit = defineEmits<{
   (e: 'batchActive', payload: MidiBoxBatchPayload): void
 }>()
 
-const { skin, skinBgStyle } = usePerformSkin()
+const { skin } = usePerformSkin()
 
 const props = defineProps({
   layoutMode: {
@@ -267,8 +267,7 @@ const containerStyle = computed(
     height: props.height,
     position: 'relative',
     overflow: 'hidden',
-    ...skin.value.container,
-    ...skinBgStyle.value
+    ...skin.value.container
   })
 )
 

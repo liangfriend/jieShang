@@ -125,5 +125,4 @@ export type PerformSkinPack = {
     activeColumn: WaterfallActiveColumnCanvasCommand
   }
   overlay: PerformOverlayCanvasCommand
-  bgSvg: string
 }

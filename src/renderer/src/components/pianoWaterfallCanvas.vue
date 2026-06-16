@@ -36,7 +36,7 @@ defineOptions({
   name: 'DsPianoWaterfallCanvas'
 })
 
-const { skin, skinBgStyle } = usePerformSkin()
+const { skin } = usePerformSkin()
 
 const emit = defineEmits<{
   /** 单个音符评分完成：评分结果、实时分、总分、第三个附加参数(noteInfo id) */
@@ -298,8 +298,7 @@ const pianoWaterfallContainerStyle = computed(
     height: props.height,
     position: 'relative',
     overflow: 'hidden',
-    ...skin.value.container,
-    ...skinBgStyle.value
+    ...skin.value.container
   })
 )
 

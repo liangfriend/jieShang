@@ -1,5 +1,4 @@
 import type { PerformSkinPack } from '../types'
-import { bg } from './svg'
 import { defaultMidiBoxActiveBlock } from './midiBox/active'
 import { defaultMidiBoxNormalBlock } from './midiBox/normal'
 import { defaultWaterfallActiveColumn } from './waterfall/active'
@@ -20,6 +19,5 @@ export const defaultPerformSkin: PerformSkinPack = {
     normalColumn: defaultWaterfallNormalColumn,
     activeColumn: defaultWaterfallActiveColumn
   },
-  overlay: defaultPerformOverlay,
-  bgSvg: bg
+  overlay: defaultPerformOverlay
 }

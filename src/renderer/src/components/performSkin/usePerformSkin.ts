@@ -1,18 +1,10 @@
-import { computed, onMounted, ref, watch, type CSSProperties } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import {
   fetchActivePerformSkinContentKey,
   resolvePerformSkinPack,
   useActivePerformSkinId
 } from '@renderer/utils/collection/performSkinLoader'
 import type { PerformSkinPack } from './types'
-
-function svgToBackgroundStyle(svg: string): CSSProperties {
-  return {
-    backgroundImage: `url("data:image/svg+xml,${encodeURIComponent(svg)}")`,
-    backgroundSize: '100% 100%',
-    backgroundRepeat: 'no-repeat'
-  }
-}
 
 /** 进入使用页时按 localStorage 中的 id 查库，content 索引本地皮肤包 */
 export function usePerformSkin() {
@@ -32,7 +24,6 @@ export function usePerformSkin() {
   })
 
   const skin = computed<PerformSkinPack>(() => resolvePerformSkinPack(skinContentKey.value))
-  const skinBgStyle = computed(() => svgToBackgroundStyle(skin.value.bgSvg))
 
-  return { performSkinId, skin, skinBgStyle }
+  return { performSkinId, skin }
 }
