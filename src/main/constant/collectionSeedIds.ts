@@ -12,9 +12,12 @@ export const BUILTIN_COLLECTION_SEED_IDS = {
     八音盒: 6
   },
   scoreSkin: {
-    默认曲谱皮肤: 7,
-    冰川曲谱皮肤: 8,
-    竹林曲谱皮肤: 9
+    默认: 7,
+    冰川: 8,
+    墨华: 9,
+    寰宇: 19,
+    晨曦: 20,
+    竹林: 21
   },
   performSkin: {
     默认演奏皮肤: 10,
@@ -32,4 +35,4 @@ export const BUILTIN_COLLECTION_SEED_IDS = {
 } as const
 
 /** 种子写入后 sqlite 自增序列续号起点 */
-export const BUILTIN_COLLECTION_MAX_SEED_ID = 18
+export const BUILTIN_COLLECTION_MAX_SEED_ID = 21

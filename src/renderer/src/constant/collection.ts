@@ -119,19 +119,34 @@ export const ToneColorBuiltinMeta = {
 
 /** 曲谱皮肤内置元数据（按 name 索引；content 存 SkinPack JSON） */
 export const ScoreSkinBuiltinMeta = {
-  默认曲谱皮肤: {
-    name: '默认曲谱皮肤',
+  默认: {
+    name: '默认',
     howToGet: '买游戏就送',
     description: '经典黑白五线谱符号，简洁清晰。'
   },
-  冰川曲谱皮肤: {
-    name: '冰川曲谱皮肤',
-    howToGet: '完成主线剧情',
-    description: '冰蓝渐变与雪花点缀的曲谱主题。'
+  冰川: {
+    name: '冰川',
+    howToGet: '极限模式存活120秒',
+    description: '冰蓝清透的曲谱主题。'
   },
-  竹林曲谱皮肤: {
-    name: '竹林曲谱皮肤',
-    howToGet: '探索竹林关卡',
+  墨华: {
+    name: '墨华',
+    howToGet: '无限模式达到500分',
+    description: '水墨晕染的东方曲谱风格。'
+  },
+  寰宇: {
+    name: '寰宇',
+    howToGet: '无限模式达到10000分',
+    description: '星空深蓝的宇宙曲谱主题。'
+  },
+  晨曦: {
+    name: '晨曦',
+    howToGet: '完成主线剧情',
+    description: '暖色朝霞的曲谱主题。'
+  },
+  竹林: {
+    name: '竹林',
+    howToGet: '无限模式达到2000分',
     description: '竹绿自然风的曲谱主题。'
   }
 } satisfies Record<string, BuiltinCollectionMeta>
