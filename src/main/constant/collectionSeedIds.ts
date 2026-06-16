@@ -25,9 +25,11 @@ export const BUILTIN_COLLECTION_SEED_IDS = {
   },
   pianoSkin: {
     经典纯色: 12,
-    金属质感: 13
+    重金属: 13,
+    黑白: 17,
+    木板: 18
   }
 } as const
 
 /** 种子写入后 sqlite 自增序列续号起点 */
-export const BUILTIN_COLLECTION_MAX_SEED_ID = 16
+export const BUILTIN_COLLECTION_MAX_SEED_ID = 18

@@ -4,7 +4,9 @@ import CollectionModel from '../models/CollectionModel'
 import sequelize from './connection'
 import {
   buildClassicPurePianoPack,
-  buildMetalGlossPianoPack
+  buildHeavyMetalPianoPack,
+  buildMonoChromePianoPack,
+  buildWoodBoardPianoPack
 } from '../resources/virtualPianoSkins/builtinSkins'
 import { BUILTIN_SCORE_SKIN_SEEDS } from '../resources/scoreSkins/builtinScoreSkins'
 import { BUILTIN_TONE_COLOR_SEEDS } from '../resources/toneColors/builtinToneColors'
@@ -43,12 +45,26 @@ const BUILTIN_PIANO_SKINS = [
   {
     name: '经典纯色',
     buildContent: buildClassicPurePianoPack,
-    description: '经典黑白纯色琴键，单矩形简洁样式。'
+    description: '经典黑白纯色琴键，单矩形简洁样式。',
+    owned: true
   },
   {
-    name: '金属质感',
-    buildContent: buildMetalGlossPianoPack,
-    description: '金属渐变质感琴键，按下时暖金铜色反馈。'
+    name: '重金属',
+    buildContent: buildHeavyMetalPianoPack,
+    description: '抛光金属琴键，多段反射高光与镜面质感。',
+    owned: true
+  },
+  {
+    name: '黑白',
+    buildContent: buildMonoChromePianoPack,
+    description: '略带俯视的立体黑白琴键，顶面与前沿分明。',
+    owned: true
+  },
+  {
+    name: '木板',
+    buildContent: buildWoodBoardPianoPack,
+    description: '木纹木板白键与木桩年轮黑键，做旧质感。',
+    owned: true
   }
 ] as const
 
@@ -108,7 +124,7 @@ export async function insertBuiltinCollections() {
       content: JSON.stringify(item.buildContent()),
       description: item.description,
       is_built_in: true,
-      owned: true
+      owned: item.owned
     })
   }
 

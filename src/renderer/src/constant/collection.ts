@@ -66,10 +66,20 @@ export const VirtualPianoSkinBuiltinMeta = {
     howToGet: '买游戏就送',
     description: '黑白纯色矩形琴键，简洁清晰。'
   },
-  金属质感: {
-    name: '金属质感',
-    howToGet: '完成新手教程',
-    description: '金属渐变与高光，更有质感。'
+  重金属: {
+    name: '重金属',
+    howToGet: '街机模式达到10分',
+    description: '抛光金属反射高光，重金属质感琴键。'
+  },
+  黑白: {
+    name: '黑白',
+    howToGet: '达成连击九段成就',
+    description: '立体俯视黑白琴键，顶面与前沿层次分明。'
+  },
+  木板: {
+    name: '木板',
+    howToGet: '达成连击八段成就',
+    description: '木纹木板与木桩年轮黑键，温暖做旧风格。'
   }
 } satisfies Record<string, BuiltinCollectionMeta>
 
