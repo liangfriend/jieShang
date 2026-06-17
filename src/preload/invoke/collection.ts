@@ -13,6 +13,7 @@ export type CollectionCreatePayload = {
   description?: string | null
   is_built_in?: boolean
   owned?: boolean
+  level?: number
   thumbnail?: string | null
 }
 
@@ -23,6 +24,7 @@ export type CollectionUpdatePayload = Partial<{
   description: string | null
   is_built_in: boolean
   owned: boolean
+  level: number
   thumbnail: string | null
 }>
 

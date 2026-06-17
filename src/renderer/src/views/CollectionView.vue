@@ -18,6 +18,11 @@ import {
   supportsCollectionUsage
 } from '@renderer/utils/collection/collectionHelper'
 import {
+  collectionLevelCardClass,
+  collectionLevelLabel,
+  normalizeCollectionLevel
+} from '@renderer/utils/collection/collectionLevel'
+import {
   loadActiveCollectionSelection,
   type ActiveCollectionSelection
 } from '@renderer/utils/collection/collectionActiveStorage'
@@ -179,10 +184,13 @@ onMounted(() => {
             <button
               type="button"
               class="collection-card"
-              :class="{
-                'collection-card--selected': item.id === selectedId,
-                'collection-card--in-use': isItemInUse(item)
-              }"
+              :class="[
+                collectionLevelCardClass(item.level),
+                {
+                  'collection-card--selected': item.id === selectedId,
+                  'collection-card--in-use': isItemInUse(item)
+                }
+              ]"
               @click="selectItem(item)"
             >
               <span v-if="isItemInUse(item)" class="collection-card__badge">使用中</span>
@@ -219,7 +227,10 @@ onMounted(() => {
           </div>
 
           <h2 class="collection-detail__name">{{ selectedName }}</h2>
-          <p class="collection-detail__type">{{ collectionTypeLabel(selectedItem.type) }}</p>
+          <p class="collection-detail__type">
+            {{ collectionTypeLabel(selectedItem.type) }} ·
+            {{ collectionLevelLabel(selectedItem.level) }}
+          </p>
 
           <section v-if="selectedDescription" class="collection-detail__section">
             <h3 class="collection-detail__label">描述</h3>
@@ -361,14 +372,44 @@ onMounted(() => {
   flex-direction: column;
   align-items: stretch;
   padding: 10px;
-  border: 1px solid rgba(255, 184, 208, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.08);
   border-radius: 14px;
-  background: #fff;
+  background: #f4f4f5;
   cursor: pointer;
   text-align: center;
   transition:
     border-color 0.15s ease,
     box-shadow 0.15s ease;
+}
+
+.collection-card--level-1 {
+  background: linear-gradient(165deg, #f6f6f7 0%, #ececee 100%);
+  border-color: rgba(120, 120, 130, 0.18);
+}
+
+.collection-card--level-2 {
+  background: linear-gradient(165deg, #eef8ef 0%, #d9f0db 100%);
+  border-color: rgba(76, 175, 80, 0.28);
+}
+
+.collection-card--level-3 {
+  background: linear-gradient(165deg, #eef4ff 0%, #d6e6ff 100%);
+  border-color: rgba(66, 133, 244, 0.28);
+}
+
+.collection-card--level-4 {
+  background: linear-gradient(165deg, #f3eeff 0%, #e2d4ff 100%);
+  border-color: rgba(142, 99, 220, 0.32);
+}
+
+.collection-card--level-5 {
+  background: linear-gradient(165deg, #fff8e8 0%, #ffe8a8 100%);
+  border-color: rgba(212, 160, 23, 0.38);
+}
+
+.collection-card--level-6 {
+  background: linear-gradient(165deg, #fff0f0 0%, #ffc9c9 100%);
+  border-color: rgba(229, 72, 77, 0.38);
 }
 
 .collection-card:hover {

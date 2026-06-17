@@ -1,5 +1,10 @@
 import { COLLECTION_TYPE } from '../constant/collection'
-import { BUILTIN_COLLECTION_MAX_SEED_ID, BUILTIN_COLLECTION_SEED_IDS } from '../constant/collectionSeedIds'
+import {
+  BUILTIN_COLLECTION_MAX_SEED_ID,
+  BUILTIN_COLLECTION_SEED_IDS,
+  isDefaultBuiltinCollectionOwned,
+  resolveBuiltinCollectionLevel
+} from '../constant/collectionSeedIds'
 import CollectionModel from '../models/CollectionModel'
 import sequelize from './connection'
 import {
@@ -45,26 +50,22 @@ const BUILTIN_PIANO_SKINS = [
   {
     name: '经典纯色',
     buildContent: buildClassicPurePianoPack,
-    description: '经典黑白纯色琴键，单矩形简洁样式。',
-    owned: true
+    description: '经典黑白纯色琴键，单矩形简洁样式。'
   },
   {
     name: '重金属',
     buildContent: buildHeavyMetalPianoPack,
-    description: '抛光金属琴键，多段反射高光与镜面质感。',
-    owned: true
+    description: '抛光金属琴键，多段反射高光与镜面质感。'
   },
   {
     name: '黑白',
     buildContent: buildMonoChromePianoPack,
-    description: '略带俯视的立体黑白琴键，顶面与前沿分明。',
-    owned: true
+    description: '略带俯视的立体黑白琴键，顶面与前沿分明。'
   },
   {
     name: '木板',
     buildContent: buildWoodBoardPianoPack,
-    description: '木纹木板白键与木桩年轮黑键，做旧质感。',
-    owned: true
+    description: '木纹木板白键与木桩年轮黑键，做旧质感。'
   }
 ] as const
 
@@ -77,7 +78,10 @@ async function syncCollectionAutoIncrement() {
 /** 写入内置藏品（随 migration 001 只执行一次） */
 export async function insertBuiltinCollections() {
   for (const item of BUILTIN_TONE_COLOR_SEEDS) {
-    const id = BUILTIN_COLLECTION_SEED_IDS.toneColor[item.name as keyof typeof BUILTIN_COLLECTION_SEED_IDS.toneColor]
+    const id =
+      BUILTIN_COLLECTION_SEED_IDS.toneColor[
+        item.name as keyof typeof BUILTIN_COLLECTION_SEED_IDS.toneColor
+      ]
     await CollectionModel.create({
       id,
       type: COLLECTION_TYPE.TONE_COLOR,
@@ -85,12 +89,16 @@ export async function insertBuiltinCollections() {
       content: item.content,
       description: item.description,
       is_built_in: true,
-      owned: true
+      owned: isDefaultBuiltinCollectionOwned(id),
+      level: resolveBuiltinCollectionLevel('toneColor', item.name)
     })
   }
 
   for (const item of BUILTIN_SCORE_SKIN_SEEDS) {
-    const id = BUILTIN_COLLECTION_SEED_IDS.scoreSkin[item.name as keyof typeof BUILTIN_COLLECTION_SEED_IDS.scoreSkin]
+    const id =
+      BUILTIN_COLLECTION_SEED_IDS.scoreSkin[
+        item.name as keyof typeof BUILTIN_COLLECTION_SEED_IDS.scoreSkin
+      ]
     await CollectionModel.create({
       id,
       type: COLLECTION_TYPE.SCORE_SKIN,
@@ -98,12 +106,16 @@ export async function insertBuiltinCollections() {
       content: item.content,
       description: item.description,
       is_built_in: true,
-      owned: true
+      owned: isDefaultBuiltinCollectionOwned(id),
+      level: resolveBuiltinCollectionLevel('scoreSkin', item.name)
     })
   }
 
   for (const item of BUILTIN_PERFORM_SKINS) {
-    const id = BUILTIN_COLLECTION_SEED_IDS.performSkin[item.name as keyof typeof BUILTIN_COLLECTION_SEED_IDS.performSkin]
+    const id =
+      BUILTIN_COLLECTION_SEED_IDS.performSkin[
+        item.name as keyof typeof BUILTIN_COLLECTION_SEED_IDS.performSkin
+      ]
     await CollectionModel.create({
       id,
       type: COLLECTION_TYPE.PERFORM_SKIN,
@@ -111,12 +123,16 @@ export async function insertBuiltinCollections() {
       content: item.content,
       description: item.description,
       is_built_in: true,
-      owned: true
+      owned: isDefaultBuiltinCollectionOwned(id),
+      level: resolveBuiltinCollectionLevel('performSkin', item.name)
     })
   }
 
   for (const item of BUILTIN_PIANO_SKINS) {
-    const id = BUILTIN_COLLECTION_SEED_IDS.pianoSkin[item.name as keyof typeof BUILTIN_COLLECTION_SEED_IDS.pianoSkin]
+    const id =
+      BUILTIN_COLLECTION_SEED_IDS.pianoSkin[
+        item.name as keyof typeof BUILTIN_COLLECTION_SEED_IDS.pianoSkin
+      ]
     await CollectionModel.create({
       id,
       type: COLLECTION_TYPE.PIANO_SKIN,
@@ -124,7 +140,8 @@ export async function insertBuiltinCollections() {
       content: JSON.stringify(item.buildContent()),
       description: item.description,
       is_built_in: true,
-      owned: item.owned
+      owned: isDefaultBuiltinCollectionOwned(id),
+      level: resolveBuiltinCollectionLevel('pianoSkin', item.name)
     })
   }
 

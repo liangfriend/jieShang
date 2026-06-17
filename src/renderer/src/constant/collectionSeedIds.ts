@@ -1,6 +1,6 @@
 /**
- * 内置藏品种子 id（与 renderer DEFAULT_COLLECTION_USAGE_IDS 约定一致）
- * 新装 migration 001 写入时显式指定，便于默认项用固定 id 查库。
+ * 内置藏品种子 id（与 main `collectionSeedIds` 保持一致）
+ * 成就奖励、默认使用项等 renderer 侧引用此文件，避免与主进程 id 漂移。
  */
 export const BUILTIN_COLLECTION_SEED_IDS = {
   toneColor: {
@@ -34,7 +34,7 @@ export const BUILTIN_COLLECTION_SEED_IDS = {
   }
 } as const
 
-/** 内置藏品级别（1 最低，5 最高） */
+/** 内置藏品级别（1 最低，5 最高；与 main 一致） */
 export const BUILTIN_COLLECTION_LEVELS = {
   toneColor: {
     三角钢琴: 1,
@@ -69,18 +69,10 @@ export const BUILTIN_COLLECTION_LEVELS = {
 
 export type CollectionLevel = 1 | 2 | 3 | 4 | 5 | 6
 
-export function resolveBuiltinCollectionLevel(
-  category: keyof typeof BUILTIN_COLLECTION_LEVELS,
-  name: string
-): CollectionLevel {
-  const levels = BUILTIN_COLLECTION_LEVELS[category] as Record<string, CollectionLevel>
-  return levels[name] ?? 1
-}
-
 /** 种子写入后 sqlite 自增序列续号起点 */
 export const BUILTIN_COLLECTION_MAX_SEED_ID = 21
 
-/** 各类型默认赠送、初始 owned=true 的藏品 id（与 renderer DEFAULT_COLLECTION_USAGE_IDS 一致） */
+/** 各类型默认赠送、初始 owned=true 的藏品 id（与 main 一致） */
 export const DEFAULT_BUILTIN_COLLECTION_OWNED_IDS = [
   BUILTIN_COLLECTION_SEED_IDS.toneColor.三角钢琴,
   BUILTIN_COLLECTION_SEED_IDS.scoreSkin.默认,
@@ -91,3 +83,4 @@ export const DEFAULT_BUILTIN_COLLECTION_OWNED_IDS = [
 export function isDefaultBuiltinCollectionOwned(id: number): boolean {
   return (DEFAULT_BUILTIN_COLLECTION_OWNED_IDS as readonly number[]).includes(id)
 }
+

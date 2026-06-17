@@ -3,6 +3,8 @@ export type NoteSliceGameMode = 'arcade' | 'endless' | 'extreme'
 
 export type NoteSliceGameEndReason = 'time_up' | 'no_lives'
 
+import type { AchievementDefinition } from '@renderer/constant/achievements'
+
 export type NoteSliceGameEndPayload = {
   score: number
   reason: NoteSliceGameEndReason
@@ -10,6 +12,8 @@ export type NoteSliceGameEndPayload = {
   isNewPersonalBest: boolean
   /** 入库前的历史最佳（用于弹窗展示） */
   previousBest: number
+  /** 本局新解锁的成就（已写入数据库） */
+  newlyUnlockedAchievements: AchievementDefinition[]
 }
 
 /** 开局倒计时文案（共 4 步，每步 1s） */

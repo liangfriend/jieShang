@@ -17,6 +17,7 @@ export type CollectionRecord = {
   description: string | null
   is_built_in: boolean
   owned: boolean
+  level: number
   thumbnail: string | null
   created_at?: string
   updated_at?: string

@@ -84,6 +84,7 @@ declare global {
           description?: string | null
           is_built_in?: boolean
           owned?: boolean
+          level?: number
           thumbnail?: string | null
         }): Promise<any>
         delete(id: number | string): Promise<any>
@@ -95,6 +96,7 @@ declare global {
             description: string | null
             is_built_in: boolean
             owned: boolean
+            level: number
             thumbnail: string | null
           }>
         ): Promise<any>

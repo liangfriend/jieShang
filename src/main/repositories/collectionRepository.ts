@@ -8,6 +8,7 @@ export type CollectionWritePayload = {
   description?: string | null
   is_built_in?: boolean
   owned?: boolean
+  level?: number
   thumbnail?: string | null
 }
 
@@ -18,6 +19,7 @@ export type CollectionUpdatePayload = Partial<{
   description: string | null
   is_built_in: boolean
   owned: boolean
+  level: number
   thumbnail: string | null
 }>
 
@@ -37,6 +39,7 @@ export class CollectionRepository {
       description: payload.description ?? null,
       is_built_in: payload.is_built_in ?? false,
       owned: payload.owned ?? false,
+      level: payload.level ?? 1,
       thumbnail: payload.thumbnail ?? null
     })
     return result.toJSON()

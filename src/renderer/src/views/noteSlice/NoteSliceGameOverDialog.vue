@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import type { AchievementDefinition } from '@renderer/constant/achievements'
 import { GAME_DIFFICULTY_OPTIONS } from '@renderer/constant/gameSettings'
 import { useGameSettingsStore } from '@renderer/store/gameSettings.store'
 import { formatNoteSliceExtremeHighScore } from '@renderer/utils/noteSliceHighScoreHelper'
@@ -14,6 +15,7 @@ const props = defineProps<{
   reason?: NoteSliceGameEndReason
   isNewPersonalBest: boolean
   previousBest: number
+  newlyUnlockedAchievements?: AchievementDefinition[]
 }>()
 
 const emit = defineEmits<{
@@ -57,6 +59,8 @@ const bestDisplay = computed(() => {
   const best = props.isNewPersonalBest ? props.score : props.previousBest
   return isExtreme.value ? formatNoteSliceExtremeHighScore(best) : String(best)
 })
+
+const unlockedAchievements = computed(() => props.newlyUnlockedAchievements ?? [])
 
 function close(): void {
   emit('update:modelValue', false)
@@ -103,6 +107,26 @@ function onGoHome(): void {
             <span class="note-slice-game-over__stat-value">{{ bestDisplay }}</span>
           </div>
         </div>
+
+        <section v-if="unlockedAchievements.length > 0" class="note-slice-game-over__achievements">
+          <h3 class="note-slice-game-over__achievements-title">本局获得成就</h3>
+          <div class="note-slice-game-over__achievements-scroll">
+            <article
+              v-for="item in unlockedAchievements"
+              :key="item.key"
+              class="note-slice-game-over__achievement"
+            >
+              <div class="note-slice-game-over__achievement-head">
+                <span class="note-slice-game-over__achievement-name">{{ item.name }}</span>
+                <span class="note-slice-game-over__achievement-badge">新</span>
+              </div>
+              <p class="note-slice-game-over__achievement-desc">{{ item.description }}</p>
+              <p v-if="item.reward !== '无'" class="note-slice-game-over__achievement-reward">
+                奖励：{{ item.reward }}
+              </p>
+            </article>
+          </div>
+        </section>
 
         <div class="note-slice-game-over__actions">
           <button type="button" class="note-slice-game-over__btn note-slice-game-over__btn--primary" @click="onPlayAgain">
@@ -257,6 +281,84 @@ function onGoHome(): void {
     rgba(201, 184, 255, 0.55) 80%,
     transparent
   );
+}
+
+.note-slice-game-over__achievements {
+  position: relative;
+  margin-top: 18px;
+  text-align: left;
+}
+
+.note-slice-game-over__achievements-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 800;
+  color: #7a6890;
+  letter-spacing: 0.04em;
+}
+
+.note-slice-game-over__achievements-scroll {
+  max-height: 168px;
+  overflow-y: auto;
+  padding-right: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.note-slice-game-over__achievements-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.note-slice-game-over__achievements-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(201, 184, 255, 0.55);
+}
+
+.note-slice-game-over__achievement {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid rgba(255, 200, 120, 0.45);
+  box-shadow: 0 4px 14px rgba(255, 180, 100, 0.12);
+}
+
+.note-slice-game-over__achievement-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.note-slice-game-over__achievement-name {
+  font-size: 14px;
+  font-weight: 800;
+  color: #5c4a6a;
+}
+
+.note-slice-game-over__achievement-badge {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #fff;
+  background: linear-gradient(90deg, #ffb347, #ff8fb8);
+}
+
+.note-slice-game-over__achievement-desc {
+  margin: 4px 0 0;
+  font-size: 12px;
+  line-height: 1.45;
+  color: #8a7898;
+}
+
+.note-slice-game-over__achievement-reward {
+  margin: 6px 0 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: #c87820;
 }
 
 .note-slice-game-over__actions {

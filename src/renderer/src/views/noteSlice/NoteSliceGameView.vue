@@ -19,6 +19,7 @@ import {
 } from '@renderer/views/noteSlice/noteSliceDifficultyConfig'
 import { createExtremeSpawnConfigManager } from '@renderer/views/noteSlice/noteSliceSpawnConfigManager'
 import { provideNoteSliceGameSession } from '@renderer/views/noteSlice/useNoteSliceGameSession'
+import { createNoteSliceSessionAchievementManager } from '@renderer/views/noteSlice/noteSliceSessionAchievementManager'
 import { finalizeNoteSliceGameScore } from '@renderer/utils/noteSliceHighScoreHelper'
 
 const props = defineProps<{
@@ -54,6 +55,14 @@ onUnmounted(() => {
 })
 
 const session = provideNoteSliceGameSession(props.mode)
+const achievementManager = createNoteSliceSessionAchievementManager(props.mode)
+
+watch(
+  () => session.combo.value,
+  (combo) => {
+    achievementManager.recordCombo(combo)
+  }
+)
 
 const playfieldBuffClass = computed(() => ({
   'note-slice-playfield--freeze': props.mode !== 'extreme' && session.isFrozen.value,
@@ -89,11 +98,16 @@ watch(
       score,
       gameSettings.difficulty
     )
+    const newlyUnlockedAchievements = await achievementManager.evaluateAndUnlock({
+      score: props.mode === 'extreme' ? 0 : session.score.value,
+      survivalMs: props.mode === 'extreme' ? session.finalSurvivalMs.value : 0
+    })
     emit('gameEnd', {
       score,
       reason: session.gameEndReason.value,
       isNewPersonalBest,
-      previousBest
+      previousBest,
+      newlyUnlockedAchievements
     })
   }
 )

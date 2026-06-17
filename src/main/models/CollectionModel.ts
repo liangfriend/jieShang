@@ -20,6 +20,8 @@ export interface CollectionAttributes {
   is_built_in: boolean
   /** 是否已拥有 */
   owned: boolean
+  /** 藏品级别 1（最低）~ 6（最高） */
+  level: number
   /** 藏品缩略图（列表展示用） */
   thumbnail: string | null
   created_at?: Date
@@ -35,6 +37,7 @@ export interface CollectionCreationAttributes
     | 'description'
     | 'is_built_in'
     | 'owned'
+    | 'level'
     | 'thumbnail'
     | 'created_at'
     | 'updated_at'
@@ -52,6 +55,7 @@ export class CollectionModel
   declare description: string | null
   declare is_built_in: boolean
   declare owned: boolean
+  declare level: number
   declare thumbnail: string | null
   declare created_at: Date
   declare updated_at: Date
@@ -92,6 +96,11 @@ CollectionModel.init(
       type: DataTypes.BOOLEAN,
       allowNull: false,
       defaultValue: false
+    },
+    level: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      defaultValue: 1
     },
     thumbnail: {
       type: DataTypes.TEXT,

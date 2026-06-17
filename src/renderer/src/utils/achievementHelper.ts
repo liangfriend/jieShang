@@ -64,3 +64,20 @@ export function formatAchievementCompletedAt(iso: string | null): string {
 export async function unlockAchievement(key: string): Promise<void> {
   await window.api.achievement.unlock({ key })
 }
+
+/** 将内置藏品标记为已拥有（幂等） */
+export async function grantCollectionOwnership(collectionId: number): Promise<void> {
+  const res = await window.api.collection.update(collectionId, { owned: true })
+  if (!res?.success) {
+    throw new Error(`grantCollectionOwnership failed: id=${collectionId}`)
+  }
+}
+
+/** 发放成就关联的藏品奖励 */
+export async function grantAchievementCollectionReward(
+  definition: AchievementDefinition
+): Promise<void> {
+  const collectionId = definition.rewardCollectionId
+  if (collectionId == null) return
+  await grantCollectionOwnership(collectionId)
+}

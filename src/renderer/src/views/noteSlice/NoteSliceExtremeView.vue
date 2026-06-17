@@ -29,6 +29,7 @@ function onPlayAgain(): void {
     :reason="endPayload?.reason"
     :is-new-personal-best="endPayload?.isNewPersonalBest ?? false"
     :previous-best="endPayload?.previousBest ?? 0"
+    :newly-unlocked-achievements="endPayload?.newlyUnlockedAchievements ?? []"
     @play-again="onPlayAgain"
   />
 </template>
