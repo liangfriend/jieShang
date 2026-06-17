@@ -6,6 +6,10 @@ export type NoteSliceGameEndReason = 'time_up' | 'no_lives'
 export type NoteSliceGameEndPayload = {
   score: number
   reason: NoteSliceGameEndReason
+  /** 本局成绩是否严格超过入库前的历史最佳 */
+  isNewPersonalBest: boolean
+  /** 入库前的历史最佳（用于弹窗展示） */
+  previousBest: number
 }
 
 /** 开局倒计时文案（共 4 步，每步 1s） */

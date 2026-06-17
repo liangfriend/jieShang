@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ref } from 'vue'
-import NoteSliceExtremeGameOverDialog from '@renderer/views/noteSlice/NoteSliceExtremeGameOverDialog.vue'
+import NoteSliceGameOverDialog from '@renderer/views/noteSlice/NoteSliceGameOverDialog.vue'
 import NoteSliceGameView from '@renderer/views/noteSlice/NoteSliceGameView.vue'
 import type { NoteSliceGameEndPayload } from '@renderer/views/noteSlice/noteSliceGameMode'
 
@@ -22,9 +22,13 @@ function onPlayAgain(): void {
 <template>
   <NoteSliceGameView :key="gameKey" mode="extreme" @game-end="onGameEnd" />
 
-  <NoteSliceExtremeGameOverDialog
+  <NoteSliceGameOverDialog
     v-model="dialogVisible"
-    :survival-ms="endPayload?.score ?? 0"
+    mode="extreme"
+    :score="endPayload?.score ?? 0"
+    :reason="endPayload?.reason"
+    :is-new-personal-best="endPayload?.isNewPersonalBest ?? false"
+    :previous-best="endPayload?.previousBest ?? 0"
     @play-again="onPlayAgain"
   />
 </template>

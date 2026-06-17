@@ -48,6 +48,20 @@ export async function fetchNoteSliceHighScores(): Promise<NoteSliceHighScoreReco
   return parseHighScoreList(res)
 }
 
+/** 读取指定模式在当前难度下的历史最佳（极限模式忽略难度） */
+export async function fetchNoteSliceModeBestScore(
+  mode: NoteSliceGameMode,
+  difficulty?: GameDifficulty
+): Promise<number> {
+  const records = await fetchNoteSliceHighScores()
+  if (mode === 'extreme') {
+    return resolveExtremeHighScore(records)
+  }
+  if (!difficulty || !isRankedDifficulty(difficulty)) return 0
+  const hit = records.find((record) => record.mode === mode && record.difficulty === difficulty)
+  return hit?.high_score ?? 0
+}
+
 function isRankedDifficulty(
   difficulty: GameDifficulty
 ): difficulty is NoteSliceHighScoreDifficulty {
@@ -68,19 +82,41 @@ export async function upsertNoteSliceExtremeHighScoreIfHigher(survivalMs: number
   await window.api.noteSliceHighScore.upsertIfHigher('extreme', 'standard', survivalMs)
 }
 
-/** 一局结束时写入数据库（街机/无限按难度更新最高分；极限写入存活时间） */
+/** 一局结束时：先对比历史最佳，再按需写入数据库 */
+export async function finalizeNoteSliceGameScore(
+  mode: NoteSliceGameMode,
+  score: number,
+  difficulty?: GameDifficulty
+): Promise<{ isNewPersonalBest: boolean; previousBest: number }> {
+  const normalizedScore = Math.max(0, Math.floor(score))
+  const previousBest = await fetchNoteSliceModeBestScore(mode, difficulty)
+
+  if (mode === 'extreme') {
+    const isNewPersonalBest = normalizedScore > previousBest
+    if (isNewPersonalBest) {
+      await upsertNoteSliceExtremeHighScoreIfHigher(normalizedScore)
+    }
+    return { isNewPersonalBest, previousBest }
+  }
+
+  if (!difficulty || !isRankedDifficulty(difficulty)) {
+    return { isNewPersonalBest: false, previousBest: 0 }
+  }
+
+  const isNewPersonalBest = normalizedScore > previousBest
+  if (isNewPersonalBest) {
+    await upsertNoteSliceHighScoreIfHigher(mode, difficulty, normalizedScore)
+  }
+  return { isNewPersonalBest, previousBest }
+}
+
+/** @deprecated 使用 finalizeNoteSliceGameScore */
 export async function persistNoteSliceGameScore(
   mode: NoteSliceGameMode,
   score: number,
   difficulty?: GameDifficulty
 ): Promise<void> {
-  const normalizedScore = Math.max(0, Math.floor(score))
-  if (mode === 'extreme') {
-    await upsertNoteSliceExtremeHighScoreIfHigher(normalizedScore)
-    return
-  }
-  if (!difficulty || !isRankedDifficulty(difficulty)) return
-  await upsertNoteSliceHighScoreIfHigher(mode, difficulty, normalizedScore)
+  await finalizeNoteSliceGameScore(mode, score, difficulty)
 }
 
 /** 成就页等展示：极限模式存活时间（ms → 秒.毫秒，如 127.251） */
