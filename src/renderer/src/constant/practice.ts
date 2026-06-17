@@ -36,7 +36,7 @@ export const NOTE_RESULT_COLOR: Record<NoteScoreResult, string> = {
   pass: '#f97316',
   early: '#93c5fd',
   late: '#f9a8d4',
-  miss: '#4b5563'
+  miss: '#ef4444'
 }
 
 /** 设置附录图例色块（完美为彩虹渐变，红→橙→黄→绿→蓝） */

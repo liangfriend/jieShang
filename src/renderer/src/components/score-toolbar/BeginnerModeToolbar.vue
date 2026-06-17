@@ -36,6 +36,7 @@ const settingsVisible = ref(false)
 const volumePanelOpen = ref(false)
 
 const settingsDisabled = computed(() => playbackState.value !== 'stopped' || countingIn.value)
+const toneColorDisabled = settingsDisabled
 const volumeLabel = computed(() => `${Math.round(volume.value * 100)}%`)
 
 function openSettings() {
@@ -111,7 +112,7 @@ onBeforeUnmount(() => {
           />
         </div>
       </div>
-      <ScoreToneColorAdjuster />
+      <ScoreToneColorAdjuster :disabled="toneColorDisabled" />
       <ScoreNotationTypeSelector
         :model-value="notationType"
         :disabled="notationTypeDisabled"

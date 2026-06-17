@@ -33,6 +33,7 @@ import { useMetronomeStore } from '@renderer/store/metronome.store'
 import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store'
 import { NOTE_RESULT_COLOR } from '@renderer/constant/practice'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
+import { applySingleLineModeScoreHeight } from '@renderer/utils/singleLineModeScoreLayout'
 import { practiceContextKey } from '@renderer/views/practice/practiceContext'
 import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
 import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
@@ -48,9 +49,6 @@ const PRACTICE_WATERFALL_HEIGHT = '100%'
 
 /** 虚拟钢琴高度（比教学白板更紧凑） */
 const PRACTICE_PIANO_HEIGHT = '96px'
-
-/** 练习模式曲谱固定高度 */
-const PRACTICE_SCORE_HEIGHT = 300
 
 /** 每个小节对应的曲谱宽度 */
 const PRACTICE_MEASURE_WIDTH = 200
@@ -206,7 +204,7 @@ function syncMetronome(score: MusicScore, bpm: number) {
 function applyPracticeScoreLayout(score: MusicScore) {
   const measureCount = countPracticeMeasures(score)
   score.width = measureCount * PRACTICE_MEASURE_WIDTH
-  score.height = PRACTICE_SCORE_HEIGHT
+  applySingleLineModeScoreHeight(score)
   score.topSpaceHeight = 0
   for (const grandStaff of score.grandStaffs) {
     grandStaff.uSpace = 0
@@ -248,11 +246,7 @@ function rebuildPracticeSequences(score: MusicScore) {
   }
 }
 
-watch(
-  maxStaffCount,
-  (count) => settings.initStaffEnabled(count),
-  { immediate: true }
-)
+watch(maxStaffCount, (count) => settings.initStaffEnabled(count), { immediate: true })
 
 watch(
   () => settings.staffEnabled,
@@ -301,7 +295,11 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="practice-page">
-    <section ref="scoreScrollRef" class="practice-page__score hidden-scrollbar">
+    <section
+      ref="scoreScrollRef"
+      class="practice-page__score hidden-scrollbar"
+      :style="{ maxHeight: `${scoreCanvasHeight + 20}px` }"
+    >
       <div
         class="practice-page__score-stack"
         :style="{ width: `${scoreCanvasWidth}px`, height: `${scoreCanvasHeight}px` }"
@@ -359,7 +357,7 @@ onBeforeUnmount(() => {
 
       <div v-if="settings.coverWaterfall" class="practice-page__waterfall-cover">
         <span class="practice-page__waterfall-cover-emoji">🎵</span>
-        <span class="practice-page__waterfall-cover-text">凭听觉练习吧</span>
+        <span class="practice-page__waterfall-cover-text">强者之遮挡</span>
       </div>
     </section>
 
@@ -393,9 +391,8 @@ onBeforeUnmount(() => {
 
 .practice-page__score {
   flex-shrink: 0;
-  max-height: 216px;
   overflow: auto;
-  padding: 12px 16px 8px;
+  padding: 12px 16px 0px;
   border-bottom: 1px solid rgba(255, 184, 208, 0.25);
 }
 
@@ -433,8 +430,8 @@ onBeforeUnmount(() => {
 
 .practice-page__waterfall {
   position: relative;
-  flex-shrink: 0;
   flex: 1;
+  min-height: 0;
   overflow: hidden;
   border-bottom: 1px solid rgba(255, 184, 208, 0.15);
   background: rgba(255, 255, 255, 0.72);

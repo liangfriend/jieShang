@@ -7,11 +7,18 @@ import {
     setNotesInfoRegion,
 } from './renderEditSymbolAddAction'
 
-/** 当前选中项是否为「音符头选中」模式 */
+/** 当前选中项是否为「音符头选中」模式（五线谱 NotesInfo） */
 export function isNoteHeadSelected(
     selected: SlotData | null,
 ): selected is SlotData & { info: NotesInfo; note: NoteSymbol; measure: Measure } {
-    return selected?.info != null && selected.self === selected.info && selected.note != null && selected.measure != null
+    const info = selected?.info
+    return (
+        info != null
+        && selected.self === info
+        && selected.note != null
+        && selected.measure != null
+        && 'region' in info
+    )
 }
 
 export type NoteHeadDragSession = {

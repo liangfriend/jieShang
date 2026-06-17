@@ -5,6 +5,7 @@ import { storeToRefs } from 'pinia'
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { WhiteboardToolbar } from '@renderer/components/whiteboard'
 import VirtualPiano from '@renderer/components/virtualPiano.vue'
+import { WHITEBOARD_PIANO_SECTION_HEIGHT } from '@renderer/constant/whiteboard'
 import { usePlayStore } from '@renderer/store/play.store'
 import { useWhiteboardStore } from '@renderer/store/whiteboard.store'
 import buildTeachingWhiteboardScore from '@renderer/template/teachingWhiteboard'
@@ -131,6 +132,7 @@ onBeforeUnmount(() => {
     <section
       class="whiteboard__piano"
       :class="{ 'whiteboard__piano--custom': isCustomWidth }"
+      :style="{ height: `${WHITEBOARD_PIANO_SECTION_HEIGHT}px` }"
     >
       <VirtualPiano
         class="whiteboard__piano-inner"
@@ -181,6 +183,7 @@ onBeforeUnmount(() => {
 
 .whiteboard__piano {
   flex-shrink: 0;
+  box-sizing: border-box;
   display: flex;
   align-items: flex-end;
   padding: 8px 12px;

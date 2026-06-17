@@ -71,6 +71,7 @@ export function useBeginnerPlayback(
   /** midi 块全部弹完时由页面回调 */
   function handleMidiBoxFinished() {
     sessionActive.value = false
+    options.midiBoxRef.value?.stop()
     options.onPlaybackStopped?.()
   }
 

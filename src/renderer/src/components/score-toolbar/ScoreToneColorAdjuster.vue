@@ -1,12 +1,19 @@
 <script setup lang="ts">
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
-import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { usePlayStore } from '@renderer/store/play.store'
 import {
   fetchOwnedToneColorOptions,
   type ToneColorOption
 } from '@renderer/utils/collection/toneColorUsage'
+
+const props = withDefaults(
+  defineProps<{
+    disabled?: boolean
+  }>(),
+  { disabled: false },
+)
 
 const playStore = usePlayStore()
 const { collectionToneColorId, collectionToneColorLoading } = storeToRefs(playStore)
@@ -21,8 +28,17 @@ const toneColorLabel = computed(() => {
 })
 
 const panelLoading = computed(() => optionsLoading.value || collectionToneColorLoading.value)
+const buttonDisabled = computed(() => props.disabled || panelLoading.value)
+
+watch(
+  () => props.disabled,
+  (disabled) => {
+    if (disabled) activePanel.value = false
+  },
+)
 
 function togglePanel() {
+  if (buttonDisabled.value) return
   activePanel.value = !activePanel.value
 }
 
@@ -67,7 +83,7 @@ async function onToneColorChange(event: Event) {
     <button
       type="button"
       class="score-toolbar__btn score-toolbar__btn--stable"
-      :disabled="panelLoading"
+      :disabled="buttonDisabled"
       @click="togglePanel"
     >
       音色 {{ toneColorLabel }}
@@ -83,7 +99,7 @@ async function onToneColorChange(event: Event) {
         <select
           class="score-tone-color__select"
           :value="collectionToneColorId"
-          :disabled="panelLoading || options.length === 0"
+          :disabled="buttonDisabled || options.length === 0"
           @change="onToneColorChange"
         >
           <option v-for="item in options" :key="item.id" :value="item.id">

@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import type { Measure, SlotData } from 'deciphony-renderer'
-import { BarlineTypeEnum } from 'deciphony-renderer'
+import { BarlineTypeEnum, MusicScoreTypeEnum } from 'deciphony-renderer'
 import { computed, ref, watch } from 'vue'
 import {
   BARLINE_B_OPTIONS,
@@ -37,6 +37,9 @@ const props = defineProps<{
 const measureEditSlot = computed(() => props.editSlot as MeasureEditSlot)
 const measure = computed(() => measureEditSlot.value.measure as Measure)
 const musicScore = computed(() => measureEditSlot.value.musicScore)
+const showClef = computed(
+  () => musicScore.value.type !== MusicScoreTypeEnum.NumberNotation,
+)
 
 const barlineB = computed({
   get: () => measure.value.barline_b?.type ?? BarlineTypeEnum.Single_barline,
@@ -178,7 +181,7 @@ function onVoltaValueInput() {
       </el-select>
     </section>
 
-    <section class="measure-props__section">
+    <section v-if="showClef" class="measure-props__section">
       <div class="measure-props__label">前置谱号</div>
       <el-select
         v-model="clefF"
@@ -232,7 +235,7 @@ function onVoltaValueInput() {
       </el-select>
     </section>
 
-    <section class="measure-props__section">
+    <section v-if="showClef" class="measure-props__section">
       <div class="measure-props__label">后置谱号</div>
       <el-select
         v-model="clefB"

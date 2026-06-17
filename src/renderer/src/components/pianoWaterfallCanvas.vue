@@ -746,6 +746,7 @@ function clearActiveParts() {
   activeParts.value = new Map<number, Array<Array<number>>>()
   activeKeys.value = new Set<number>()
   noteScores.value = new Map<string, NoteScoreResult>()
+  currentTime.value = 0
   overlayHost.runtime?.reset()
   overlayHost.prevActiveKeys = new Set()
 }

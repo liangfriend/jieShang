@@ -40,6 +40,7 @@ const settingsVisible = ref(false)
 
 // 设置：仅停止状态可用；预备拍期间禁用
 const settingsDisabled = computed(() => playbackState.value !== 'stopped' || countingIn.value)
+const toneColorDisabled = settingsDisabled
 // 清空：预备拍期间禁用
 const clearDisabled = computed(() => countingIn.value)
 
@@ -91,7 +92,7 @@ function clearPlayData() {
         <span class="score-toolbar__stop-icon" aria-hidden="true" />
         <span>停止</span>
       </button>
-      <ScoreToneColorAdjuster />
+      <ScoreToneColorAdjuster :disabled="toneColorDisabled" />
       <ScoreNotationTypeSelector
         :model-value="notationType"
         :disabled="notationTypeDisabled"

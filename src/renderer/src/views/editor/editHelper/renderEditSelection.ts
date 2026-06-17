@@ -11,6 +11,7 @@ import {
     locateMeasure,
     locateNoteSlot,
     locateNotesInfoById,
+    locateNotesNumberInfoById,
     locateSingleStaff,
 } from '@renderer/dr-extensions/dr-edit/score-builder/locate'
 
@@ -130,6 +131,17 @@ export function slotDataFromVDom(musicScore: MusicScore, vdom: VDom): SlotData |
                 note: located.note,
                 info: located.notesInfo,
                 self: located.notesInfo,
+            })
+        }
+        const numberLocated = locateNotesNumberInfoById(musicScore, id)
+        if (numberLocated) {
+            return buildSlotData(musicScore, {
+                grandStaff: numberLocated.grandStaff,
+                singleStaff: numberLocated.singleStaff,
+                measure: numberLocated.measure,
+                note: numberLocated.note,
+                info: numberLocated.notesNumberInfo,
+                self: numberLocated.notesNumberInfo,
             })
         }
     }

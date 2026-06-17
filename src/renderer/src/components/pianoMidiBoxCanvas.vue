@@ -453,6 +453,12 @@ function resetProgress() {
   overlayHost.runtime?.reset()
   overlayHost.prevActiveKeys = new Set()
   skipEmptyBatches()
+  if (fallAnimRaf) {
+    cancelAnimationFrame(fallAnimRaf)
+    fallAnimRaf = null
+  }
+  fallScrollOffset.value = fallenBatchCount.value * blockStride.value
+  skipFallAnimation = false
 }
 
 function skipEmptyBatches() {

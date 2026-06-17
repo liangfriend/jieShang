@@ -23,6 +23,7 @@ import {
   fetchActiveVirtualPianoPack
 } from '@renderer/utils/collection/virtualPianoSkinLoader'
 import type { VirtualPianoPack } from '@renderer/types/collection'
+import { INTERVAL_SLIDER_STEPS, isIntervalSliderAnchor } from '@renderer/utils/intervalSliderData'
 
 defineOptions({
   name: 'DsPiano'
@@ -58,7 +59,7 @@ const props = defineProps({
     default: 'None'
   },
   intervalRuler: {
-    // 音程尺
+    // 音程滑块
     type: Boolean,
     default: false
   },
@@ -444,69 +445,24 @@ const groupNameStyle = computed(
     }
   }
 )
-// 音程尺
-const intervalRulerStyle = computed((): CSSProperties => {
-  const res: CSSProperties = {
-    width: dim(whiteKeyWidthNum.value * 26),
-    height: props.height,
-    backgroundColor: 'white',
-    boxShadow: '0px 0px 5px 2px rgba(200,200,200,1)',
-    borderRadius: '10px',
-    position: 'absolute',
-    bottom: 0,
-    display: 'flex',
-    justifyContent: 'center'
-  }
-  return res
+// 音程滑块（横向拖动，与琴键对齐）
+const intervalSliderWidth = computed(() => dim(whiteKeyWidthNum.value * 26))
+
+const intervalSliderColWidth = computed(() =>
+  isFillParentMode.value ? dim(whiteKeyWidthNum.value) : props.whiteKeyWidth
+)
+
+const intervalSliderHeight = computed(() => {
+  const compact = Math.min(58, Math.max(46, Math.round(containerHeightNum.value * 0.3)))
+  return dim(compact)
 })
-// 音程尺刻度样式
-const intervalRulerTickStyle = computed((): ((index: number) => CSSProperties) => {
-  return (index) => {
-    const res: CSSProperties = {
-      width: '1px',
-      height:
-        index % 2 ? dim(containerHeightNum.value * 0.1) : dim(containerHeightNum.value * 0.07),
-      backgroundColor: '#111'
-    }
-    return res
-  }
-})
-const intervalRulerData = ref([
-  { name: '纯一度', semitones: 0, wholeTones: 0 },
-  { name: '小二度', semitones: 1, wholeTones: 0.5 },
-  { name: '大二度', semitones: 2, wholeTones: 1 },
-  { name: '小三度', semitones: 3, wholeTones: 1.5 },
-  { name: '大三度', semitones: 4, wholeTones: 2 },
-  { name: '纯四度', semitones: 5, wholeTones: 2.5 },
-  { name: '增四度', semitones: 6, wholeTones: 3 },
-  { name: '纯五度', semitones: 7, wholeTones: 3.5 },
-  { name: '小六度', semitones: 8, wholeTones: 4 },
-  { name: '大六度', semitones: 9, wholeTones: 4.5 },
-  { name: '小七度', semitones: 10, wholeTones: 5 },
-  { name: '大七度', semitones: 11, wholeTones: 5.5 },
-  { name: '纯八度', semitones: 12, wholeTones: 6 },
-  { name: '小九度', semitones: 13, wholeTones: 6.5 },
-  { name: '大九度', semitones: 14, wholeTones: 7 },
-  { name: '小十度', semitones: 15, wholeTones: 7.5 },
-  { name: '大十度', semitones: 16, wholeTones: 8 },
-  { name: '纯十一度', semitones: 17, wholeTones: 8.5 },
-  { name: '增十一度', semitones: 18, wholeTones: 9 },
-  { name: '纯十二度', semitones: 19, wholeTones: 9.5 },
-  { name: '小十三度', semitones: 20, wholeTones: 10 },
-  { name: '大十三度', semitones: 21, wholeTones: 10.5 },
-  { name: '小十四度', semitones: 22, wholeTones: 11 },
-  { name: '大十四度', semitones: 23, wholeTones: 11.5 },
-  { name: '纯十五度', semitones: 24, wholeTones: 12 }
-])
-const intervalRulerItemStyle = computed((): CSSProperties => {
-  return {
-    width: isFillParentMode.value ? dim(whiteKeyWidthNum.value) : props.whiteKeyWidth,
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'space-between',
-    alignItems: 'center'
-  }
-})
+
+function intervalSliderMarkerClass(index: number): string {
+  if (isIntervalSliderAnchor(index)) return 'interval-slider__marker interval-slider__marker--anchor'
+  return index % 2 === 0
+    ? 'interval-slider__marker interval-slider__marker--mid'
+    : 'interval-slider__marker interval-slider__marker--minor'
+}
 // 和弦滑块
 const chordList = ref([
   // 三和弦 Triads
@@ -554,22 +510,25 @@ const chordList = ref([
   { name: '属七b9', keyList: [0, 4, 7, 10, 13] }, // 7b9
   { name: '属七#9', keyList: [0, 4, 7, 10, 15] } // 7#9
 ])
-const chordBoxStyle = computed((): CSSProperties => {
+const chordBoxLayout = computed(() => {
   const keyW = Math.max(whiteKeyWidthNum.value, 28)
   const rightPad = keyW * 0.85
+  const height = Math.min(56, Math.max(44, Math.round(containerHeightNum.value * 0.28)))
+  return { rightPad, height }
+})
+
+const chordBoxStyle = computed((): CSSProperties => {
+  const { rightPad, height } = chordBoxLayout.value
   return {
-    width: dim(keyW * 5 + rightPad),
-    height: dim(keyW),
+    width: '168px',
+    height: dim(height),
     bottom: '0',
     position: 'absolute',
-    display: 'flex',
-    padding: `2px ${dim(rightPad)} 2px 6px`
+    paddingRight: dim(rightPad)
   }
 })
-const curChord = ref({
-  name: '大三和弦',
-  keyList: [0, 4, 7]
-})
+const curChordIndex = ref(0)
+const curChord = computed(() => chordList.value[curChordIndex.value]!)
 
 const chordBoxRef = ref(null)
 const curActiveChordMidi = ref<Set<number>>(new Set())
@@ -833,14 +792,24 @@ onBeforeUnmount(() => {
       <div
         v-show="intervalRuler"
         v-drag="{ enabled: true, axis: 'x', limit: true }"
-        :style="intervalRulerStyle"
-        comment="音程尺"
+        class="interval-slider"
+        :style="{ width: intervalSliderWidth, height: intervalSliderHeight }"
+        comment="音程滑块"
       >
-        <div v-for="(item, index) in intervalRulerData" :style="intervalRulerItemStyle">
-          <div></div>
-          <div :style="{ writingMode: 'vertical-rl' }">{{ item.name }}</div>
-          <div style="display: flex; justify-content: center; align-items: flex-end">
-            <div :style="intervalRulerTickStyle(index)"></div>
+        <div class="interval-slider__head">
+          <span class="interval-slider__grip" aria-hidden="true" />
+          <span class="interval-slider__title">音程滑块</span>
+        </div>
+        <div class="interval-slider__track">
+          <div
+            v-for="(item, index) in INTERVAL_SLIDER_STEPS"
+            :key="item.semitones"
+            class="interval-slider__col"
+            :style="{ width: intervalSliderColWidth }"
+            :title="item.name"
+          >
+            <span class="interval-slider__label">{{ item.shortLabel }}</span>
+            <span :class="intervalSliderMarkerClass(index)" aria-hidden="true" />
           </div>
         </div>
       </div>
@@ -848,22 +817,29 @@ onBeforeUnmount(() => {
         v-show="chordBox"
         ref="chordBoxRef"
         v-drag="{ enabled: true, axis: 'x', limit: true }"
-        class="chord-box"
+        class="chord-slider"
         :style="chordBoxStyle"
         comment="和弦滑块"
       >
-        <select v-model="curChord" class="chord-box__select">
-          <option v-for="item in chordList" :label="item.name" :value="item"></option>
-        </select>
-        <!--            拖拽指令会设置pointerCaputre导致外部的pointerup不会触发，所以加.stop    -->
-        <button
-          class="chord-box__btn"
-          type="button"
-          @pointerup="chordBoxPointerUp($event)"
-          @pointerdown.stop="chordBoxPointerDown($event)"
-        >
-          叩
-        </button>
+        <div class="chord-slider__head">
+          <span class="chord-slider__grip" aria-hidden="true" />
+          <span class="chord-slider__title">和弦滑块</span>
+        </div>
+        <div class="chord-slider__body">
+          <select v-model.number="curChordIndex" class="chord-slider__select">
+            <option v-for="(item, index) in chordList" :key="item.name" :value="index">
+              {{ item.name }}
+            </option>
+          </select>
+          <button
+            class="chord-slider__play"
+            type="button"
+            @pointerup="chordBoxPointerUp($event)"
+            @pointerdown.stop="chordBoxPointerDown($event)"
+          >
+            叩
+          </button>
+        </div>
       </div>
     </div>
   </div>
@@ -960,40 +936,203 @@ onBeforeUnmount(() => {
   text-overflow: ellipsis;
 }
 
-.chord-box {
+.chord-slider {
   pointer-events: auto;
-  align-items: center;
-  gap: 4px;
+  left: 0;
   box-sizing: border-box;
-  min-width: 140px;
-  min-height: 40px;
-  border-radius: 10px;
-  background-color: #fff;
-  box-shadow: 0 0 5px 2px rgba(200, 200, 200, 1);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(155, 127, 214, 0.38);
+  border-radius: 14px 14px 6px 6px;
+  background: linear-gradient(165deg, rgba(248, 244, 255, 0.98) 0%, rgba(255, 240, 248, 0.96) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 6px 18px rgba(160, 130, 190, 0.18);
+  cursor: grab;
+  touch-action: none;
 }
 
-.chord-box__select {
+.chord-slider:active {
+  cursor: grabbing;
+}
+
+.chord-slider__head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px;
+  border-bottom: 1px solid rgba(155, 127, 214, 0.14);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.chord-slider__grip {
+  width: 14px;
+  height: 8px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(155, 127, 214, 0.55) 1.5px, transparent 2px) 0 50% / 5px 8px,
+    radial-gradient(circle, rgba(214, 51, 108, 0.55) 1.5px, transparent 2px) 50% 50% / 5px 8px,
+    radial-gradient(circle, rgba(155, 127, 214, 0.55) 1.5px, transparent 2px) 100% 50% / 5px 8px;
+}
+
+.chord-slider__title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #7a5a86;
+}
+
+.chord-slider__body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 6px 4px;
+}
+
+.chord-slider__select {
   flex: 1;
   min-width: 0;
-  height: 100%;
-  border: 1px solid rgba(200, 200, 200, 0.8);
-  border-radius: 6px;
-  background: #fff;
-  font-size: 12px;
+  height: 24px;
+  padding: 0 8px;
+  border: 1px solid rgba(155, 127, 214, 0.35);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.92);
+  color: #5c4a6a;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-overflow: ellipsis;
 }
 
-.chord-box__btn {
+.chord-slider__select:focus {
+  outline: none;
+  border-color: rgba(214, 51, 108, 0.45);
+  box-shadow: 0 0 0 2px rgba(214, 51, 108, 0.12);
+}
+
+.chord-slider__play {
   flex-shrink: 0;
-  min-width: 28px;
-  height: 28px;
-  padding: 0 6px;
-  border: 1px solid rgba(155, 127, 214, 0.55);
+  width: 28px;
+  height: 24px;
+  padding: 0;
+  border: 1px solid rgba(214, 51, 108, 0.35);
   border-radius: 8px;
-  background: linear-gradient(180deg, rgba(255, 248, 251, 1), rgba(230, 220, 245, 1));
-  color: #5c4a6a;
-  font-size: 13px;
+  background: linear-gradient(180deg, #ffd6e8 0%, #ffb8d0 100%);
+  color: #9a3d5c;
+  font-size: 11px;
   font-weight: 700;
+  line-height: 1;
   cursor: pointer;
+}
+
+.chord-slider__play:active {
+  transform: translateY(1px);
+  background: linear-gradient(180deg, #ffc4de 0%, #ff9fc4 100%);
+}
+
+.interval-slider {
+  pointer-events: auto;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(214, 51, 108, 0.28);
+  border-radius: 14px 14px 6px 6px;
+  background: linear-gradient(165deg, rgba(255, 248, 252, 0.98) 0%, rgba(237, 226, 255, 0.96) 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 6px 18px rgba(180, 130, 170, 0.18);
+  cursor: grab;
+  touch-action: none;
+}
+
+.interval-slider:active {
+  cursor: grabbing;
+}
+
+.interval-slider__head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 6px;
+  border-bottom: 1px solid rgba(214, 51, 108, 0.12);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.interval-slider__grip {
+  width: 14px;
+  height: 8px;
+  border-radius: 999px;
+  background:
+    radial-gradient(circle, rgba(214, 51, 108, 0.55) 1.5px, transparent 2px) 0 50% / 5px 8px,
+    radial-gradient(circle, rgba(155, 127, 214, 0.55) 1.5px, transparent 2px) 50% 50% / 5px 8px,
+    radial-gradient(circle, rgba(214, 51, 108, 0.55) 1.5px, transparent 2px) 100% 50% / 5px 8px;
+}
+
+.interval-slider__title {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #8a5a72;
+}
+
+.interval-slider__track {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: 2px 2px 4px;
+}
+
+.interval-slider__col {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 2px;
+  min-width: 0;
+}
+
+.interval-slider__label {
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1;
+  color: #7a5a86;
+  white-space: nowrap;
+  transform: scale(0.92);
+  transform-origin: center top;
+}
+
+.interval-slider__marker {
+  display: block;
+  width: 3px;
+  border-radius: 999px;
+  background: rgba(155, 127, 214, 0.55);
+}
+
+.interval-slider__marker--minor {
+  height: 5px;
+  opacity: 0.65;
+}
+
+.interval-slider__marker--mid {
+  height: 8px;
+  background: rgba(214, 51, 108, 0.45);
+}
+
+.interval-slider__marker--anchor {
+  width: 5px;
+  height: 11px;
+  background: linear-gradient(180deg, #ff8fb8, #d6336c);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.65);
 }
 
 .hide-scrollbar {

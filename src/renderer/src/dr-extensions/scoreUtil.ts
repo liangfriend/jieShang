@@ -1007,16 +1007,26 @@ function expandMeasuresByPlayIndexes(
 /**
  * 曲谱转换为单个复谱表模式
  */
-export function mergeGrandStaff(musicScore: MusicScore): MusicScore {
-  if (musicScore.grandStaffs.length === 0) return musicScore
+export function getGrandStaffSingleStaffMismatchMessage(musicScore: MusicScore): string | null {
+  if (musicScore.grandStaffs.length === 0) return null
 
   const staffCounts = musicScore.grandStaffs.map((gs) => gs.staves.length)
   const expectedCount = staffCounts[0]!
   if (staffCounts.some((count) => count !== expectedCount)) {
-    throw new Error('单谱表数量不一致，无法转换')
+    return '各复谱表的单谱表行数须一致，无法进入练习/新手模式'
   }
 
+  return null
+}
+
+export function mergeGrandStaff(musicScore: MusicScore): MusicScore {
+  if (musicScore.grandStaffs.length === 0) return musicScore
+
+  const mismatch = getGrandStaffSingleStaffMismatchMessage(musicScore)
+  if (mismatch) throw new Error(mismatch)
+
   const mergedGrandStaff = musicScore.grandStaffs[0]!
+  const expectedCount = mergedGrandStaff.staves.length
   for (let staffIndex = 0; staffIndex < expectedCount; staffIndex++) {
     const measures: Measure[] = []
     for (const grandStaff of musicScore.grandStaffs) {

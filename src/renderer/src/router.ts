@@ -1,4 +1,5 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
+import { guardSingleLineModeEnter } from '@renderer/utils/scoreRoute'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -23,13 +24,15 @@ const routes: RouteRecordRaw[] = [
     path: '/practice',
     name: 'practice',
     component: () => import('./views/practice/practice.vue'),
-    meta: { title: '练习模式' }
+    meta: { title: '练习模式' },
+    beforeEnter: guardSingleLineModeEnter
   },
   {
     path: '/for-beginner',
     name: 'forBeginner',
     component: () => import('./views/forBeginner/forBeginner.vue'),
-    meta: { title: '新手模式' }
+    meta: { title: '新手模式' },
+    beforeEnter: guardSingleLineModeEnter
   },
   {
     path: '/scores',

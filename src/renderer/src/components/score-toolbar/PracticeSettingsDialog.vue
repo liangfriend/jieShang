@@ -73,7 +73,7 @@ const appendixOpen = ref(false)
         <div class="practice-settings-row">
           <div class="practice-settings-row__label">
             <span>实时显示音符结果</span>
-            <small>弹对、弹早、弹晚、漏弹以不同颜色标注</small>
+            <small>弹对、弹早、弹晚、漏弹以不同颜色标注（漏弹为红色）</small>
           </div>
           <el-switch v-model="showNoteResult" />
         </div>

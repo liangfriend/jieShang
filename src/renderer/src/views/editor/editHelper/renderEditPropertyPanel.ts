@@ -15,8 +15,8 @@ export type PropertyPanelKind = 'measure' | 'noteHead' | 'numberHead' | 'rest' |
  */
 export function resolvePropertyPanelKind(selected: SlotData | null): PropertyPanelKind {
   if (isMeasureAddMode(selected)) return 'measure'
-  if (isNoteHeadSelected(selected)) return 'noteHead'
   if (isNumberHeadSelected(selected)) return 'numberHead'
+  if (isNoteHeadSelected(selected)) return 'noteHead'
   if (isRestSelected(selected)) return 'rest'
   if (isVoltaSelected(selected)) return 'volta'
   if (isSlurSelected(selected)) return 'slur'

@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { EditPen, VideoPause, VideoPlay } from '@element-plus/icons-vue'
+import { ElMessage } from 'element-plus'
+import type { MusicScore, MusicScoreTypeEnum } from 'deciphony-renderer'
 import { storeToRefs } from 'pinia'
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import BackButton from '@renderer/components/BackButton.vue'
 import VerticalDragSlider from '@renderer/components/VerticalDragSlider.vue'
+import { getGrandStaffSingleStaffMismatchMessage } from '@renderer/dr-extensions/scoreUtil'
 import { scorePlaybackKey } from '@renderer/utils/scorePagePlayback'
 import {
   PLAY_BPM_MAX,
@@ -17,7 +20,6 @@ import ScoreToolbarShell from './ScoreToolbarShell.vue'
 import ScoreNotationTypeSelector from './ScoreNotationTypeSelector.vue'
 import ScoreToneColorAdjuster from './ScoreToneColorAdjuster.vue'
 import { buildScoreRouteQuery } from '@renderer/utils/scoreRoute'
-import type { MusicScoreTypeEnum } from 'deciphony-renderer'
 
 const route = useRoute()
 const router = useRouter()
@@ -29,7 +31,8 @@ if (!playback) {
   throw new Error('PlayModeToolbar requires scorePlayback from play.vue')
 }
 
-defineProps<{
+const props = defineProps<{
+  musicScore: MusicScore
   notationType: MusicScoreTypeEnum
   notationTypeDisabled?: boolean
 }>()
@@ -81,22 +84,27 @@ function switchToEdit() {
   })
 }
 
-function goPractice() {
+function goSingleLineMode(name: 'practice' | 'forBeginner') {
+  const message = getGrandStaffSingleStaffMismatchMessage(props.musicScore)
+  if (message) {
+    ElMessage.warning(message)
+    return
+  }
+
   handleStop()
   activePanel.value = null
   router.push({
-    name: 'practice',
+    name,
     query: buildScoreRouteQuery(route)
   })
 }
 
+function goPractice() {
+  goSingleLineMode('practice')
+}
+
 function goForBeginner() {
-  handleStop()
-  activePanel.value = null
-  router.push({
-    name: 'forBeginner',
-    query: buildScoreRouteQuery(route)
-  })
+  goSingleLineMode('forBeginner')
 }
 </script>
 

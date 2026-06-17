@@ -73,6 +73,7 @@ onMounted(async () => {
       </musicScoreVue>
     </div>
     <PlayModeToolbar
+      :music-score="musicScoreData"
       :notation-type="displayType"
       :notation-type-disabled="notationTypeDisabled"
       @notation-type-change="onNotationTypeChange"

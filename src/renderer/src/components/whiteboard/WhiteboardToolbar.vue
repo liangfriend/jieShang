@@ -299,7 +299,7 @@ function formatBpm(value: number) {
         :class="{ 'score-toolbar__btn--active': intervalRulerEnabled }"
         @click="whiteboardStore.toggleIntervalRuler()"
       >
-        音程尺
+        音程滑块
       </button>
 
       <button

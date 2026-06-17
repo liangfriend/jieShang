@@ -93,6 +93,7 @@ export function useScorePagePlayback(
     await playStore.waitReady()
 
     if (playbackState.value !== 'paused') {
+      handleClearPlayData()
       playStore.setPlaySequence(sequence)
 
       if (options.countIn) {

@@ -1,5 +1,5 @@
 import type { MusicScore } from 'deciphony-renderer'
-import type { RouteLocationNormalizedLoaded } from 'vue-router'
+import type { RouteLocationNormalized, RouteLocationNormalizedLoaded } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import emptyTemplate from '@renderer/template/empty'
 import emptyJianpuTemplate from '@renderer/template/emptyJianpu'
@@ -7,6 +7,7 @@ import singleVoiceTemplate from '@renderer/template/singleVoice'
 import singleVoiceJianpuTemplate from '@renderer/template/singleVoiceJianpu'
 import doubleVoiceTemplate from '@renderer/template/doubleVoice'
 import doubleVoiceJianpuTemplate from '@renderer/template/doubleVoiceJianpu'
+import { getGrandStaffSingleStaffMismatchMessage } from '@renderer/dr-extensions/scoreUtil'
 import { useDataStore } from '@renderer/store/data.store'
 import { loadScoreFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper'
 import { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from '@renderer/constant'
@@ -145,6 +146,22 @@ export function buildScoreRouteQuery(route: RouteLocationNormalizedLoaded): Reco
   }
 
   return { template: resolveTemplateKey(route.query.template) }
+}
+
+/** 练习/新手模式入口：各 grandStaff 单谱表行数须一致 */
+export async function guardSingleLineModeEnter(
+  to: RouteLocationNormalized,
+  from: RouteLocationNormalized
+) {
+  const score = await loadScoreFromRoute(to)
+  if (!score) return true
+
+  const message = getGrandStaffSingleStaffMismatchMessage(score)
+  if (!message) return true
+
+  ElMessage.warning(message)
+  if (from.name === 'play') return false
+  return { name: 'play', query: buildScoreRouteQuery(to) }
 }
 
 export const SCORE_SLOT_CONFIG = {

@@ -383,7 +383,7 @@ onMounted(() => {
 }
 
 .collection-card--level-1 {
-  background: linear-gradient(165deg, #f6f6f7 0%, #ececee 100%);
+  background: linear-gradient(165deg, #f6f6f7 0%, #fff 100%);
   border-color: rgba(120, 120, 130, 0.18);
 }
 

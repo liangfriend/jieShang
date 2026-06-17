@@ -52,6 +52,10 @@ export const WHITEBOARD_WHITE_KEY_WIDTH_MIN = 20
 export const WHITEBOARD_WHITE_KEY_WIDTH_MAX = 72
 export const WHITEBOARD_WHITE_KEY_WIDTH_DEFAULT = 36
 
+/** 钢琴区固定高度（最大键高 + 上下 padding），不随音程滑块等开关变化 */
+export const WHITEBOARD_PIANO_SECTION_HEIGHT =
+  WHITEBOARD_KEY_HEIGHT_MAX + 16
+
 /** 教学白板按住琴键时 trigger 的持续秒数（keyup 前由 release 结束） */
 export const WHITEBOARD_NOTE_HOLD_DURATION_SEC = 3600
 

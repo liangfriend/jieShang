@@ -15,6 +15,7 @@ import { useBeginnerSettingsStore } from '@renderer/store/beginnerSettings.store
 import { usePlayStore } from '@renderer/store/play.store'
 import { resolvePlayBpm } from '@renderer/constant/play'
 import { loadScoreFromRoute } from '@renderer/utils/scoreRoute'
+import { applySingleLineModeScoreHeight } from '@renderer/utils/singleLineModeScoreLayout'
 import {
   toMidiBoxSequence,
   toPlaySequence,
@@ -40,7 +41,6 @@ import empty from '@renderer/template/empty'
 const MIDI_RANGE = { min: 21, max: 108 } as const
 const MIDI_BOX_HEIGHT = '100%'
 const PIANO_HEIGHT = '96px'
-const SCORE_HEIGHT = 300
 const MEASURE_WIDTH = 200
 
 const route = useRoute()
@@ -191,7 +191,7 @@ function syncMetronome(score: MusicScore, bpm: number) {
 function applyScoreLayout(score: MusicScore) {
   const measureCount = countMeasures(score)
   score.width = measureCount * MEASURE_WIDTH
-  score.height = SCORE_HEIGHT
+  applySingleLineModeScoreHeight(score)
   score.topSpaceHeight = 0
   for (const grandStaff of score.grandStaffs) {
     grandStaff.uSpace = 0
@@ -228,11 +228,7 @@ function rebuildSequences(score: MusicScore) {
   staffDim.sync(score, passSingleStaffIndex)
 }
 
-watch(
-  maxStaffCount,
-  (count) => settings.initStaffEnabled(count),
-  { immediate: true }
-)
+watch(maxStaffCount, (count) => settings.initStaffEnabled(count), { immediate: true })
 
 watch(
   () => settings.staffEnabled,
@@ -270,7 +266,11 @@ function handleMidiBoxFinished() {
 
 <template>
   <div class="beginner-page">
-    <section ref="scoreScrollRef" class="beginner-page__score hidden-scrollbar">
+    <section
+      ref="scoreScrollRef"
+      class="beginner-page__score hidden-scrollbar"
+      :style="{ maxHeight: `${scoreCanvasHeight + 20}px` }"
+    >
       <div
         class="beginner-page__score-stack"
         :style="{ width: `${scoreCanvasWidth}px`, height: `${scoreCanvasHeight}px` }"
@@ -310,7 +310,7 @@ function handleMidiBoxFinished() {
 
       <div v-if="settings.coverMidiBox" class="beginner-page__midi-box-cover">
         <span class="beginner-page__midi-box-cover-emoji">🎵</span>
-        <span class="beginner-page__midi-box-cover-text">凭听觉练习吧</span>
+        <span class="beginner-page__midi-box-cover-text">强者之遮挡</span>
       </div>
     </section>
 
@@ -346,9 +346,8 @@ function handleMidiBoxFinished() {
 
 .beginner-page__score {
   flex-shrink: 0;
-  max-height: 216px;
   overflow: auto;
-  padding: 12px 16px 8px;
+  padding: 12px 16px 0px;
   border-bottom: 1px solid rgba(255, 184, 208, 0.25);
 }
 
