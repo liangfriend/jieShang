@@ -27,11 +27,12 @@ import {
 } from '@renderer/views/forBeginner/beginnerPlayback'
 import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
 import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
-import {
-  createBeginnerNoteProgressHighlight,
-  type MidiBoxBatchPayload
-} from '@renderer/views/forBeginner/beginnerNoteProgressHighlight'
+import type { MidiBoxBatchPayload } from '@renderer/views/forBeginner/beginnerNoteProgressHighlight'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
+import {
+  ScoreNoteHeadOverlay,
+  type ScoreNoteHeadOverlayApi
+} from '@renderer/components/scoreNoteHeadOverlay'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotationDisplay'
 import empty from '@renderer/template/empty'
@@ -61,25 +62,26 @@ const maxStaffCount = computed(() => {
 
 const scoreScrollRef = ref<HTMLElement | null>(null)
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
+const scoreOverlayRef = ref<ScoreNoteHeadOverlayApi | null>(null)
 const pianoMidiBoxRef = ref<PianoMidiBoxExpose | null>(null)
 const playSequence = ref<PlaySequence>([])
 const midiBoxSequence = ref<MidiBoxSequence>({})
 const vDomList = ref<VDom[]>([])
 
+const scoreCanvasWidth = computed(() => musicScoreData.value.width ?? 0)
+const scoreCanvasHeight = computed(() => musicScoreData.value.height ?? 0)
+
+const findScoreElementByVDom = (node: VDom) => musicScoreRef.value?.findElementByVDom(node) ?? null
+
 const staffDim = createPracticeStaffDim({
   getVDomList: () => vDomList.value,
-  findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
-})
-
-const noteProgressHighlight = createBeginnerNoteProgressHighlight({
-  getVDomList: () => vDomList.value,
-  findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
+  findElementByVDom: findScoreElementByVDom
 })
 
 const scrollToPlayingNote = createScoreScrollToPlayingNote({
   getScrollContainer: () => scoreScrollRef.value,
   getVDomList: () => vDomList.value,
-  findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
+  findElementByVDom: findScoreElementByVDom
 })
 
 const hasMidiBoxSequence = computed(() =>
@@ -94,7 +96,7 @@ const playback = useBeginnerPlayback({
   },
   onPlaybackStopped: () => {
     metronomeStore.stop()
-    noteProgressHighlight.clearAll()
+    scoreOverlayRef.value?.clearBeginner()
     scrollToPlayingNote.resetScroll()
   },
   hasSequence: () => hasMidiBoxSequence.value
@@ -137,24 +139,24 @@ function onPianoKeyUp(midi: number) {
 
 function handleRenderMusicScore(list: VDom[]) {
   vDomList.value = list
+  scoreOverlayRef.value?.onRenderMusicScore(list)
   staffDim.rebindAfterRender()
-  noteProgressHighlight.rebindAfterRender()
 }
 
 function handleMidiBoxProgressReset() {
-  noteProgressHighlight.clearAll()
+  scoreOverlayRef.value?.clearBeginner()
 }
 
 function handleMidiBoxBatchComplete(payload: MidiBoxBatchPayload) {
-  noteProgressHighlight.markBatchDone(payload.notes)
+  scoreOverlayRef.value?.markBeginnerBatchDone(payload.notes.map((note) => note.info))
 }
 
 function handleMidiBoxBatchActive(payload: MidiBoxBatchPayload) {
   if (payload.batchIndex < 0 || payload.notes.length === 0) {
-    noteProgressHighlight.setCurrentBatch([])
+    scoreOverlayRef.value?.setBeginnerCurrentBatch([])
     return
   }
-  noteProgressHighlight.setCurrentBatch(payload.notes)
+  scoreOverlayRef.value?.setBeginnerCurrentBatch(payload.notes.map((note) => note.info))
   const noteId = payload.notes[0]?.info
   if (noteId != null) scrollToPlayingNote.scrollToHorizontalCenter(String(noteId))
 }
@@ -211,7 +213,7 @@ function onNotationTypeChange(targetType: MusicScoreTypeEnum) {
   try {
     applyDisplayType(targetType)
     musicScoreData.value = prepareBeginnerScore(musicScoreData.value)
-    noteProgressHighlight.clearAll()
+    scoreOverlayRef.value?.clearBeginner()
     rebuildSequences(musicScoreData.value)
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '曲谱类型切换失败')
@@ -258,7 +260,7 @@ onBeforeUnmount(() => {
   metronomeStore.stop()
   playStore.releaseAllHeldNotes()
   staffDim.clearAll()
-  noteProgressHighlight.clearAll()
+  scoreOverlayRef.value?.clearAll()
 })
 
 function handleMidiBoxFinished() {
@@ -269,14 +271,25 @@ function handleMidiBoxFinished() {
 <template>
   <div class="beginner-page">
     <section ref="scoreScrollRef" class="beginner-page__score hidden-scrollbar">
-      <musicScoreVue
-        ref="musicScoreRef"
-        class="beginner-page__score-svg"
-        :data="musicScoreData"
-        :skin="scoreSkin"
-        :skin-name="scoreSkinName"
-        @renderMusicScore="handleRenderMusicScore"
-      />
+      <div
+        class="beginner-page__score-stack"
+        :style="{ width: `${scoreCanvasWidth}px`, height: `${scoreCanvasHeight}px` }"
+      >
+        <musicScoreVue
+          ref="musicScoreRef"
+          class="beginner-page__score-svg"
+          :data="musicScoreData"
+          :skin="scoreSkin"
+          :skin-name="scoreSkinName"
+          @renderMusicScore="handleRenderMusicScore"
+        />
+        <ScoreNoteHeadOverlay
+          ref="scoreOverlayRef"
+          :width="scoreCanvasWidth"
+          :height="scoreCanvasHeight"
+          :find-element-by-v-dom="findScoreElementByVDom"
+        />
+      </div>
     </section>
 
     <section class="beginner-page__midi-box">
@@ -339,8 +352,14 @@ function handleMidiBoxFinished() {
   border-bottom: 1px solid rgba(255, 184, 208, 0.25);
 }
 
+.beginner-page__score-stack {
+  position: relative;
+  flex-shrink: 0;
+}
+
 .beginner-page__score-svg {
   flex-shrink: 0;
+  display: block;
 }
 
 .beginner-page__midi-box {

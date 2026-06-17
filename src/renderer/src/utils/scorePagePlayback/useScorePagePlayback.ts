@@ -38,6 +38,7 @@ export function useScorePagePlayback(
   const highlight = options.musicScoreRef
     ? usePlayHighlight({
         musicScoreRef: options.musicScoreRef,
+        getOverlay: options.getOverlay,
         getBpm: () => bpm.value,
         getBeatUnit: () => 4,
         getRate: () => 1

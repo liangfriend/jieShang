@@ -24,13 +24,16 @@ import type {
   MusicScoreHighlightExpose,
   PlayHighlightProgressData
 } from '@renderer/dr-extensions/dr-play-highlight'
+import {
+  ScoreNoteHeadOverlay,
+  type ScoreNoteHeadOverlayApi
+} from '@renderer/components/scoreNoteHeadOverlay'
 import { usePlayStore } from '@renderer/store/play.store'
 import { useMetronomeStore } from '@renderer/store/metronome.store'
 import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store'
 import { NOTE_RESULT_COLOR } from '@renderer/constant/practice'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
 import { practiceContextKey } from '@renderer/views/practice/practiceContext'
-import { createPracticeNoteResultHighlight } from '@renderer/views/practice/practiceNoteResultHighlight'
 import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
 import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
@@ -71,32 +74,34 @@ const maxStaffCount = computed(() => {
 
 const scoreScrollRef = ref<HTMLElement | null>(null)
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
+const scoreOverlayRef = ref<ScoreNoteHeadOverlayApi | null>(null)
 const pianoWaterfallRef = ref<PianoWaterfallPlaybackExpose | null>(null)
 const performSequence = ref<PerformSequence>({})
 const playSequence = ref<PlaySequence>([])
 const practiceBpm = ref(120)
 const vDomList = ref<VDom[]>([])
 
-const noteResultHighlight = createPracticeNoteResultHighlight({
-  getVDomList: () => vDomList.value,
-  findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
-})
+const scoreCanvasWidth = computed(() => musicScoreData.value.width ?? 0)
+const scoreCanvasHeight = computed(() => musicScoreData.value.height ?? 0)
+
+const findScoreElementByVDom = (node: VDom) => musicScoreRef.value?.findElementByVDom(node) ?? null
 
 const staffDim = createPracticeStaffDim({
   getVDomList: () => vDomList.value,
-  findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
+  findElementByVDom: findScoreElementByVDom
 })
 
 const scrollToPlayingNote = createScoreScrollToPlayingNote({
   getScrollContainer: () => scoreScrollRef.value,
   getVDomList: () => vDomList.value,
-  findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
+  findElementByVDom: findScoreElementByVDom
 })
 
 let scrollProgressSubId: string | null = null
 
 const playback = useScorePagePlayback(musicScoreData, {
   musicScoreRef,
+  getOverlay: () => scoreOverlayRef.value,
   waterfallRef: pianoWaterfallRef,
   getPlaySequence: () => playSequence.value,
   countIn: () => metronomeStore.playCountIn(),
@@ -108,7 +113,7 @@ const playback = useScorePagePlayback(musicScoreData, {
     metronomeStore.stop()
     scrollToPlayingNote.resetScroll()
   },
-  onClearPlayData: () => noteResultHighlight.clearAll()
+  onClearPlayData: () => scoreOverlayRef.value?.clearResults()
 })
 
 provide(scorePlaybackKey, playback)
@@ -140,8 +145,7 @@ watch(
 watch(
   () => settings.showNoteResult,
   (enabled) => {
-    if (enabled) noteResultHighlight.showAll()
-    else noteResultHighlight.hideAll()
+    scoreOverlayRef.value?.setResultsVisible(enabled)
   }
 )
 
@@ -150,7 +154,7 @@ provide(practiceContextKey, {
   bpm: practiceBpm
 })
 
-/** 音符评分回调：通过 noteInfo id 定位曲谱 DOM，按结果加 filter */
+/** 音符评分回调：在 canvas 叠层绘制符头着色 */
 function handleNoteScore(
   result: NoteScoreResult,
   realScore: number,
@@ -160,13 +164,13 @@ function handleNoteScore(
   void realScore
   void totalScore
   if (!settings.showNoteResult) return
-  noteResultHighlight.applyNoteResult(info, result)
+  scoreOverlayRef.value?.setNoteResult(info, result)
 }
 
 function handleRenderMusicScore(list: VDom[]) {
   vDomList.value = list
   playback.handleRenderMusicScore?.(list)
-  noteResultHighlight.rebindAfterRender()
+  scoreOverlayRef.value?.onRenderMusicScore(list)
   staffDim.rebindAfterRender()
 }
 
@@ -224,7 +228,7 @@ function onNotationTypeChange(targetType: MusicScoreTypeEnum) {
   try {
     applyDisplayType(targetType)
     musicScoreData.value = preparePracticeScore(musicScoreData.value)
-    noteResultHighlight.clearAll()
+    scoreOverlayRef.value?.clearResults()
     rebuildPracticeSequences(musicScoreData.value)
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '曲谱类型切换失败')
@@ -290,7 +294,7 @@ onBeforeUnmount(() => {
   if (scrollProgressSubId) playback.unsubscribeProgressStart(scrollProgressSubId)
   playback.handleStop()
   metronomeStore.stop()
-  noteResultHighlight.clearAll()
+  scoreOverlayRef.value?.clearAll()
   staffDim.clearAll()
 })
 </script>
@@ -298,14 +302,25 @@ onBeforeUnmount(() => {
 <template>
   <div class="practice-page">
     <section ref="scoreScrollRef" class="practice-page__score hidden-scrollbar">
-      <musicScoreVue
-        ref="musicScoreRef"
-        class="practice-page__score-svg"
-        :data="musicScoreData"
-        :skin="scoreSkin"
-        :skin-name="scoreSkinName"
-        @renderMusicScore="handleRenderMusicScore"
-      />
+      <div
+        class="practice-page__score-stack"
+        :style="{ width: `${scoreCanvasWidth}px`, height: `${scoreCanvasHeight}px` }"
+      >
+        <musicScoreVue
+          ref="musicScoreRef"
+          class="practice-page__score-svg"
+          :data="musicScoreData"
+          :skin="scoreSkin"
+          :skin-name="scoreSkinName"
+          @renderMusicScore="handleRenderMusicScore"
+        />
+        <ScoreNoteHeadOverlay
+          ref="scoreOverlayRef"
+          :width="scoreCanvasWidth"
+          :height="scoreCanvasHeight"
+          :find-element-by-v-dom="findScoreElementByVDom"
+        />
+      </div>
     </section>
 
     <section class="practice-page__stats">
@@ -384,8 +399,14 @@ onBeforeUnmount(() => {
   border-bottom: 1px solid rgba(255, 184, 208, 0.25);
 }
 
+.practice-page__score-stack {
+  position: relative;
+  flex-shrink: 0;
+}
+
 .practice-page__score-svg {
   flex-shrink: 0;
+  display: block;
 }
 
 .practice-page__stats {

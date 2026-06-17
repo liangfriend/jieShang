@@ -1,4 +1,5 @@
 import type {VDom} from 'deciphony-renderer'
+import type {ScoreNoteHeadOverlayApi} from '@renderer/components/scoreNoteHeadOverlay'
 import {NOTE_PART_TAGS, PLAY_HIGHLIGHT_CLASS} from './constants'
 
 export type PlayHighlightTarget = VDom | string
@@ -6,6 +7,8 @@ export type PlayHighlightTarget = VDom | string
 export type PlayHighlightDeps = {
     getVDomList: () => readonly VDom[]
     findElementByVDom: (node: VDom) => SVGElement | null
+    /** 练习/新手模式：用 canvas 叠层代替 filter 类名 */
+    getOverlay?: () => ScoreNoteHeadOverlayApi | null
 }
 
 function normalizeNoteId(target: PlayHighlightTarget): string | null {
@@ -35,6 +38,13 @@ export function createPlayHighlight(deps: PlayHighlightDeps) {
     const highlightedByNoteId = new Map<string, Set<SVGElement>>()
 
     function applyHighlightForNoteId(noteId: string) {
+        const overlay = deps.getOverlay?.()
+        if (overlay) {
+            overlay.setPlayActive(noteId, true)
+            activeNoteIds.add(noteId)
+            return
+        }
+
         const vdoms = findNotePartVDoms(deps.getVDomList(), noteId)
         const els = new Set<SVGElement>()
         for (const vdom of vdoms) {
@@ -47,6 +57,13 @@ export function createPlayHighlight(deps: PlayHighlightDeps) {
     }
 
     function removeHighlightForNoteId(noteId: string) {
+        const overlay = deps.getOverlay?.()
+        if (overlay) {
+            overlay.setPlayActive(noteId, false)
+            highlightedByNoteId.delete(noteId)
+            return
+        }
+
         const els = highlightedByNoteId.get(noteId)
         if (!els) return
         for (const el of els) removeHighlight(el)
@@ -55,6 +72,14 @@ export function createPlayHighlight(deps: PlayHighlightDeps) {
 
     /** 取消当前所有播放高亮 */
     function clearHighlight() {
+        const overlay = deps.getOverlay?.()
+        if (overlay) {
+            overlay.clearPlay()
+            highlightedByNoteId.clear()
+            activeNoteIds.clear()
+            return
+        }
+
         for (const noteId of [...highlightedByNoteId.keys()]) {
             removeHighlightForNoteId(noteId)
         }
@@ -90,6 +115,8 @@ export function createPlayHighlight(deps: PlayHighlightDeps) {
 
     /** vDom 重渲染后按 noteId 重新绑定 DOM 高亮 */
     function rebindAfterRender() {
+        if (deps.getOverlay?.()) return
+
         for (const noteId of [...activeNoteIds]) {
             removeHighlightForNoteId(noteId)
             applyHighlightForNoteId(noteId)
