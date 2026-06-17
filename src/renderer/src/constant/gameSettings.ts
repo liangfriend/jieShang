@@ -28,11 +28,11 @@ export const GAME_DIFFICULTY_OPTIONS: {
   {
     value: 'standard',
     label: '标准',
-    desc: 'MIDI 38–83，三种谱号，全部变音记号'
+    desc: 'MIDI 38–83，三种谱号，无重升重降，节奏更快'
   },
   {
     value: 'hard',
     label: '困难',
-    desc: 'MIDI 21–108，三种谱号，全部变音记号，生成更快'
+    desc: 'MIDI 38–83，三种谱号，全部变音，块速与生成更快'
   }
 ]
