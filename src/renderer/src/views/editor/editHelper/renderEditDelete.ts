@@ -42,7 +42,8 @@ export function isNumberRestSelected(
     selected: SlotData | null,
 ): selected is SlotData & {measure: Measure; self: NoteNumber} {
     const self = selected?.self
-    return selected?.measure != null && self != null && isNoteNumberSlot(self) && isSlotRestLike(self)
+    if (!selected?.measure || self == null || isMeasureAddMode(selected)) return false
+    return isNoteNumberSlot(self) && isSlotRestLike(self)
 }
 
 function removeScoreAffiliatedById(musicScore: MusicScore, symbolId: string): boolean {
@@ -292,20 +293,20 @@ export function deleteSelectedItem(musicScore: MusicScore, selected: SlotData | 
         return deleteNumberHeadSlot(musicScore, selected)
     }
 
-    if (isRestSelected(selected)) {
-        return deleteRestSlot(selected)
-    }
-
-    if (isNumberRestSelected(selected)) {
-        return deleteNumberRestSlot(selected)
-    }
-
     if (isMeasureAddMode(selected)) {
         if (!selected.singleStaff) return false
         return deleteMeasureSlot(musicScore, selected as SlotData & {
             measure: Measure
             singleStaff: NonNullable<SlotData['singleStaff']>
         })
+    }
+
+    if (isRestSelected(selected)) {
+        return deleteRestSlot(selected)
+    }
+
+    if (isNumberRestSelected(selected)) {
+        return deleteNumberRestSlot(selected)
     }
 
     if (deleteMeasureOptionalSymbol(selected)) {

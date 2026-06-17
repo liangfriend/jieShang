@@ -8,11 +8,13 @@ import {
   AUGMENTATION_DOT_OPTIONS,
   BEAM_TYPE_OPTIONS,
   NOTE_CLEF_SELECT_OPTIONS,
+  STEM_DIRECTION_OPTIONS,
   setNoteClef,
   setNotesInfoAccidental,
   setNotesInfoAugmentationDot,
   setNotesInfoBeamType,
   setNotesInfoChronaxie,
+  setNotesInfoDirection,
   setNotesInfoRelativeX,
   type NoteHeadEditSlot,
 } from '../renderEditNoteHeadProperties'
@@ -39,6 +41,11 @@ const chronaxie = computed({
 const beamType = computed({
   get: () => notesInfo.value.beamType ?? BeamTypeEnum.None,
   set: (v: BeamTypeEnum) => setNotesInfoBeamType(notesInfo.value, v),
+})
+
+const direction = computed({
+  get: () => notesInfo.value.direction,
+  set: (v: 'up' | 'down') => setNotesInfoDirection(notesInfo.value, v),
 })
 
 const accidental = computed({
@@ -94,6 +101,19 @@ function onAddSlur(span: SlurSpan) {
       <el-radio-group v-model="beamType" class="note-head-props__radio" size="small">
         <el-radio-button
           v-for="opt in BEAM_TYPE_OPTIONS"
+          :key="opt.value"
+          :label="opt.value"
+        >
+          {{ opt.label }}
+        </el-radio-button>
+      </el-radio-group>
+    </section>
+
+    <section class="note-head-props__section">
+      <div class="note-head-props__label">符干方向</div>
+      <el-radio-group v-model="direction" class="note-head-props__radio" size="small">
+        <el-radio-button
+          v-for="opt in STEM_DIRECTION_OPTIONS"
           :key="opt.value"
           :label="opt.value"
         >

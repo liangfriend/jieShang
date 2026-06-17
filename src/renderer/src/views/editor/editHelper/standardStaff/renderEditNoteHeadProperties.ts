@@ -12,6 +12,11 @@ export const BEAM_TYPE_OPTIONS: {value: BeamTypeEnum; label: string}[] = [
   {value: BeamTypeEnum.None, label: '无'},
 ]
 
+export const STEM_DIRECTION_OPTIONS: {value: 'up' | 'down'; label: string}[] = [
+  {value: 'up', label: '向上'},
+  {value: 'down', label: '向下'},
+]
+
 export const ACCIDENTAL_OPTIONS: {value: AccidentalTypeEnum; label: string}[] = [
   {value: AccidentalTypeEnum.Sharp, label: '升号 ♯'},
   {value: AccidentalTypeEnum.Flat, label: '降号 ♭'},
@@ -57,6 +62,10 @@ export function setNotesInfoChronaxie(info: NotesInfo, chronaxie: Chronaxie): vo
 
 export function setNotesInfoBeamType(info: NotesInfo, beamType: BeamTypeEnum): void {
   info.beamType = beamType
+}
+
+export function setNotesInfoDirection(info: NotesInfo, direction: 'up' | 'down'): void {
+  info.direction = direction
 }
 
 export function setNotesInfoAccidental(info: NotesInfo, type: AccidentalTypeEnum | ''): void {

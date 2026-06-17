@@ -6,6 +6,7 @@ import NumberHeadPropertyPanel from '../numberNotation/components/NumberHeadProp
 import NoteHeadPropertyPanel from '../standardStaff/components/NoteHeadPropertyPanel.vue'
 import RestPropertyPanel from '../standardStaff/components/RestPropertyPanel.vue'
 import MeasurePropertyPanel from './MeasurePropertyPanel.vue'
+import SlurPropertyPanel from './SlurPropertyPanel.vue'
 import VoltaPropertyPanel from './VoltaPropertyPanel.vue'
 
 const props = defineProps<{
@@ -18,7 +19,8 @@ const panelMeta: Record<Exclude<PropertyPanelKind, null>, { title: string; emoji
   noteHead: { title: '音符属性', emoji: '♩' },
   numberHead: { title: '音符属性', emoji: '♩' },
   rest: { title: '休止符属性', emoji: '𝄽' },
-  volta: { title: 'Volta 属性', emoji: '↺' }
+  volta: { title: 'Volta 属性', emoji: '↺' },
+  slur: { title: '连音线属性', emoji: '⌒' }
 }
 
 const hasContent = computed(() => {
@@ -32,7 +34,7 @@ const hasContent = computed(() => {
   if (props.kind === 'rest') {
     return Boolean(props.selected.measure && props.selected.self)
   }
-  return props.kind === 'volta'
+  return props.kind === 'volta' || props.kind === 'slur'
 })
 
 const headerMeta = computed(() => {
@@ -67,10 +69,11 @@ const headerMeta = computed(() => {
         :edit-slot="selected as any"
       />
       <VoltaPropertyPanel v-else-if="kind === 'volta' && selected" :edit-slot="selected" />
+      <SlurPropertyPanel v-else-if="kind === 'slur' && selected" :edit-slot="selected" />
       <div v-else class="property-panel__placeholder">
         <span class="property-panel__placeholder-emoji">🎼</span>
         <p class="property-panel__placeholder-text">
-          选中曲谱中的小节、音符、休止符或 Volta，这里会显示可编辑属性
+          选中曲谱中的小节、音符、休止符、连音线或 Volta，这里会显示可编辑属性
         </p>
       </div>
     </div>

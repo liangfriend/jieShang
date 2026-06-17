@@ -70,6 +70,13 @@ export {
   type SlurHandlePoints,
 } from './renderEditSlurDrag'
 export {
+  canMoveSlurEndEarlier,
+  canMoveSlurEndLater,
+  moveSlurEndEarlier,
+  moveSlurEndLater,
+  type SlurEditSlot,
+} from './renderEditSlurProperties'
+export {
   computeVoltaHandlePoints,
   createVoltaDragSession,
   isVoltaSelected,
@@ -138,6 +145,7 @@ export {default as AddNoteStatePanel} from './components/AddNoteStatePanel.vue'
 export {default as PropertyPanel} from './components/PropertyPanel.vue'
 export {default as MeasurePropertyPanel} from './components/MeasurePropertyPanel.vue'
 export {default as VoltaPropertyPanel} from './components/VoltaPropertyPanel.vue'
+export {default as SlurPropertyPanel} from './components/SlurPropertyPanel.vue'
 export {default as VoltaDragHandles} from './components/VoltaDragHandles.vue'
 export {default as SlurDragHandles} from './components/SlurDragHandles.vue'
 export {default as AddGrandStaffButton} from './components/AddGrandStaffButton.vue'

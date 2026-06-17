@@ -69,15 +69,17 @@ export function appendNotesInfo(
 }
 
 export function isNoteNumberSlot(slot: StaffSlot | NoteNumber): slot is NoteNumber {
-    return !('type' in slot);
+    if (isNoteSymbol(slot) || isNoteRest(slot)) return false
+    return 'notesInfo' in slot && 'chronaxie' in slot && 'beamType' in slot
 }
 
 export function isSlotRestLike(slot: StaffSlot | NoteNumber): boolean {
-    if (isNoteRest(slot)) return true;
+    if (isNoteRest(slot)) return true
     if (isNoteNumberSlot(slot)) {
-        return !slot.notesInfo.length || slot.notesInfo.every((ni) => ni.syllable === 0);
+        const notesInfo = slot.notesInfo
+        return !notesInfo?.length || notesInfo.every((ni) => ni.syllable === 0)
     }
-    return false;
+    return false
 }
 
 export function isSlotNoteLike(slot: StaffSlot | NoteNumber): slot is NoteSymbol | NoteNumber {
