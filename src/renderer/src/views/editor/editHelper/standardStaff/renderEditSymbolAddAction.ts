@@ -120,9 +120,59 @@ export function noteHeadWidth(chronaxie: Chronaxie): number {
   return NOTE_HEAD_WIDTH[chronaxie] ?? 14.59
 }
 
-export function previewSvgHtml(chronaxie: Chronaxie, direction: 'up' | 'down'): string {
+/** 与 defaultSkin addLine 一致 */
+const ADD_LINE_WIDTH = 16
+const ADD_LINE_HEIGHT = 11
+const GHOST_LEDGER_STROKE = '#2066ff'
+const GHOST_LEDGER_OPACITY = 0.6
+
+/** 与 renderer renderSymbol 加线 region 规则一致 */
+export function ledgerLineRegions(region: number): number[] {
+  const lines: number[] = []
+  if (region < -1) {
+    for (let line = -2; line >= region; line -= 2) lines.push(line)
+  }
+  if (region > 9) {
+    for (let line = 10; line <= region; line += 2) lines.push(line)
+  }
+  return lines
+}
+
+function noteCenterYFromRegion(region: number): number {
+  return yFromRegion(region) + NOTE_HEAD_HEIGHT / 2
+}
+
+/** 加线相对 ghost 组（音符头左上角）的 y */
+function ledgerLineYInGroup(lineRegion: number, noteRegion: number): number {
+  return noteCenterYFromRegion(lineRegion) - ADD_LINE_HEIGHT / 2 - yFromRegion(noteRegion)
+}
+
+function ledgerLineSvgHtml(x: number, y: number): string {
+  const lineY = y + ADD_LINE_HEIGHT / 2
+  return `<line x1="${x}" y1="${lineY}" x2="${x + ADD_LINE_WIDTH}" y2="${lineY}" stroke="${GHOST_LEDGER_STROKE}" stroke-width="1" opacity="${GHOST_LEDGER_OPACITY}" />`
+}
+
+export function previewLedgerLinesSvgHtml(
+  region: number,
+  noteRegion: number,
+  headW: number
+): string {
+  const lines = ledgerLineRegions(region)
+  if (lines.length === 0) return ''
+  const x = headW / 2 - ADD_LINE_WIDTH / 2
+  return lines.map((line) => ledgerLineSvgHtml(x, ledgerLineYInGroup(line, noteRegion))).join('\n')
+}
+
+export function previewSvgHtml(
+  chronaxie: Chronaxie,
+  direction: 'up' | 'down',
+  region?: number
+): string {
   const key = chronaxie ?? 64
-  return noteSymbolSvg[direction][key]
+  const note = noteSymbolSvg[direction][key]
+  if (region == null) return note
+  const ledger = previewLedgerLinesSvgHtml(region, region, noteHeadWidth(chronaxie))
+  return ledger ? `${ledger}\n${note}` : note
 }
 
 const REST_PREVIEW_HEIGHT: Partial<Record<Chronaxie, number>> = {
@@ -485,7 +535,7 @@ export function resolveGhostNotePreview(params: ResolveGhostNoteParams): GhostNo
     region,
     direction,
     chronaxie: effectiveChronaxie,
-    svgHtml: previewSvgHtml(effectiveChronaxie, direction),
+    svgHtml: previewSvgHtml(effectiveChronaxie, direction, region),
     snap
   }
 }
