@@ -99,7 +99,7 @@ function goToAchievements() {
       <div class="logo-wrap">
         <span class="logo-face">♪</span>
         <div>
-          <h1 class="title">谱旅之章</h1>
+          <h1 class="title">识音</h1>
           <p class="subtitle">切准音符，闯出高分</p>
         </div>
       </div>
