@@ -10,7 +10,12 @@ import {
 import { NOTE_SLICE_COMBO_DISPLAY_MIN } from '@renderer/views/noteSlice/noteSliceScoring'
 import { useNoteSliceGameSession } from '@renderer/views/noteSlice/useNoteSliceGameSession'
 
-const { mode, score, combo, timeRemainingMs, lives, passTimeMs } = useNoteSliceGameSession()
+const { mode, score, combo, timeRemainingMs, lives, passTimeMs, isFrozen, isDoubleScore } =
+  useNoteSliceGameSession()
+
+const showBuffUi = computed(
+  () => mode !== 'extreme' && (isFrozen.value || isDoubleScore.value)
+)
 
 const arcadeTimeLabel = computed(() => formatNoteSliceArcadeTimeRemaining(timeRemainingMs.value))
 const extremeElapsedLabel = computed(() => formatNoteSliceExtremeElapsed(passTimeMs.value))
@@ -58,8 +63,22 @@ const extremeElapsedLabel = computed(() => formatNoteSliceExtremeElapsed(passTim
     </div>
     <div v-else class="note-slice-game-hud__center" />
 
-    <!-- 右：连击（三连击起显示；极限模式不显示） -->
+    <!-- 右：增益状态 + 连击 -->
     <div class="note-slice-game-hud__right">
+      <div v-if="showBuffUi" class="note-slice-game-hud__buffs" role="status">
+        <span v-if="isFrozen" class="note-slice-game-hud__buff note-slice-game-hud__buff--freeze">
+          <span aria-hidden="true">❄</span>
+          减速
+        </span>
+        <span
+          v-if="isDoubleScore"
+          class="note-slice-game-hud__buff note-slice-game-hud__buff--double"
+        >
+          <span aria-hidden="true">×2</span>
+          加倍
+        </span>
+      </div>
+
       <span
         v-if="mode !== 'extreme' && combo >= NOTE_SLICE_COMBO_DISPLAY_MIN"
         class="note-slice-game-hud__combo"
@@ -99,9 +118,57 @@ const extremeElapsedLabel = computed(() => formatNoteSliceExtremeElapsed(passTim
 }
 
 .note-slice-game-hud__right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
   justify-self: end;
   min-width: 88px;
   text-align: right;
+}
+
+.note-slice-game-hud__buffs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.note-slice-game-hud__buff {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.03em;
+  color: #fff;
+  white-space: nowrap;
+  animation: note-slice-hud-buff-in 0.3s ease-out;
+}
+
+.note-slice-game-hud__buff--freeze {
+  border: 1px solid rgba(160, 230, 255, 0.55);
+  background: rgba(48, 120, 190, 0.62);
+  box-shadow: 0 0 14px rgba(100, 200, 255, 0.3);
+}
+
+.note-slice-game-hud__buff--double {
+  border: 1px solid rgba(255, 220, 120, 0.6);
+  background: rgba(180, 120, 20, 0.58);
+  box-shadow: 0 0 14px rgba(255, 200, 80, 0.3);
+}
+
+@keyframes note-slice-hud-buff-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }
 
 .note-slice-game-hud__back {

@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { usePlayStore } from '@renderer/store/play.store'
 import { PLAY_DEFAULT_BPM } from '@renderer/constant/play'
+import NoteSliceBuffOverlay from '@renderer/views/noteSlice/NoteSliceBuffOverlay.vue'
 import NoteSliceGameHud from '@renderer/views/noteSlice/NoteSliceGameHud.vue'
 import NoteSliceGameLayer from '@renderer/views/noteSlice/NoteSliceGameLayer.vue'
 import NoteSliceStarfield from '@renderer/views/noteSlice/NoteSliceStarfield.vue'
@@ -54,6 +55,11 @@ onUnmounted(() => {
 
 const session = provideNoteSliceGameSession(props.mode)
 
+const playfieldBuffClass = computed(() => ({
+  'note-slice-playfield--freeze': props.mode !== 'extreme' && session.isFrozen.value,
+  'note-slice-playfield--double': props.mode !== 'extreme' && session.isDoubleScore.value
+}))
+
 type GameLayerExpose = {
   startTick: () => void
   stopTick: () => void
@@ -96,15 +102,20 @@ watch(
 <template>
   <div class="note-slice-game">
     <div class="stack">
-      <!-- 背景层：星空 -->
-      <div class="stackItem stackItem--bg">
-        <NoteSliceStarfield />
+      <div class="note-slice-playfield" :class="playfieldBuffClass">
+        <!-- 背景层：星空 -->
+        <div class="stackItem stackItem--bg">
+          <NoteSliceStarfield />
+        </div>
+
+        <!-- 游戏层：音符块 + 清除特效 -->
+        <div class="stackItem stackItem--game">
+          <NoteSliceGameLayer ref="gameLayerRef" />
+        </div>
       </div>
 
-      <!-- 游戏层：音符块 + 清除特效 -->
-      <div class="stackItem stackItem--game">
-        <NoteSliceGameLayer ref="gameLayerRef" />
-      </div>
+      <!-- 增益氛围：向内暗角 + 状态提示 -->
+      <NoteSliceBuffOverlay />
 
       <!-- UI 层：返回、分数、连击、模式信息 -->
       <div class="stackItem stackItem--ui">
@@ -133,6 +144,25 @@ watch(
   height: 100%;
 }
 
+.note-slice-playfield {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  transition: filter 0.45s ease;
+}
+
+.note-slice-playfield--freeze {
+  filter: saturate(0.88) hue-rotate(-14deg) brightness(1.08) contrast(1.03);
+}
+
+.note-slice-playfield--double {
+  filter: saturate(1.28) sepia(0.14) brightness(1.1) contrast(1.04);
+}
+
+.note-slice-playfield--freeze.note-slice-playfield--double {
+  filter: saturate(1.06) hue-rotate(6deg) brightness(1.12) contrast(1.05);
+}
+
 .stackItem {
   position: absolute;
   inset: 0;
@@ -154,7 +184,7 @@ watch(
 }
 
 .stackItem--ui {
-  z-index: 2;
+  z-index: 3;
   pointer-events: none;
 }
 </style>
