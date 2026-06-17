@@ -1,5 +1,7 @@
 <script lang="ts" setup>
-import { onUnmounted, ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { usePlayStore } from '@renderer/store/play.store'
+import { PLAY_DEFAULT_BPM } from '@renderer/constant/play'
 import NoteSliceGameHud from '@renderer/views/noteSlice/NoteSliceGameHud.vue'
 import NoteSliceGameLayer from '@renderer/views/noteSlice/NoteSliceGameLayer.vue'
 import NoteSliceStarfield from '@renderer/views/noteSlice/NoteSliceStarfield.vue'
@@ -27,6 +29,13 @@ const emit = defineEmits<{
 }>()
 
 const gameSettings = useGameSettingsStore()
+const playStore = usePlayStore()
+
+onMounted(async () => {
+  await playStore.waitReady()
+  await playStore.ensureCollectionToneColorInitialized()
+  playStore.setBpm(PLAY_DEFAULT_BPM)
+})
 
 function syncSpawnConfigManager(): void {
   if (props.mode === 'extreme') {

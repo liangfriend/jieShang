@@ -5,6 +5,11 @@ export type GameDifficulty = 'test' | 'easy' | 'standard' | 'hard'
 
 export const DEFAULT_GAME_DIFFICULTY: GameDifficulty = 'test'
 
+/** 音符块出现时的发声音量（0~1） */
+export const NOTE_BLOCK_SOUND_VOLUME_MIN = 0
+export const NOTE_BLOCK_SOUND_VOLUME_MAX = 1
+export const DEFAULT_NOTE_BLOCK_SOUND_VOLUME = 1
+
 export const GAME_DIFFICULTY_OPTIONS: {
   value: GameDifficulty
   label: string

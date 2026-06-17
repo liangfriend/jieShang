@@ -1,5 +1,7 @@
 <script lang="ts" setup>
 import { computed, onUnmounted, ref } from 'vue'
+import { usePlayStore } from '@renderer/store/play.store'
+import { useGameSettingsStore } from '@renderer/store/gameSettings.store'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import NoteSliceBlockContent from '@renderer/views/noteSlice/NoteSliceBlockContent.vue'
 import NoteSliceSlotClearEffect from '@renderer/views/noteSlice/NoteSliceSlotClearEffect.vue'
@@ -70,6 +72,8 @@ const {
 } = useNoteSliceGameSession()
 
 const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
+const playStore = usePlayStore()
+const gameSettings = useGameSettingsStore()
 
 /** 当前帧生效的生成参数（每 tick 按 passTime 更新） */
 const currentSpawnConfig = ref<NoteSliceSpawnRuntimeConfig>(
@@ -161,6 +165,14 @@ function applyHealSpawnCooldown(): void {
   healSpawnCooldownMs = getActiveNoteSliceDifficultyConfig().healSpawnCooldownSeconds * 1000
 }
 
+function playBlockAppearSound(block: Pick<UnplacedBlock, 'id' | 'midi'>): void {
+  void playStore.triggerNote(block.midi, {
+    duration: 60 / playStore.bpm,
+    id: `note-slice-${block.id}`,
+    volume: gameSettings.noteBlockSoundVolume
+  })
+}
+
 /** 将已构造的治疗块放入指定格子 */
 function placeHealBlockAtSlot(slotIndex: number, block: UnplacedBlock): void {
   const { x, y } = getNoteSliceSlotPosition(slotIndex, block.width, block.height)
@@ -172,6 +184,7 @@ function placeHealBlockAtSlot(slotIndex: number, block: UnplacedBlock): void {
     y,
     ageMs: 0
   })
+  playBlockAppearSound(block)
 }
 
 function placeFreezeBlockAtSlot(slotIndex: number, block: UnplacedBlock): void {
@@ -184,6 +197,7 @@ function placeFreezeBlockAtSlot(slotIndex: number, block: UnplacedBlock): void {
     y,
     ageMs: 0
   })
+  playBlockAppearSound(block)
 }
 
 function placeDoubleBlockAtSlot(slotIndex: number, block: UnplacedBlock): void {
@@ -196,6 +210,7 @@ function placeDoubleBlockAtSlot(slotIndex: number, block: UnplacedBlock): void {
     y,
     ageMs: 0
   })
+  playBlockAppearSound(block)
 }
 
 /** 炸弹消失后解除对应 midi 的黑名单 */
@@ -354,6 +369,7 @@ function spawnBlockAtSlot(slotIndex: number): void {
     y,
     ageMs: 0
   })
+  playBlockAppearSound(block)
   applySpawnCooldown()
 }
 

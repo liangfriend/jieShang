@@ -1,7 +1,7 @@
-/** NPlayer 音量范围（线性增益 0~1） */
+/** NPlayer 逻辑音量范围（UI / store 中保存的值，写入播放器前会乘增益） */
 export const PLAY_VOLUME_MIN = 0
 export const PLAY_VOLUME_MAX = 1
-export const PLAY_DEFAULT_VOLUME = 1
+export const PLAY_DEFAULT_VOLUME = 0.5
 
 /** NPlayer BPM 可调范围 */
 export const PLAY_BPM_MIN = 40

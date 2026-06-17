@@ -15,11 +15,19 @@ const emit = defineEmits<{
 }>()
 
 const settings = useGameSettingsStore()
-const { difficulty } = storeToRefs(settings)
+const { difficulty, noteBlockSoundVolume } = storeToRefs(settings)
 
 const visible = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
+})
+
+/** 音量用 0~100 展示，存储为 0~1 */
+const noteBlockSoundVolumePercent = computed({
+  get: () => Math.round(noteBlockSoundVolume.value * 100),
+  set: (value: number) => {
+    noteBlockSoundVolume.value = value / 100
+  }
 })
 </script>
 
@@ -46,6 +54,12 @@ const visible = computed({
             </el-radio>
           </el-radio-group>
         </div>
+      </section>
+
+      <section class="home-settings-section">
+        <el-form-item label="音符块声音">
+          <el-slider v-model="noteBlockSoundVolumePercent" :min="0" :max="100" show-input />
+        </el-form-item>
       </section>
     </el-form>
 

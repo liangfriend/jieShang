@@ -30,8 +30,19 @@ export type EndListener = () => void
 
 export const PIANO_TONE_COLOR_NAME = 'piano'
 
+/** 写入 NPlayer 前对逻辑音量统一乘上的增益 */
+export const PLAY_VOLUME_GAIN_MULTIPLIER = 3
+
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value))
+}
+
+function clampLogicalVolume(value: number): number {
+  return clamp(value, PLAY_VOLUME_MIN, PLAY_VOLUME_MAX)
+}
+
+function toPlayerVolume(logicalVolume: number): number {
+  return clampLogicalVolume(logicalVolume) * PLAY_VOLUME_GAIN_MULTIPLIER
 }
 
 export const usePlayStore = defineStore('play', () => {
@@ -126,7 +137,8 @@ export const usePlayStore = defineStore('play', () => {
       nplayer = new NPlayer({ checkTime: 50, checkDuration: 500 })
       bindPlayerCallbacks(nplayer)
       await nplayer.addToneColor(PIANO_TONE_COLOR_NAME, piano)
-      syncPlayerSettings()
+      setVolume(PLAY_DEFAULT_VOLUME)
+      bpm.value = nplayer.bpm
       ready.value = true
     })()
 
@@ -139,14 +151,14 @@ export const usePlayStore = defineStore('play', () => {
 
   function syncPlayerSettings() {
     if (!nplayer) return
-    volume.value = nplayer.volume
+    volume.value = clampLogicalVolume(nplayer.volume / PLAY_VOLUME_GAIN_MULTIPLIER)
     bpm.value = nplayer.bpm
   }
 
   function setVolume(value: number) {
-    const next = clamp(value, PLAY_VOLUME_MIN, PLAY_VOLUME_MAX)
+    const next = clampLogicalVolume(value)
     volume.value = next
-    if (nplayer) nplayer.volume = next
+    if (nplayer) nplayer.volume = toPlayerVolume(next)
   }
 
   function setBpm(value: number) {
@@ -213,19 +225,27 @@ export const usePlayStore = defineStore('play', () => {
     return collectionToneColorInitPromise
   }
 
-  async function triggerNote(midi: number, options?: { volume?: number }) {
+  async function triggerNote(
+    midi: number,
+    options?: { volume?: number; duration?: number; id?: string }
+  ) {
     await waitReady()
-    if (!nplayer || heldNoteIds.has(midi)) return
+    if (!nplayer) return
+    const isOneShot = options?.duration != null
+    if (!isOneShot && heldNoteIds.has(midi)) return
     await activeContext()
-    const id = `preview-${midi}`
+    const id = options?.id ?? `preview-${midi}`
+    const logicalVolume = options?.volume ?? volume.value
     nplayer.trigger({
       id,
       midi,
       toneColor: getActiveToneColorKey(),
-      volume: options?.volume ?? volume.value,
-      duration: WHITEBOARD_NOTE_HOLD_DURATION_SEC
+      volume: toPlayerVolume(logicalVolume),
+      duration: options?.duration ?? WHITEBOARD_NOTE_HOLD_DURATION_SEC
     })
-    heldNoteIds.set(midi, id)
+    if (!isOneShot) {
+      heldNoteIds.set(midi, id)
+    }
   }
 
   function releaseNote(midi: number) {
