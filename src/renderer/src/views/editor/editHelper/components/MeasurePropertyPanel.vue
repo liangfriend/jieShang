@@ -1,9 +1,10 @@
 <script lang="ts" setup>
-import type {Measure, SlotData} from 'deciphony-renderer'
-import {BarlineTypeEnum} from 'deciphony-renderer'
-import {computed, ref, watch} from 'vue'
+import type { Measure, SlotData } from 'deciphony-renderer'
+import { BarlineTypeEnum } from 'deciphony-renderer'
+import { computed, ref, watch } from 'vue'
 import {
-  BARLINE_OPTIONS,
+  BARLINE_B_OPTIONS,
+  BARLINE_F_OPTIONS,
   CLEF_OPTIONS,
   END_REPEAT_OPTIONS,
   findVoltaAtMeasure,
@@ -25,9 +26,9 @@ import {
   setMeasureTimeSignatureF,
   START_REPEAT_OPTIONS,
   TIME_SIGNATURE_OPTIONS,
-  type MeasureEditSlot,
+  type MeasureEditSlot
 } from '../renderEditMeasureProperties'
-import {VOLTA_SPAN_OPTIONS, tryAddVoltaFromMeasure, type VoltaSpan} from '../renderEditVoltaAdd'
+import { VOLTA_SPAN_OPTIONS, tryAddVoltaFromMeasure, type VoltaSpan } from '../renderEditVoltaAdd'
 
 const props = defineProps<{
   editSlot: SlotData
@@ -39,52 +40,52 @@ const musicScore = computed(() => measureEditSlot.value.musicScore)
 
 const barlineB = computed({
   get: () => measure.value.barline_b?.type ?? BarlineTypeEnum.Single_barline,
-  set: (v) => setMeasureBarlineB(measure.value, v),
+  set: (v) => setMeasureBarlineB(measure.value, v)
 })
 
 const barlineF = computed({
   get: () => measure.value.barline_f?.type ?? '',
-  set: (v) => setMeasureBarlineF(measure.value, v === '' ? null : v),
+  set: (v) => setMeasureBarlineF(measure.value, v === '' ? null : v)
 })
 
 const clefF = computed({
   get: () => measure.value.clef_f?.type ?? '',
-  set: (v) => setMeasureClefF(measure.value, v === '' ? null : v),
+  set: (v) => setMeasureClefF(measure.value, v === '' ? null : v)
 })
 
 const keySignatureF = computed({
   get: () => measure.value.keySignature_f?.type ?? '',
-  set: (v) => setMeasureKeySignatureF(measure.value, v === '' ? null : v),
+  set: (v) => setMeasureKeySignatureF(measure.value, v === '' ? null : v)
 })
 
 const timeSignatureF = computed({
   get: () => measure.value.timeSignature_f?.type ?? '',
-  set: (v) => setMeasureTimeSignatureF(measure.value, v === '' ? null : v),
+  set: (v) => setMeasureTimeSignatureF(measure.value, v === '' ? null : v)
 })
 
 const clefB = computed({
   get: () => measure.value.clef_b?.type ?? '',
-  set: (v) => setMeasureClefB(measure.value, v === '' ? null : v),
+  set: (v) => setMeasureClefB(measure.value, v === '' ? null : v)
 })
 
 const keySignatureB = computed({
   get: () => measure.value.keySignature_b?.type ?? '',
-  set: (v) => setMeasureKeySignatureB(measure.value, v === '' ? null : v),
+  set: (v) => setMeasureKeySignatureB(measure.value, v === '' ? null : v)
 })
 
 const timeSignatureB = computed({
   get: () => measure.value.timeSignature_b?.type ?? '',
-  set: (v) => setMeasureTimeSignatureB(measure.value, v === '' ? null : v),
+  set: (v) => setMeasureTimeSignatureB(measure.value, v === '' ? null : v)
 })
 
 const startRepeat = computed({
   get: () => measure.value.startRepeat?.type ?? '',
-  set: (v) => setMeasureStartRepeat(measure.value, v === '' ? null : v),
+  set: (v) => setMeasureStartRepeat(measure.value, v === '' ? null : v)
 })
 
 const endRepeat = computed({
   get: () => measure.value.endRepeat?.type ?? '',
-  set: (v) => setMeasureEndRepeat(measure.value, v === '' ? null : v),
+  set: (v) => setMeasureEndRepeat(measure.value, v === '' ? null : v)
 })
 
 const voltaAtMeasure = computed(() => findVoltaAtMeasure(musicScore.value, measure.value.id))
@@ -97,7 +98,7 @@ watch(
     voltaText.value = volta?.data?.volta?.text ?? ''
     voltaValueText.value = volta?.data?.volta ? formatVoltaValue(volta.data.volta.value) : ''
   },
-  {immediate: true},
+  { immediate: true }
 )
 
 function onInsertBefore() {
@@ -151,7 +152,7 @@ function onVoltaValueInput() {
       <div class="measure-props__label">后置小节线</div>
       <el-select v-model="barlineB" class="measure-props__select" size="small">
         <el-option
-          v-for="opt in BARLINE_OPTIONS"
+          v-for="opt in BARLINE_B_OPTIONS"
           :key="opt.value"
           :label="opt.label"
           :value="opt.value"
@@ -161,9 +162,15 @@ function onVoltaValueInput() {
 
     <section class="measure-props__section">
       <div class="measure-props__label">前置小节线</div>
-      <el-select v-model="barlineF" class="measure-props__select" clearable placeholder="无" size="small">
+      <el-select
+        v-model="barlineF"
+        class="measure-props__select"
+        clearable
+        placeholder="无"
+        size="small"
+      >
         <el-option
-          v-for="opt in BARLINE_OPTIONS"
+          v-for="opt in BARLINE_F_OPTIONS"
           :key="opt.value"
           :label="opt.label"
           :value="opt.value"
@@ -173,7 +180,13 @@ function onVoltaValueInput() {
 
     <section class="measure-props__section">
       <div class="measure-props__label">前置谱号</div>
-      <el-select v-model="clefF" class="measure-props__select" clearable placeholder="无" size="small">
+      <el-select
+        v-model="clefF"
+        class="measure-props__select"
+        clearable
+        placeholder="无"
+        size="small"
+      >
         <el-option
           v-for="opt in CLEF_OPTIONS"
           :key="opt.value"
@@ -185,7 +198,13 @@ function onVoltaValueInput() {
 
     <section class="measure-props__section">
       <div class="measure-props__label">前置调号</div>
-      <el-select v-model="keySignatureF" class="measure-props__select" clearable placeholder="无" size="small">
+      <el-select
+        v-model="keySignatureF"
+        class="measure-props__select"
+        clearable
+        placeholder="无"
+        size="small"
+      >
         <el-option
           v-for="opt in KEY_SIGNATURE_OPTIONS"
           :key="opt.value"
@@ -197,7 +216,13 @@ function onVoltaValueInput() {
 
     <section class="measure-props__section">
       <div class="measure-props__label">前置拍号</div>
-      <el-select v-model="timeSignatureF" class="measure-props__select" clearable placeholder="无" size="small">
+      <el-select
+        v-model="timeSignatureF"
+        class="measure-props__select"
+        clearable
+        placeholder="无"
+        size="small"
+      >
         <el-option
           v-for="opt in TIME_SIGNATURE_OPTIONS"
           :key="opt.value"
@@ -209,7 +234,13 @@ function onVoltaValueInput() {
 
     <section class="measure-props__section">
       <div class="measure-props__label">后置谱号</div>
-      <el-select v-model="clefB" class="measure-props__select" clearable placeholder="无" size="small">
+      <el-select
+        v-model="clefB"
+        class="measure-props__select"
+        clearable
+        placeholder="无"
+        size="small"
+      >
         <el-option
           v-for="opt in CLEF_OPTIONS"
           :key="opt.value"
@@ -221,7 +252,13 @@ function onVoltaValueInput() {
 
     <section class="measure-props__section">
       <div class="measure-props__label">后置调号</div>
-      <el-select v-model="keySignatureB" class="measure-props__select" clearable placeholder="无" size="small">
+      <el-select
+        v-model="keySignatureB"
+        class="measure-props__select"
+        clearable
+        placeholder="无"
+        size="small"
+      >
         <el-option
           v-for="opt in KEY_SIGNATURE_OPTIONS"
           :key="opt.value"
@@ -233,7 +270,13 @@ function onVoltaValueInput() {
 
     <section class="measure-props__section">
       <div class="measure-props__label">后置拍号</div>
-      <el-select v-model="timeSignatureB" class="measure-props__select" clearable placeholder="无" size="small">
+      <el-select
+        v-model="timeSignatureB"
+        class="measure-props__select"
+        clearable
+        placeholder="无"
+        size="small"
+      >
         <el-option
           v-for="opt in TIME_SIGNATURE_OPTIONS"
           :key="opt.value"
@@ -245,7 +288,13 @@ function onVoltaValueInput() {
 
     <section class="measure-props__section">
       <div class="measure-props__label">小节前反复</div>
-      <el-select v-model="startRepeat" class="measure-props__select" clearable placeholder="无" size="small">
+      <el-select
+        v-model="startRepeat"
+        class="measure-props__select"
+        clearable
+        placeholder="无"
+        size="small"
+      >
         <el-option
           v-for="opt in START_REPEAT_OPTIONS"
           :key="opt.value"
@@ -257,7 +306,13 @@ function onVoltaValueInput() {
 
     <section class="measure-props__section">
       <div class="measure-props__label">小节后反复</div>
-      <el-select v-model="endRepeat" class="measure-props__select" clearable placeholder="无" size="small">
+      <el-select
+        v-model="endRepeat"
+        class="measure-props__select"
+        clearable
+        placeholder="无"
+        size="small"
+      >
         <el-option
           v-for="opt in END_REPEAT_OPTIONS"
           :key="opt.value"
@@ -270,21 +325,27 @@ function onVoltaValueInput() {
     <section class="measure-props__section">
       <div class="measure-props__label">反复房子 (Volta)</div>
       <template v-if="voltaAtMeasure">
-        <el-input
-          v-model="voltaText"
-          class="measure-props__input"
-          placeholder="文案，如 1."
+        <!--        小节属性栏不显示volta属性-->
+        <!--        <el-input-->
+        <!--          v-model="voltaText"-->
+        <!--          class="measure-props__input"-->
+        <!--          placeholder="文案，如 1."-->
+        <!--          size="small"-->
+        <!--          @change="onVoltaTextInput"-->
+        <!--        />-->
+        <!--        <el-input-->
+        <!--          v-model="voltaValueText"-->
+        <!--          class="measure-props__input"-->
+        <!--          placeholder="播放轮次，如 1 或 1, 2"-->
+        <!--          size="small"-->
+        <!--          @change="onVoltaValueInput"-->
+        <!--        />-->
+        <el-button
+          class="measure-props__btn-block"
           size="small"
-          @change="onVoltaTextInput"
-        />
-        <el-input
-          v-model="voltaValueText"
-          class="measure-props__input"
-          placeholder="播放轮次，如 1 或 1, 2"
-          size="small"
-          @change="onVoltaValueInput"
-        />
-        <el-button class="measure-props__btn-block" size="small" type="danger" @click="onRemoveVolta">
+          type="danger"
+          @click="onRemoveVolta"
+        >
           移除 Volta
         </el-button>
       </template>

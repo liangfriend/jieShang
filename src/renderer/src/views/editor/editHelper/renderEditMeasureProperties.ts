@@ -24,7 +24,9 @@ import {
 
 export type MeasureEditSlot = SlotData & {measure: Measure; singleStaff: SingleStaff}
 
-export const BARLINE_OPTIONS: {value: BarlineTypeEnum; label: string}[] = [
+type BarlineOption = {value: BarlineTypeEnum; label: string}
+
+const ALL_BARLINE_OPTIONS: BarlineOption[] = [
   {value: BarlineTypeEnum.Single_barline, label: '单小节线'},
   {value: BarlineTypeEnum.Double_barline, label: '双小节线'},
   {value: BarlineTypeEnum.StartRepeat_barline, label: '反复开始'},
@@ -37,6 +39,29 @@ export const BARLINE_OPTIONS: {value: BarlineTypeEnum; label: string}[] = [
   {value: BarlineTypeEnum.Heavy_barline, label: '粗线'},
   {value: BarlineTypeEnum.Heavy_double_barline, label: '粗双线'},
 ]
+
+/** 编辑界面不展示的类型 */
+const BARLINE_HIDDEN = new Set<BarlineTypeEnum>([BarlineTypeEnum.Start_end_repeat_barline])
+
+/** 仅前置小节线可选 */
+const BARLINE_FRONT_ONLY = new Set<BarlineTypeEnum>([
+  BarlineTypeEnum.Reverse_barline,
+  BarlineTypeEnum.StartRepeat_barline,
+])
+
+/** 仅后置小节线可选 */
+const BARLINE_BACK_ONLY = new Set<BarlineTypeEnum>([
+  BarlineTypeEnum.Final_barline,
+  BarlineTypeEnum.EndRepeat_barline,
+])
+
+export const BARLINE_F_OPTIONS = ALL_BARLINE_OPTIONS.filter(
+  (opt) => !BARLINE_HIDDEN.has(opt.value) && !BARLINE_BACK_ONLY.has(opt.value),
+)
+
+export const BARLINE_B_OPTIONS = ALL_BARLINE_OPTIONS.filter(
+  (opt) => !BARLINE_HIDDEN.has(opt.value) && !BARLINE_FRONT_ONLY.has(opt.value),
+)
 
 export const CLEF_OPTIONS: {value: ClefTypeEnum; label: string}[] = [
   {value: ClefTypeEnum.Treble, label: '高音谱号'},
