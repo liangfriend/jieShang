@@ -11,11 +11,13 @@ import {
   STEM_DIRECTION_OPTIONS,
   setNoteClef,
   setNotesInfoAccidental,
+  setNotesInfoAccidentalRelativeX,
   setNotesInfoAugmentationDot,
   setNotesInfoBeamType,
   setNotesInfoChronaxie,
   setNotesInfoDirection,
   setNotesInfoRelativeX,
+  setNoteClefRelativeX,
   type NoteHeadEditSlot,
 } from '../renderEditNoteHeadProperties'
 import {tryAddSlurFromNoteHead, type SlurSpan} from '../renderEditSlurAdd'
@@ -65,6 +67,19 @@ const relativeX = computed({
   set: (v: number) => setNotesInfoRelativeX(notesInfo.value, v),
 })
 
+const noteClefRelativeX = computed({
+  get: () => note.value.clef?.relativeX ?? 0,
+  set: (v: number) => setNoteClefRelativeX(note.value, v),
+})
+
+const accidentalRelativeX = computed({
+  get: () => notesInfo.value.accidental?.relativeX ?? 0,
+  set: (v: number) => setNotesInfoAccidentalRelativeX(notesInfo.value, v),
+})
+
+const hasNoteClef = computed(() => Boolean(note.value.clef))
+const hasAccidental = computed(() => Boolean(notesInfo.value.accidental))
+
 const musicScore = computed(() => props.editSlot.musicScore as MusicScore)
 
 function onAddSlur(span: SlurSpan) {
@@ -97,6 +112,11 @@ function onAddSlur(span: SlurSpan) {
           :value="opt.value"
         />
       </el-select>
+      <RelativeXOffsetControl
+        v-if="hasNoteClef"
+        v-model="noteClefRelativeX"
+        nested
+      />
     </section>
 
     <section class="note-head-props__section">
@@ -139,6 +159,11 @@ function onAddSlur(span: SlurSpan) {
           :value="opt.value"
         />
       </el-select>
+      <RelativeXOffsetControl
+        v-if="hasAccidental"
+        v-model="accidentalRelativeX"
+        nested
+      />
     </section>
 
     <section class="note-head-props__section">

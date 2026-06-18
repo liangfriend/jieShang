@@ -12,6 +12,7 @@ import { usePlayStore } from '@renderer/store/play.store'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotationDisplay'
+import GlobalLoading from '@renderer/components/GlobalLoading.vue'
 import empty from '@renderer/template/empty'
 
 const route = useRoute()
@@ -19,7 +20,8 @@ const playStore = usePlayStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
 const displayType = ref<MusicScoreTypeEnum>(MusicScoreTypeEnum.StandardStaff)
-const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
+const pageLoading = ref(true)
+const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin()
 const playback = useScorePagePlayback(musicScoreData, { musicScoreRef })
 const { initAfterLoad, applyDisplayType } = usePlayScoreNotationDisplay(musicScoreData, displayType)
 
@@ -42,18 +44,25 @@ function onNotationTypeChange(targetType: MusicScoreTypeEnum) {
 }
 
 onMounted(async () => {
-  const loaded = await loadScoreFromRoute(route)
-  if (loaded) {
-    initAfterLoad(loaded)
+  try {
+    const [, loaded] = await Promise.all([waitScoreSkin(), loadScoreFromRoute(route)])
+    if (loaded) {
+      initAfterLoad(loaded)
+    }
+    await playStore.restorePlaybackDefaults(musicScoreData.value)
+  } finally {
+    pageLoading.value = false
   }
-  await playStore.restorePlaybackDefaults(musicScoreData.value)
 })
 </script>
 
 <template>
   <div class="score-page">
+    <GlobalLoading :visible="pageLoading" />
     <div class="score-page__main">
       <musicScoreVue
+        v-if="scoreSkin"
+        :key="scoreSkinName"
         ref="musicScoreRef"
         class="score-page__svg"
         :data="musicScoreData"

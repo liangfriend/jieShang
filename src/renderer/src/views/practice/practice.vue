@@ -38,7 +38,10 @@ import { practiceContextKey } from '@renderer/views/practice/practiceContext'
 import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
 import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
+import { useVirtualPianoSkin } from '@renderer/utils/collection/useVirtualPianoSkin'
+import { usePerformSkin } from '@renderer/components/performSkin/usePerformSkin'
 import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotationDisplay'
+import GlobalLoading from '@renderer/components/GlobalLoading.vue'
 import empty from '@renderer/template/empty'
 
 /** 练习模式瀑布流 / 虚拟钢琴共用 midi 范围（88 键） */
@@ -59,7 +62,10 @@ const metronomeStore = useMetronomeStore()
 const settings = usePracticeSettingsStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
 const displayType = ref<MusicScoreTypeEnum>(MusicScoreTypeEnum.StandardStaff)
-const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
+const pageLoading = ref(true)
+const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin()
+const { pianoSkin, virtualPianoSkinId, waitVirtualPianoSkin } = useVirtualPianoSkin()
+const { performSkinReady, performSkinId, waitPerformSkin } = usePerformSkin()
 const { initAfterLoad, applyDisplayType } = usePlayScoreNotationDisplay(musicScoreData, displayType)
 
 const maxStaffCount = computed(() => {
@@ -264,24 +270,33 @@ watch(
 )
 
 onMounted(async () => {
-  const loaded = await loadScoreFromRoute(route)
-  if (loaded) {
-    initAfterLoad(loaded)
-    musicScoreData.value = preparePracticeScore(musicScoreData.value)
-  } else {
-    applyPracticeScoreLayout(musicScoreData.value)
+  try {
+    const [, , , , loaded] = await Promise.all([
+      waitScoreSkin(),
+      waitVirtualPianoSkin(),
+      waitPerformSkin(),
+      playStore.waitReady(),
+      loadScoreFromRoute(route)
+    ])
+    if (loaded) {
+      initAfterLoad(loaded)
+      musicScoreData.value = preparePracticeScore(musicScoreData.value)
+    } else {
+      applyPracticeScoreLayout(musicScoreData.value)
+    }
+
+    await playStore.restorePlaybackDefaults(musicScoreData.value)
+    settings.bpm = playStore.bpm
+    settings.scoreVolume = playStore.volume
+    metronomeStore.setVolume(settings.metronomeVolume)
+    rebuildPracticeSequences(musicScoreData.value)
+
+    scrollProgressSubId = playback.subscribeProgressStart((_progress, data) => {
+      scrollToPlayingNote.handleProgressStart(data as PlayHighlightProgressData)
+    })
+  } finally {
+    pageLoading.value = false
   }
-
-  await playStore.restorePlaybackDefaults(musicScoreData.value)
-  // 设置面板初值与曲谱默认对齐后再重建序列，避免 BPM 与瀑布流不同步
-  settings.bpm = playStore.bpm
-  settings.scoreVolume = playStore.volume
-  metronomeStore.setVolume(settings.metronomeVolume)
-  rebuildPracticeSequences(musicScoreData.value)
-
-  scrollProgressSubId = playback.subscribeProgressStart((_progress, data) => {
-    scrollToPlayingNote.handleProgressStart(data as PlayHighlightProgressData)
-  })
 })
 
 onBeforeUnmount(() => {
@@ -295,6 +310,7 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="practice-page">
+    <GlobalLoading :visible="pageLoading" />
     <section
       ref="scoreScrollRef"
       class="practice-page__score hidden-scrollbar"
@@ -305,6 +321,8 @@ onBeforeUnmount(() => {
         :style="{ width: `${scoreCanvasWidth}px`, height: `${scoreCanvasHeight}px` }"
       >
         <musicScoreVue
+          v-if="scoreSkin"
+          :key="scoreSkinName"
           ref="musicScoreRef"
           class="practice-page__score-svg"
           :data="musicScoreData"
@@ -339,6 +357,8 @@ onBeforeUnmount(() => {
 
     <section class="practice-page__waterfall">
       <PianoWaterfall
+        v-if="performSkinReady"
+        :key="performSkinId ?? 'default'"
         ref="pianoWaterfallRef"
         class="practice-page__waterfall-inner"
         layout-mode="fillParent"
@@ -363,6 +383,8 @@ onBeforeUnmount(() => {
 
     <section class="practice-page__piano">
       <VirtualPiano
+        v-if="pianoSkin"
+        :key="virtualPianoSkinId ?? 'default'"
         class="practice-page__piano-inner"
         layout-mode="fillParent"
         :height="PRACTICE_PIANO_HEIGHT"

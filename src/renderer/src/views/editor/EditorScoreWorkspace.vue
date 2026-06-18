@@ -101,6 +101,8 @@ defineExpose({ clearSelection })
     <div ref="scoreRootRef" class="score-page__main">
       <div class="score-page__stack">
         <musicScoreVue
+          v-if="scoreSkin"
+          :key="scoreSkinName"
           ref="musicScoreRef"
           class="score-page__svg"
           :data="musicScoreData"

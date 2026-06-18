@@ -16,6 +16,8 @@ import {
   resolveChronaxieFromHoldMs
 } from '@renderer/views/teachingWhiteboard/noteInput'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
+import { useVirtualPianoSkin } from '@renderer/utils/collection/useVirtualPianoSkin'
+import GlobalLoading from '@renderer/components/GlobalLoading.vue'
 
 const WHITEBOARD_SLOT_CONFIG = {
   'g-l': { w: 50 },
@@ -24,7 +26,9 @@ const WHITEBOARD_SLOT_CONFIG = {
 
 const musicScoreData = ref(JSON.parse(JSON.stringify(buildTeachingWhiteboardScore)))
 const scoreSectionRef = ref<HTMLElement | null>(null)
-const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
+const pageLoading = ref(true)
+const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin()
+const { pianoSkin, virtualPianoSkinId, waitVirtualPianoSkin } = useVirtualPianoSkin()
 
 const whiteboardStore = useWhiteboardStore()
 const playStore = usePlayStore()
@@ -99,16 +103,23 @@ function fitScoreToSection() {
 let scoreResizeObserver: ResizeObserver | null = null
 
 onMounted(async () => {
-  await nextTick()
-  fitScoreToSection()
+  try {
+    await Promise.all([
+      waitScoreSkin(),
+      waitVirtualPianoSkin(),
+      playStore.waitReady(),
+      playStore.ensureCollectionToneColorInitialized()
+    ])
+    await nextTick()
+    fitScoreToSection()
 
-  if (scoreSectionRef.value) {
-    scoreResizeObserver = new ResizeObserver(() => fitScoreToSection())
-    scoreResizeObserver.observe(scoreSectionRef.value)
+    if (scoreSectionRef.value) {
+      scoreResizeObserver = new ResizeObserver(() => fitScoreToSection())
+      scoreResizeObserver.observe(scoreSectionRef.value)
+    }
+  } finally {
+    pageLoading.value = false
   }
-
-  await playStore.waitReady()
-  await playStore.ensureCollectionToneColorInitialized()
 })
 
 onBeforeUnmount(() => {
@@ -119,8 +130,11 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="whiteboard">
+    <GlobalLoading :visible="pageLoading" />
     <section ref="scoreSectionRef" class="whiteboard__score">
       <musicScoreVue
+        v-if="scoreSkin"
+        :key="scoreSkinName"
         class="whiteboard__score-svg"
         :data="musicScoreData"
         :slot-config="WHITEBOARD_SLOT_CONFIG"
@@ -135,6 +149,8 @@ onBeforeUnmount(() => {
       :style="{ height: `${WHITEBOARD_PIANO_SECTION_HEIGHT}px` }"
     >
       <VirtualPiano
+        v-if="pianoSkin"
+        :key="virtualPianoSkinId ?? 'default'"
         class="whiteboard__piano-inner"
         :chord-box="chordBoxEnabled"
         :group="groupEnabled"

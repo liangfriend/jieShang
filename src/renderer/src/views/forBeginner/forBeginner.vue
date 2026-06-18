@@ -35,7 +35,10 @@ import {
   type ScoreNoteHeadOverlayApi
 } from '@renderer/components/scoreNoteHeadOverlay'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
+import { useVirtualPianoSkin } from '@renderer/utils/collection/useVirtualPianoSkin'
+import { usePerformSkin } from '@renderer/components/performSkin/usePerformSkin'
 import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotationDisplay'
+import GlobalLoading from '@renderer/components/GlobalLoading.vue'
 import empty from '@renderer/template/empty'
 
 const MIDI_RANGE = { min: 21, max: 108 } as const
@@ -49,7 +52,10 @@ const metronomeStore = useMetronomeStore()
 const settings = useBeginnerSettingsStore()
 const musicScoreData = ref<MusicScore>(JSON.parse(JSON.stringify(empty)))
 const displayType = ref<MusicScoreTypeEnum>(MusicScoreTypeEnum.StandardStaff)
-const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
+const pageLoading = ref(true)
+const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin()
+const { pianoSkin, virtualPianoSkinId, waitVirtualPianoSkin } = useVirtualPianoSkin()
+const { performSkinReady, performSkinId, waitPerformSkin } = usePerformSkin()
 const { initAfterLoad, applyDisplayType } = usePlayScoreNotationDisplay(musicScoreData, displayType)
 
 const maxStaffCount = computed(() => {
@@ -237,18 +243,28 @@ watch(
 )
 
 onMounted(async () => {
-  const loaded = await loadScoreFromRoute(route)
-  if (loaded) {
-    initAfterLoad(loaded)
-    musicScoreData.value = prepareBeginnerScore(musicScoreData.value)
-  } else {
-    applyScoreLayout(musicScoreData.value)
-  }
+  try {
+    const [, , , , loaded] = await Promise.all([
+      waitScoreSkin(),
+      waitVirtualPianoSkin(),
+      waitPerformSkin(),
+      playStore.waitReady(),
+      loadScoreFromRoute(route)
+    ])
+    if (loaded) {
+      initAfterLoad(loaded)
+      musicScoreData.value = prepareBeginnerScore(musicScoreData.value)
+    } else {
+      applyScoreLayout(musicScoreData.value)
+    }
 
-  await playStore.restorePlaybackDefaults(musicScoreData.value)
-  settings.bpm = resolvePlayBpm(musicScoreData.value.bpm)
-  metronomeStore.setVolume(settings.metronomeVolume)
-  rebuildSequences(musicScoreData.value)
+    await playStore.restorePlaybackDefaults(musicScoreData.value)
+    settings.bpm = resolvePlayBpm(musicScoreData.value.bpm)
+    metronomeStore.setVolume(settings.metronomeVolume)
+    rebuildSequences(musicScoreData.value)
+  } finally {
+    pageLoading.value = false
+  }
 })
 
 onBeforeUnmount(() => {
@@ -266,6 +282,7 @@ function handleMidiBoxFinished() {
 
 <template>
   <div class="beginner-page">
+    <GlobalLoading :visible="pageLoading" />
     <section
       ref="scoreScrollRef"
       class="beginner-page__score hidden-scrollbar"
@@ -276,6 +293,8 @@ function handleMidiBoxFinished() {
         :style="{ width: `${scoreCanvasWidth}px`, height: `${scoreCanvasHeight}px` }"
       >
         <musicScoreVue
+          v-if="scoreSkin"
+          :key="scoreSkinName"
           ref="musicScoreRef"
           class="beginner-page__score-svg"
           :data="musicScoreData"
@@ -294,6 +313,8 @@ function handleMidiBoxFinished() {
 
     <section class="beginner-page__midi-box">
       <PianoMidiBox
+        v-if="performSkinReady"
+        :key="performSkinId ?? 'default'"
         ref="pianoMidiBoxRef"
         class="beginner-page__midi-box-inner"
         layout-mode="fillParent"
@@ -316,6 +337,8 @@ function handleMidiBoxFinished() {
 
     <section class="beginner-page__piano">
       <VirtualPiano
+        v-if="pianoSkin"
+        :key="virtualPianoSkinId ?? 'default'"
         class="beginner-page__piano-inner"
         layout-mode="fillParent"
         :height="PIANO_HEIGHT"

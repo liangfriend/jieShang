@@ -18,11 +18,7 @@ import {
 } from 'deciphony-core'
 import vDrag from '@renderer/directivces/drag'
 import { useMidiStore } from '@renderer/store/midi.store'
-import { useActiveVirtualPianoSkinId } from '@renderer/utils/collection/collectionActiveStorage'
-import {
-  fetchActiveVirtualPianoPack
-} from '@renderer/utils/collection/virtualPianoSkinLoader'
-import type { VirtualPianoPack } from '@renderer/types/collection'
+import { useVirtualPianoSkin } from '@renderer/utils/collection/useVirtualPianoSkin'
 import { INTERVAL_SLIDER_STEPS, isIntervalSliderAnchor } from '@renderer/utils/intervalSliderData'
 
 defineOptions({
@@ -175,14 +171,8 @@ const containerHeightNum = computed(() => fixedContainerHeightNum.value)
 const blackKeyWidthNum = computed(() => whiteKeyWidthNum.value * props.blackKeyWidthRatio)
 const blackKeyHeightNum = computed(() => containerHeightNum.value * props.blackKeyHeightRatio)
 
-const activeVirtualPianoSkinId = useActiveVirtualPianoSkinId()
-const pianoSkinPack = ref<VirtualPianoPack | null>(null)
+const { pianoSkin: pianoSkinPack } = useVirtualPianoSkin()
 
-async function loadVirtualPianoSkin() {
-  pianoSkinPack.value = await fetchActiveVirtualPianoPack()
-}
-
-/** 按 midi 取皮肤，content 已是可直接使用的 url（dataurl 或线上路径） */
 function keySkinStyle(midi: number): CSSProperties {
   const skin = pianoSkinPack.value?.[midi]
   if (!skin) return {}
@@ -702,11 +692,6 @@ watch(
 onMounted(async () => {
   observeContainer()
   midiStore.addMessageListener(handleMidiMessage)
-  await loadVirtualPianoSkin()
-})
-
-watch(activeVirtualPianoSkinId, () => {
-  void loadVirtualPianoSkin()
 })
 
 onBeforeUnmount(() => {

@@ -95,3 +95,13 @@ export function setNotesInfoAugmentationDot(info: NotesInfo, count: 0 | 1 | 2 | 
 export function setNotesInfoRelativeX(info: NotesInfo, relativeX: number): void {
   setRelativeX(info, relativeX)
 }
+
+export function setNoteClefRelativeX(note: NoteSymbol, relativeX: number): void {
+  if (!note.clef) return
+  setRelativeX(note.clef, relativeX)
+}
+
+export function setNotesInfoAccidentalRelativeX(info: NotesInfo, relativeX: number): void {
+  if (!info.accidental) return
+  setRelativeX(info.accidental, relativeX)
+}

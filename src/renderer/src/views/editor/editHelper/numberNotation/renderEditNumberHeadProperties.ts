@@ -4,6 +4,7 @@ import {
   createAccidental,
   createAugmentationDot
 } from '@renderer/dr-extensions/dr-edit/score-builder'
+import {setRelativeX} from '../standardStaff/renderEditFrameProperties'
 
 export type NumberHeadEditSlot = SlotData & {
   info: NotesNumberInfo
@@ -102,4 +103,12 @@ export function setNotesNumberInfoAugmentationDot(
   } else {
     info.augmentationDot = createAugmentationDot(count)
   }
+}
+
+export function setNotesNumberInfoAccidentalRelativeX(
+  info: NotesNumberInfo,
+  relativeX: number,
+): void {
+  if (!info.accidental) return
+  setRelativeX(info.accidental, relativeX)
 }

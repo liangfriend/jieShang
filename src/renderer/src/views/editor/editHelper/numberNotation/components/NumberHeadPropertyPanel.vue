@@ -12,6 +12,7 @@ import {
   setNoteNumberBeamType,
   setNoteNumberChronaxie,
   setNotesNumberInfoAccidental,
+  setNotesNumberInfoAccidentalRelativeX,
   setNotesNumberInfoAugmentationDot,
   setNotesNumberInfoOctaveDot,
   setNotesNumberInfoSyllable,
@@ -19,6 +20,7 @@ import {
 } from '../renderEditNumberHeadProperties'
 import {tryAddSlurFromNumberHead, type SlurSpan} from '../renderEditSlurAdd'
 import NoteSlurListSection from '../../components/NoteSlurListSection.vue'
+import RelativeXOffsetControl from '../../standardStaff/components/RelativeXOffsetControl.vue'
 
 const props = defineProps<{
   editSlot: NumberHeadEditSlot
@@ -57,6 +59,13 @@ const augmentationDot = computed({
   get: (): 0 | 1 | 2 | 3 => notesInfo.value.augmentationDot?.count ?? 0,
   set: (v: 0 | 1 | 2 | 3) => setNotesNumberInfoAugmentationDot(notesInfo.value, v),
 })
+
+const accidentalRelativeX = computed({
+  get: () => notesInfo.value.accidental?.relativeX ?? 0,
+  set: (v: number) => setNotesNumberInfoAccidentalRelativeX(notesInfo.value, v),
+})
+
+const hasAccidental = computed(() => Boolean(notesInfo.value.accidental))
 
 const musicScore = computed(() => props.editSlot.musicScore as MusicScore)
 
@@ -127,6 +136,11 @@ function onAddSlur(span: SlurSpan) {
           :value="opt.value"
         />
       </el-select>
+      <RelativeXOffsetControl
+        v-if="hasAccidental"
+        v-model="accidentalRelativeX"
+        nested
+      />
     </section>
 
     <section class="note-head-props__section">

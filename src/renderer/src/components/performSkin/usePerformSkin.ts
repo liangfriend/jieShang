@@ -6,24 +6,39 @@ import {
 } from '@renderer/utils/collection/performSkinLoader'
 import type { PerformSkinPack } from './types'
 
+const performSkinId = useActivePerformSkinId()
+
+const skinContentKey = ref<string | null>(null)
+const performSkinLoading = ref(false)
+const performSkinReady = ref(false)
+
+async function loadPerformSkin(): Promise<void> {
+  performSkinLoading.value = true
+  try {
+    skinContentKey.value = await fetchActivePerformSkinContentKey()
+    performSkinReady.value = true
+  } finally {
+    performSkinLoading.value = false
+  }
+}
+
+watch(performSkinId, () => {
+  void loadPerformSkin()
+})
+
 /** 进入使用页时按 localStorage 中的 id 查库，content 索引本地皮肤包 */
 export function usePerformSkin() {
-  const performSkinId = useActivePerformSkinId()
-  const skinContentKey = ref<string | null>(null)
-
-  async function loadPerformSkin() {
-    skinContentKey.value = await fetchActivePerformSkinContentKey()
-  }
-
   onMounted(() => {
-    void loadPerformSkin()
-  })
-
-  watch(performSkinId, () => {
     void loadPerformSkin()
   })
 
   const skin = computed<PerformSkinPack>(() => resolvePerformSkinPack(skinContentKey.value))
 
-  return { performSkinId, skin }
+  return {
+    performSkinId,
+    skin,
+    performSkinReady: computed(() => performSkinReady.value),
+    performSkinLoading: computed(() => performSkinLoading.value),
+    waitPerformSkin: loadPerformSkin
+  }
 }

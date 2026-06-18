@@ -22,6 +22,8 @@ import { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from '@renderer/consta
 import { useDataStore } from '@renderer/store/data.store'
 import { convertScoreNotationType } from '@renderer/utils/scoreNotationTransfer'
 import EditorScoreWorkspace from '@renderer/views/editor/EditorScoreWorkspace.vue'
+import GlobalLoading from '@renderer/components/GlobalLoading.vue'
+import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import '@renderer/styles/editor-cute.css'
 
 const route = useRoute()
@@ -33,6 +35,8 @@ const notationWorkspaceKey = ref(0)
 const workspaceRef = ref<InstanceType<typeof EditorScoreWorkspace> | null>(null)
 const fileBusy = ref(false)
 const musicXmlNoticeVisible = ref(false)
+const pageLoading = ref(true)
+const { waitScoreSkin } = useScoreSkin()
 
 function syncScoreToTemp(score: typeof musicScoreData.value) {
   const dataStore = useDataStore()
@@ -164,16 +168,21 @@ async function handleSaveScore() {
 }
 
 onMounted(async () => {
-  const loaded = await loadScoreFromRoute(route)
-  if (loaded) {
-    musicScoreData.value = loaded
-    notationWorkspaceKey.value += 1
+  try {
+    const [, loaded] = await Promise.all([waitScoreSkin(), loadScoreFromRoute(route)])
+    if (loaded) {
+      musicScoreData.value = loaded
+      notationWorkspaceKey.value += 1
+    }
+  } finally {
+    pageLoading.value = false
   }
 })
 </script>
 
 <template>
   <div class="score-page editor-cute">
+    <GlobalLoading :visible="pageLoading" />
     <EditorScoreWorkspace
       ref="workspaceRef"
       :key="notationWorkspaceKey"

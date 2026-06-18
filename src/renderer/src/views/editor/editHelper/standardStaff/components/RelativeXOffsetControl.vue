@@ -6,6 +6,8 @@ import {
 
 defineProps<{
   modelValue: number
+  /** 嵌在属性区块内（如谱号、变音符号下方），与上方控件拉开间距 */
+  nested?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -14,11 +16,8 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <section class="relative-x-offset">
-    <div class="relative-x-offset__label">
-      横向偏移
-      <span v-if="modelValue !== 0" class="relative-x-offset__value">{{ modelValue }}</span>
-    </div>
+  <section class="relative-x-offset" :class="{'relative-x-offset--nested': nested}">
+    <div class="relative-x-offset__label">横向偏移</div>
     <el-slider
       class="relative-x-offset__slider"
       :model-value="modelValue"
@@ -41,19 +40,16 @@ const emit = defineEmits<{
   margin-bottom: 14px;
 }
 
+.relative-x-offset--nested {
+  margin-top: 12px;
+  margin-bottom: 0;
+}
+
 .relative-x-offset__label {
-  display: flex;
-  align-items: center;
-  gap: 8px;
   margin-bottom: 6px;
   font-size: 12px;
   font-weight: 600;
   color: #606266;
-}
-
-.relative-x-offset__value {
-  font-weight: 500;
-  color: #909399;
 }
 
 .relative-x-offset__slider {

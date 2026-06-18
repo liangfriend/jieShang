@@ -95,6 +95,8 @@ const scoreTransform = computed(() => resolveNoteSliceScoreShellTransform(props.
       :transform="`translate(${scoreTransform.offsetX}, ${scoreTransform.offsetY}) scale(${scoreTransform.scale})`"
     >
       <musicScoreVue
+        v-if="skin"
+        :key="skinName ?? 'default'"
         class="note-slice-block__score"
         :data="musicScore"
         :skin="skin"
