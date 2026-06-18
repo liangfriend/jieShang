@@ -22,7 +22,7 @@ import { CUR_PLAY_SCORE_TEMP_ID } from '@renderer/constant'
 import { useDataStore } from '@renderer/store/data.store'
 import { convertScoreNotationType } from '@renderer/utils/scoreNotationTransfer'
 import EditorScoreWorkspace from '@renderer/views/editor/EditorScoreWorkspace.vue'
-import GlobalLoading from '@renderer/components/GlobalLoading.vue'
+import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import '@renderer/styles/editor-cute.css'
 
@@ -35,8 +35,8 @@ const notationWorkspaceKey = ref(0)
 const workspaceRef = ref<InstanceType<typeof EditorScoreWorkspace> | null>(null)
 const fileBusy = ref(false)
 const musicXmlNoticeVisible = ref(false)
-const pageLoading = ref(true)
 const { waitScoreSkin } = useScoreSkin()
+const globalLoading = useGlobalLoadingStore()
 
 function clearSelection() {
   workspaceRef.value?.clearSelection()
@@ -73,12 +73,14 @@ async function handleImportSj() {
   if (fileBusy.value) return
   fileBusy.value = true
   try {
-    const result = await importSjFromDisk()
-    if (!result) return
-    applyMusicScoreInPlace(musicScoreData.value, result.musicScore)
-    notationWorkspaceKey.value += 1
-    clearSelection()
-    ElMessage.success(`已导入 ${result.fileName}`)
+    await globalLoading.run('导入中…', async () => {
+      const result = await importSjFromDisk()
+      if (!result) return
+      applyMusicScoreInPlace(musicScoreData.value, result.musicScore)
+      notationWorkspaceKey.value += 1
+      clearSelection()
+      ElMessage.success(`已导入 ${result.fileName}`)
+    })
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '导入失败')
   } finally {
@@ -90,12 +92,14 @@ async function handleImportMusicXml() {
   if (fileBusy.value) return
   fileBusy.value = true
   try {
-    const result = await importMusicXmlFromDisk()
-    if (!result) return
-    applyMusicScoreInPlace(musicScoreData.value, result.musicScore)
-    notationWorkspaceKey.value += 1
-    clearSelection()
-    ElMessage.success(`已导入 ${result.fileName}`)
+    await globalLoading.run('导入中…', async () => {
+      const result = await importMusicXmlFromDisk()
+      if (!result) return
+      applyMusicScoreInPlace(musicScoreData.value, result.musicScore)
+      notationWorkspaceKey.value += 1
+      clearSelection()
+      ElMessage.success(`已导入 ${result.fileName}`)
+    })
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : 'MusicXML 导入失败')
   } finally {
@@ -107,8 +111,10 @@ async function handleExportMusicXml() {
   if (fileBusy.value) return
   fileBusy.value = true
   try {
-    const ok = await exportMusicXmlToDisk(musicScoreData.value)
-    if (ok) ElMessage.success('导出成功')
+    await globalLoading.run('导出中…', async () => {
+      const ok = await exportMusicXmlToDisk(musicScoreData.value)
+      if (ok) ElMessage.success('导出成功')
+    })
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : 'MusicXML 导出失败')
   } finally {
@@ -120,8 +126,10 @@ async function handleExportSj() {
   if (fileBusy.value) return
   fileBusy.value = true
   try {
-    const ok = await exportSjToDisk(musicScoreData.value)
-    if (ok) ElMessage.success('导出成功')
+    await globalLoading.run('导出中…', async () => {
+      const ok = await exportSjToDisk(musicScoreData.value)
+      if (ok) ElMessage.success('导出成功')
+    })
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '导出失败')
   } finally {
@@ -133,19 +141,21 @@ async function handleSaveScore() {
   if (fileBusy.value) return
   fileBusy.value = true
   try {
-    const saved = await saveScoreToDatabase(musicScoreData.value, scoreId.value)
-    const dataStore = useDataStore()
-    dataStore.setTempScore(CUR_PLAY_SCORE_TEMP_ID, musicScoreData.value)
-    if (!scoreId.value) {
-      await router.replace({
-        name: 'edit',
-        query: {
-          scoreId: String(saved.id),
-          tempId: CUR_PLAY_SCORE_TEMP_ID
-        }
-      })
-    }
-    ElMessage.success('保存成功')
+    await globalLoading.run('保存中…', async () => {
+      const saved = await saveScoreToDatabase(musicScoreData.value, scoreId.value)
+      const dataStore = useDataStore()
+      dataStore.setTempScore(CUR_PLAY_SCORE_TEMP_ID, musicScoreData.value)
+      if (!scoreId.value) {
+        await router.replace({
+          name: 'edit',
+          query: {
+            scoreId: String(saved.id),
+            tempId: CUR_PLAY_SCORE_TEMP_ID
+          }
+        })
+      }
+      ElMessage.success('保存成功')
+    })
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '保存失败')
   } finally {
@@ -154,6 +164,7 @@ async function handleSaveScore() {
 }
 
 onMounted(async () => {
+  globalLoading.show('加载中…')
   try {
     const [, loaded] = await Promise.all([waitScoreSkin(), loadScoreFromRoute(route)])
     if (loaded) {
@@ -161,14 +172,13 @@ onMounted(async () => {
       notationWorkspaceKey.value += 1
     }
   } finally {
-    pageLoading.value = false
+    globalLoading.hide()
   }
 })
 </script>
 
 <template>
   <div class="score-page editor-cute">
-    <GlobalLoading :visible="pageLoading" />
     <EditorScoreWorkspace
       ref="workspaceRef"
       :key="notationWorkspaceKey"
@@ -249,5 +259,28 @@ onMounted(async () => {
   --el-button-text-color: var(--ec-text);
   --el-button-hover-bg-color: rgba(255, 214, 232, 0.85);
   --el-button-hover-border-color: var(--ec-pink-deep);
+  --el-button-disabled-bg-color: rgba(255, 255, 255, 0.5);
+  --el-button-disabled-border-color: rgba(255, 184, 208, 0.28);
+  --el-button-disabled-text-color: var(--ec-text-soft);
+}
+
+.toolbar-btn--save {
+  --el-button-bg-color: var(--ec-pink-deep);
+  --el-button-border-color: var(--ec-pink-deep);
+  --el-button-text-color: #fff;
+  --el-button-hover-bg-color: #ff7aab;
+  --el-button-hover-border-color: #ff7aab;
+  --el-button-disabled-bg-color: rgba(255, 143, 184, 0.42);
+  --el-button-disabled-border-color: rgba(255, 143, 184, 0.42);
+  --el-button-disabled-text-color: rgba(255, 255, 255, 0.82);
+}
+
+.toolbar-btn.is-disabled,
+.toolbar-btn.is-disabled:hover,
+.toolbar-btn--save.is-disabled,
+.toolbar-btn--save.is-disabled:hover {
+  background-color: var(--el-button-disabled-bg-color);
+  border-color: var(--el-button-disabled-border-color);
+  color: var(--el-button-disabled-text-color);
 }
 </style>

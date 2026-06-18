@@ -41,7 +41,7 @@ import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import { useVirtualPianoSkin } from '@renderer/utils/collection/useVirtualPianoSkin'
 import { usePerformSkin } from '@renderer/components/performSkin/usePerformSkin'
 import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotationDisplay'
-import GlobalLoading from '@renderer/components/GlobalLoading.vue'
+import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
 import empty from '@renderer/template/empty'
 
 /** 练习模式瀑布流 / 虚拟钢琴共用 midi 范围（88 键） */
@@ -60,9 +60,9 @@ const route = useRoute()
 const playStore = usePlayStore()
 const metronomeStore = useMetronomeStore()
 const settings = usePracticeSettingsStore()
+const globalLoading = useGlobalLoadingStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
 const displayType = ref<MusicScoreTypeEnum>(MusicScoreTypeEnum.StandardStaff)
-const pageLoading = ref(true)
 const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin()
 const { pianoSkin, virtualPianoSkinId, waitVirtualPianoSkin } = useVirtualPianoSkin()
 const { performSkinReady, performSkinId, waitPerformSkin } = usePerformSkin()
@@ -270,6 +270,7 @@ watch(
 )
 
 onMounted(async () => {
+  globalLoading.show('加载中…')
   try {
     const [, , , , loaded] = await Promise.all([
       waitScoreSkin(),
@@ -295,7 +296,7 @@ onMounted(async () => {
       scrollToPlayingNote.handleProgressStart(data as PlayHighlightProgressData)
     })
   } finally {
-    pageLoading.value = false
+    globalLoading.hide()
   }
 })
 
@@ -310,7 +311,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="practice-page">
-    <GlobalLoading :visible="pageLoading" />
     <section
       ref="scoreScrollRef"
       class="practice-page__score hidden-scrollbar"

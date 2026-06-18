@@ -17,7 +17,7 @@ import {
 } from '@renderer/views/teachingWhiteboard/noteInput'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import { useVirtualPianoSkin } from '@renderer/utils/collection/useVirtualPianoSkin'
-import GlobalLoading from '@renderer/components/GlobalLoading.vue'
+import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
 
 const WHITEBOARD_SLOT_CONFIG = {
   'g-l': { w: 50 },
@@ -26,7 +26,7 @@ const WHITEBOARD_SLOT_CONFIG = {
 
 const musicScoreData = ref(JSON.parse(JSON.stringify(buildTeachingWhiteboardScore)))
 const scoreSectionRef = ref<HTMLElement | null>(null)
-const pageLoading = ref(true)
+const globalLoading = useGlobalLoadingStore()
 const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin()
 const { pianoSkin, virtualPianoSkinId, waitVirtualPianoSkin } = useVirtualPianoSkin()
 
@@ -103,6 +103,7 @@ function fitScoreToSection() {
 let scoreResizeObserver: ResizeObserver | null = null
 
 onMounted(async () => {
+  globalLoading.show('加载中…')
   try {
     await Promise.all([
       waitScoreSkin(),
@@ -118,7 +119,7 @@ onMounted(async () => {
       scoreResizeObserver.observe(scoreSectionRef.value)
     }
   } finally {
-    pageLoading.value = false
+    globalLoading.hide()
   }
 })
 
@@ -130,7 +131,6 @@ onBeforeUnmount(() => {
 
 <template>
   <div class="whiteboard">
-    <GlobalLoading :visible="pageLoading" />
     <section ref="scoreSectionRef" class="whiteboard__score">
       <musicScoreVue
         v-if="scoreSkin"

@@ -38,7 +38,7 @@ import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import { useVirtualPianoSkin } from '@renderer/utils/collection/useVirtualPianoSkin'
 import { usePerformSkin } from '@renderer/components/performSkin/usePerformSkin'
 import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotationDisplay'
-import GlobalLoading from '@renderer/components/GlobalLoading.vue'
+import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
 import empty from '@renderer/template/empty'
 
 const MIDI_RANGE = { min: 21, max: 108 } as const
@@ -50,9 +50,9 @@ const route = useRoute()
 const playStore = usePlayStore()
 const metronomeStore = useMetronomeStore()
 const settings = useBeginnerSettingsStore()
+const globalLoading = useGlobalLoadingStore()
 const musicScoreData = ref<MusicScore>(JSON.parse(JSON.stringify(empty)))
 const displayType = ref<MusicScoreTypeEnum>(MusicScoreTypeEnum.StandardStaff)
-const pageLoading = ref(true)
 const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin()
 const { pianoSkin, virtualPianoSkinId, waitVirtualPianoSkin } = useVirtualPianoSkin()
 const { performSkinReady, performSkinId, waitPerformSkin } = usePerformSkin()
@@ -243,6 +243,7 @@ watch(
 )
 
 onMounted(async () => {
+  globalLoading.show('加载中…')
   try {
     const [, , , , loaded] = await Promise.all([
       waitScoreSkin(),
@@ -263,7 +264,7 @@ onMounted(async () => {
     metronomeStore.setVolume(settings.metronomeVolume)
     rebuildSequences(musicScoreData.value)
   } finally {
-    pageLoading.value = false
+    globalLoading.hide()
   }
 })
 
@@ -282,7 +283,6 @@ function handleMidiBoxFinished() {
 
 <template>
   <div class="beginner-page">
-    <GlobalLoading :visible="pageLoading" />
     <section
       ref="scoreScrollRef"
       class="beginner-page__score hidden-scrollbar"

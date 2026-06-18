@@ -1,8 +1,9 @@
 <script lang="ts" setup>
-defineProps<{
-  visible: boolean
-  text?: string
-}>()
+import { storeToRefs } from 'pinia'
+import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
+
+const globalLoading = useGlobalLoadingStore()
+const { visible, text } = storeToRefs(globalLoading)
 </script>
 
 <template>
@@ -11,7 +12,7 @@ defineProps<{
       <div v-if="visible" class="global-loading" role="status" aria-live="polite" aria-busy="true">
         <div class="global-loading__panel">
           <div class="global-loading__spinner" aria-hidden="true" />
-          <p class="global-loading__text">{{ text ?? '加载中…' }}</p>
+          <p class="global-loading__text">{{ text }}</p>
         </div>
       </div>
     </Transition>
