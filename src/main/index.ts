@@ -1,13 +1,42 @@
+import fs from 'node:fs'
 import { app, shell, BrowserWindow, ipcMain, protocol, net } from 'electron'
 import { join } from 'path'
-
-const path = require('node:path')
-const url = require('node:url')
+import { pathToFileURL } from 'node:url'
 import { electronApp, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 import { initShortcut } from './utils/shortcutManager'
-import { setupContainer } from './container'
 import { registerController } from './register'
+import pathManager from './utils/pathManager'
+
+// 注册协议
+protocol.registerSchemesAsPrivileged([
+  {
+    scheme: 'app-image',
+    privileges: {
+      secure: true,
+      standard: true,
+      supportFetchAPI: true,
+      bypassCSP: true,
+      stream: true
+    }
+  }
+])
+
+function registerAppImageProtocol() {
+  // 协议处理
+  protocol.handle('app-image', async (request) => {
+    try {
+      const rel = pathManager.fromAppImageUrl(request.url)
+      const abs = pathManager.resolveResourceRelative(rel)
+      if (!fs.existsSync(abs)) {
+        return new Response(null, { status: 404, statusText: 'Not Found' })
+      }
+      return net.fetch(pathToFileURL(abs).href)
+    } catch {
+      return new Response(null, { status: 400, statusText: 'Bad Request' })
+    }
+  })
+}
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
@@ -46,6 +75,7 @@ const VITE_DEV_SERVER_URL = isDev ? 'http://localhost:5173/' : undefined
 process.env.VITE_DEV_SERVER_URL = VITE_DEV_SERVER_URL
 
 app.whenReady().then(async () => {
+  registerAppImageProtocol()
   await registerController()
   electronApp.setAppUserModelId('com.electron')
 

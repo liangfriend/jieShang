@@ -1,8 +1,5 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import { saveInvoke } from './invoke/save'
-import { gameInvoke } from './invoke/game'
-import { resourceInvoke } from './invoke/resource'
 import { scoreInvoke } from './invoke/score'
 import { workInvoke } from './invoke/work'
 import { collectionInvoke } from './invoke/collection'
@@ -18,9 +15,6 @@ if (process.contextIsolated) {
   try {
     contextBridge.exposeInMainWorld('api', {
       file: fileInvoke,
-      game: gameInvoke,
-      resource: resourceInvoke,
-      save: saveInvoke,
       score: scoreInvoke,
       work: workInvoke,
       collection: collectionInvoke,

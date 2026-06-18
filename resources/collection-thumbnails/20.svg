@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" fill="#FFF0E0"/>
+  
+  <defs><linearGradient id="dawn" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#8B5394" stop-opacity="0.3"/>
+    <stop offset="50%" stop-color="#DF7A64" stop-opacity="0.25"/>
+    <stop offset="100%" stop-color="#FFBD76" stop-opacity="0.2"/></linearGradient></defs>
+  <rect x="0" y="0" width="64" height="64" fill="url(#dawn)"/>
+  <circle cx="32" cy="44" r="12" fill="#FFD98A" opacity="0.7"/>
+  <circle cx="32" cy="44" r="8" fill="#FFF0C0"/>
+  <path d="M32 20 L34 28 L42 28 L36 32 L38 40 L32 36 L26 40 L28 32 L22 28 L30 28 Z" fill="#FFCE7E" opacity="0.5"/>
+  <line x1="10" y1="48" x2="54" y2="48" stroke="rgba(206,116,58,0.7)" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="10" y1="51" x2="54" y2="51" stroke="rgba(206,116,58,0.7)" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="10" y1="54" x2="54" y2="54" stroke="rgba(206,116,58,0.7)" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="10" y1="57" x2="54" y2="57" stroke="rgba(206,116,58,0.7)" stroke-width="1.2" stroke-linecap="round"/>
+  <line x1="10" y1="60" x2="54" y2="60" stroke="rgba(206,116,58,0.7)" stroke-width="1.2" stroke-linecap="round"/>
+</svg>

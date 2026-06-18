@@ -4,18 +4,14 @@ export {}
 declare global {
   interface Window {
     api: {
-      game: {
-        create(payload: any): Promise<any>
-        delete(id: any): Promise<any>
-        update(id: any, payload: any): Promise<any>
-        query(filters: any): Promise<any>
-        list(): Promise<any>
-        searchByName(name: string): Promise<any>
-      }
       file: {
-        upload(buffer: any, originalName: string, type: string, displayName: string): Promise<any>
-        delete(id: any): Promise<any>
-        query(query: any): Promise<any>
+        upload(
+          buffer: ArrayBuffer,
+          originalName: string,
+          type: 'image' | 'audio' | 'video',
+          displayName: string
+        ): Promise<{ name: string; type: string; url: string }>
+        delete(url: string): Promise<{ success: boolean }>
         importSj(): Promise<{
           canceled: boolean
           filePath?: string
@@ -36,20 +32,6 @@ declare global {
           content: string,
           defaultName?: string
         ): Promise<{ canceled: boolean; filePath?: string }>
-      }
-      resource: {
-        create(payload: any): Promise<any>
-        delete(id: any): Promise<any>
-        update(id: any, payload: any): Promise<any>
-        query(filters: any): Promise<any>
-        list(): Promise<any>
-      }
-      save: {
-        create(payload: any): Promise<any>
-        delete(id: any): Promise<any>
-        update(id: any, payload: any): Promise<any>
-        query(filters: any): Promise<any>
-        list(): Promise<any>
       }
       score: {
         create(payload: { name: string; data?: string }): Promise<any>

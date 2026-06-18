@@ -14,13 +14,13 @@ const props = defineProps<{
   selected: SlotData | null
 }>()
 
-const panelMeta: Record<Exclude<PropertyPanelKind, null>, { title: string; emoji: string }> = {
-  measure: { title: '小节属性', emoji: '📏' },
-  noteHead: { title: '音符属性', emoji: '♩' },
-  numberHead: { title: '音符属性', emoji: '♩' },
-  rest: { title: '休止符属性', emoji: '𝄽' },
-  volta: { title: 'Volta 属性', emoji: '↺' },
-  slur: { title: '连音线属性', emoji: '⌒' }
+const panelMeta: Record<Exclude<PropertyPanelKind, null>, { title: string }> = {
+  measure: { title: '小节属性' },
+  noteHead: { title: '音符属性' },
+  numberHead: { title: '音符属性' },
+  rest: { title: '休止符属性' },
+  volta: { title: 'Volta 属性' },
+  slur: { title: '连音线属性' }
 }
 
 const hasContent = computed(() => {
@@ -37,19 +37,18 @@ const hasContent = computed(() => {
   return props.kind === 'volta' || props.kind === 'slur'
 })
 
-const headerMeta = computed(() => {
+const headerTitle = computed(() => {
   if (props.kind && hasContent.value) {
-    return panelMeta[props.kind]
+    return panelMeta[props.kind].title
   }
-  return { title: '属性', emoji: '✨' }
+  return '属性'
 })
 </script>
 
 <template>
   <aside class="property-panel">
     <header class="property-panel__header">
-      <span class="property-panel__emoji">{{ headerMeta.emoji }}</span>
-      <h3 class="property-panel__title">{{ headerMeta.title }}</h3>
+      <h3 class="property-panel__title">{{ headerTitle }}</h3>
     </header>
     <div class="property-panel__body">
       <MeasurePropertyPanel
@@ -94,17 +93,10 @@ const headerMeta = computed(() => {
   position: sticky;
   top: 0;
   z-index: 1;
-  display: flex;
-  align-items: center;
-  gap: 8px;
   padding: 14px 16px 12px;
   background: rgba(255, 255, 255, 0.72);
   border-bottom: 1px solid rgba(201, 184, 255, 0.35);
   backdrop-filter: blur(6px);
-}
-
-.property-panel__emoji {
-  font-size: 18px;
 }
 
 .property-panel__title {

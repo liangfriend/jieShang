@@ -3,93 +3,46 @@ import fs from 'fs'
 import path from 'path'
 import { BrowserWindow, dialog } from 'electron'
 import pathManager from '../utils/pathManager'
-import { ResourceService } from './resourceService'
 
 const SJ_FILTER = [{ name: 'SJ 曲谱', extensions: ['sj'] }] as const
 const MUSICXML_FILTER = [{ name: 'MusicXML', extensions: ['xml', 'musicxml'] }] as const
 
 export class FileService {
-  private resourceService: ResourceService
-
-  constructor({ resourceService }: { resourceService: ResourceService }) {
-    this.resourceService = resourceService
-  }
-
   /**
-   * 保存文件到磁盘 + 创建 resource 记录
+   * 保存文件到 userData/resources/{type}，返回 app-image 虚拟路径
    */
   async saveResource(
     fileBuffer: Buffer,
-    originalName: string, // file.name，例如 "test.png"
+    originalName: string,
     type: 'image' | 'audio' | 'video',
-    displayName: string // 例如 "背景图1"
+    displayName: string
   ) {
     const targetDir = pathManager.getResourceDir(type)
-
-    // 正确解析用户实际上传文件的扩展名
     const ext = path.extname(originalName) || ''
-
-    // 随机生成文件名（不会覆盖）
     const safeName = `${Date.now()}-${Math.random().toString(36).slice(2)}${ext}`
     const finalPath = path.join(targetDir, safeName)
 
     fs.writeFileSync(finalPath, fileBuffer)
 
-    const url = `file://${finalPath}`
-
-    // 写入数据库使用展示名
-    const record = (
-      await this.resourceService.createResource({
-        name: displayName,
-        type,
-        url
-      })
-    ).data
+    const url = pathManager.toAppImageUrl(`${type}/${safeName}`)
 
     return {
-      id: record.id,
-      name: record.name,
-      type: record.type,
-      url: record.url
+      name: displayName,
+      type,
+      url
     }
   }
 
-  /**
-   * 删除资源文件 + 删除 resource 表记录
-   */
-  async deleteResource(id: number) {
-    // 用 ResourceService 查询
-    const list = await this.resourceService.queryResources({ id: String(id) })
-    const record = list[0]
-    if (!record) return false
+  /** 按 app-image 虚拟路径删除磁盘文件 */
+  async deleteResourceByUrl(url: string) {
+    const rel = pathManager.fromAppImageUrl(url)
+    const filePath = pathManager.resolveResourceRelative(rel)
 
-    const filePath = record.url.replace('file://', '')
-
-    // 删除文件
     if (fs.existsSync(filePath)) {
       fs.unlinkSync(filePath)
     }
 
-    // 删除数据库记录
-    const res = await this.resourceService.deleteResource(String(id))
-
-    return { success: true, data: res }
-  }
-
-  /**
-   * 仅查询资源（调用 ResourceService）
-   */
-  async queryResources(condition: any) {
-    const res = await this.resourceService.queryResources(condition)
-    return { success: true, data: res }
-  }
-
-  /**
-   * 更新资源记录（不修改文件）
-   */
-  async updateResource(id: number, data: any) {
-    const res = await this.resourceService.updateResource(String(id), data)
-    return { success: true, data: res }
+    return { success: true }
   }
 
   /** 通过系统对话框导入 .sj 曲谱文件 */

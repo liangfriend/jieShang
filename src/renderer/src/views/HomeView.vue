@@ -1,37 +1,50 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
-import { Document, EditPen, Setting } from '@element-plus/icons-vue'
 import HomeSettingsDialog from '@renderer/components/HomeSettingsDialog.vue'
 import { HOME_TEMPLATE_TO_ROUTE } from '@renderer/utils/scoreRoute'
 import { useMidiStore } from '@renderer/store/midi.store'
+import arcadeIcon from '@renderer/assets/homeView/icon-arcade.svg'
+import endlessIcon from '@renderer/assets/homeView/icon-endless.svg'
+import extremeIcon from '@renderer/assets/homeView/icon-extreme.svg'
+import collectionIcon from '@renderer/assets/homeView/icon-collection.svg'
+import composeIcon from '@renderer/assets/homeView/icon-compose.svg'
+import scoresIcon from '@renderer/assets/homeView/icon-scores.svg'
+import whiteboardIcon from '@renderer/assets/homeView/icon-whiteboard.svg'
+import achievementsIcon from '@renderer/assets/homeView/icon-achievements.svg'
+import logoIcon from '@renderer/assets/homeView/icon-logo.svg'
+import settingsIcon from '@renderer/assets/homeView/icon-settings.svg'
+import midiIcon from '@renderer/assets/homeView/icon-midi.svg'
+import midiOffIcon from '@renderer/assets/homeView/icon-midi-off.svg'
 
 const router = useRouter()
 const { hasConnectedInput } = storeToRefs(useMidiStore())
 const templateVisible = ref(false)
 const settingsVisible = ref(false)
 
+const midiStatusIcon = computed(() => (hasConnectedInput.value ? midiIcon : midiOffIcon))
+
 const gameModes = [
   {
     route: 'noteSliceArcade',
     title: '街机模式',
     desc: '60 秒限时，冲高分',
-    emoji: '⚡',
+    icon: arcadeIcon,
     tint: '#fff0c9'
   },
   {
     route: 'noteSliceEndless',
     title: '无限模式',
     desc: '三条命，看你能撑多久',
-    emoji: '♾',
+    icon: endlessIcon,
     tint: '#d4f0ff'
   },
   {
     route: 'noteSliceExtreme',
     title: '极限模式',
     desc: '不准漏音，挑战存活',
-    emoji: '🔥',
+    icon: extremeIcon,
     tint: '#ffd6e8'
   }
 ] as const
@@ -40,17 +53,17 @@ const templateGroups = [
   {
     title: '线谱',
     items: [
-      { key: 'empty', label: '空', emoji: '✨' },
-      { key: 'single', label: '单声部', emoji: '🎵' },
-      { key: 'double', label: '双声部', emoji: '🎶' }
+      { key: 'empty', label: '空' },
+      { key: 'single', label: '单声部' },
+      { key: 'double', label: '双声部' }
     ]
   },
   {
     title: '简谱',
     items: [
-      { key: 'jianpuEmpty', label: '空', emoji: '✨' },
-      { key: 'jianpuSingle', label: '单声部', emoji: '🎵' },
-      { key: 'jianpuDouble', label: '双声部', emoji: '🎶' }
+      { key: 'jianpuEmpty', label: '空' },
+      { key: 'jianpuSingle', label: '单声部' },
+      { key: 'jianpuDouble', label: '双声部' }
     ]
   }
 ]
@@ -97,7 +110,7 @@ function goToAchievements() {
 
     <header class="home-header">
       <div class="logo-wrap">
-        <span class="logo-face">♪</span>
+        <img class="logo-face" :src="logoIcon" alt="识音" />
         <div>
           <h1 class="title">识音</h1>
           <p class="subtitle">切准音符，闯出高分</p>
@@ -115,7 +128,7 @@ function goToAchievements() {
           :style="{ '--card-tint': mode.tint }"
           @click="goToGameMode(mode.route)"
         >
-          <span class="mode-card__emoji">{{ mode.emoji }}</span>
+          <img class="mode-card__icon" :src="mode.icon" :alt="mode.title" />
           <h2 class="mode-card__title">{{ mode.title }}</h2>
           <p class="mode-card__desc">{{ mode.desc }}</p>
         </button>
@@ -123,33 +136,29 @@ function goToAchievements() {
 
       <section class="action-row">
         <button type="button" class="action-btn action-collection" @click="goToCollection">
-          <span class="action-emoji">🎁</span>
+          <img class="action-btn__icon" :src="collectionIcon" alt="藏品" />
           <span class="action-label">藏品</span>
         </button>
 
         <button type="button" class="action-btn action-compose" @click="templateVisible = true">
-          <span class="action-icon"
-            ><el-icon><EditPen /></el-icon
-          ></span>
+          <img class="action-btn__icon" :src="composeIcon" alt="曲谱制作" />
           <span class="action-label">曲谱制作</span>
         </button>
 
         <button type="button" class="action-btn action-scores" @click="goToScores">
-          <span class="action-icon"
-            ><el-icon><Document /></el-icon
-          ></span>
+          <img class="action-btn__icon" :src="scoresIcon" alt="我的曲谱" />
           <span class="action-label">我的曲谱</span>
         </button>
       </section>
 
       <section class="action-row action-row--dual">
         <button type="button" class="action-btn action-whiteboard" @click="goToWhiteboard">
-          <span class="action-emoji">🎹</span>
+          <img class="action-btn__icon" :src="whiteboardIcon" alt="教学白板" />
           <span class="action-label">教学白板</span>
         </button>
 
         <button type="button" class="action-btn action-achievements" @click="goToAchievements">
-          <span class="action-emoji">🏆</span>
+          <img class="action-btn__icon" :src="achievementsIcon" alt="成就" />
           <span class="action-label">成就</span>
         </button>
       </section>
@@ -176,8 +185,7 @@ function goToAchievements() {
               class="template-item"
               @click="onTemplateSelect(tpl.key)"
             >
-              <span class="template-emoji">{{ tpl.emoji }}</span>
-              <span>{{ tpl.label }}</span>
+              {{ tpl.label }}
             </button>
           </div>
         </section>
@@ -193,7 +201,7 @@ function goToAchievements() {
       aria-label="设置"
       @click="settingsVisible = true"
     >
-      <el-icon class="home-settings-btn__icon"><Setting /></el-icon>
+      <img class="home-settings-btn__icon" :src="settingsIcon" alt="" />
     </button>
 
     <div
@@ -203,7 +211,7 @@ function goToAchievements() {
       aria-live="polite"
       :aria-label="hasConnectedInput ? 'MIDI 琴已连接' : 'MIDI 琴未连接'"
     >
-      <span class="midi-status__icon" aria-hidden="true">🎹</span>
+      <img class="midi-status__icon" :src="midiStatusIcon" alt="" />
     </div>
   </div>
 </template>
@@ -320,14 +328,12 @@ function goToAchievements() {
 .logo-face {
   width: 56px;
   height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 26px;
+  object-fit: contain;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--pink) 0%, var(--lavender) 100%);
   box-shadow: var(--shadow);
   animation: bounce 3s ease-in-out infinite;
+  user-select: none;
+  pointer-events: none;
 }
 
 @keyframes bounce {
@@ -392,10 +398,14 @@ function goToAchievements() {
   box-shadow: 0 12px 40px rgba(200, 140, 180, 0.28);
 }
 
-.mode-card__emoji {
+.mode-card__icon {
   display: block;
-  font-size: 32px;
-  margin-bottom: 10px;
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 10px;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
 }
 
 .mode-card__title {
@@ -463,20 +473,12 @@ function goToAchievements() {
   background: rgba(255, 232, 180, 0.92);
 }
 
-.action-emoji {
-  font-size: 28px;
-}
-
-.action-icon {
-  width: 40px;
-  height: 40px;
-  border-radius: 12px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 20px;
-  color: var(--pink-deep);
-  background: rgba(255, 184, 208, 0.2);
+.action-btn__icon {
+  width: 48px;
+  height: 48px;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
 }
 
 .action-label {
@@ -513,7 +515,7 @@ function goToAchievements() {
 .template-item {
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: center;
   padding: 16px 20px;
   border: 2px solid rgba(255, 184, 208, 0.4);
   border-radius: 16px;
@@ -532,10 +534,6 @@ function goToAchievements() {
   transform: translateX(4px);
   border-color: var(--pink-deep);
   background: rgba(255, 214, 232, 0.5);
-}
-
-.template-emoji {
-  font-size: 24px;
 }
 
 .midi-status {
@@ -559,9 +557,11 @@ function goToAchievements() {
 }
 
 .midi-status__icon {
-  font-size: 22px;
-  line-height: 1;
-  filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.08));
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
 }
 
 .midi-status.is-connected {
@@ -621,7 +621,11 @@ function goToAchievements() {
 }
 
 .home-settings-btn__icon {
-  font-size: 22px;
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+  user-select: none;
+  pointer-events: none;
 }
 </style>
 

@@ -3,12 +3,6 @@ import { createContainer, asClass, asValue } from 'awilix'
 import sequelize from './database/connection'
 import { runMigrations } from './database/migrationRunner'
 
-import { GameRepository } from './repositories/gameRepository'
-import { GameService } from './services/gameService'
-import { GameController } from './controllers/gameController'
-import { SaveRepository } from './repositories/saveRepository'
-import { SaveService } from './services/saveService'
-import { SaveController } from './controllers/saveController'
 import { ScoreRepository } from './repositories/scoreRepository'
 import { ScoreService } from './services/scoreService'
 import { ScoreController } from './controllers/scoreController'
@@ -20,9 +14,6 @@ import { CollectionService } from './services/collectionService'
 import { CollectionController } from './controllers/collectionController'
 import { FileService } from './services/fileService'
 import { FileController } from './controllers/fileController'
-import { ResourceService } from './services/resourceService'
-import { ResourceController } from './controllers/resourceController'
-import { ResourceRepository } from './repositories/resourceRepository'
 import { GroupService } from './services/groupService'
 import { GroupController } from './controllers/groupController'
 import { GroupRepository } from './repositories/groupRepository'
@@ -33,23 +24,17 @@ import { AchievementProgressController } from './controllers/achievementProgress
 import { NoteSliceHighScoreRepository } from './repositories/noteSliceHighScoreRepository'
 import { NoteSliceHighScoreService } from './services/noteSliceHighScoreService'
 import { NoteSliceHighScoreController } from './controllers/noteSliceHighScoreController'
+import { syncBuiltinCollectionThumbnails } from './utils/collectionThumbnailSync'
 
 export const container = createContainer()
 
 export async function setupContainer() {
   await sequelize.authenticate()
   await runMigrations()
+  syncBuiltinCollectionThumbnails()
 
   container.register({
     sequelize: asValue(sequelize),
-
-    gameRepository: asClass(GameRepository).singleton(),
-    gameService: asClass(GameService).singleton(),
-    gameController: asClass(GameController).singleton(),
-
-    saveRepository: asClass(SaveRepository).singleton(),
-    saveService: asClass(SaveService).singleton(),
-    saveController: asClass(SaveController).singleton(),
 
     scoreRepository: asClass(ScoreRepository).singleton(),
     scoreService: asClass(ScoreService).singleton(),
@@ -62,10 +47,6 @@ export async function setupContainer() {
     collectionRepository: asClass(CollectionRepository).singleton(),
     collectionService: asClass(CollectionService).singleton(),
     collectionController: asClass(CollectionController).singleton(),
-
-    resourceRepository: asClass(ResourceRepository).singleton(),
-    resourceService: asClass(ResourceService).singleton(),
-    resourceController: asClass(ResourceController).singleton(),
 
     groupRepository: asClass(GroupRepository).singleton(),
     groupService: asClass(GroupService).singleton(),

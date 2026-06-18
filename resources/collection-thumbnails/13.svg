@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" fill="#2A2A32"/>
+  
+  <defs><linearGradient id="metal" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#E8EEF4"/><stop offset="40%" stop-color="#A8B4C0"/><stop offset="100%" stop-color="#6A7680"/>
+  </linearGradient></defs>
+  <rect x="10" y="24" width="44" height="20" rx="3" fill="url(#metal)" stroke="#8898A8"/>
+  <rect x="12" y="26" width="6" height="16" rx="1" fill="#D0D8E0" stroke="#A0A8B0"/>
+  <rect x="20" y="26" width="6" height="16" rx="1" fill="#E8EEF4" stroke="#B0B8C0"/>
+  <rect x="28" y="26" width="6" height="16" rx="1" fill="#C8D0D8" stroke="#98A0A8"/>
+  <rect x="36" y="26" width="6" height="16" rx="1" fill="#E0E8F0" stroke="#A8B0B8"/>
+  <rect x="44" y="26" width="6" height="16" rx="1" fill="#B8C0C8" stroke="#8890A0"/>
+  <rect x="17" y="26" width="4" height="10" rx="0.5" fill="#505860"/>
+  <rect x="29" y="26" width="4" height="10" rx="0.5" fill="#505860"/>
+  <rect x="41" y="26" width="4" height="10" rx="0.5" fill="#505860"/>
+  <line x1="14" y1="27" x2="18" y2="29" stroke="#FFF" stroke-width="1" opacity="0.6"/>
+</svg>

@@ -2,11 +2,9 @@ import { BrowserWindow, ipcMain } from 'electron'
 
 export class FileController {
   private fileService
-  private resourceService
 
-  constructor({ fileService, resourceService }) {
+  constructor({ fileService }) {
     this.fileService = fileService
-    this.resourceService = resourceService
   }
 
   register() {
@@ -19,12 +17,8 @@ export class FileController {
       )
     })
 
-    ipcMain.handle('file:delete', (_, id) => {
-      return this.fileService.deleteResource(id)
-    })
-
-    ipcMain.handle('file:query', (_, query) => {
-      return this.fileService.queryResources(query)
+    ipcMain.handle('file:delete', (_, url: string) => {
+      return this.fileService.deleteResourceByUrl(url)
     })
 
     ipcMain.handle('file:importSj', (event) => {

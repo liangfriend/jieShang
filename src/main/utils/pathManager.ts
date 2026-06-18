@@ -38,6 +38,51 @@ class PathManager {
     return path.join(dbDir, 'app.db')
   }
 
+  /** 藏品缩略图目录：userData/resources/image/collection */
+  getCollectionThumbnailDir() {
+    const dir = path.join(this.getResourceDir('image'), 'collection')
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+    return dir
+  }
+
+  /** 安装包内置缩略图源目录 */
+  getBundledThumbnailsDir() {
+    return this.isDev
+      ? path.join(process.cwd(), 'resources/collection-thumbnails')
+      : path.join(process.resourcesPath, 'collection-thumbnails')
+  }
+
+  /** 相对 userData/resources 的路径 → 绝对路径（防目录穿越） */
+  resolveResourceRelative(rel: string) {
+    const base = path.resolve(this.getResourceDir('all'))
+    const normalized = rel.replace(/\\/g, '/').replace(/^\/+/, '')
+    const abs = path.resolve(base, normalized)
+    if (abs !== base && !abs.startsWith(base + path.sep)) {
+      throw new Error(`Invalid resource path: ${rel}`)
+    }
+    return abs
+  }
+
+  /** 相对 resources/image 的路径 → 绝对路径（防目录穿越） */
+  resolveImageRelative(rel: string) {
+    const base = path.resolve(this.getResourceDir('image'))
+    const normalized = rel.replace(/\\/g, '/').replace(/^\/+/, '')
+    const abs = path.resolve(base, normalized)
+    if (abs !== base && !abs.startsWith(base + path.sep)) {
+      throw new Error(`Invalid image path: ${rel}`)
+    }
+    return abs
+  }
+
+  toAppImageUrl(rel: string) {
+    const normalized = rel.replace(/\\/g, '/').replace(/^\/+/, '')
+    return `app-image://${normalized}`
+  }
+
+  fromAppImageUrl(url: string) {
+    return decodeURIComponent(url.replace(/^app-image:\/\//, ''))
+  }
+
   /** 资源目录路径 images/audio/video */
   getResourceDir(type: 'image' | 'audio' | 'video' | 'all') {
     const base = path.join(this.userDataPath, 'resources')

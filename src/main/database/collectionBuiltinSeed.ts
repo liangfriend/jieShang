@@ -15,6 +15,7 @@ import {
 } from '../resources/virtualPianoSkins/builtinSkins'
 import { BUILTIN_SCORE_SKIN_SEEDS } from '../resources/scoreSkins/builtinScoreSkins'
 import { BUILTIN_TONE_COLOR_SEEDS } from '../resources/toneColors/builtinToneColors'
+import { builtinCollectionThumbnailUrl } from '../constant/collectionThumbnail'
 
 /** 内置演奏皮肤：content 存内置名称 key */
 const BUILTIN_PERFORM_SKINS = [
@@ -90,7 +91,8 @@ export async function insertBuiltinCollections() {
       description: item.description,
       is_built_in: true,
       owned: isDefaultBuiltinCollectionOwned(id),
-      level: resolveBuiltinCollectionLevel('toneColor', item.name)
+      level: resolveBuiltinCollectionLevel('toneColor', item.name),
+      thumbnail: builtinCollectionThumbnailUrl(id)
     })
   }
 
@@ -107,7 +109,8 @@ export async function insertBuiltinCollections() {
       description: item.description,
       is_built_in: true,
       owned: isDefaultBuiltinCollectionOwned(id),
-      level: resolveBuiltinCollectionLevel('scoreSkin', item.name)
+      level: resolveBuiltinCollectionLevel('scoreSkin', item.name),
+      thumbnail: builtinCollectionThumbnailUrl(id)
     })
   }
 
@@ -124,7 +127,8 @@ export async function insertBuiltinCollections() {
       description: item.description,
       is_built_in: true,
       owned: isDefaultBuiltinCollectionOwned(id),
-      level: resolveBuiltinCollectionLevel('performSkin', item.name)
+      level: resolveBuiltinCollectionLevel('performSkin', item.name),
+      thumbnail: builtinCollectionThumbnailUrl(id)
     })
   }
 
@@ -141,7 +145,8 @@ export async function insertBuiltinCollections() {
       description: item.description,
       is_built_in: true,
       owned: isDefaultBuiltinCollectionOwned(id),
-      level: resolveBuiltinCollectionLevel('pianoSkin', item.name)
+      level: resolveBuiltinCollectionLevel('pianoSkin', item.name),
+      thumbnail: builtinCollectionThumbnailUrl(id)
     })
   }
 

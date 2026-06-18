@@ -26,19 +26,15 @@ const chronaxie = computed({
 
 const chronaxieOptions = computed(() => chronaxieOptionsForKind(model.value.kind))
 
-const durationLabel = computed(() => (model.value.kind === 'rest' ? '⏸ 时值' : '🎵 时值'))
+const durationLabel = computed(() => (model.value.kind === 'rest' ? '时值' : '时值'))
 </script>
 
 <template>
   <div class="add-note-state">
     <div class="add-note-state__row">
-      <span class="add-note-state__label">✏️ 添加</span>
+      <span class="add-note-state__label">添加</span>
       <el-radio-group v-model="kind" size="small">
-        <el-radio-button
-          v-for="opt in ADD_NOTE_KIND_OPTIONS"
-          :key="opt.value"
-          :label="opt.value"
-        >
+        <el-radio-button v-for="opt in ADD_NOTE_KIND_OPTIONS" :key="opt.value" :label="opt.value">
           {{ opt.label }}
         </el-radio-button>
       </el-radio-group>
@@ -46,11 +42,7 @@ const durationLabel = computed(() => (model.value.kind === 'rest' ? '⏸ 时值'
     <div class="add-note-state__row">
       <span class="add-note-state__label">{{ durationLabel }}</span>
       <el-radio-group v-model="chronaxie" size="small">
-        <el-radio-button
-          v-for="opt in chronaxieOptions"
-          :key="opt.value"
-          :label="opt.value"
-        >
+        <el-radio-button v-for="opt in chronaxieOptions" :key="opt.value" :label="opt.value">
           {{ opt.label }}
         </el-radio-button>
       </el-radio-group>
