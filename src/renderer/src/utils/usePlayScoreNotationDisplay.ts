@@ -17,11 +17,8 @@ export function usePlayScoreNotationDisplay(
   const originalType = ref<MusicScoreTypeEnum>(MusicScoreTypeEnum.StandardStaff)
 
   function initAfterLoad(loaded: MusicScore) {
-    const cachedOriginal = dataStore.getTempScore(CUR_PLAY_SCORE_TEMP_ID)
-    const original = cachedOriginal ?? loaded
-    if (!cachedOriginal) {
-      dataStore.setTempScore(CUR_PLAY_SCORE_TEMP_ID, JSON.parse(JSON.stringify(loaded)) as MusicScore)
-    }
+    const original = JSON.parse(JSON.stringify(loaded)) as MusicScore
+    dataStore.setTempScore(CUR_PLAY_SCORE_TEMP_ID, original)
 
     originalType.value = original.type
     displayType.value = original.type

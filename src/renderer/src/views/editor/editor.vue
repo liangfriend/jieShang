@@ -13,12 +13,12 @@ import {
 } from '@renderer/utils/fileHelper'
 import { EditModeToolbar, MusicXmlNoticeDialog } from '@renderer/components/score-toolbar'
 import {
+  applyMusicScoreInPlace,
   initEditorScoreFromRoute,
   loadScoreFromRoute,
-  resolveScoreId,
-  resolveTempId
+  resolveScoreId
 } from '@renderer/utils/scoreRoute'
-import { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from '@renderer/constant'
+import { CUR_PLAY_SCORE_TEMP_ID } from '@renderer/constant'
 import { useDataStore } from '@renderer/store/data.store'
 import { convertScoreNotationType } from '@renderer/utils/scoreNotationTransfer'
 import EditorScoreWorkspace from '@renderer/views/editor/EditorScoreWorkspace.vue'
@@ -37,18 +37,6 @@ const fileBusy = ref(false)
 const musicXmlNoticeVisible = ref(false)
 const pageLoading = ref(true)
 const { waitScoreSkin } = useScoreSkin()
-
-function syncScoreToTemp(score: typeof musicScoreData.value) {
-  const dataStore = useDataStore()
-  dataStore.setTempScore(CUR_PLAY_SCORE_TEMP_ID, score)
-
-  const tempId = resolveTempId(route.query.tempId)
-  if (tempId) {
-    dataStore.setTempScore(tempId, score)
-  } else if (route.query.template) {
-    dataStore.setTempScore(EDIT_NEW_SCORE_TEMP_ID, score)
-  }
-}
 
 function clearSelection() {
   workspaceRef.value?.clearSelection()
@@ -73,9 +61,8 @@ async function handleNotationTypeChange(targetType: MusicScoreTypeEnum) {
 
   try {
     const converted = convertScoreNotationType(musicScoreData.value, targetType)
-    musicScoreData.value = converted
+    applyMusicScoreInPlace(musicScoreData.value, converted)
     notationWorkspaceKey.value += 1
-    syncScoreToTemp(converted)
     ElMessage.success('曲谱类型已切换')
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : '曲谱类型切换失败')
@@ -88,7 +75,7 @@ async function handleImportSj() {
   try {
     const result = await importSjFromDisk()
     if (!result) return
-    musicScoreData.value = result.musicScore
+    applyMusicScoreInPlace(musicScoreData.value, result.musicScore)
     notationWorkspaceKey.value += 1
     clearSelection()
     ElMessage.success(`已导入 ${result.fileName}`)
@@ -105,9 +92,8 @@ async function handleImportMusicXml() {
   try {
     const result = await importMusicXmlFromDisk()
     if (!result) return
-    musicScoreData.value = result.musicScore
+    applyMusicScoreInPlace(musicScoreData.value, result.musicScore)
     notationWorkspaceKey.value += 1
-    syncScoreToTemp(result.musicScore)
     clearSelection()
     ElMessage.success(`已导入 ${result.fileName}`)
   } catch (error) {

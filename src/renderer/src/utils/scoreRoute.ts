@@ -75,21 +75,42 @@ function hasTemplateQuery(route: RouteLocationNormalizedLoaded): boolean {
   return true
 }
 
-/** 编辑器首屏同步初始化（tempId 缓存 / template），保证 useRenderEdit 按正确 type 分发 */
+/** 编辑器首屏同步初始化（tempId 缓存 / template），与 temp 缓存同一引用以便就地编辑 */
 export function initEditorScoreFromRoute(route: RouteLocationNormalizedLoaded): MusicScore {
   const dataStore = useDataStore()
   const tempId = resolveTempId(route.query.tempId)
   if (tempId) {
     const cached = dataStore.getTempScore(tempId)
-    if (cached) return JSON.parse(JSON.stringify(cached)) as MusicScore
+    if (cached) return cached
   }
   if (hasTemplateQuery(route)) {
     const template = resolveTemplateKey(route.query.template)
     const score = TEMPLATE_LOADERS[template]()
     dataStore.setTempScore(EDIT_NEW_SCORE_TEMP_ID, score)
-    return JSON.parse(JSON.stringify(score)) as MusicScore
+    return score
   }
-  return JSON.parse(JSON.stringify(emptyTemplate)) as MusicScore
+  const score = JSON.parse(JSON.stringify(emptyTemplate)) as MusicScore
+  dataStore.setTempScore(EDIT_NEW_SCORE_TEMP_ID, score)
+  return score
+}
+
+/** 编辑页当前绑定的 tempId */
+export function resolveEditorTempId(route: RouteLocationNormalizedLoaded): string {
+  const tempId = resolveTempId(route.query.tempId)
+  if (tempId) return tempId
+  if (resolveScoreId(route.query.scoreId)) return CUR_PLAY_SCORE_TEMP_ID
+  return EDIT_NEW_SCORE_TEMP_ID
+}
+
+/** 将导入/转换结果写入已有曲谱对象，保持与 temp 缓存同一引用 */
+export function applyMusicScoreInPlace(target: MusicScore, source: MusicScore): void {
+  const next = JSON.parse(JSON.stringify(source)) as MusicScore
+  for (const key of Object.keys(target)) {
+    if (!(key in next)) {
+      delete (target as Record<string, unknown>)[key]
+    }
+  }
+  Object.assign(target, next)
 }
 
 /** 按路由 query 加载曲谱，见文件顶部路由规则表 */

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { EditPen, VideoPlay } from '@element-plus/icons-vue'
+import { VideoPlay } from '@element-plus/icons-vue'
 import { useRoute, useRouter } from 'vue-router'
 import BackButton from '@renderer/components/BackButton.vue'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
