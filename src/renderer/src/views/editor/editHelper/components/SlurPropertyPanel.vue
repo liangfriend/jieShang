@@ -4,10 +4,13 @@ import {computed} from 'vue'
 import {
   canMoveSlurEndEarlier,
   canMoveSlurEndLater,
+  getSlurThickness,
   moveSlurEndEarlier,
   moveSlurEndLater,
+  setSlurThickness,
   type SlurEditSlot,
 } from '../renderEditSlurProperties'
+import SlurThicknessControl from './SlurThicknessControl.vue'
 
 const props = defineProps<{
   editSlot: SlotData
@@ -20,6 +23,11 @@ const slur = computed(() => slurEditSlot.value.self)
 const canEarlier = computed(() => canMoveSlurEndEarlier(musicScore.value, slur.value))
 const canLater = computed(() => canMoveSlurEndLater(musicScore.value, slur.value))
 
+const thickness = computed({
+  get: () => getSlurThickness(slur.value),
+  set: (v: number) => setSlurThickness(slur.value, v),
+})
+
 function onMoveEarlier() {
   moveSlurEndEarlier(musicScore.value, slur.value)
 }
@@ -31,6 +39,9 @@ function onMoveLater() {
 
 <template>
   <div class="slur-props">
+    <section class="slur-props__section">
+      <SlurThicknessControl v-model="thickness" />
+    </section>
     <section class="slur-props__section">
       <div class="slur-props__label">尾部锚点</div>
       <div class="slur-props__row">

@@ -1,21 +1,14 @@
 import {DoubleNoteAffiliatedSymbolNameEnum} from 'deciphony-renderer'
 import type {DoubleNoteAffiliatedSymbol, MusicScore, SlotData, VDom} from 'deciphony-renderer'
 
-export type SlurHandleKind = 'start' | 'control' | 'end'
+import {
+  ensureSlurData,
+  type SlurDragSession,
+  type SlurHandleKind,
+  type SlurHandlePoints,
+} from './renderEditSlurProperties'
 
-export type SlurHandlePoints = {
-  start: { x: number; y: number }
-  control: { x: number; y: number }
-  end: { x: number; y: number }
-}
-
-export type SlurDragSession = {
-  pointerId: number
-  slurId: string
-  handle: SlurHandleKind
-  baseStart: { x: number; y: number }
-  baseEnd: { x: number; y: number }
-}
+export type {SlurDragSession, SlurHandleKind, SlurHandlePoints} from './renderEditSlurProperties'
 
 export function isSlurVDom(vdom: VDom | null | undefined): boolean {
   return vdom?.tag === 'affiliation' && vdom.special?.slur != null
@@ -41,18 +34,6 @@ export function findSlurSymbol(
   const sym = musicScore.affiliatedSymbols.find((item) => item.id === slurId)
   if (!sym || sym.name !== DoubleNoteAffiliatedSymbolNameEnum.Slur) return null
   return sym
-}
-
-function ensureSlurData(sym: DoubleNoteAffiliatedSymbol) {
-  if (!sym.data.slur) {
-    sym.data.slur = {
-      relativeStartPoint: {x: 0, y: 0},
-      relativeEndPoint: {x: 0, y: 0},
-      relativeControlPoint: {x: 0, y: 0},
-      thickness: 2,
-    }
-  }
-  return sym.data.slur
 }
 
 /** 与 slur.vue 一致：控制点 = 默认中点上方 + relativeControlPoint */

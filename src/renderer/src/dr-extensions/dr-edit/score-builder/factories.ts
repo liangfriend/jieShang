@@ -436,7 +436,7 @@ export function createSlur(options: CreateSlurOptions): DoubleNoteAffiliatedSymb
                 relativeStartPoint: {x: 0, y: 0},
                 relativeEndPoint: {x: 0, y: 0},
                 relativeControlPoint: {x: 0, y: 0},
-                thickness: 2,
+                thickness: 4,
                 ...partial?.data?.slur,
             },
         },

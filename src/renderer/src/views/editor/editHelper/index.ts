@@ -72,9 +72,15 @@ export {
 export {
   canMoveSlurEndEarlier,
   canMoveSlurEndLater,
+  getSlurThickness,
+  listSlursStartingAtNotesInfo,
   moveSlurEndEarlier,
   moveSlurEndLater,
+  removeSlur,
+  setSlurThickness,
+  SLUR_SPAN_OPTIONS,
   type SlurEditSlot,
+  type SlurSpan,
 } from './renderEditSlurProperties'
 export {
   computeVoltaHandlePoints,
@@ -107,7 +113,7 @@ export {
   updateNoteHeadDragFromPointer,
   type NoteHeadDragSession,
 } from './standardStaff/renderEditNoteHeadDrag'
-export {SLUR_SPAN_OPTIONS, tryAddSlurFromNoteHead, type SlurSpan} from './standardStaff/renderEditSlurAdd'
+export {tryAddSlurFromNoteHead} from './standardStaff/renderEditSlurAdd'
 export {useStandardStaffRenderEdit} from './standardStaff/useRenderEdit'
 export {default as NoteHeadPropertyPanel} from './standardStaff/components/NoteHeadPropertyPanel.vue'
 export {default as RestPropertyPanel} from './standardStaff/components/RestPropertyPanel.vue'

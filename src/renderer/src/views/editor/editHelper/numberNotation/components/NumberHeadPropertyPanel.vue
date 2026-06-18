@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type {Chronaxie} from 'deciphony-renderer'
+import type {Chronaxie, MusicScore} from 'deciphony-renderer'
 import {AccidentalTypeEnum, BeamTypeEnum} from 'deciphony-renderer'
 import {computed} from 'vue'
 import {CHRONAXIE_OPTIONS} from '../renderEditNumberAddState'
@@ -17,7 +17,8 @@ import {
   setNotesNumberInfoSyllable,
   type NumberHeadEditSlot,
 } from '../renderEditNumberHeadProperties'
-import {SLUR_SPAN_OPTIONS, tryAddSlurFromNumberHead, type SlurSpan} from '../renderEditSlurAdd'
+import {tryAddSlurFromNumberHead, type SlurSpan} from '../renderEditSlurAdd'
+import NoteSlurListSection from '../../components/NoteSlurListSection.vue'
 
 const props = defineProps<{
   editSlot: NumberHeadEditSlot
@@ -56,6 +57,8 @@ const augmentationDot = computed({
   get: (): 0 | 1 | 2 | 3 => notesInfo.value.augmentationDot?.count ?? 0,
   set: (v: 0 | 1 | 2 | 3) => setNotesNumberInfoAugmentationDot(notesInfo.value, v),
 })
+
+const musicScore = computed(() => props.editSlot.musicScore as MusicScore)
 
 function onAddSlur(span: SlurSpan) {
   tryAddSlurFromNumberHead(props.editSlot, span)
@@ -139,19 +142,11 @@ function onAddSlur(span: SlurSpan) {
       </el-radio-group>
     </section>
 
-    <section class="note-head-props__section">
-      <div class="note-head-props__label">连音线</div>
-      <div class="note-head-props__row">
-        <el-button
-          v-for="span in SLUR_SPAN_OPTIONS"
-          :key="span"
-          size="small"
-          @click="onAddSlur(span)"
-        >
-          {{ span }}
-        </el-button>
-      </div>
-    </section>
+    <NoteSlurListSection
+      :music-score="musicScore"
+      :notes-info-id="notesInfo.id"
+      @add="onAddSlur"
+    />
   </div>
 </template>
 

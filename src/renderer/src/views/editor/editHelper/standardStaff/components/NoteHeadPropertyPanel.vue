@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type {Chronaxie} from 'deciphony-renderer'
+import type {Chronaxie, MusicScore} from 'deciphony-renderer'
 import {AccidentalTypeEnum, BeamTypeEnum, ClefTypeEnum} from 'deciphony-renderer'
 import {computed} from 'vue'
 import {CHRONAXIE_OPTIONS} from '../../renderEditAddNoteState'
@@ -18,7 +18,8 @@ import {
   setNotesInfoRelativeX,
   type NoteHeadEditSlot,
 } from '../renderEditNoteHeadProperties'
-import {SLUR_SPAN_OPTIONS, tryAddSlurFromNoteHead, type SlurSpan} from '../renderEditSlurAdd'
+import {tryAddSlurFromNoteHead, type SlurSpan} from '../renderEditSlurAdd'
+import NoteSlurListSection from '../../components/NoteSlurListSection.vue'
 import RelativeXOffsetControl from './RelativeXOffsetControl.vue'
 
 const props = defineProps<{
@@ -63,6 +64,8 @@ const relativeX = computed({
   get: () => notesInfo.value.relativeX ?? 0,
   set: (v: number) => setNotesInfoRelativeX(notesInfo.value, v),
 })
+
+const musicScore = computed(() => props.editSlot.musicScore as MusicScore)
 
 function onAddSlur(span: SlurSpan) {
   tryAddSlurFromNoteHead(props.editSlot, span)
@@ -153,19 +156,11 @@ function onAddSlur(span: SlurSpan) {
 
     <RelativeXOffsetControl v-model="relativeX" />
 
-    <section class="note-head-props__section">
-      <div class="note-head-props__label">连音线</div>
-      <div class="note-head-props__row">
-        <el-button
-          v-for="span in SLUR_SPAN_OPTIONS"
-          :key="span"
-          size="small"
-          @click="onAddSlur(span)"
-        >
-          {{ span }}
-        </el-button>
-      </div>
-    </section>
+    <NoteSlurListSection
+      :music-score="musicScore"
+      :notes-info-id="notesInfo.id"
+      @add="onAddSlur"
+    />
   </div>
 </template>
 

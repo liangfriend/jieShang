@@ -1,13 +1,27 @@
-import type {Measure, MusicScore, NoteNumber, NotesNumberInfo, SingleStaff} from 'deciphony-renderer'
-import {createSlur} from '@renderer/dr-extensions/dr-edit/score-builder'
-import {isNoteNumberSlot, isSlotRestLike} from '@renderer/dr-extensions/dr-edit/score-builder/noteSlot'
-import type {NumberHeadEditSlot} from './renderEditNumberHeadProperties'
+import type {
+  Measure,
+  MusicScore,
+  NoteNumber,
+  NotesNumberInfo,
+  SingleStaff
+} from 'deciphony-renderer'
+import { createSlur } from '@renderer/dr-extensions/dr-edit/score-builder'
+import {
+  isNoteNumberSlot,
+  isSlotRestLike
+} from '@renderer/dr-extensions/dr-edit/score-builder/noteSlot'
+import { DEFAULT_SLUR_THICKNESS } from '../renderEditSlurProperties'
+
+import type { NumberHeadEditSlot } from './renderEditNumberHeadProperties'
 
 export type SlurSpan = 2 | 3 | 4
 
 export const SLUR_SPAN_OPTIONS: SlurSpan[] = [2, 3, 4]
 
-function pickNotesNumberInfoForSlurEnd(note: NoteNumber, voiceIndex: number): NotesNumberInfo | null {
+function pickNotesNumberInfoForSlurEnd(
+  note: NoteNumber,
+  voiceIndex: number
+): NotesNumberInfo | null {
   if (note.notesInfo.length === 0) return null
   if (voiceIndex >= 0 && voiceIndex < note.notesInfo.length) {
     return note.notesInfo[voiceIndex]!
@@ -20,7 +34,7 @@ export function findNotesNumberInfoAtRightOffset(
   startMeasureIndex: number,
   startNoteIndex: number,
   slotsToRight: number,
-  voiceIndex: number,
+  voiceIndex: number
 ): NotesNumberInfo | null {
   if (slotsToRight <= 0) return null
 
@@ -52,16 +66,14 @@ export function findNotesNumberInfoAtRightOffset(
   return null
 }
 
-function resolveNumberHeadAnchor(
-  editSlot: NumberHeadEditSlot,
-): {
+function resolveNumberHeadAnchor(editSlot: NumberHeadEditSlot): {
   singleStaff: SingleStaff
   measureIndex: number
   noteIndex: number
   voiceIndex: number
   startInfo: NotesNumberInfo
 } | null {
-  const {singleStaff, measure, note, info} = editSlot
+  const { singleStaff, measure, note, info } = editSlot
   if (!singleStaff || !measure || !note || !info) return null
 
   const measureIndex = singleStaff.measures.indexOf(measure as Measure)
@@ -73,10 +85,14 @@ function resolveNumberHeadAnchor(
   const voiceIndex = note.notesInfo.indexOf(info)
   if (voiceIndex < 0) return null
 
-  return {singleStaff, measureIndex, noteIndex, voiceIndex, startInfo: info}
+  return { singleStaff, measureIndex, noteIndex, voiceIndex, startInfo: info }
 }
 
-export function tryAddSlurFromNumberHead(editSlot: NumberHeadEditSlot, span: SlurSpan): boolean {
+export function tryAddSlurFromNumberHead(
+  editSlot: NumberHeadEditSlot,
+  span: SlurSpan,
+  thickness = DEFAULT_SLUR_THICKNESS
+): boolean {
   const anchor = resolveNumberHeadAnchor(editSlot)
   if (!anchor) return false
 
@@ -85,13 +101,17 @@ export function tryAddSlurFromNumberHead(editSlot: NumberHeadEditSlot, span: Slu
     anchor.measureIndex,
     anchor.noteIndex,
     span - 1,
-    anchor.voiceIndex,
+    anchor.voiceIndex
   )
   if (!endInfo || endInfo.id === anchor.startInfo.id) return false
 
   const musicScore = editSlot.musicScore as MusicScore
   musicScore.affiliatedSymbols.push(
-    createSlur({startId: anchor.startInfo.id, endId: endInfo.id}),
+    createSlur({
+      startId: anchor.startInfo.id,
+      endId: endInfo.id,
+      partial: { data: { slur: { thickness } } }
+    })
   )
   return true
 }

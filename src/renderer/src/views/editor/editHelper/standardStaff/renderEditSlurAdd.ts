@@ -1,7 +1,8 @@
-import {isNoteSymbol} from 'deciphony-renderer'
-import type {Measure, MusicScore, NotesInfo, NoteSymbol, SingleStaff} from 'deciphony-renderer'
-import {createSlur} from '@renderer/dr-extensions/dr-edit/score-builder'
-import type {NoteHeadEditSlot} from './renderEditNoteHeadProperties'
+import { isNoteSymbol } from 'deciphony-renderer'
+import type { Measure, MusicScore, NotesInfo, NoteSymbol, SingleStaff } from 'deciphony-renderer'
+import { createSlur } from '@renderer/dr-extensions/dr-edit/score-builder'
+import { DEFAULT_SLUR_THICKNESS } from '../renderEditSlurProperties'
+import type { NoteHeadEditSlot } from '../renderEditNoteHeadProperties'
 
 /** 连音线跨越的连续音符位数（含当前音符） */
 export type SlurSpan = 2 | 3 | 4
@@ -25,7 +26,7 @@ export function findNotesInfoAtRightOffset(
   startMeasureIndex: number,
   startNoteIndex: number,
   slotsToRight: number,
-  voiceIndex: number,
+  voiceIndex: number
 ): NotesInfo | null {
   if (slotsToRight <= 0) return null
 
@@ -57,16 +58,14 @@ export function findNotesInfoAtRightOffset(
   return null
 }
 
-function resolveNoteHeadAnchor(
-  editSlot: NoteHeadEditSlot,
-): {
+function resolveNoteHeadAnchor(editSlot: NoteHeadEditSlot): {
   singleStaff: SingleStaff
   measureIndex: number
   noteIndex: number
   voiceIndex: number
   startInfo: NotesInfo
 } | null {
-  const {singleStaff, measure, note, info} = editSlot
+  const { singleStaff, measure, note, info } = editSlot
   if (!singleStaff || !measure || !note || !info) return null
 
   const measureIndex = singleStaff.measures.indexOf(measure as Measure)
@@ -78,11 +77,15 @@ function resolveNoteHeadAnchor(
   const voiceIndex = note.notesInfo.indexOf(info)
   if (voiceIndex < 0) return null
 
-  return {singleStaff, measureIndex, noteIndex, voiceIndex, startInfo: info}
+  return { singleStaff, measureIndex, noteIndex, voiceIndex, startInfo: info }
 }
 
 /** 在选中音符头与右侧第 (span-1) 个音符头之间添加连音线；不足两小节内音符则失败 */
-export function tryAddSlurFromNoteHead(editSlot: NoteHeadEditSlot, span: SlurSpan): boolean {
+export function tryAddSlurFromNoteHead(
+  editSlot: NoteHeadEditSlot,
+  span: SlurSpan,
+  thickness = DEFAULT_SLUR_THICKNESS
+): boolean {
   const anchor = resolveNoteHeadAnchor(editSlot)
   if (!anchor) return false
 
@@ -91,13 +94,17 @@ export function tryAddSlurFromNoteHead(editSlot: NoteHeadEditSlot, span: SlurSpa
     anchor.measureIndex,
     anchor.noteIndex,
     span - 1,
-    anchor.voiceIndex,
+    anchor.voiceIndex
   )
   if (!endInfo || endInfo.id === anchor.startInfo.id) return false
 
   const musicScore = editSlot.musicScore as MusicScore
   musicScore.affiliatedSymbols.push(
-    createSlur({startId: anchor.startInfo.id, endId: endInfo.id}),
+    createSlur({
+      startId: anchor.startInfo.id,
+      endId: endInfo.id,
+      partial: { data: { slur: { thickness } } }
+    })
   )
   return true
 }

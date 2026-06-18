@@ -1,4 +1,4 @@
-import {isNoteRest, isNoteSymbol} from 'deciphony-renderer'
+import {DoubleNoteAffiliatedSymbolNameEnum, isNoteRest, isNoteSymbol} from 'deciphony-renderer'
 import type {
   DoubleNoteAffiliatedSymbol,
   MusicScore,
@@ -13,7 +13,69 @@ import {
 } from '@renderer/dr-extensions/dr-edit/score-builder/locate'
 import {isNoteNumberSlot, isSlotRestLike} from '@renderer/dr-extensions/dr-edit/score-builder/noteSlot'
 
+export const DEFAULT_SLUR_THICKNESS = 4
+export const SLUR_THICKNESS_MIN = 2
+export const SLUR_THICKNESS_MAX = 12
+
+export type SlurSpan = 2 | 3 | 4
+export const SLUR_SPAN_OPTIONS: SlurSpan[] = [2, 3, 4]
+
+export type SlurHandleKind = 'start' | 'control' | 'end'
+
+export type SlurHandlePoints = {
+  start: { x: number; y: number }
+  control: { x: number; y: number }
+  end: { x: number; y: number }
+}
+
+export type SlurDragSession = {
+  pointerId: number
+  slurId: string
+  handle: SlurHandleKind
+  baseStart: { x: number; y: number }
+  baseEnd: { x: number; y: number }
+}
+
 export type SlurEditSlot = SlotData & {self: DoubleNoteAffiliatedSymbol}
+
+export function ensureSlurData(sym: DoubleNoteAffiliatedSymbol) {
+  if (!sym.data.slur) {
+    sym.data.slur = {
+      relativeStartPoint: {x: 0, y: 0},
+      relativeEndPoint: {x: 0, y: 0},
+      relativeControlPoint: {x: 0, y: 0},
+      thickness: DEFAULT_SLUR_THICKNESS,
+    }
+  }
+  return sym.data.slur
+}
+
+export function getSlurThickness(sym: DoubleNoteAffiliatedSymbol): number {
+  return ensureSlurData(sym).thickness ?? DEFAULT_SLUR_THICKNESS
+}
+
+export function setSlurThickness(sym: DoubleNoteAffiliatedSymbol, thickness: number): void {
+  const clamped = Math.min(SLUR_THICKNESS_MAX, Math.max(SLUR_THICKNESS_MIN, Math.round(thickness)))
+  ensureSlurData(sym).thickness = clamped
+}
+
+/** 以当前音符为起点的连音线（musicScore.affiliatedSymbols 中 startId 匹配） */
+export function listSlursStartingAtNotesInfo(
+  musicScore: MusicScore,
+  notesInfoId: string,
+): DoubleNoteAffiliatedSymbol[] {
+  return musicScore.affiliatedSymbols.filter(
+    (sym): sym is DoubleNoteAffiliatedSymbol =>
+      sym.name === DoubleNoteAffiliatedSymbolNameEnum.Slur && sym.startId === notesInfoId,
+  )
+}
+
+export function removeSlur(musicScore: MusicScore, slurId: string): boolean {
+  const idx = musicScore.affiliatedSymbols.findIndex((sym) => sym.id === slurId)
+  if (idx < 0) return false
+  musicScore.affiliatedSymbols.splice(idx, 1)
+  return true
+}
 
 type SlurEndAnchor = {
   singleStaff: SingleStaff
