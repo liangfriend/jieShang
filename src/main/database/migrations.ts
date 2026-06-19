@@ -7,7 +7,7 @@ import WorkModel from '../models/WorkModel'
 import CollectionModel from '../models/CollectionModel'
 import AchievementProgressModel from '../models/AchievementProgressModel'
 import NoteSliceHighScoreModel from '../models/NoteSliceHighScoreModel'
-import { insertBuiltinCollections } from './collectionBuiltinSeed'
+import { insertBuiltinCollections, syncBuiltinCollections } from './collectionBuiltinSeed'
 import { syncBuiltinCollectionThumbnails } from '../utils/collectionThumbnailSync'
 
 export interface Migrations {
@@ -38,6 +38,15 @@ export const migrations: Migrations[] = [
       await ScoreModel.drop()
       await GroupModel.drop()
       await MigrationModel.drop()
+    }
+  },
+  {
+    id: '002-sync-builtin-collections',
+    async up() {
+      await syncBuiltinCollections()
+    },
+    async down() {
+      // 仅同步元数据，不回滚
     }
   }
 ]

@@ -2,7 +2,7 @@ import { isNoteSymbol } from 'deciphony-renderer'
 import type { Measure, MusicScore, NotesInfo, NoteSymbol, SingleStaff } from 'deciphony-renderer'
 import { createSlur } from '@renderer/dr-extensions/dr-edit/score-builder'
 import { DEFAULT_SLUR_THICKNESS } from '../renderEditSlurProperties'
-import type { NoteHeadEditSlot } from '../renderEditNoteHeadProperties'
+import type { NoteHeadEditSlot } from './renderEditNoteHeadProperties'
 
 /** 连音线跨越的连续音符位数（含当前音符） */
 export type SlurSpan = 2 | 3 | 4

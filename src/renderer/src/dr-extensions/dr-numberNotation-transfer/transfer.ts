@@ -139,7 +139,7 @@ function staffNotesInfoToNumberInfo(
     info.region,
   )
   const midi = getNoteMidi(state.curClef, info.region, effectiveAcc)
-  const {octave, syllable, accidental} = getOctaveAndSyllable(midi, priority, state.curKeySignature)
+  const {octave, syllable, accidental} = getOctaveAndSyllable(midi, priority)
 
   const out: NotesNumberInfo = {
     id: info.id,
@@ -220,7 +220,7 @@ function numberInfoToStaffInfo(
     throw new Error('休止符或节奏音符无法转为线谱音符头')
   }
 
-  const midi = getNoteNumberMidi(info, keySignature)
+  const midi = getNoteNumberMidi(info)
   const {region, accidental} = getNoteRegionAndAccidental(DEFAULT_CLEF, midi, keySignature, priority)
   const staffInfo: NotesInfo = {
     id: info.id,

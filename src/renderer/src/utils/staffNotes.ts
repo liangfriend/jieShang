@@ -3,15 +3,13 @@ import { NoteSymbolTypeEnum } from 'deciphony-renderer'
 
 function collectNotesInfoIds(ni: NotesInfo, onId: (id: string) => void) {
   onId(ni.id)
-  for (const g of ni.graceNotes ?? []) collectNotesInfoIds(g, onId)
-  for (const g of ni.graceNotesAfter ?? []) collectNotesInfoIds(g, onId)
 }
 
 function walkMeasureNoteIds(measure: Measure, onId: (id: string) => void) {
   for (const slot of measure.notes) {
     if (!('type' in slot)) {
       const note = slot as NoteNumber
-      for (const ni of note.notesInfo) collectNotesInfoIds(ni, onId)
+      for (const ni of note.notesInfo) onId(ni.id)
       continue
     }
     const s = slot as StaffSlot

@@ -86,7 +86,7 @@ export type LocatedNotesNumberInfo = NotesNumberInfoPath & {
 // —— 创建选项 ——
 
 export type CreateMusicScoreOptions = Partial<
-  Pick<MusicScore, 'id' | 'type' | 'title' | 'bpm' | 'width' | 'height' | 'topSpaceHeight'>
+  Pick<MusicScore, 'id' | 'type' | 'title' | 'description' | 'bpm' | 'width' | 'height' | 'topSpaceHeight'>
 >;
 
 export type CreateGrandStaffOptions = Partial<
@@ -118,7 +118,7 @@ export type CreateNotesInfoOptions = {
   direction?: 'up' | 'down';
   beamType?: BeamTypeEnum;
   accidental?: AccidentalTypeEnum;
-  augmentationDot?: AugmentationDot | AccidentalTypeEnum;
+  augmentationDot?: AugmentationDot | (1 | 2 | 3);
   affiliatedSymbols?: NotesInfo['affiliatedSymbols'];
 };
 
@@ -141,7 +141,7 @@ export type CreateNoteRestOptions = {
   widthRatio?: number;
   widthRatioForMeasure?: number;
   clef?: ClefTypeEnum;
-  augmentationDot?: AugmentationDot | AccidentalTypeEnum;
+  augmentationDot?: AugmentationDot | (1 | 2 | 3);
   affiliatedSymbols?: NoteRest['affiliatedSymbols'];
 };
 
@@ -163,7 +163,11 @@ export type CreateNoteNumberOptions = {
 export type CreateSlurOptions = {
   startId: string;
   endId: string;
-  partial?: Partial<DoubleNoteAffiliatedSymbol>;
+  partial?: Partial<Omit<DoubleNoteAffiliatedSymbol, 'data'>> & {
+    data?: {
+      slur?: Partial<NonNullable<DoubleNoteAffiliatedSymbol['data']['slur']>>;
+    };
+  };
 };
 
 export type FramePartial = Partial<Pick<Accidental | Clef, 'relativeX' | 'relativeY' | 'relativeW' | 'relativeH'>>;

@@ -143,8 +143,8 @@ export {useNumberNotationRenderEdit} from './numberNotation/useRenderEdit'
 export {default as NumberHeadPropertyPanel} from './numberNotation/components/NumberHeadPropertyPanel.vue'
 export {default as GhostNumberPreview} from './numberNotation/components/GhostNumberPreview.vue'
 export {default as AddNumberStatePanel} from './numberNotation/components/AddNumberStatePanel.vue'
-export type {StaffGhostNotePreview as GhostNotePreviewState}
-export type {NumberGhostPreview as GhostNumberPreviewState}
+export type { GhostNotePreview as GhostNotePreviewState } from './standardStaff/renderEditSymbolAddAction'
+export type { GhostNumberPreview as GhostNumberPreviewState } from './numberNotation/renderEditNumberAddAction'
 
 // —— 共用 UI ——
 export {default as AddNoteStatePanel} from './components/AddNoteStatePanel.vue'

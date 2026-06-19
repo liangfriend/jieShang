@@ -128,7 +128,17 @@ export function addNoteToWhiteboardScore(params: AddWhiteboardNoteParams): boole
     KeySignatureTypeEnum.C,
     AccidentalTypeEnum.Sharp
   )
-  const writeAccidental = resolveAccidentalToWrite(measure, clef, keySignature, region, accidental)
+  const desiredAccidental: AlteredAccidental | null =
+    accidental != null && accidental !== AccidentalTypeEnum.Natural
+      ? (accidental as AlteredAccidental)
+      : null
+  const writeAccidental = resolveAccidentalToWrite(
+    measure,
+    clef,
+    keySignature,
+    region,
+    desiredAccidental
+  )
 
   const note = createNoteSymbol({
     region,

@@ -35,7 +35,7 @@ export function isRestSelected(
     selected: SlotData | null,
 ): selected is SlotData & { measure: Measure; self: NoteRest } {
     const self = selected?.self
-    return selected?.measure != null && self != null && isNoteRest(self)
+    return selected?.measure != null && self != null && isNoteRest(self as unknown as NoteRest)
 }
 
 export function isNumberRestSelected(
@@ -43,7 +43,7 @@ export function isNumberRestSelected(
 ): selected is SlotData & {measure: Measure; self: NoteNumber} {
     const self = selected?.self
     if (!selected?.measure || self == null || isMeasureAddMode(selected)) return false
-    return isNoteNumberSlot(self) && isSlotRestLike(self)
+    return isNoteNumberSlot(self as NoteNumber) && isSlotRestLike(self as NoteNumber)
 }
 
 function removeScoreAffiliatedById(musicScore: MusicScore, symbolId: string): boolean {

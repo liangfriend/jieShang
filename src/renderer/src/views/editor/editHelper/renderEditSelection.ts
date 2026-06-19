@@ -110,14 +110,14 @@ export function slotDataFromVDom(musicScore: MusicScore, vdom: VDom): SlotData |
     if (vdom.tag === 'affiliation' && vdom.special?.slur) {
         const sym = findAffiliatedSymbolById(musicScore, id)
         if (sym) {
-            return buildSlotData(musicScore, {self: sym as SlotData['self']})
+            return buildSlotData(musicScore, {self: sym as unknown as SlotData['self']})
         }
     }
 
     if (vdom.tag === 'affiliation' && vdom.special?.volta != null) {
         const sym = findAffiliatedSymbolById(musicScore, id)
         if (sym) {
-            return buildSlotData(musicScore, {self: sym as SlotData['self']})
+            return buildSlotData(musicScore, {self: sym as unknown as SlotData['self']})
         }
     }
 
@@ -153,7 +153,7 @@ export function slotDataFromVDom(musicScore: MusicScore, vdom: VDom): SlotData |
                 grandStaff: located.grandStaff,
                 singleStaff: located.singleStaff,
                 measure: located.measure,
-                self: located.slot as SlotData['self'],
+                self: located.slot as unknown as SlotData['self'],
             })
         }
     }
@@ -176,7 +176,7 @@ export function slotDataFromVDom(musicScore: MusicScore, vdom: VDom): SlotData |
             grandStaff: measureSymbol.located.grandStaff,
             singleStaff: measureSymbol.located.singleStaff,
             measure: measureSymbol.located.measure,
-            self: measureSymbol.symbol as SlotData['self'],
+            self: measureSymbol.symbol as unknown as SlotData['self'],
         })
     }
 
@@ -189,7 +189,7 @@ export function slotDataFromVDom(musicScore: MusicScore, vdom: VDom): SlotData |
             singleStaff: noteLocated.singleStaff,
             measure: noteLocated.measure,
             note,
-            self: (note ?? slot) as SlotData['self'],
+            self: (note ?? slot) as unknown as SlotData['self'],
         })
     }
 
@@ -202,7 +202,7 @@ export function slotDataFromVDom(musicScore: MusicScore, vdom: VDom): SlotData |
             if (located) {
                 return buildSlotData(musicScore, {
                     grandStaff: located.grandStaff,
-                    self: grandStaff.bracket as SlotData['self'],
+                    self: grandStaff.bracket as unknown as SlotData['self'],
                 })
             }
         }
@@ -222,7 +222,7 @@ export function slotDataFromVDom(musicScore: MusicScore, vdom: VDom): SlotData |
 
     const affiliated = findAffiliatedSymbolById(musicScore, id)
     if (affiliated) {
-        return buildSlotData(musicScore, {self: affiliated as SlotData['self']})
+        return buildSlotData(musicScore, {self: affiliated as unknown as SlotData['self']})
     }
 
     const measureLocated = findMeasureById(musicScore, id)

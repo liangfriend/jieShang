@@ -36,7 +36,7 @@ function pushGraceNumberNote(
   noteStaveIndex: Map<string, number>,
 ): void {
   if (!hasPitch(g)) return
-  const midi = getNoteNumberMidi(g, keySignature)
+  const midi = getNoteNumberMidi(g)
   pushPitchItem(seq, noteStaveIndex, staveIndex, {
     note_id: g.id,
     midi,
@@ -96,7 +96,7 @@ function appendNoteNumberSequence(
 
   for (const ni of note.notesInfo) {
     if (!hasPitch(ni)) continue
-    const midi = getNoteNumberMidi(ni, keySignature)
+    const midi = getNoteNumberMidi(ni)
     pushPitchItem(seq, noteStaveIndex, staveIndex, {note_id: ni.id, midi, duration, playTime})
   }
 

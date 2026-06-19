@@ -10,9 +10,9 @@ import {
   watch
 } from 'vue'
 import { parseAndFormatDimension } from '../utils/commonUtil'
-import { KeyCodeEnum } from '../../types/enum'
+import { KeyCodeEnum } from '@renderer/types/enum'
 import { defaultCodeConfig } from '../utils/constant'
-import { HighlightPolicy, NoteScoreResult } from '@/types/types'
+import { HighlightPolicy, NoteScoreResult } from '@renderer/types/types'
 import { useMidiStore } from '@renderer/store/midi.store'
 import { usePerformSkin } from '@renderer/components/performSkin/usePerformSkin'
 import {

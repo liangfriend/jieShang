@@ -12,7 +12,6 @@ import {
 import {
   createBarline,
   createClef,
-  createEmptyMeasure,
   createGrandStaff,
   createKeySignature,
   createMusicScore,

@@ -62,7 +62,7 @@ function resolveAccidental(
 }
 
 function resolveAugmentationDot(
-    input: AugmentationDot | AccidentalTypeEnum | undefined,
+    input: AugmentationDot | (1 | 2 | 3) | undefined,
 ): AugmentationDot | undefined {
     if (input == null) return undefined;
     if (typeof input === 'object' && 'count' in input) return input;
@@ -76,6 +76,7 @@ export function createMusicScore(options: CreateMusicScoreOptions = {}): MusicSc
         id: options.id ?? newId(),
         type: options.type ?? MusicScoreTypeEnum.StandardStaff,
         title: options.title ?? '',
+        description: options.description ?? '',
         bpm: options.bpm ?? 120,
         topSpaceHeight: options.topSpaceHeight ?? 0,
         width: options.width ?? 800,
@@ -369,13 +370,16 @@ export function createNoteNumber(options: CreateNoteNumberOptions): NoteNumber {
     let notesInfo: NotesNumberInfo[];
     if (options.notesInfo?.length) {
         notesInfo = options.notesInfo.map((ni) =>
-            createNotesNumberInfo(ni.syllable, {octaveDot: ni.octaveDot, accidental: ni.accidental}),
+            createNotesNumberInfo(ni.syllable, {
+                octaveDot: ni.octaveDot,
+                accidental: resolveAccidental(ni.accidental),
+            }),
         );
     } else {
         notesInfo = [
             createNotesNumberInfo(options.syllable, {
                 octaveDot: options.octaveDot,
-                accidental: options.accidental,
+                accidental: resolveAccidental(options.accidental),
             }),
         ];
     }
@@ -425,6 +429,8 @@ export function createVolta(options: CreateVoltaOptions): DoubleMeasureAffiliate
 /** 连音线 / 延音线：startId、endId 必须为 NotesInfo.id */
 export function createSlur(options: CreateSlurOptions): DoubleNoteAffiliatedSymbol {
     const {startId, endId, partial} = options;
+    const slurOverride = partial?.data?.slur;
+    const {data: _partialData, ...partialRest} = partial ?? {};
     return {
         ...ZERO_FRAME,
         id: partial?.id ?? newId(),
@@ -433,13 +439,12 @@ export function createSlur(options: CreateSlurOptions): DoubleNoteAffiliatedSymb
         endId,
         data: {
             slur: {
-                relativeStartPoint: {x: 0, y: 0},
-                relativeEndPoint: {x: 0, y: 0},
-                relativeControlPoint: {x: 0, y: 0},
-                thickness: 4,
-                ...partial?.data?.slur,
+                relativeStartPoint: slurOverride?.relativeStartPoint ?? {x: 0, y: 0},
+                relativeEndPoint: slurOverride?.relativeEndPoint ?? {x: 0, y: 0},
+                relativeControlPoint: slurOverride?.relativeControlPoint ?? {x: 0, y: 0},
+                thickness: slurOverride?.thickness ?? 4,
             },
         },
-        ...partial,
+        ...partialRest,
     };
 }

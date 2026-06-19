@@ -85,8 +85,8 @@ onMounted(async () => {
         >
           <div class="achievement-card__illus" aria-hidden="true">
             <img
-              v-if="item.illustrationUrl"
-              :src="item.illustrationUrl"
+              v-if="item.illustrationInactiveUrl && item.illustrationActiveUrl"
+              :src="item.completed ? item.illustrationActiveUrl : item.illustrationInactiveUrl"
               :alt="item.name"
               class="achievement-card__image"
             />
@@ -269,7 +269,9 @@ onMounted(async () => {
 .achievement-card__image {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
+  padding: 4px;
+  box-sizing: border-box;
 }
 
 .achievement-card__illus-placeholder {

@@ -15,7 +15,7 @@ import {
   midiToNoteName,
   noteNameToHelmholtz,
   noteNameToNoteString
-} from 'deciphony-core'
+} from '@renderer/utils/noteNameDisplay'
 import vDrag from '@renderer/directivces/drag'
 import { useMidiStore } from '@renderer/store/midi.store'
 import { useVirtualPianoSkin } from '@renderer/utils/collection/useVirtualPianoSkin'
@@ -339,7 +339,7 @@ const groupMaskList = computed(
       '小字八组'
     ]
 
-    const res = []
+    const res: { whiteKeyCount: number; groupName: string; color: string }[] = []
     let whiteKeyCount = 0
     for (let i = min; i <= max; i++) {
       whiteKeyCount += isWhiteKey(i) ? 1 : 0
@@ -520,21 +520,21 @@ const chordBoxStyle = computed((): CSSProperties => {
 const curChordIndex = ref(0)
 const curChord = computed(() => chordList.value[curChordIndex.value]!)
 
-const chordBoxRef = ref(null)
+const chordBoxRef = ref<HTMLElement | null>(null)
 const curActiveChordMidi = ref<Set<number>>(new Set())
 
 function chordBoxPointerDown(event: PointerEvent) {
   const el = event.target as HTMLElement
   el.setPointerCapture(event.pointerId)
   // 滑块距离左侧位置 TODO 因为这里的left只能是px,所以外部传入的值也必须px,否则计算出错
+  if (!chordBoxRef.value) return
   const { value: left, unit } = parseAndFormatDimension(getComputedStyle(chordBoxRef.value).left)
   // 键盘起始midi
   const startMidi = props.midi.min
   // 起始midi固定唱名索引
   const solmizationIndex = startMidi % 12 // 比如21键起始9
   // 计算左侧未出现的已经经过的当前组的宽度，只计算白键
-  const passWidth =
-    {
+  const solmizationOffsetMap: Record<string, number> = {
       '0': 0,
       '1': 1,
       '2': 1,
@@ -547,7 +547,8 @@ function chordBoxPointerDown(event: PointerEvent) {
       '9': 5,
       '10': 6,
       '11': 6
-    }['' + solmizationIndex] * whiteKeyWidthNum.value
+    }
+  const passWidth = (solmizationOffsetMap[String(solmizationIndex)] ?? 0) * whiteKeyWidthNum.value
   // 当前琴键已经走过的八度
   const baseMidi =
     (Math.floor((left + passWidth) / (whiteKeyWidthNum.value * 7)) + Math.floor(startMidi / 12)) *
@@ -616,12 +617,13 @@ function chordBoxPointerDown(event: PointerEvent) {
       lt: whiteKeyWidthNum.value * 7
     }
   ]
-  let midiAdd = relativeMidiAdd.find((e) => {
+  const matched = relativeMidiAdd.find((e) => {
     const relativeLeft = (left + passWidth) % (7 * whiteKeyWidthNum.value)
     if (relativeLeft >= e.gte && relativeLeft < e.lt) {
       return true
     }
-  }).relativeMidi
+  })
+  let midiAdd = matched?.relativeMidi ?? 0
   let midi = baseMidi + midiAdd
 
   // 特殊逻辑，如果当前钢琴以白键开始，但是原本左侧的0.5的黑键还会参与计算就会导致计算出错,这里进行修正

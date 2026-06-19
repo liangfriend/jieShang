@@ -1,5 +1,5 @@
 import type {Measure, MusicScore, SingleStaff} from 'deciphony-renderer'
-import {DoubleMeasureAffiliatedSymbolNameEnum} from 'deciphony-renderer'
+import {DoubleMeasureAffiliatedSymbolNameEnum, type DoubleMeasureAffiliatedSymbol} from 'deciphony-renderer'
 import {createVolta} from '@renderer/dr-extensions/dr-edit/score-builder'
 import {resolveVoltaMeasureIds} from './renderEditVoltaDrag'
 import type {MeasureEditSlot} from './renderEditMeasureProperties'
@@ -13,11 +13,11 @@ export const VOLTA_SPAN_OPTIONS: VoltaSpan[] = [1, 2, 3, 4, 5]
 export function findVoltaAtMeasure(
   musicScore: MusicScore,
   measureId: string,
-) {
+): DoubleMeasureAffiliatedSymbol | undefined {
   return musicScore.affiliatedSymbols.find(
-    (sym) =>
+    (sym): sym is DoubleMeasureAffiliatedSymbol =>
       sym.name === DoubleMeasureAffiliatedSymbolNameEnum.Volta
-      && sym.data?.volta
+      && sym.data?.volta != null
       && resolveVoltaMeasureIds(musicScore, sym).includes(measureId),
   )
 }

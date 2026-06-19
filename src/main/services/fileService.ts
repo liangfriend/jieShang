@@ -4,8 +4,24 @@ import path from 'path'
 import { BrowserWindow, dialog } from 'electron'
 import pathManager from '../utils/pathManager'
 
-const SJ_FILTER = [{ name: 'SJ 曲谱', extensions: ['sj'] }] as const
-const MUSICXML_FILTER = [{ name: 'MusicXML', extensions: ['xml', 'musicxml'] }] as const
+const SJ_FILTER: Electron.FileFilter[] = [{ name: 'SJ 曲谱', extensions: ['sj'] }]
+const MUSICXML_FILTER: Electron.FileFilter[] = [
+  { name: 'MusicXML', extensions: ['xml', 'musicxml'] }
+]
+
+function getDialogParent(window?: BrowserWindow | null): BrowserWindow | null {
+  return window ?? BrowserWindow.getFocusedWindow()
+}
+
+function showOpenDialog(options: Electron.OpenDialogOptions, window?: BrowserWindow | null) {
+  const parent = getDialogParent(window)
+  return parent ? dialog.showOpenDialog(parent, options) : dialog.showOpenDialog(options)
+}
+
+function showSaveDialog(options: Electron.SaveDialogOptions, window?: BrowserWindow | null) {
+  const parent = getDialogParent(window)
+  return parent ? dialog.showSaveDialog(parent, options) : dialog.showSaveDialog(options)
+}
 
 export class FileService {
   /**
@@ -47,12 +63,14 @@ export class FileService {
 
   /** 通过系统对话框导入 .sj 曲谱文件 */
   async importSj(window?: BrowserWindow | null) {
-    const parent = window ?? BrowserWindow.getFocusedWindow() ?? undefined
-    const { canceled, filePaths } = await dialog.showOpenDialog(parent, {
-      title: '导入 SJ 曲谱',
-      filters: [...SJ_FILTER],
-      properties: ['openFile']
-    })
+    const { canceled, filePaths } = await showOpenDialog(
+      {
+        title: '导入 SJ 曲谱',
+        filters: SJ_FILTER,
+        properties: ['openFile']
+      },
+      window
+    )
 
     if (canceled || !filePaths[0]) {
       return { canceled: true as const }
@@ -71,13 +89,15 @@ export class FileService {
 
   /** 通过系统对话框导出 .sj 曲谱文件 */
   async exportSj(content: string, defaultName = '未命名曲谱', window?: BrowserWindow | null) {
-    const parent = window ?? BrowserWindow.getFocusedWindow() ?? undefined
     const safeName = defaultName.replace(/[<>:"/\\|?*]/g, '_').trim() || '未命名曲谱'
-    const { canceled, filePath } = await dialog.showSaveDialog(parent, {
-      title: '导出 SJ 曲谱',
-      defaultPath: `${safeName}.sj`,
-      filters: [...SJ_FILTER]
-    })
+    const { canceled, filePath } = await showSaveDialog(
+      {
+        title: '导出 SJ 曲谱',
+        defaultPath: `${safeName}.sj`,
+        filters: [...SJ_FILTER]
+      },
+      window
+    )
 
     if (canceled || !filePath) {
       return { canceled: true as const }
@@ -93,12 +113,14 @@ export class FileService {
 
   /** 通过系统对话框导入 MusicXML 文件 */
   async importMusicXml(window?: BrowserWindow | null) {
-    const parent = window ?? BrowserWindow.getFocusedWindow() ?? undefined
-    const { canceled, filePaths } = await dialog.showOpenDialog(parent, {
-      title: '导入 MusicXML',
-      filters: [...MUSICXML_FILTER],
-      properties: ['openFile']
-    })
+    const { canceled, filePaths } = await showOpenDialog(
+      {
+        title: '导入 MusicXML',
+        filters: MUSICXML_FILTER,
+        properties: ['openFile']
+      },
+      window
+    )
 
     if (canceled || !filePaths[0]) {
       return { canceled: true as const }
@@ -117,13 +139,15 @@ export class FileService {
 
   /** 通过系统对话框导出 MusicXML 文件 */
   async exportMusicXml(content: string, defaultName = '未命名曲谱', window?: BrowserWindow | null) {
-    const parent = window ?? BrowserWindow.getFocusedWindow() ?? undefined
     const safeName = defaultName.replace(/[<>:"/\\|?*]/g, '_').trim() || '未命名曲谱'
-    const { canceled, filePath } = await dialog.showSaveDialog(parent, {
-      title: '导出 MusicXML',
-      defaultPath: `${safeName}.musicxml`,
-      filters: [...MUSICXML_FILTER]
-    })
+    const { canceled, filePath } = await showSaveDialog(
+      {
+        title: '导出 MusicXML',
+        defaultPath: `${safeName}.musicxml`,
+        filters: [...MUSICXML_FILTER]
+      },
+      window
+    )
 
     if (canceled || !filePath) {
       return { canceled: true as const }

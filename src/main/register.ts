@@ -10,4 +10,6 @@ export async function registerController() {
   container.resolve('noteSliceHighScoreController').register()
   container.resolve('fileController').register()
   container.resolve('windowController').register()
+
+  await container.resolve('achievementProgressService').syncCompletedToSteam()
 }

@@ -13,7 +13,8 @@ export function isNoteHeadSelected(
 ): selected is SlotData & { info: NotesInfo; note: NoteSymbol; measure: Measure } {
     const info = selected?.info
     return (
-        info != null
+        selected != null
+        && info != null
         && selected.self === info
         && selected.note != null
         && selected.measure != null

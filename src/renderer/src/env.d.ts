@@ -1,4 +1,10 @@
 /// <reference types="vite/client" />
+
+declare module '@renderer/toneColor/accoustic_grand_piano' {
+  const toneColor: unknown
+  export default toneColor
+}
+
 export {}
 
 declare global {
@@ -73,6 +79,55 @@ declare global {
         close: (name: string) => void
         focus: (name: string) => void
         get: (name: string) => void
+      }
+      collection: {
+        create(payload: {
+          type: 'tone_color' | 'score_skin' | 'piano_skin' | 'perform_skin'
+          name?: string
+          content?: string
+          description?: string | null
+          is_built_in?: boolean
+          owned?: boolean
+          level?: number
+          thumbnail?: string | null
+        }): Promise<any>
+        delete(id: number | string): Promise<any>
+        update(
+          id: number | string,
+          payload: Partial<{
+            type: 'tone_color' | 'score_skin' | 'piano_skin' | 'perform_skin'
+            name: string
+            content: string
+            description: string | null
+            is_built_in: boolean
+            owned: boolean
+            level: number
+            thumbnail: string | null
+          }>
+        ): Promise<any>
+        get(id: number | string): Promise<any>
+        query(
+          filters: Partial<{
+            id: number | string
+            type: 'tone_color' | 'score_skin' | 'piano_skin' | 'perform_skin'
+            is_built_in: boolean
+            owned: boolean
+          }>
+        ): Promise<any>
+        list(): Promise<any>
+        listByType(type: 'tone_color' | 'score_skin' | 'piano_skin' | 'perform_skin'): Promise<any>
+      }
+      achievement: {
+        list(): Promise<any>
+        unlock(payload: { key: string; completed_at?: string }): Promise<any>
+      }
+      noteSliceHighScore: {
+        list(): Promise<any>
+        upsertIfHigher(
+          mode: 'arcade' | 'endless' | 'extreme',
+          difficulty: 'easy' | 'standard' | 'hard',
+          score: number
+        ): Promise<any>
       }
     }
   }

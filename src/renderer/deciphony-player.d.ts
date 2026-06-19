@@ -39,6 +39,18 @@ declare module 'deciphony-player' {
     set onProgressEnd(cb: (progress: number, data: unknown) => void)
 
     set onEnd(cb: () => void)
+
+    trigger(options: {
+      id: string
+      midi: number
+      toneColor: string
+      volume?: number
+      duration?: number
+    }): void
+
+    release(options: { id: string }): void
+
+    releaseAll(): void
   }
 
   export type Intensity = 'strong' | 'weak' | 'secondary'

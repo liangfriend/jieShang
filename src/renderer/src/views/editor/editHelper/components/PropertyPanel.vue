@@ -67,8 +67,8 @@ const headerTitle = computed(() => {
         v-else-if="kind === 'rest' && selected?.measure && selected.self"
         :edit-slot="selected as any"
       />
-      <VoltaPropertyPanel v-else-if="kind === 'volta' && selected" :edit-slot="selected" />
-      <SlurPropertyPanel v-else-if="kind === 'slur' && selected" :edit-slot="selected" />
+      <VoltaPropertyPanel v-else-if="kind === 'volta' && selected" :edit-slot="selected as any" />
+      <SlurPropertyPanel v-else-if="kind === 'slur' && selected" :edit-slot="selected as any" />
       <div v-else class="property-panel__placeholder">
         <span class="property-panel__placeholder-emoji">🎼</span>
         <p class="property-panel__placeholder-text">

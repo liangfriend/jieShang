@@ -141,7 +141,7 @@ export async function loadScoreFromRoute(
     const template = resolveTemplateKey(route.query.template)
     const score = TEMPLATE_LOADERS[template]()
     dataStore.setTempScore(EDIT_NEW_SCORE_TEMP_ID, score)
-    return dataStore.getTempScore(EDIT_NEW_SCORE_TEMP_ID)
+    return dataStore.getTempScore(EDIT_NEW_SCORE_TEMP_ID) ?? null
   }
 
   return null

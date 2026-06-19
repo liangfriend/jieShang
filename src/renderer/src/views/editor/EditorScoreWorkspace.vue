@@ -83,6 +83,14 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', onKeyDown)
 })
 
+/** 五线谱/简谱 addNoteState 形态不同，用 computed 桥接 v-model */
+const addNoteStateModel = computed<any>({
+  get: () => addNoteState.value,
+  set: (value) => {
+    addNoteState.value = value
+  }
+})
+
 defineExpose({ clearSelection })
 </script>
 
@@ -90,10 +98,10 @@ defineExpose({ clearSelection })
   <header class="editor-top-bar">
     <AddNumberStatePanel
       v-if="isNumberNotation"
-      v-model="addNoteState as any"
+      v-model="addNoteStateModel"
       class="editor-top-bar__note"
     />
-    <AddNoteStatePanel v-else v-model="addNoteState" class="editor-top-bar__note" />
+    <AddNoteStatePanel v-else v-model="addNoteStateModel" class="editor-top-bar__note" />
     <slot name="top-actions" />
   </header>
 
