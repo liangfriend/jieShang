@@ -1,14 +1,17 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import i18n from '@renderer/i18n'
 
-const DEFAULT_TEXT = '加载中…'
+function defaultLoadingText() {
+  return i18n.global.t('common.loading')
+}
 
 export const useGlobalLoadingStore = defineStore('globalLoading', () => {
   const visible = ref(false)
-  const text = ref(DEFAULT_TEXT)
+  const text = ref(defaultLoadingText())
   let depth = 0
 
-  function show(message = DEFAULT_TEXT) {
+  function show(message = defaultLoadingText()) {
     depth += 1
     text.value = message
     visible.value = true

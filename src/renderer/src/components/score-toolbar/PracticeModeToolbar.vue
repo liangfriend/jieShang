@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Delete, Setting, VideoPause, VideoPlay } from '@element-plus/icons-vue'
 import { computed, inject, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
 import { scorePlaybackKey } from '@renderer/utils/scorePagePlayback'
 import type { MusicScoreTypeEnum } from 'deciphony-renderer'
@@ -17,6 +18,8 @@ defineProps<{
 const emit = defineEmits<{
   'notation-type-change': [value: MusicScoreTypeEnum]
 }>()
+
+const { t } = useI18n()
 
 const playback = inject(scorePlaybackKey)
 
@@ -68,7 +71,7 @@ function clearPlayData() {
         @click="openSettings"
       >
         <el-icon><Setting /></el-icon>
-        <span>设置</span>
+        <span>{{ t('practice.toolbar.settings') }}</span>
       </button>
       <button
         type="button"
@@ -77,7 +80,7 @@ function clearPlayData() {
         @click="handlePlay"
       >
         <el-icon><VideoPlay /></el-icon>
-        <span>播放</span>
+        <span>{{ t('practice.toolbar.play') }}</span>
       </button>
       <button
         type="button"
@@ -86,11 +89,11 @@ function clearPlayData() {
         @click="handlePause"
       >
         <el-icon><VideoPause /></el-icon>
-        <span>暂停</span>
+        <span>{{ t('practice.toolbar.pause') }}</span>
       </button>
       <button type="button" class="score-toolbar__btn" :disabled="stopDisabled" @click="handleStop">
         <span class="score-toolbar__stop-icon" aria-hidden="true" />
-        <span>停止</span>
+        <span>{{ t('practice.toolbar.stop') }}</span>
       </button>
       <ScoreToneColorAdjuster :disabled="toneColorDisabled" />
       <ScoreNotationTypeSelector
@@ -105,7 +108,7 @@ function clearPlayData() {
         @click="clearPlayData"
       >
         <el-icon><Delete /></el-icon>
-        <span>清空弹奏数据</span>
+        <span>{{ t('practice.toolbar.clearPlayData') }}</span>
       </button>
     </template>
   </ScoreToolbarShell>

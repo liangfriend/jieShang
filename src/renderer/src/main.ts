@@ -13,6 +13,7 @@ import { usePlayStore } from '@renderer/store/play.store'
 import { useMidiStore } from '@renderer/store/midi.store'
 import { useMetronomeStore } from '@renderer/store/metronome.store'
 import { useGameSettingsStore } from '@renderer/store/gameSettings.store'
+import { useLocaleStore } from '@renderer/store/locale.store'
 import { initCollectionActiveStorage } from '@renderer/utils/collection/collectionActiveStorage'
 import { initDefaultCollectionSelection } from '@renderer/utils/collection/initCollectionSelection'
 
@@ -32,6 +33,7 @@ async function bootstrap() {
   void useMidiStore().init()
   void useMetronomeStore().init()
   useGameSettingsStore().init()
+  useLocaleStore().init()
   app.mount('#app')
 }
 

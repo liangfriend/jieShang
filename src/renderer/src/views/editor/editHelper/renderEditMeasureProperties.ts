@@ -12,7 +12,6 @@ import {
   MeasureStartRepeatEnum,
   TIME_SIGNATURE_TYPES_ORDERED,
   TimeSignatureTypeEnum,
-  timeSignatureTypeToLabel,
 } from 'deciphony-renderer'
 import {insertMeasure} from '@renderer/dr-extensions/dr-edit/edit-util'
 import {
@@ -26,20 +25,18 @@ import {
 
 export type MeasureEditSlot = SlotData & {measure: Measure; singleStaff: SingleStaff}
 
-type BarlineOption = {value: BarlineTypeEnum; label: string}
-
-const ALL_BARLINE_OPTIONS: BarlineOption[] = [
-  {value: BarlineTypeEnum.Single_barline, label: '单小节线'},
-  {value: BarlineTypeEnum.Double_barline, label: '双小节线'},
-  {value: BarlineTypeEnum.StartRepeat_barline, label: '反复开始'},
-  {value: BarlineTypeEnum.EndRepeat_barline, label: '反复结束'},
-  {value: BarlineTypeEnum.Dashed_barline, label: '虚线'},
-  {value: BarlineTypeEnum.Final_barline, label: '终止线'},
-  {value: BarlineTypeEnum.Start_end_repeat_barline, label: '反复起止'},
-  {value: BarlineTypeEnum.Dotted_barline, label: '点线'},
-  {value: BarlineTypeEnum.Reverse_barline, label: '反小节线'},
-  {value: BarlineTypeEnum.Heavy_barline, label: '粗线'},
-  {value: BarlineTypeEnum.Heavy_double_barline, label: '粗双线'},
+const ALL_BARLINE_VALUES: BarlineTypeEnum[] = [
+  BarlineTypeEnum.Single_barline,
+  BarlineTypeEnum.Double_barline,
+  BarlineTypeEnum.StartRepeat_barline,
+  BarlineTypeEnum.EndRepeat_barline,
+  BarlineTypeEnum.Dashed_barline,
+  BarlineTypeEnum.Final_barline,
+  BarlineTypeEnum.Start_end_repeat_barline,
+  BarlineTypeEnum.Dotted_barline,
+  BarlineTypeEnum.Reverse_barline,
+  BarlineTypeEnum.Heavy_barline,
+  BarlineTypeEnum.Heavy_double_barline,
 ]
 
 /** 编辑界面不展示的类型 */
@@ -57,59 +54,56 @@ const BARLINE_BACK_ONLY = new Set<BarlineTypeEnum>([
   BarlineTypeEnum.EndRepeat_barline,
 ])
 
-export const BARLINE_F_OPTIONS = ALL_BARLINE_OPTIONS.filter(
-  (opt) => !BARLINE_HIDDEN.has(opt.value) && !BARLINE_BACK_ONLY.has(opt.value),
+export const BARLINE_F_VALUES: BarlineTypeEnum[] = [
+  BarlineTypeEnum.StartRepeat_barline,
+  BarlineTypeEnum.Reverse_barline,
+]
+
+export const BARLINE_B_VALUES = ALL_BARLINE_VALUES.filter(
+  (value) => !BARLINE_HIDDEN.has(value) && !BARLINE_FRONT_ONLY.has(value),
 )
 
-export const BARLINE_B_OPTIONS = ALL_BARLINE_OPTIONS.filter(
-  (opt) => !BARLINE_HIDDEN.has(opt.value) && !BARLINE_FRONT_ONLY.has(opt.value),
-)
-
-export const CLEF_OPTIONS: {value: ClefTypeEnum; label: string}[] = [
-  {value: ClefTypeEnum.Treble, label: '高音谱号'},
-  {value: ClefTypeEnum.Bass, label: '低音谱号'},
-  {value: ClefTypeEnum.Alto, label: '中音谱号'},
-  {value: ClefTypeEnum.Tenor, label: '次中音谱号'},
+export const CLEF_VALUES: ClefTypeEnum[] = [
+  ClefTypeEnum.Treble,
+  ClefTypeEnum.Bass,
+  ClefTypeEnum.Alto,
+  ClefTypeEnum.Tenor,
 ]
 
-export const KEY_SIGNATURE_OPTIONS: {value: KeySignatureTypeEnum; label: string}[] = [
-  {value: KeySignatureTypeEnum.C, label: 'C 大调'},
-  {value: KeySignatureTypeEnum.G, label: 'G 大调'},
-  {value: KeySignatureTypeEnum.D, label: 'D 大调'},
-  {value: KeySignatureTypeEnum.A, label: 'A 大调'},
-  {value: KeySignatureTypeEnum.E, label: 'E 大调'},
-  {value: KeySignatureTypeEnum.B, label: 'B 大调'},
-  {value: KeySignatureTypeEnum.F_sharp, label: 'F♯ 大调'},
-  {value: KeySignatureTypeEnum.C_sharp, label: 'C♯ 大调'},
-  {value: KeySignatureTypeEnum.F, label: 'F 大调'},
-  {value: KeySignatureTypeEnum.B_flat, label: 'B♭ 大调'},
-  {value: KeySignatureTypeEnum.E_flat, label: 'E♭ 大调'},
-  {value: KeySignatureTypeEnum.A_flat, label: 'A♭ 大调'},
-  {value: KeySignatureTypeEnum.D_flat, label: 'D♭ 大调'},
-  {value: KeySignatureTypeEnum.G_flat, label: 'G♭ 大调'},
-  {value: KeySignatureTypeEnum.C_flat, label: 'C♭ 大调'},
+export const KEY_SIGNATURE_VALUES: KeySignatureTypeEnum[] = [
+  KeySignatureTypeEnum.C,
+  KeySignatureTypeEnum.G,
+  KeySignatureTypeEnum.D,
+  KeySignatureTypeEnum.A,
+  KeySignatureTypeEnum.E,
+  KeySignatureTypeEnum.B,
+  KeySignatureTypeEnum.F_sharp,
+  KeySignatureTypeEnum.C_sharp,
+  KeySignatureTypeEnum.F,
+  KeySignatureTypeEnum.B_flat,
+  KeySignatureTypeEnum.E_flat,
+  KeySignatureTypeEnum.A_flat,
+  KeySignatureTypeEnum.D_flat,
+  KeySignatureTypeEnum.G_flat,
+  KeySignatureTypeEnum.C_flat,
 ]
 
-export const TIME_SIGNATURE_OPTIONS: {value: TimeSignatureTypeEnum; label: string}[] =
-  TIME_SIGNATURE_TYPES_ORDERED.map((value) => ({
-    value,
-    label: timeSignatureTypeToLabel(value),
-  }))
+export const TIME_SIGNATURE_VALUES: TimeSignatureTypeEnum[] = [...TIME_SIGNATURE_TYPES_ORDERED]
 
-export const START_REPEAT_OPTIONS: {value: MeasureStartRepeatEnum; label: string}[] = [
-  {value: MeasureStartRepeatEnum.Segno, label: 'Segno'},
-  {value: MeasureStartRepeatEnum.Coda, label: 'Coda'},
+export const START_REPEAT_VALUES: MeasureStartRepeatEnum[] = [
+  MeasureStartRepeatEnum.Segno,
+  MeasureStartRepeatEnum.Coda,
 ]
 
-export const END_REPEAT_OPTIONS: {value: MeasureEndRepeatEnum; label: string}[] = [
-  {value: MeasureEndRepeatEnum.Fine, label: 'Fine'},
-  {value: MeasureEndRepeatEnum.DC, label: 'D.C.'},
-  {value: MeasureEndRepeatEnum.DS, label: 'D.S.'},
-  {value: MeasureEndRepeatEnum.To_coda, label: 'To Coda'},
-  {value: MeasureEndRepeatEnum.DC_al_fine, label: 'D.C. al Fine'},
-  {value: MeasureEndRepeatEnum.DC_al_coda, label: 'D.C. al Coda'},
-  {value: MeasureEndRepeatEnum.DS_al_fine, label: 'D.S. al Fine'},
-  {value: MeasureEndRepeatEnum.DS_al_coda, label: 'D.S. al Coda'},
+export const END_REPEAT_VALUES: MeasureEndRepeatEnum[] = [
+  MeasureEndRepeatEnum.Fine,
+  MeasureEndRepeatEnum.DC,
+  MeasureEndRepeatEnum.DS,
+  MeasureEndRepeatEnum.To_coda,
+  MeasureEndRepeatEnum.DC_al_fine,
+  MeasureEndRepeatEnum.DC_al_coda,
+  MeasureEndRepeatEnum.DS_al_fine,
+  MeasureEndRepeatEnum.DS_al_coda,
 ]
 
 export function insertMeasureBefore(slot: MeasureEditSlot): Measure {

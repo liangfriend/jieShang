@@ -3,6 +3,7 @@ import { Delete, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
 import {
   deleteScoreFromDatabase,
@@ -11,6 +12,7 @@ import {
   type ScoreListItem
 } from '@renderer/utils/fileHelper'
 
+const { t } = useI18n()
 const router = useRouter()
 const keyword = ref('')
 const loading = ref(false)
@@ -51,11 +53,11 @@ async function deleteScore(score: ScoreListItem, event: Event) {
 
   try {
     await ElMessageBox.confirm(
-      `确定删除曲谱「${displayScoreName(score.name)}」吗？此操作不可恢复。`,
-      '删除曲谱',
+      t('scores.deleteConfirm', { name: displayScoreName(score.name) }),
+      t('scores.deleteTitle'),
       {
-        confirmButtonText: '删除',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.delete'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning',
         confirmButtonClass: 'el-button--danger'
       }
@@ -68,9 +70,9 @@ async function deleteScore(score: ScoreListItem, event: Event) {
   try {
     await deleteScoreFromDatabase(score.id)
     scores.value = scores.value.filter((item) => item.id !== score.id)
-    ElMessage.success('曲谱已删除')
+    ElMessage.success(t('scores.deleteSuccess'))
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '删除失败')
+    ElMessage.error(error instanceof Error ? error.message : t('common.deleteFailed'))
   } finally {
     deletingId.value = null
   }
@@ -90,12 +92,12 @@ onMounted(() => {
         <BackButton fallback="/" />
       </div>
       <div class="score-list__header-main">
-        <h1 class="score-list__title">我的曲谱</h1>
+        <h1 class="score-list__title">{{ t('scores.title') }}</h1>
         <el-input
           v-model="keyword"
           class="score-list__search"
           clearable
-          placeholder="搜索曲谱名称"
+          :placeholder="t('scores.searchPlaceholder')"
           :prefix-icon="Search"
         />
       </div>
@@ -103,7 +105,7 @@ onMounted(() => {
 
     <main v-loading="loading" class="score-list__main">
       <div v-if="!loading && scores.length === 0" class="score-list__empty">
-        {{ keyword.trim() ? '没有找到匹配的曲谱' : '还没有曲谱，先去制作一个吧～' }}
+        {{ keyword.trim() ? t('scores.emptyFiltered') : t('scores.empty') }}
       </div>
 
       <div v-else class="score-grid">
@@ -112,7 +114,7 @@ onMounted(() => {
             type="button"
             class="score-card__delete"
             :disabled="deletingId === score.id"
-            aria-label="删除曲谱"
+            :aria-label="t('scores.deleteAria')"
             @click="deleteScore(score, $event)"
           >
             <el-icon><Delete /></el-icon>

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import {ref} from 'vue'
+import { useI18n } from 'vue-i18n'
 
 const props = defineProps<{
   modelValue: number[]
@@ -8,6 +9,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: number[]]
 }>()
+
+const { t } = useI18n()
 
 const addInput = ref(1)
 
@@ -41,7 +44,9 @@ function addValue() {
       >
         {{ value }}
       </el-tag>
-      <span v-if="modelValue.length === 0" class="volta-value-editor__empty">至少保留一项</span>
+      <span v-if="modelValue.length === 0" class="volta-value-editor__empty">
+        {{ t('editor.volta.valueEditor.keepOne') }}
+      </span>
     </div>
     <div class="volta-value-editor__add">
       <el-input-number
@@ -51,9 +56,11 @@ function addValue() {
         controls-position="right"
         size="small"
       />
-      <el-button size="small" type="primary" @click="addValue">添加</el-button>
+      <el-button size="small" type="primary" @click="addValue">
+        {{ t('editor.volta.valueEditor.add') }}
+      </el-button>
     </div>
-    <p class="volta-value-editor__hint">表示第几遍播放时经过（从 1 起）</p>
+    <p class="volta-value-editor__hint">{{ t('editor.volta.valueEditor.hint') }}</p>
   </div>
 </template>
 

@@ -1007,23 +1007,25 @@ function expandMeasuresByPlayIndexes(
 /**
  * 曲谱转换为单个复谱表模式
  */
-export function getGrandStaffSingleStaffMismatchMessage(musicScore: MusicScore): string | null {
-  if (musicScore.grandStaffs.length === 0) return null
+export function hasGrandStaffSingleStaffMismatch(musicScore: MusicScore): boolean {
+  if (musicScore.grandStaffs.length === 0) return false
 
   const staffCounts = musicScore.grandStaffs.map((gs) => gs.staves.length)
   const expectedCount = staffCounts[0]!
-  if (staffCounts.some((count) => count !== expectedCount)) {
-    return '各复谱表的单谱表行数须一致，无法进入练习/新手模式'
-  }
+  return staffCounts.some((count) => count !== expectedCount)
+}
 
-  return null
+/** @deprecated 使用 hasGrandStaffSingleStaffMismatch */
+export function getGrandStaffSingleStaffMismatchMessage(musicScore: MusicScore): string | null {
+  return hasGrandStaffSingleStaffMismatch(musicScore) ? 'mismatch' : null
 }
 
 export function mergeGrandStaff(musicScore: MusicScore): MusicScore {
   if (musicScore.grandStaffs.length === 0) return musicScore
 
-  const mismatch = getGrandStaffSingleStaffMismatchMessage(musicScore)
-  if (mismatch) throw new Error(mismatch)
+  if (hasGrandStaffSingleStaffMismatch(musicScore)) {
+    throw new Error('Grand staff single-staff line count mismatch')
+  }
 
   const mergedGrandStaff = musicScore.grandStaffs[0]!
   const expectedCount = mergedGrandStaff.staves.length

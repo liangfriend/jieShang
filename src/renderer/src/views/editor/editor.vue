@@ -2,6 +2,7 @@
 import { ElMessage } from 'element-plus'
 import { MusicScoreTypeEnum } from 'deciphony-renderer'
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import ScoreNotationTypeSelector from '@renderer/components/score-toolbar/ScoreNotationTypeSelector.vue'
 import {
@@ -26,6 +27,7 @@ import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import '@renderer/styles/editor-cute.css'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const scoreId = computed(() => resolveScoreId(route.query.scoreId))
@@ -53,9 +55,9 @@ async function handleNotationTypeChange(targetType: MusicScoreTypeEnum) {
     const converted = convertScoreNotationType(musicScoreData.value, targetType)
     applyMusicScoreInPlace(musicScoreData.value, converted)
     notationWorkspaceKey.value += 1
-    ElMessage.success('曲谱类型已切换')
+    ElMessage.success(t('editor.messages.notationTypeSwitched'))
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '曲谱类型切换失败')
+    ElMessage.error(error instanceof Error ? error.message : t('editor.messages.notationTypeSwitchFailed'))
   }
 }
 
@@ -63,16 +65,16 @@ async function handleImportSj() {
   if (fileBusy.value) return
   fileBusy.value = true
   try {
-    await globalLoading.run('导入中…', async () => {
+    await globalLoading.run(t('common.importing'), async () => {
       const result = await importSjFromDisk()
       if (!result) return
       applyMusicScoreInPlace(musicScoreData.value, result.musicScore)
       notationWorkspaceKey.value += 1
       clearSelection()
-      ElMessage.success(`已导入 ${result.fileName}`)
+      ElMessage.success(t('editor.messages.importSuccess', { fileName: result.fileName }))
     })
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '导入失败')
+    ElMessage.error(error instanceof Error ? error.message : t('editor.messages.importFailed'))
   } finally {
     fileBusy.value = false
   }
@@ -82,16 +84,16 @@ async function handleImportMusicXml() {
   if (fileBusy.value) return
   fileBusy.value = true
   try {
-    await globalLoading.run('导入中…', async () => {
+    await globalLoading.run(t('common.importing'), async () => {
       const result = await importMusicXmlFromDisk()
       if (!result) return
       applyMusicScoreInPlace(musicScoreData.value, result.musicScore)
       notationWorkspaceKey.value += 1
       clearSelection()
-      ElMessage.success(`已导入 ${result.fileName}`)
+      ElMessage.success(t('editor.messages.importSuccess', { fileName: result.fileName }))
     })
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : 'MusicXML 导入失败')
+    ElMessage.error(error instanceof Error ? error.message : t('editor.messages.importMusicXmlFailed'))
   } finally {
     fileBusy.value = false
   }
@@ -101,12 +103,12 @@ async function handleExportMusicXml() {
   if (fileBusy.value) return
   fileBusy.value = true
   try {
-    await globalLoading.run('导出中…', async () => {
+    await globalLoading.run(t('common.exporting'), async () => {
       const ok = await exportMusicXmlToDisk(musicScoreData.value)
-      if (ok) ElMessage.success('导出成功')
+      if (ok) ElMessage.success(t('editor.messages.exportSuccess'))
     })
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : 'MusicXML 导出失败')
+    ElMessage.error(error instanceof Error ? error.message : t('editor.messages.exportMusicXmlFailed'))
   } finally {
     fileBusy.value = false
   }
@@ -116,12 +118,12 @@ async function handleExportSj() {
   if (fileBusy.value) return
   fileBusy.value = true
   try {
-    await globalLoading.run('导出中…', async () => {
+    await globalLoading.run(t('common.exporting'), async () => {
       const ok = await exportSjToDisk(musicScoreData.value)
-      if (ok) ElMessage.success('导出成功')
+      if (ok) ElMessage.success(t('editor.messages.exportSuccess'))
     })
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '导出失败')
+    ElMessage.error(error instanceof Error ? error.message : t('editor.messages.exportFailed'))
   } finally {
     fileBusy.value = false
   }
@@ -131,7 +133,7 @@ async function handleSaveScore() {
   if (fileBusy.value) return
   fileBusy.value = true
   try {
-    await globalLoading.run('保存中…', async () => {
+    await globalLoading.run(t('common.saving'), async () => {
       const saved = await saveScoreToDatabase(musicScoreData.value, scoreId.value)
       const dataStore = useDataStore()
       dataStore.setTempScore(CUR_PLAY_SCORE_TEMP_ID, musicScoreData.value)
@@ -144,17 +146,17 @@ async function handleSaveScore() {
           }
         })
       }
-      ElMessage.success('保存成功')
+      ElMessage.success(t('editor.messages.saveSuccess'))
     })
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '保存失败')
+    ElMessage.error(error instanceof Error ? error.message : t('editor.messages.saveFailed'))
   } finally {
     fileBusy.value = false
   }
 }
 
 onMounted(async () => {
-  globalLoading.show('加载中…')
+  globalLoading.show(t('common.loading'))
   try {
     const [, loaded] = await Promise.all([waitScoreSkin(), loadScoreFromRoute(route)])
     if (loaded) {
@@ -184,7 +186,7 @@ onMounted(async () => {
             @change="handleNotationTypeChange"
           />
           <el-button class="toolbar-btn" size="small" @click="editorNoticeVisible = true">
-            须知
+            {{ t('editor.toolbar.notice') }}
           </el-button>
           <el-button
             class="toolbar-btn"
@@ -192,7 +194,7 @@ onMounted(async () => {
             size="small"
             @click="handleImportMusicXml"
           >
-            导入 musicxml
+            {{ t('editor.toolbar.importMusicXml') }}
           </el-button>
           <el-button
             class="toolbar-btn"
@@ -200,13 +202,13 @@ onMounted(async () => {
             size="small"
             @click="handleExportMusicXml"
           >
-            导出 musicxml
+            {{ t('editor.toolbar.exportMusicXml') }}
           </el-button>
           <el-button class="toolbar-btn" :disabled="fileBusy" size="small" @click="handleImportSj">
-            导入 sj
+            {{ t('editor.toolbar.importSj') }}
           </el-button>
           <el-button class="toolbar-btn" :disabled="fileBusy" size="small" @click="handleExportSj">
-            导出 sj
+            {{ t('editor.toolbar.exportSj') }}
           </el-button>
           <el-button
             class="toolbar-btn toolbar-btn--save"
@@ -215,7 +217,7 @@ onMounted(async () => {
             type="primary"
             @click="handleSaveScore"
           >
-            保存
+            {{ t('editor.toolbar.save') }}
           </el-button>
         </div>
       </template>

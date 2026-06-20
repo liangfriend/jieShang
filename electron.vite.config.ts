@@ -35,7 +35,7 @@ function buildRendererResolve(useLocalDeciphony: boolean) {
 }
 
 export default defineConfig(({ mode }) => {
-  const useLocalDeciphony = mode === 'local'
+  const useLocalDeciphony = mode === 'deciphony'
 
   return {
     main: {

@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
 import {
   formatNoteSliceArcadeTimeRemaining,
@@ -9,6 +10,8 @@ import {
 } from '@renderer/views/noteSlice/noteSliceGameMode'
 import { NOTE_SLICE_COMBO_DISPLAY_MIN } from '@renderer/views/noteSlice/noteSliceScoring'
 import { useNoteSliceGameSession } from '@renderer/views/noteSlice/useNoteSliceGameSession'
+
+const { t } = useI18n()
 
 const { mode, score, combo, timeRemainingMs, lives, passTimeMs, isFrozen, isDoubleScore } =
   useNoteSliceGameSession()
@@ -23,13 +26,12 @@ const extremeElapsedLabel = computed(() => formatNoteSliceExtremeElapsed(passTim
 
 <template>
   <header class="note-slice-game-hud">
-    <!-- 左：返回 + 模式信息（街机倒计时 / 无限生命） -->
     <div class="note-slice-game-hud__left">
       <BackButton class="note-slice-game-hud__back" fallback="/" />
 
       <span v-if="mode === 'arcade'" class="note-slice-game-hud__timer">{{ arcadeTimeLabel }}</span>
 
-      <div v-else-if="mode === 'endless'" class="note-slice-game-hud__lives" aria-label="剩余生命">
+      <div v-else-if="mode === 'endless'" class="note-slice-game-hud__lives" :aria-label="t('noteSlice.hud.livesAria')">
         <span
           v-for="heartIndex in NOTE_SLICE_ENDLESS_LIVES"
           :key="heartIndex"
@@ -41,7 +43,7 @@ const extremeElapsedLabel = computed(() => formatNoteSliceExtremeElapsed(passTim
       </div>
 
       <div v-else-if="mode === 'extreme'" class="note-slice-game-hud__extreme-meta">
-        <div class="note-slice-game-hud__lives" aria-label="剩余生命">
+        <div class="note-slice-game-hud__lives" :aria-label="t('noteSlice.hud.livesAria')">
           <span
             v-for="heartIndex in NOTE_SLICE_EXTREME_LIVES"
             :key="heartIndex"
@@ -57,25 +59,23 @@ const extremeElapsedLabel = computed(() => formatNoteSliceExtremeElapsed(passTim
       </div>
     </div>
 
-    <!-- 中：分数（极限模式不计分，不显示） -->
     <div v-if="mode !== 'extreme'" class="note-slice-game-hud__center">
       <span class="note-slice-game-hud__score">{{ score }}</span>
     </div>
     <div v-else class="note-slice-game-hud__center" />
 
-    <!-- 右：增益状态 + 连击 -->
     <div class="note-slice-game-hud__right">
       <div v-if="showBuffUi" class="note-slice-game-hud__buffs" role="status">
         <span v-if="isFrozen" class="note-slice-game-hud__buff note-slice-game-hud__buff--freeze">
           <span aria-hidden="true">❄</span>
-          减速
+          {{ t('noteSlice.hud.slowDown') }}
         </span>
         <span
           v-if="isDoubleScore"
           class="note-slice-game-hud__buff note-slice-game-hud__buff--double"
         >
           <span aria-hidden="true">×2</span>
-          加倍
+          {{ t('noteSlice.hud.doubleScore') }}
         </span>
       </div>
 
@@ -83,7 +83,7 @@ const extremeElapsedLabel = computed(() => formatNoteSliceExtremeElapsed(passTim
         v-if="mode !== 'extreme' && combo >= NOTE_SLICE_COMBO_DISPLAY_MIN"
         class="note-slice-game-hud__combo"
       >
-        {{ combo }} 连击
+        {{ t('noteSlice.hud.combo', { n: combo }) }}
       </span>
     </div>
   </header>

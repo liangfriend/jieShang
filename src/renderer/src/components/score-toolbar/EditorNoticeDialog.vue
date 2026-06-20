@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 defineOptions({ name: 'EditorNoticeDialog' })
+
+const { t, tm } = useI18n()
 
 const props = defineProps<{
   modelValue: boolean
@@ -15,12 +18,16 @@ const visible = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
+
+const selectionItems = computed(() => tm('editor.noticeDialog.selectionItems') as string[])
+const importItems = computed(() => tm('editor.noticeDialog.importItems') as string[])
+const exportItems = computed(() => tm('editor.noticeDialog.exportItems') as string[])
 </script>
 
 <template>
   <el-dialog
     v-model="visible"
-    title="编辑须知"
+    :title="t('editor.noticeDialog.title')"
     width="560px"
     class="editor-notice-dialog cute-dialog"
     append-to-body
@@ -28,44 +35,32 @@ const visible = computed({
     destroy-on-close
   >
     <section class="editor-notice-dialog__section">
-      <h3 class="editor-notice-dialog__title">选中与删除</h3>
+      <h3 class="editor-notice-dialog__title">{{ t('editor.noticeDialog.selectionTitle') }}</h3>
       <ul class="editor-notice-dialog__list">
-        <li>点击曲谱上的元素即可选中；按 <kbd>Esc</kbd> 可退出选中状态。</li>
-        <li>选中后按 <kbd>Delete</kbd> 或 <kbd>Backspace</kbd> 可删除当前选中项。</li>
-        <li>
-          音符上的部分符号无法在谱面上直接选中，请在右侧<strong>音符属性栏</strong>中删除。
-        </li>
-        <li>
-          反复房子（volta）和连音线（slur）可以选中并删除，但需要精准点击到符号本身。
-        </li>
-        <li>小节、单谱表、复谱表在各自只剩最后一个时不允许删除（对应删除按钮会变灰）。</li>
+        <li v-for="(item, index) in selectionItems" :key="index">{{ item }}</li>
       </ul>
     </section>
 
     <section class="editor-notice-dialog__section">
-      <h3 class="editor-notice-dialog__title">MusicXML 导入为谱子</h3>
+      <h3 class="editor-notice-dialog__title">{{ t('editor.noticeDialog.importTitle') }}</h3>
       <p class="editor-notice-dialog__lead">
-        由于 musicxml 文件内容丰富，本人没办法一次性完全解析。以下是当前支持的符号内容：
+        {{ t('editor.noticeDialog.importLead') }}
       </p>
       <ul class="editor-notice-dialog__list">
-        <li>小节谱号、调号、拍号</li>
-        <li>音符、休止符、变音符号</li>
-        <li>小节线、反复房子记号、连音线</li>
+        <li v-for="(item, index) in importItems" :key="index">{{ item }}</li>
       </ul>
     </section>
 
     <section class="editor-notice-dialog__section">
-      <h3 class="editor-notice-dialog__title">谱子导出为 musicxml</h3>
+      <h3 class="editor-notice-dialog__title">{{ t('editor.noticeDialog.exportTitle') }}</h3>
       <ul class="editor-notice-dialog__list">
-        <li>小节谱号、调号、拍号</li>
-        <li>音符、休止符、变音符号</li>
-        <li>小节线、反复房子记号、连音线</li>
+        <li v-for="(item, index) in exportItems" :key="index">{{ item }}</li>
       </ul>
     </section>
 
     <template #footer>
       <button type="button" class="editor-notice-dialog__btn" @click="visible = false">
-        知道了
+        {{ t('common.gotIt') }}
       </button>
     </template>
   </el-dialog>

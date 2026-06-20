@@ -3,6 +3,7 @@ import musicScoreVue from 'deciphony-renderer'
 import { ElMessage } from 'element-plus'
 import { MusicScoreTypeEnum } from 'deciphony-renderer'
 import { computed, onMounted, provide, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
 import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
@@ -15,6 +16,7 @@ import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotatio
 import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
 import empty from '@renderer/template/empty'
 
+const { t } = useI18n()
 const route = useRoute()
 const playStore = usePlayStore()
 const globalLoading = useGlobalLoadingStore()
@@ -39,12 +41,12 @@ function onNotationTypeChange(targetType: MusicScoreTypeEnum) {
   try {
     applyDisplayType(targetType)
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '曲谱类型切换失败')
+    ElMessage.error(error instanceof Error ? error.message : t('play.messages.notationTypeSwitchFailed'))
   }
 }
 
 onMounted(async () => {
-  globalLoading.show('加载中…')
+  globalLoading.show(t('common.loading'))
   try {
     const [, loaded] = await Promise.all([waitScoreSkin(), loadScoreFromRoute(route)])
     if (loaded) {

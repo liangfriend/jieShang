@@ -1,6 +1,7 @@
 import { ElMessage } from 'element-plus'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import i18n from '@renderer/i18n'
 
 export type MidiDeviceSnapshot = {
   id: string
@@ -23,7 +24,7 @@ function toDeviceSnapshot(port: MIDIPort): MidiDeviceSnapshot {
 }
 
 function deviceLabel(device: MidiDeviceSnapshot) {
-  return device.name?.trim() || '未知 MIDI 设备'
+  return device.name?.trim() || i18n.global.t('midi.unknownDevice')
 }
 
 function notifyDeviceStateChanges(
@@ -40,9 +41,9 @@ function notifyDeviceStateChanges(
     shown.add(key)
 
     if (type === 'connect') {
-      ElMessage.success(`MIDI 设备已连接：${label}`)
+      ElMessage.success(i18n.global.t('midi.connected', { label }))
     } else {
-      ElMessage.info(`MIDI 设备已断开：${label}`)
+      ElMessage.info(i18n.global.t('midi.disconnected', { label }))
     }
   }
 

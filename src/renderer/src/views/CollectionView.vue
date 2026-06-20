@@ -2,9 +2,10 @@
 import { Delete, Search } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
-import { COLLECTION_TYPE_FILTER_OPTIONS } from '@renderer/constant/collection'
-import type { CollectionDbType, CollectionRecord } from '@renderer/types/collection'
+import { COLLECTION_ENUM_TO_DB } from '@renderer/constant/collection'
+import { CollectionTypeEnum, type CollectionDbType, type CollectionRecord } from '@renderer/types/collection'
 import {
   activateCollectionRecord,
   canDeleteCollection,
@@ -19,13 +20,14 @@ import {
 } from '@renderer/utils/collection/collectionHelper'
 import {
   collectionLevelCardClass,
-  collectionLevelLabel,
-  normalizeCollectionLevel
+  collectionLevelLabel
 } from '@renderer/utils/collection/collectionLevel'
 import {
   loadActiveCollectionSelection,
   type ActiveCollectionSelection
 } from '@renderer/utils/collection/collectionActiveStorage'
+
+const { t } = useI18n()
 
 const loading = ref(false)
 const deleting = ref(false)
@@ -34,6 +36,14 @@ const typeFilter = ref<CollectionDbType | 'all'>('all')
 const items = ref<CollectionRecord[]>([])
 const selectedId = ref<number | null>(null)
 const activeSelection = ref<ActiveCollectionSelection>(loadActiveCollectionSelection())
+
+const typeFilterOptions = computed(() => [
+  { value: 'all' as const, label: t('collection.typeFilter.all') },
+  ...Object.values(CollectionTypeEnum).map((enumValue) => {
+    const dbType = COLLECTION_ENUM_TO_DB[enumValue]
+    return { value: dbType, label: collectionTypeLabel(dbType) }
+  })
+])
 
 const filteredItems = computed(() => {
   const q = keyword.value.trim().toLowerCase()
@@ -76,9 +86,9 @@ function refreshActiveSelection() {
 }
 
 const emptyListText = computed(() => {
-  if (items.value.length === 0) return '还没有已拥有的藏品'
-  if (keyword.value.trim() || typeFilter.value !== 'all') return '没有匹配的藏品'
-  return '还没有已拥有的藏品'
+  if (items.value.length === 0) return t('collection.emptyOwned')
+  if (keyword.value.trim() || typeFilter.value !== 'all') return t('collection.emptyFiltered')
+  return t('collection.emptyOwned')
 })
 
 async function loadCollections() {
@@ -99,7 +109,7 @@ function handleUseSelected() {
   if (!item || isItemInUse(item)) return
   activateCollectionRecord(item)
   refreshActiveSelection()
-  ElMessage.success(`已使用「${resolveCollectionName(item)}」`)
+  ElMessage.success(t('collection.useSuccess', { name: resolveCollectionName(item) }))
 }
 
 async function handleDeleteSelected() {
@@ -108,9 +118,9 @@ async function handleDeleteSelected() {
 
   const name = resolveCollectionName(item)
   try {
-    await ElMessageBox.confirm(`确定删除藏品「${name}」吗？此操作不可恢复。`, '删除藏品', {
-      confirmButtonText: '删除',
-      cancelButtonText: '取消',
+    await ElMessageBox.confirm(t('collection.deleteConfirm', { name }), t('collection.deleteTitle'), {
+      confirmButtonText: t('common.delete'),
+      cancelButtonText: t('common.cancel'),
       type: 'warning',
       confirmButtonClass: 'el-button--danger'
     })
@@ -122,9 +132,9 @@ async function handleDeleteSelected() {
   try {
     await deleteCollectionFromDatabase(item.id)
     items.value = items.value.filter((row) => row.id !== item.id)
-    ElMessage.success('藏品已删除')
+    ElMessage.success(t('collection.deleteSuccess'))
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '删除失败')
+    ElMessage.error(error instanceof Error ? error.message : t('common.deleteFailed'))
   } finally {
     deleting.value = false
   }
@@ -150,12 +160,12 @@ onMounted(() => {
   <div class="collection-page">
     <header class="collection-page__header">
       <BackButton fallback="/" />
-      <h1 class="collection-page__title">藏品</h1>
+      <h1 class="collection-page__title">{{ t('collection.title') }}</h1>
       <el-input
         v-model="keyword"
         class="collection-page__search"
         clearable
-        placeholder="搜索藏品名称"
+        :placeholder="t('collection.searchPlaceholder')"
         :prefix-icon="Search"
       />
     </header>
@@ -164,7 +174,7 @@ onMounted(() => {
       <section v-loading="loading" class="collection-page__main">
         <div class="collection-page__filters">
           <button
-            v-for="option in COLLECTION_TYPE_FILTER_OPTIONS"
+            v-for="option in typeFilterOptions"
             :key="option.value"
             type="button"
             class="collection-filter"
@@ -193,7 +203,9 @@ onMounted(() => {
               ]"
               @click="selectItem(item)"
             >
-              <span v-if="isItemInUse(item)" class="collection-card__badge">使用中</span>
+              <span v-if="isItemInUse(item)" class="collection-card__badge">{{
+                t('collection.inUseBadge')
+              }}</span>
               <div class="collection-card__thumb">
                 <img
                   v-if="item.thumbnail"
@@ -213,7 +225,9 @@ onMounted(() => {
       </section>
 
       <aside class="collection-page__detail">
-        <div v-if="!selectedItem" class="collection-page__detail-empty">选择藏品查看详情</div>
+        <div v-if="!selectedItem" class="collection-page__detail-empty">
+          {{ t('collection.selectDetail') }}
+        </div>
 
         <div v-else class="collection-detail">
           <div class="collection-detail__preview">
@@ -233,12 +247,12 @@ onMounted(() => {
           </p>
 
           <section v-if="selectedDescription" class="collection-detail__section">
-            <h3 class="collection-detail__label">描述</h3>
+            <h3 class="collection-detail__label">{{ t('collection.description') }}</h3>
             <p class="collection-detail__text">{{ selectedDescription }}</p>
           </section>
 
           <section v-if="selectedHowToGet" class="collection-detail__section">
-            <h3 class="collection-detail__label">获取条件</h3>
+            <h3 class="collection-detail__label">{{ t('collection.howToGet') }}</h3>
             <p class="collection-detail__text">{{ selectedHowToGet }}</p>
           </section>
 
@@ -250,7 +264,7 @@ onMounted(() => {
             :disabled="selectedInUse"
             @click="handleUseSelected"
           >
-            {{ selectedInUse ? '已使用' : '使用' }}
+            {{ selectedInUse ? t('common.inUse') : t('common.use') }}
           </button>
 
           <button
@@ -261,7 +275,7 @@ onMounted(() => {
             @click="handleDeleteSelected"
           >
             <el-icon><Delete /></el-icon>
-            删除
+            {{ t('common.delete') }}
           </button>
         </div>
       </aside>

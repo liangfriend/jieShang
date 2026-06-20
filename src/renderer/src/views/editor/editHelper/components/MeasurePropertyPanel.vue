@@ -2,17 +2,25 @@
 import type { Measure, SlotData } from 'deciphony-renderer'
 import { BarlineTypeEnum, MusicScoreTypeEnum } from 'deciphony-renderer'
 import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
-  BARLINE_B_OPTIONS,
-  BARLINE_F_OPTIONS,
-  CLEF_OPTIONS,
-  END_REPEAT_OPTIONS,
+  resolveBarlineLabel,
+  resolveClefLabel,
+  resolveEndRepeatLabel,
+  resolveKeySignatureLabel,
+  resolveStartRepeatLabel,
+  resolveTimeSignatureLabel
+} from '@renderer/i18n/helpers'
+import {
+  BARLINE_B_VALUES,
+  BARLINE_F_VALUES,
+  CLEF_VALUES,
+  END_REPEAT_VALUES,
   findVoltaAtMeasure,
   formatVoltaValue,
   insertMeasureAfter,
   insertMeasureBefore,
-  KEY_SIGNATURE_OPTIONS,
-  parseVoltaValueText,
+  KEY_SIGNATURE_VALUES,
   removeVolta,
   setMeasureBarlineB,
   setMeasureBarlineF,
@@ -24,8 +32,8 @@ import {
   setMeasureStartRepeat,
   setMeasureTimeSignatureB,
   setMeasureTimeSignatureF,
-  START_REPEAT_OPTIONS,
-  TIME_SIGNATURE_OPTIONS,
+  START_REPEAT_VALUES,
+  TIME_SIGNATURE_VALUES,
   type MeasureEditSlot
 } from '../renderEditMeasureProperties'
 import { VOLTA_SPAN_OPTIONS, tryAddVoltaFromMeasure, type VoltaSpan } from '../renderEditVoltaAdd'
@@ -33,6 +41,8 @@ import { VOLTA_SPAN_OPTIONS, tryAddVoltaFromMeasure, type VoltaSpan } from '../r
 const props = defineProps<{
   editSlot: SlotData
 }>()
+
+const { t } = useI18n()
 
 const measureEditSlot = computed(() => props.editSlot as MeasureEditSlot)
 const measure = computed(() => measureEditSlot.value.measure as Measure)
@@ -127,229 +137,202 @@ function onRemoveVolta() {
   voltaText.value = ''
   voltaValueText.value = ''
 }
-
-function onVoltaTextInput() {
-  const volta = voltaAtMeasure.value
-  if (!volta?.data.volta) return
-  volta.data.volta.text = voltaText.value
-}
-
-function onVoltaValueInput() {
-  const volta = voltaAtMeasure.value
-  if (!volta?.data.volta) return
-  volta.data.volta.value = parseVoltaValueText(voltaValueText.value)
-}
 </script>
 
 <template>
   <div class="measure-props">
     <section class="measure-props__section">
-      <div class="measure-props__label">小节操作</div>
+      <div class="measure-props__label">{{ t('editor.measure.actions') }}</div>
       <div class="measure-props__row">
-        <el-button size="small" @click="onInsertBefore">前插小节</el-button>
-        <el-button size="small" @click="onInsertAfter">后插小节</el-button>
+        <el-button size="small" @click="onInsertBefore">{{ t('editor.measure.insertBefore') }}</el-button>
+        <el-button size="small" @click="onInsertAfter">{{ t('editor.measure.insertAfter') }}</el-button>
       </div>
     </section>
 
     <section class="measure-props__section">
-      <div class="measure-props__label">后置小节线</div>
+      <div class="measure-props__label">{{ t('editor.measure.barlineBack') }}</div>
       <el-select v-model="barlineB" class="measure-props__select" size="small">
         <el-option
-          v-for="opt in BARLINE_B_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
+          v-for="value in BARLINE_B_VALUES"
+          :key="value"
+          :label="resolveBarlineLabel(value)"
+          :value="value"
         />
       </el-select>
     </section>
 
     <section class="measure-props__section">
-      <div class="measure-props__label">前置小节线</div>
+      <div class="measure-props__label">{{ t('editor.measure.barlineFront') }}</div>
       <el-select
         v-model="barlineF"
         class="measure-props__select"
         clearable
-        placeholder="无"
+        :placeholder="t('common.none')"
         size="small"
       >
         <el-option
-          v-for="opt in BARLINE_F_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
+          v-for="value in BARLINE_F_VALUES"
+          :key="value"
+          :label="resolveBarlineLabel(value)"
+          :value="value"
         />
       </el-select>
     </section>
 
     <section v-if="showClef" class="measure-props__section">
-      <div class="measure-props__label">前置谱号</div>
+      <div class="measure-props__label">{{ t('editor.measure.clefFront') }}</div>
       <el-select
         v-model="clefF"
         class="measure-props__select"
         clearable
-        placeholder="无"
+        :placeholder="t('common.none')"
         size="small"
       >
         <el-option
-          v-for="opt in CLEF_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
+          v-for="value in CLEF_VALUES"
+          :key="value"
+          :label="resolveClefLabel(value)"
+          :value="value"
         />
       </el-select>
     </section>
 
     <section class="measure-props__section">
-      <div class="measure-props__label">前置调号</div>
+      <div class="measure-props__label">{{ t('editor.measure.keySignatureFront') }}</div>
       <el-select
         v-model="keySignatureF"
         class="measure-props__select"
         clearable
-        placeholder="无"
+        :placeholder="t('common.none')"
         size="small"
       >
         <el-option
-          v-for="opt in KEY_SIGNATURE_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
+          v-for="value in KEY_SIGNATURE_VALUES"
+          :key="value"
+          :label="resolveKeySignatureLabel(value)"
+          :value="value"
         />
       </el-select>
     </section>
 
     <section class="measure-props__section">
-      <div class="measure-props__label">前置拍号</div>
+      <div class="measure-props__label">{{ t('editor.measure.timeSignatureFront') }}</div>
       <el-select
         v-model="timeSignatureF"
         class="measure-props__select"
         clearable
-        placeholder="无"
+        :placeholder="t('common.none')"
         size="small"
       >
         <el-option
-          v-for="opt in TIME_SIGNATURE_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
+          v-for="value in TIME_SIGNATURE_VALUES"
+          :key="value"
+          :label="resolveTimeSignatureLabel(value)"
+          :value="value"
         />
       </el-select>
     </section>
 
     <section v-if="showClef" class="measure-props__section">
-      <div class="measure-props__label">后置谱号</div>
+      <div class="measure-props__label">{{ t('editor.measure.clefBack') }}</div>
       <el-select
         v-model="clefB"
         class="measure-props__select"
         clearable
-        placeholder="无"
+        :placeholder="t('common.none')"
         size="small"
       >
         <el-option
-          v-for="opt in CLEF_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
+          v-for="value in CLEF_VALUES"
+          :key="value"
+          :label="resolveClefLabel(value)"
+          :value="value"
         />
       </el-select>
     </section>
 
     <section class="measure-props__section">
-      <div class="measure-props__label">后置调号</div>
+      <div class="measure-props__label">{{ t('editor.measure.keySignatureBack') }}</div>
       <el-select
         v-model="keySignatureB"
         class="measure-props__select"
         clearable
-        placeholder="无"
+        :placeholder="t('common.none')"
         size="small"
       >
         <el-option
-          v-for="opt in KEY_SIGNATURE_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
+          v-for="value in KEY_SIGNATURE_VALUES"
+          :key="value"
+          :label="resolveKeySignatureLabel(value)"
+          :value="value"
         />
       </el-select>
     </section>
 
     <section class="measure-props__section">
-      <div class="measure-props__label">后置拍号</div>
+      <div class="measure-props__label">{{ t('editor.measure.timeSignatureBack') }}</div>
       <el-select
         v-model="timeSignatureB"
         class="measure-props__select"
         clearable
-        placeholder="无"
+        :placeholder="t('common.none')"
         size="small"
       >
         <el-option
-          v-for="opt in TIME_SIGNATURE_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
+          v-for="value in TIME_SIGNATURE_VALUES"
+          :key="value"
+          :label="resolveTimeSignatureLabel(value)"
+          :value="value"
         />
       </el-select>
     </section>
 
     <section class="measure-props__section">
-      <div class="measure-props__label">小节前反复</div>
+      <div class="measure-props__label">{{ t('editor.measure.startRepeat') }}</div>
       <el-select
         v-model="startRepeat"
         class="measure-props__select"
         clearable
-        placeholder="无"
+        :placeholder="t('common.none')"
         size="small"
       >
         <el-option
-          v-for="opt in START_REPEAT_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
+          v-for="value in START_REPEAT_VALUES"
+          :key="value"
+          :label="resolveStartRepeatLabel(value)"
+          :value="value"
         />
       </el-select>
     </section>
 
     <section class="measure-props__section">
-      <div class="measure-props__label">小节后反复</div>
+      <div class="measure-props__label">{{ t('editor.measure.endRepeat') }}</div>
       <el-select
         v-model="endRepeat"
         class="measure-props__select"
         clearable
-        placeholder="无"
+        :placeholder="t('common.none')"
         size="small"
       >
         <el-option
-          v-for="opt in END_REPEAT_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
+          v-for="value in END_REPEAT_VALUES"
+          :key="value"
+          :label="resolveEndRepeatLabel(value)"
+          :value="value"
         />
       </el-select>
     </section>
 
     <section class="measure-props__section">
-      <div class="measure-props__label">反复房子 (Volta)</div>
+      <div class="measure-props__label">{{ t('editor.measure.volta') }}</div>
       <template v-if="voltaAtMeasure">
-        <!--        小节属性栏不显示volta属性-->
-        <!--        <el-input-->
-        <!--          v-model="voltaText"-->
-        <!--          class="measure-props__input"-->
-        <!--          placeholder="文案，如 1."-->
-        <!--          size="small"-->
-        <!--          @change="onVoltaTextInput"-->
-        <!--        />-->
-        <!--        <el-input-->
-        <!--          v-model="voltaValueText"-->
-        <!--          class="measure-props__input"-->
-        <!--          placeholder="播放轮次，如 1 或 1, 2"-->
-        <!--          size="small"-->
-        <!--          @change="onVoltaValueInput"-->
-        <!--        />-->
         <el-button
           class="measure-props__btn-block"
           size="small"
           type="danger"
           @click="onRemoveVolta"
         >
-          移除 Volta
+          {{ t('editor.measure.removeVolta') }}
         </el-button>
       </template>
       <div v-else class="measure-props__row">

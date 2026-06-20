@@ -4,6 +4,7 @@ import {
   SLUR_THICKNESS_MAX,
   SLUR_THICKNESS_MIN,
 } from '../renderEditSlurProperties'
+import { useI18n } from 'vue-i18n'
 
 defineProps<{
   modelValue: number
@@ -12,11 +13,13 @@ defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: number]
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
   <div class="slur-thickness">
-    <div class="slur-thickness__label">线宽</div>
+    <div class="slur-thickness__label">{{ t('editor.slur.thickness') }}</div>
     <el-input-number
       :model-value="modelValue"
       :min="SLUR_THICKNESS_MIN"

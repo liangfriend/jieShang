@@ -3,6 +3,7 @@ import type { PlaySequence } from 'deciphony-player'
 import { NPlayer, activeContext, startJPlayer } from 'deciphony-player'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import i18n from '@renderer/i18n'
 import piano from '@renderer/toneColor/accoustic_grand_piano.json'
 import { DEFAULT_TONE_COLOR_ID, TONE_COLOR_MAP } from '@renderer/constant/toneColor'
 import { WHITEBOARD_NOTE_HOLD_DURATION_SEC } from '@renderer/constant/whiteboard'
@@ -194,11 +195,11 @@ export const usePlayStore = defineStore('play', () => {
     try {
       const res = await window.api.collection.get(id)
       if (!res?.success || !res.data) {
-        throw new Error('音色不存在')
+        throw new Error(i18n.global.t('play.toneColor.notFound'))
       }
       const record = res.data as CollectionRecord
       if (record.type !== 'tone_color' || !record.owned) {
-        throw new Error('音色不可用')
+        throw new Error(i18n.global.t('play.toneColor.unavailable'))
       }
 
       const toneData = parseToneColorContent(record.content)
@@ -218,7 +219,7 @@ export const usePlayStore = defineStore('play', () => {
         await setCollectionToneColor(DEFAULT_TONE_COLOR_COLLECTION_ID)
       } catch {
         collectionToneColorInitPromise = null
-        throw new Error('默认音色加载失败')
+        throw new Error(i18n.global.t('play.toneColor.defaultLoadFailed'))
       }
     })()
 

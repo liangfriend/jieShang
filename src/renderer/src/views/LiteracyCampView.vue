@@ -1,15 +1,18 @@
 <script lang="ts" setup>
+import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
+
+const { t } = useI18n()
 </script>
 
 <template>
   <div class="sub-mode-page">
     <header class="sub-mode-page__header">
       <BackButton fallback="/" />
-      <h1 class="sub-mode-page__title">素养训练营</h1>
+      <h1 class="sub-mode-page__title">{{ t('router.literacyCamp') }}</h1>
     </header>
     <main class="sub-mode-page__main">
-      <p class="sub-mode-page__placeholder">素养训练营页面开发中</p>
+      <p class="sub-mode-page__placeholder">{{ t('router.literacyCampPlaceholder') }}</p>
     </main>
   </div>
 </template>

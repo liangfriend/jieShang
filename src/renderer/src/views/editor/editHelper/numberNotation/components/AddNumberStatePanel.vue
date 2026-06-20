@@ -1,13 +1,17 @@
 <script lang="ts" setup>
 import type {Chronaxie} from 'deciphony-renderer'
+import { useI18n } from 'vue-i18n'
+import { resolveAddNoteKindLabel, resolveNoteDurationLabel } from '@renderer/i18n/helpers'
 import {
-  ADD_NUMBER_KIND_OPTIONS,
-  CHRONAXIE_OPTIONS,
+  ADD_NUMBER_KIND_VALUES,
+  CHRONAXIE_VALUES,
   type AddNumberSlotKind,
   type AddNumberState,
 } from '../renderEditNumberAddState'
 
 const model = defineModel<AddNumberState>({required: true})
+
+const { t } = useI18n()
 
 function setKind(kind: AddNumberSlotKind) {
   model.value = {...model.value, kind}
@@ -21,26 +25,26 @@ function setChronaxie(chronaxie: Chronaxie) {
 <template>
   <div class="add-note-state">
     <div class="add-note-state__row">
-      <span class="add-note-state__label">添加</span>
+      <span class="add-note-state__label">{{ t('editor.addNote.add') }}</span>
       <el-radio-group :model-value="model.kind" size="small" @change="setKind">
         <el-radio-button
-          v-for="opt in ADD_NUMBER_KIND_OPTIONS"
-          :key="opt.value"
-          :label="opt.value"
+          v-for="value in ADD_NUMBER_KIND_VALUES"
+          :key="value"
+          :label="value"
         >
-          {{ opt.label }}
+          {{ resolveAddNoteKindLabel(value) }}
         </el-radio-button>
       </el-radio-group>
     </div>
     <div class="add-note-state__row">
-      <span class="add-note-state__label">时值</span>
+      <span class="add-note-state__label">{{ t('editor.addNote.duration') }}</span>
       <el-radio-group :model-value="model.chronaxie" size="small" @change="setChronaxie">
         <el-radio-button
-          v-for="opt in CHRONAXIE_OPTIONS"
-          :key="opt.value"
-          :label="opt.value"
+          v-for="value in CHRONAXIE_VALUES"
+          :key="value"
+          :label="value"
         >
-          {{ opt.label }}
+          {{ resolveNoteDurationLabel(value) }}
         </el-radio-button>
       </el-radio-group>
     </div>

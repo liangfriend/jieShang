@@ -2,13 +2,22 @@
 import type {Chronaxie, MusicScore} from 'deciphony-renderer'
 import {AccidentalTypeEnum, BeamTypeEnum} from 'deciphony-renderer'
 import {computed} from 'vue'
-import {CHRONAXIE_OPTIONS} from '../renderEditNumberAddState'
+import { useI18n } from 'vue-i18n'
 import {
-  ACCIDENTAL_SELECT_OPTIONS,
-  AUGMENTATION_DOT_OPTIONS,
-  BEAM_TYPE_OPTIONS,
-  OCTAVE_DOT_OPTIONS,
-  SYLLABLE_OPTIONS,
+  resolveAccidentalSelectLabel,
+  resolveAugmentationDotLabel,
+  resolveBeamTypeLabel,
+  resolveNoteDurationLabel,
+  resolveOctaveDotLabel,
+  resolveSyllableLabel
+} from '@renderer/i18n/helpers'
+import {CHRONAXIE_VALUES} from '../renderEditNumberAddState'
+import {
+  ACCIDENTAL_SELECT_VALUES,
+  AUGMENTATION_DOT_VALUES,
+  BEAM_TYPE_VALUES,
+  OCTAVE_DOT_VALUES,
+  SYLLABLE_VALUES,
   setNoteNumberBeamType,
   setNoteNumberChronaxie,
   setNotesNumberInfoAccidental,
@@ -25,6 +34,8 @@ import RelativeXOffsetControl from '../../standardStaff/components/RelativeXOffs
 const props = defineProps<{
   editSlot: NumberHeadEditSlot
 }>()
+
+const { t } = useI18n()
 
 const notesInfo = computed(() => props.editSlot.info)
 const note = computed(() => props.editSlot.note)
@@ -77,63 +88,63 @@ function onAddSlur(span: SlurSpan) {
 <template>
   <div class="note-head-props">
     <section class="note-head-props__section">
-      <div class="note-head-props__label">唱名</div>
+      <div class="note-head-props__label">{{ t('editor.note.syllable') }}</div>
       <el-select v-model="syllable" class="note-head-props__select" size="small">
         <el-option
-          v-for="opt in SYLLABLE_OPTIONS"
-          :key="String(opt.value)"
-          :label="opt.label"
-          :value="opt.value"
+          v-for="value in SYLLABLE_VALUES"
+          :key="String(value)"
+          :label="resolveSyllableLabel(value)"
+          :value="value"
         />
       </el-select>
     </section>
 
     <section class="note-head-props__section">
-      <div class="note-head-props__label">八度点</div>
+      <div class="note-head-props__label">{{ t('editor.note.octaveDotLabel') }}</div>
       <el-select v-model="octaveDot" class="note-head-props__select" size="small">
         <el-option
-          v-for="opt in OCTAVE_DOT_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
+          v-for="value in OCTAVE_DOT_VALUES"
+          :key="value"
+          :label="resolveOctaveDotLabel(value)"
+          :value="value"
         />
       </el-select>
     </section>
 
     <section class="note-head-props__section">
-      <div class="note-head-props__label">时值</div>
+      <div class="note-head-props__label">{{ t('editor.note.duration') }}</div>
       <el-radio-group v-model="chronaxie" class="note-head-props__radio" size="small">
         <el-radio-button
-          v-for="opt in CHRONAXIE_OPTIONS"
-          :key="opt.value"
-          :label="opt.value"
+          v-for="value in CHRONAXIE_VALUES"
+          :key="value"
+          :label="value"
         >
-          {{ opt.label }}
+          {{ resolveNoteDurationLabel(value) }}
         </el-radio-button>
       </el-radio-group>
     </section>
 
     <section class="note-head-props__section">
-      <div class="note-head-props__label">减时线连接</div>
+      <div class="note-head-props__label">{{ t('editor.note.beamConnection') }}</div>
       <el-radio-group v-model="beamType" class="note-head-props__radio" size="small">
         <el-radio-button
-          v-for="opt in BEAM_TYPE_OPTIONS"
-          :key="opt.value"
-          :label="opt.value"
+          v-for="value in BEAM_TYPE_VALUES"
+          :key="value"
+          :label="value"
         >
-          {{ opt.label }}
+          {{ resolveBeamTypeLabel(value) }}
         </el-radio-button>
       </el-radio-group>
     </section>
 
     <section class="note-head-props__section">
-      <div class="note-head-props__label">变音符号</div>
+      <div class="note-head-props__label">{{ t('editor.note.accidental') }}</div>
       <el-select v-model="accidental" class="note-head-props__select" size="small">
         <el-option
-          v-for="opt in ACCIDENTAL_SELECT_OPTIONS"
-          :key="opt.value || 'none'"
-          :label="opt.label"
-          :value="opt.value"
+          v-for="value in ACCIDENTAL_SELECT_VALUES"
+          :key="value || 'none'"
+          :label="resolveAccidentalSelectLabel(value)"
+          :value="value"
         />
       </el-select>
       <RelativeXOffsetControl
@@ -144,14 +155,14 @@ function onAddSlur(span: SlurSpan) {
     </section>
 
     <section class="note-head-props__section">
-      <div class="note-head-props__label">附点</div>
+      <div class="note-head-props__label">{{ t('editor.note.augmentationDot') }}</div>
       <el-radio-group v-model="augmentationDot" class="note-head-props__radio" size="small">
         <el-radio-button
-          v-for="opt in AUGMENTATION_DOT_OPTIONS"
-          :key="opt.value"
-          :label="opt.value"
+          v-for="value in AUGMENTATION_DOT_VALUES"
+          :key="value"
+          :label="value"
         >
-          {{ opt.label }}
+          {{ resolveAugmentationDotLabel(value) }}
         </el-radio-button>
       </el-radio-group>
     </section>

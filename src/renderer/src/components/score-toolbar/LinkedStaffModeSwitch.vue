@@ -1,8 +1,11 @@
 <script setup lang="ts">
 import type { MusicScore } from 'deciphony-renderer'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 defineOptions({ name: 'LinkedStaffModeSwitch' })
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -30,7 +33,7 @@ const linkedStaffMode = computed({
 
 <template>
   <label class="linked-staff-mode" :class="{ 'linked-staff-mode--disabled': disabled }">
-    <span class="linked-staff-mode__label">连谱模式</span>
+    <span class="linked-staff-mode__label">{{ t('editor.toolbar.linkedStaffMode') }}</span>
     <el-switch v-model="linkedStaffMode" :disabled="disabled" size="small" />
   </label>
 </template>

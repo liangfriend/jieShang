@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { storeToRefs } from 'pinia'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
 import VerticalDragSlider from '@renderer/components/VerticalDragSlider.vue'
 import { KeySignatureTypeEnum } from 'deciphony-renderer'
@@ -51,6 +52,8 @@ const emit = defineEmits<{
   clearNotes: []
   changeKeySignature: [KeySignatureTypeEnum]
 }>()
+
+const { t } = useI18n()
 
 const whiteboardStore = useWhiteboardStore()
 const playStore = usePlayStore()
@@ -153,14 +156,14 @@ function formatBpm(value: number) {
     <div class="whiteboard-toolbar__main">
       <div class="score-toolbar__adjuster">
         <button type="button" class="score-toolbar__btn" @click="togglePanel('keyCount')">
-          琴键 {{ keyCountLabel }}
+          {{ t('whiteboard.toolbar.keys') }} {{ keyCountLabel }}
         </button>
         <div v-if="activePanel === 'keyCount'" class="score-toolbar__popup" @pointerdown.stop>
           <div class="whiteboard-toolbar__field">
-            <span class="whiteboard-toolbar__field-label">琴键数量</span>
+            <span class="whiteboard-toolbar__field-label">{{ t('whiteboard.toolbar.keyCount') }}</span>
             <select class="whiteboard-toolbar__select" :value="keyCount" @change="onKeyCountChange">
               <option v-for="item in WHITEBOARD_KEY_COUNT_OPTIONS" :key="item.value" :value="item.value">
-                {{ item.label }}
+                {{ resolveWhiteboardKeyCountLabel(item.value) }}
               </option>
             </select>
           </div>
@@ -173,12 +176,12 @@ function formatBpm(value: number) {
           class="score-toolbar__btn whiteboard-toolbar__btn--stable"
           @click="togglePanel('keyHeight')"
         >
-          高度 {{ formatPx(keyHeight) }}
+          {{ t('whiteboard.toolbar.height') }} {{ formatPx(keyHeight) }}
         </button>
         <div v-if="activePanel === 'keyHeight'" class="score-toolbar__popup" @pointerdown.stop>
           <VerticalDragSlider
             :format="formatPx"
-            label="琴键高度"
+            :label="t('whiteboard.toolbar.keyHeight')"
             :max="WHITEBOARD_KEY_HEIGHT_MAX"
             :min="WHITEBOARD_KEY_HEIGHT_MIN"
             :model-value="keyHeight"
@@ -190,14 +193,14 @@ function formatBpm(value: number) {
 
       <div class="score-toolbar__adjuster">
         <button type="button" class="score-toolbar__btn" @click="togglePanel('widthType')">
-          宽度 {{ widthTypeLabel }}
+          {{ t('whiteboard.toolbar.width') }} {{ widthTypeLabel }}
         </button>
         <div v-if="activePanel === 'widthType'" class="score-toolbar__popup" @pointerdown.stop>
           <div class="whiteboard-toolbar__field">
-            <span class="whiteboard-toolbar__field-label">宽度类型</span>
+            <span class="whiteboard-toolbar__field-label">{{ t('whiteboard.toolbar.widthType') }}</span>
             <select class="whiteboard-toolbar__select" :value="widthType" @change="onWidthTypeChange">
               <option v-for="item in WHITEBOARD_WIDTH_TYPE_OPTIONS" :key="item.value" :value="item.value">
-                {{ item.label }}
+                {{ resolveWhiteboardWidthTypeLabel(item.value) }}
               </option>
             </select>
           </div>
@@ -211,12 +214,12 @@ function formatBpm(value: number) {
           :disabled="!isCustomWidth"
           @click="togglePanel('whiteKeyWidth')"
         >
-          白键宽 {{ formatPx(whiteKeyWidth) }}
+          {{ t('whiteboard.toolbar.whiteKeyWidthShort') }} {{ formatPx(whiteKeyWidth) }}
         </button>
         <div v-if="activePanel === 'whiteKeyWidth' && isCustomWidth" class="score-toolbar__popup" @pointerdown.stop>
           <VerticalDragSlider
             :format="formatPx"
-            label="白键宽度"
+            :label="t('whiteboard.toolbar.whiteKeyWidth')"
             :max="WHITEBOARD_WHITE_KEY_WIDTH_MAX"
             :min="WHITEBOARD_WHITE_KEY_WIDTH_MIN"
             :model-value="whiteKeyWidth"
@@ -232,11 +235,11 @@ function formatBpm(value: number) {
           class="score-toolbar__btn whiteboard-toolbar__btn--stable"
           @click="togglePanel('pitchNotation')"
         >
-          音名 {{ pitchNotationLabel }}
+          {{ t('whiteboard.toolbar.pitchName') }} {{ pitchNotationLabel }}
         </button>
         <div v-if="activePanel === 'pitchNotation'" class="score-toolbar__popup" @pointerdown.stop>
           <div class="whiteboard-toolbar__field">
-            <span class="whiteboard-toolbar__field-label">音名显示</span>
+            <span class="whiteboard-toolbar__field-label">{{ t('whiteboard.toolbar.pitchNotation') }}</span>
             <select
               class="whiteboard-toolbar__select"
               :value="pitchNotation"
@@ -247,7 +250,7 @@ function formatBpm(value: number) {
                 :key="item.value"
                 :value="item.value"
               >
-                {{ item.label }}
+                {{ resolveWhiteboardPitchNotationLabel(item.value) }}
               </option>
             </select>
           </div>
@@ -262,12 +265,12 @@ function formatBpm(value: number) {
           class="score-toolbar__btn whiteboard-toolbar__btn--stable"
           @click="togglePanel('volume')"
         >
-          音量 {{ volumeLabel }}
+          {{ t('whiteboard.toolbar.volume') }} {{ volumeLabel }}
         </button>
         <div v-if="activePanel === 'volume'" class="score-toolbar__popup" @pointerdown.stop>
           <VerticalDragSlider
             :format="formatVolume"
-            label="音量"
+            :label="t('whiteboard.toolbar.volume')"
             :max="PLAY_VOLUME_MAX"
             :min="PLAY_VOLUME_MIN"
             :model-value="volume"
@@ -283,7 +286,7 @@ function formatBpm(value: number) {
         :class="{ 'score-toolbar__btn--active': groupEnabled }"
         @click="whiteboardStore.toggleGroup()"
       >
-        分组
+        {{ t('whiteboard.toolbar.group') }}
       </button>
       <button
         type="button"
@@ -291,7 +294,7 @@ function formatBpm(value: number) {
         :class="{ 'score-toolbar__btn--active': chordBoxEnabled }"
         @click="whiteboardStore.toggleChordBox()"
       >
-        和弦滑块
+        {{ t('whiteboard.toolbar.chordSlider') }}
       </button>
       <button
         type="button"
@@ -299,7 +302,7 @@ function formatBpm(value: number) {
         :class="{ 'score-toolbar__btn--active': intervalRulerEnabled }"
         @click="whiteboardStore.toggleIntervalRuler()"
       >
-        音程滑块
+        {{ t('whiteboard.toolbar.intervalSlider') }}
       </button>
 
       <button
@@ -308,7 +311,7 @@ function formatBpm(value: number) {
         :class="{ 'score-toolbar__btn--active': addNoteEnabled }"
         @click="whiteboardStore.toggleAddNote()"
       >
-        添加音符
+        {{ t('whiteboard.toolbar.addNote') }}
       </button>
 
       <div class="score-toolbar__adjuster">
@@ -317,14 +320,14 @@ function formatBpm(value: number) {
           class="score-toolbar__btn whiteboard-toolbar__btn--stable"
           @click="togglePanel('targetClef')"
         >
-          谱号 {{ targetClefLabel }}
+          {{ t('whiteboard.toolbar.clef') }} {{ targetClefLabel }}
         </button>
         <div v-if="activePanel === 'targetClef'" class="score-toolbar__popup" @pointerdown.stop>
           <div class="whiteboard-toolbar__field">
-            <span class="whiteboard-toolbar__field-label">添加到谱号</span>
+            <span class="whiteboard-toolbar__field-label">{{ t('whiteboard.toolbar.targetClef') }}</span>
             <select class="whiteboard-toolbar__select" :value="targetClef" @change="onTargetClefChange">
               <option v-for="item in WHITEBOARD_CLEF_OPTIONS" :key="item.value" :value="item.value">
-                {{ item.label }}
+                {{ resolveWhiteboardClefLabel(item.value) }}
               </option>
             </select>
           </div>
@@ -337,12 +340,12 @@ function formatBpm(value: number) {
           class="score-toolbar__btn whiteboard-toolbar__btn--stable"
           @click="togglePanel('noteBpm')"
         >
-          BPM {{ formatBpm(noteInputBpm) }}
+          {{ t('whiteboard.toolbar.bpm') }} {{ formatBpm(noteInputBpm) }}
         </button>
         <div v-if="activePanel === 'noteBpm'" class="score-toolbar__popup" @pointerdown.stop>
           <VerticalDragSlider
             :format="formatBpm"
-            label="时值 BPM"
+            :label="t('whiteboard.toolbar.noteBpm')"
             :max="WHITEBOARD_NOTE_BPM_MAX"
             :min="WHITEBOARD_NOTE_BPM_MIN"
             :model-value="noteInputBpm"
@@ -358,11 +361,11 @@ function formatBpm(value: number) {
           class="score-toolbar__btn whiteboard-toolbar__btn--stable"
           @click="togglePanel('keySignature')"
         >
-          调号 {{ keySignatureLabel }}
+          {{ t('whiteboard.toolbar.keySignature') }} {{ keySignatureLabel }}
         </button>
         <div v-if="activePanel === 'keySignature'" class="score-toolbar__popup" @pointerdown.stop>
           <div class="whiteboard-toolbar__field">
-            <span class="whiteboard-toolbar__field-label">调号</span>
+            <span class="whiteboard-toolbar__field-label">{{ t('whiteboard.toolbar.keySignature') }}</span>
             <select
               class="whiteboard-toolbar__select"
               :value="keySignature"
@@ -373,7 +376,7 @@ function formatBpm(value: number) {
                 :key="item.value"
                 :value="item.value"
               >
-                {{ item.label }}
+                {{ resolveWhiteboardKeySignatureLabel(item.value) }}
               </option>
             </select>
           </div>
@@ -381,7 +384,7 @@ function formatBpm(value: number) {
       </div>
 
       <button type="button" class="score-toolbar__btn" @click="onClearNotes">
-        清空音符
+        {{ t('whiteboard.toolbar.clearNotes') }}
       </button>
     </div>
   </footer>

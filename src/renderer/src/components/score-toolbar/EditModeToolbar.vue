@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { VideoPlay } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import BackButton from '@renderer/components/BackButton.vue'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
 import { buildScoreRouteQuery } from '@renderer/utils/scoreRoute'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 
@@ -24,7 +26,7 @@ function switchToPlay() {
     <template #center>
       <button type="button" class="score-toolbar__btn" @click="switchToPlay">
         <el-icon><VideoPlay /></el-icon>
-        <span>播放模式</span>
+        <span>{{ t('editor.toolbar.playMode') }}</span>
       </button>
     </template>
   </ScoreToolbarShell>

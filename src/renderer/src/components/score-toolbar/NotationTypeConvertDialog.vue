@@ -1,7 +1,10 @@
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 
 defineOptions({ name: 'NotationTypeConvertDialog' })
+
+const { t } = useI18n()
 
 const visible = ref(false)
 let resolveFn: ((confirmed: boolean) => void) | null = null
@@ -38,7 +41,7 @@ defineExpose({ open })
 <template>
   <el-dialog
     v-model="visible"
-    title="切换曲谱类型"
+    :title="t('editor.convertDialog.title')"
     width="440px"
     class="notation-convert-dialog cute-dialog"
     append-to-body
@@ -48,16 +51,16 @@ defineExpose({ open })
     @close="onCancel"
   >
     <p class="notation-convert-dialog__text">
-      切换后播放信息会尽量保持一致，但谱面样式与部分记谱细节可能丢失，且此操作不可撤销。
+      {{ t('editor.convertDialog.message') }}
     </p>
 
     <template #footer>
       <div class="notation-convert-dialog__actions">
         <button type="button" class="notation-convert-dialog__btn notation-convert-dialog__btn--ghost" @click="onCancel">
-          取消
+          {{ t('common.cancel') }}
         </button>
         <button type="button" class="notation-convert-dialog__btn notation-convert-dialog__btn--primary" @click="onConfirm">
-          确定
+          {{ t('common.confirm') }}
         </button>
       </div>
     </template>

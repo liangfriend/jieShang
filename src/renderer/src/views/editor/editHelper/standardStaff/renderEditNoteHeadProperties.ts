@@ -1,48 +1,34 @@
 import type {Chronaxie, Measure, NoteSymbol, NotesInfo, SlotData} from 'deciphony-renderer'
 import {AccidentalTypeEnum, BeamTypeEnum, ClefTypeEnum} from 'deciphony-renderer'
 import {createAccidental, createAugmentationDot, createClef} from '@renderer/dr-extensions/dr-edit/score-builder'
-import {CLEF_OPTIONS} from '../renderEditMeasureProperties'
+import {CLEF_VALUES} from '../renderEditMeasureProperties'
 import {setRelativeX} from './renderEditFrameProperties'
 
 export type NoteHeadEditSlot = SlotData & {info: NotesInfo; note: NoteSymbol; measure: Measure}
 
-export const BEAM_TYPE_OPTIONS: {value: BeamTypeEnum; label: string}[] = [
-  {value: BeamTypeEnum.Combined, label: '全连'},
-  {value: BeamTypeEnum.OnlyRight, label: '右连'},
-  {value: BeamTypeEnum.None, label: '无'},
+export const BEAM_TYPE_VALUES: BeamTypeEnum[] = [
+  BeamTypeEnum.Combined,
+  BeamTypeEnum.OnlyRight,
+  BeamTypeEnum.None,
 ]
 
-export const STEM_DIRECTION_OPTIONS: {value: 'up' | 'down'; label: string}[] = [
-  {value: 'up', label: '向上'},
-  {value: 'down', label: '向下'},
-]
+export const STEM_DIRECTION_VALUES: ('up' | 'down')[] = ['up', 'down']
 
-export const ACCIDENTAL_OPTIONS: {value: AccidentalTypeEnum; label: string}[] = [
-  {value: AccidentalTypeEnum.Sharp, label: '升号 ♯'},
-  {value: AccidentalTypeEnum.Flat, label: '降号 ♭'},
-  {value: AccidentalTypeEnum.Double_sharp, label: '重升 𝄪'},
-  {value: AccidentalTypeEnum.Double_flat, label: '重降 𝄫'},
-  {value: AccidentalTypeEnum.Natural, label: '还原 ♮'},
+export const ACCIDENTAL_VALUES: AccidentalTypeEnum[] = [
+  AccidentalTypeEnum.Sharp,
+  AccidentalTypeEnum.Flat,
+  AccidentalTypeEnum.Double_sharp,
+  AccidentalTypeEnum.Double_flat,
+  AccidentalTypeEnum.Natural,
 ]
 
 /** 变音符号选择器选项（含「无」= 删除 accidental） */
-export const ACCIDENTAL_SELECT_OPTIONS: {value: AccidentalTypeEnum | ''; label: string}[] = [
-  {value: '', label: '无'},
-  ...ACCIDENTAL_OPTIONS,
-]
+export const ACCIDENTAL_SELECT_VALUES: (AccidentalTypeEnum | '')[] = ['', ...ACCIDENTAL_VALUES]
 
-export const AUGMENTATION_DOT_OPTIONS: {value: 0 | 1 | 2 | 3; label: string}[] = [
-  {value: 0, label: '无'},
-  {value: 1, label: '单附点'},
-  {value: 2, label: '双附点'},
-  {value: 3, label: '三附点'},
-]
+export const AUGMENTATION_DOT_VALUES: (0 | 1 | 2 | 3)[] = [0, 1, 2, 3]
 
 /** 音符前谱号选择器（含「无」= 删除 note.clef） */
-export const NOTE_CLEF_SELECT_OPTIONS: {value: ClefTypeEnum | ''; label: string}[] = [
-  {value: '', label: '无'},
-  ...CLEF_OPTIONS,
-]
+export const NOTE_CLEF_SELECT_VALUES: (ClefTypeEnum | '')[] = ['', ...CLEF_VALUES]
 
 export function setNoteClef(note: NoteSymbol, type: ClefTypeEnum | ''): void {
   if (type === '') {

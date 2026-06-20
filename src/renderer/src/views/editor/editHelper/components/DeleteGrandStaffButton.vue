@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { VDom } from 'deciphony-renderer'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { deleteGrandStaffFromSlot } from '../renderEditSlotActions'
 import {
   DELETE_GRAND_STAFF_BTN_H,
@@ -10,6 +11,8 @@ import {
 } from '../renderEditSlotLayout'
 
 const props = defineProps<{ node: VDom }>()
+
+const { t } = useI18n()
 
 const transform = computed(
   () => `translate(${deleteGrandStaffBtnX(props.node)}, ${deleteGrandStaffBtnY(props.node)})`
@@ -59,7 +62,7 @@ function onClick() {
       text-anchor="middle"
       x="58"
       y="19"
-      >复谱表
+      >{{ t('editor.staff.grandStaff') }}
     </text>
   </g>
 </template>

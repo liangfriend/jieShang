@@ -4,6 +4,7 @@ import { ElMessage } from 'element-plus'
 import type { MusicScore, MusicScoreTypeEnum } from 'deciphony-renderer'
 import { storeToRefs } from 'pinia'
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import BackButton from '@renderer/components/BackButton.vue'
 import VerticalDragSlider from '@renderer/components/VerticalDragSlider.vue'
@@ -21,6 +22,7 @@ import ScoreNotationTypeSelector from './ScoreNotationTypeSelector.vue'
 import ScoreToneColorAdjuster from './ScoreToneColorAdjuster.vue'
 import { buildScoreRouteQuery } from '@renderer/utils/scoreRoute'
 
+const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
 const playback = inject(scorePlaybackKey)
@@ -85,9 +87,8 @@ function switchToEdit() {
 }
 
 function goSingleLineMode(name: 'practice' | 'forBeginner') {
-  const message = getGrandStaffSingleStaffMismatchMessage(props.musicScore)
-  if (message) {
-    ElMessage.warning(message)
+  if (getGrandStaffSingleStaffMismatchMessage(props.musicScore)) {
+    ElMessage.warning(t('play.messages.grandStaffMismatch'))
     return
   }
 
@@ -116,7 +117,7 @@ function goForBeginner() {
     <template #center>
       <button type="button" class="score-toolbar__btn" @click="switchToEdit">
         <el-icon><EditPen /></el-icon>
-        <span>编辑模式</span>
+        <span>{{ t('play.toolbar.editMode') }}</span>
       </button>
       <button
         type="button"
@@ -125,24 +126,24 @@ function goForBeginner() {
         @click="handlePlay"
       >
         <el-icon><VideoPlay /></el-icon>
-        <span>播放</span>
+        <span>{{ t('play.toolbar.play') }}</span>
       </button>
       <button type="button" class="score-toolbar__btn" :disabled="pauseDisabled" @click="handlePause">
         <el-icon><VideoPause /></el-icon>
-        <span>暂停</span>
+        <span>{{ t('play.toolbar.pause') }}</span>
       </button>
       <button type="button" class="score-toolbar__btn" :disabled="stopDisabled" @click="handleStop">
         <span class="score-toolbar__stop-icon" aria-hidden="true" />
-        <span>停止</span>
+        <span>{{ t('play.toolbar.stop') }}</span>
       </button>
       <div class="score-toolbar__adjuster">
         <button type="button" class="score-toolbar__btn" @click="togglePanel('volume')">
-          音量 {{ volumeLabel }}
+          {{ t('play.toolbar.volume') }} {{ volumeLabel }}
         </button>
         <div v-if="activePanel === 'volume'" class="score-toolbar__popup" @pointerdown.stop>
           <VerticalDragSlider
             :format="formatVolume"
-            label="音量"
+            :label="t('play.toolbar.volume')"
             :max="PLAY_VOLUME_MAX"
             :min="PLAY_VOLUME_MIN"
             :model-value="volume"
@@ -153,12 +154,12 @@ function goForBeginner() {
       </div>
       <div class="score-toolbar__adjuster">
         <button type="button" class="score-toolbar__btn" @click="togglePanel('bpm')">
-          BPM {{ bpmLabel }}
+          {{ t('play.toolbar.bpm') }} {{ bpmLabel }}
         </button>
         <div v-if="activePanel === 'bpm'" class="score-toolbar__popup" @pointerdown.stop>
           <VerticalDragSlider
             :format="formatBpm"
-            label="BPM"
+            :label="t('play.toolbar.bpm')"
             :max="PLAY_BPM_MAX"
             :min="PLAY_BPM_MIN"
             :model-value="bpm"
@@ -174,10 +175,10 @@ function goForBeginner() {
         @change="emit('notation-type-change', $event)"
       />
       <button type="button" class="score-toolbar__btn" @click="goPractice">
-        <span>练习模式</span>
+        <span>{{ t('play.toolbar.practiceMode') }}</span>
       </button>
       <button type="button" class="score-toolbar__btn" @click="goForBeginner">
-        <span>新手模式</span>
+        <span>{{ t('play.toolbar.beginnerMode') }}</span>
       </button>
     </template>
   </ScoreToolbarShell>

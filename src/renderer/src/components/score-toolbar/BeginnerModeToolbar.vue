@@ -2,6 +2,7 @@
 import { Setting, VideoPlay } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
 import VerticalDragSlider from '@renderer/components/VerticalDragSlider.vue'
 import { PLAY_VOLUME_MAX, PLAY_VOLUME_MIN } from '@renderer/constant/play'
@@ -21,6 +22,8 @@ defineProps<{
 const emit = defineEmits<{
   'notation-type-change': [value: MusicScoreTypeEnum]
 }>()
+
+const { t } = useI18n()
 
 const playback = inject(beginnerPlaybackKey)
 const playStore = usePlayStore()
@@ -81,7 +84,7 @@ onBeforeUnmount(() => {
         @click="openSettings"
       >
         <el-icon><Setting /></el-icon>
-        <span>设置</span>
+        <span>{{ t('beginner.toolbar.settings') }}</span>
       </button>
       <button
         type="button"
@@ -90,20 +93,20 @@ onBeforeUnmount(() => {
         @click="handlePlay"
       >
         <el-icon><VideoPlay /></el-icon>
-        <span>开始练习</span>
+        <span>{{ t('beginner.toolbar.startPractice') }}</span>
       </button>
       <button type="button" class="score-toolbar__btn" :disabled="stopDisabled" @click="handleStop">
         <span class="score-toolbar__stop-icon" aria-hidden="true" />
-        <span>停止</span>
+        <span>{{ t('beginner.toolbar.stop') }}</span>
       </button>
       <div class="score-toolbar__adjuster">
         <button type="button" class="score-toolbar__btn" @click="toggleVolumePanel">
-          音量 {{ volumeLabel }}
+          {{ t('beginner.toolbar.volume') }} {{ volumeLabel }}
         </button>
         <div v-if="volumePanelOpen" class="score-toolbar__popup" @pointerdown.stop>
           <VerticalDragSlider
             :format="formatVolume"
-            label="音量"
+            :label="t('beginner.toolbar.volume')"
             :max="PLAY_VOLUME_MAX"
             :min="PLAY_VOLUME_MIN"
             :model-value="volume"

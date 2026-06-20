@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { SlotData } from 'deciphony-renderer'
 import type { PropertyPanelKind } from '../renderEditPropertyPanel'
 import NumberHeadPropertyPanel from '../numberNotation/components/NumberHeadPropertyPanel.vue'
@@ -14,13 +15,15 @@ const props = defineProps<{
   selected: SlotData | null
 }>()
 
-const panelMeta: Record<Exclude<PropertyPanelKind, null>, { title: string }> = {
-  measure: { title: '小节属性' },
-  noteHead: { title: '音符属性' },
-  numberHead: { title: '音符属性' },
-  rest: { title: '休止符属性' },
-  volta: { title: 'Volta 属性' },
-  slur: { title: '连音线属性' }
+const { t } = useI18n()
+
+const panelTitleKey: Record<Exclude<PropertyPanelKind, null>, string> = {
+  measure: 'editor.propertyPanel.measure',
+  noteHead: 'editor.propertyPanel.noteHead',
+  numberHead: 'editor.propertyPanel.noteHead',
+  rest: 'editor.propertyPanel.rest',
+  volta: 'editor.propertyPanel.volta',
+  slur: 'editor.propertyPanel.slur'
 }
 
 const hasContent = computed(() => {
@@ -39,9 +42,9 @@ const hasContent = computed(() => {
 
 const headerTitle = computed(() => {
   if (props.kind && hasContent.value) {
-    return panelMeta[props.kind].title
+    return t(panelTitleKey[props.kind])
   }
-  return '属性'
+  return t('editor.propertyPanel.title')
 })
 </script>
 
@@ -72,7 +75,7 @@ const headerTitle = computed(() => {
       <div v-else class="property-panel__placeholder">
         <span class="property-panel__placeholder-emoji">🎼</span>
         <p class="property-panel__placeholder-text">
-          选中曲谱中的小节、音符、休止符、连音线或 Volta，这里会显示可编辑属性
+          {{ t('editor.propertyPanel.placeholder') }}
         </p>
       </div>
     </div>

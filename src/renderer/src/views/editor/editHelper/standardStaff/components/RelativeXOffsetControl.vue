@@ -1,4 +1,5 @@
 <script lang="ts" setup>
+import { useI18n } from 'vue-i18n'
 import {
   RELATIVE_X_OFFSET_MAX,
   RELATIVE_X_OFFSET_MIN,
@@ -13,11 +14,13 @@ defineProps<{
 const emit = defineEmits<{
   'update:modelValue': [value: number]
 }>()
+
+const { t } = useI18n()
 </script>
 
 <template>
   <section class="relative-x-offset" :class="{'relative-x-offset--nested': nested}">
-    <div class="relative-x-offset__label">横向偏移</div>
+    <div class="relative-x-offset__label">{{ t('editor.note.relativeX') }}</div>
     <el-slider
       class="relative-x-offset__slider"
       :model-value="modelValue"

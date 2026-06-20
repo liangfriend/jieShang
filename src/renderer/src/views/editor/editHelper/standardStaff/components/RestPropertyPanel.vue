@@ -1,8 +1,10 @@
 <script lang="ts" setup>
 import type {Chronaxie} from 'deciphony-renderer'
 import {computed} from 'vue'
-import {REST_CHRONAXIE_OPTIONS} from '../../renderEditAddNoteState'
-import {AUGMENTATION_DOT_OPTIONS} from '../renderEditNoteHeadProperties'
+import { useI18n } from 'vue-i18n'
+import { resolveAugmentationDotLabel, resolveRestDurationLabel } from '@renderer/i18n/helpers'
+import {REST_CHRONAXIE_VALUES} from '../../renderEditAddNoteState'
+import {AUGMENTATION_DOT_VALUES} from '../renderEditNoteHeadProperties'
 import {
   setNoteRestAugmentationDot,
   setNoteRestChronaxie,
@@ -14,6 +16,8 @@ import RelativeXOffsetControl from './RelativeXOffsetControl.vue'
 const props = defineProps<{
   editSlot: RestEditSlot
 }>()
+
+const { t } = useI18n()
 
 const rest = computed(() => props.editSlot.self)
 
@@ -36,27 +40,27 @@ const relativeX = computed({
 <template>
   <div class="rest-props">
     <section class="rest-props__section">
-      <div class="rest-props__label">时值</div>
+      <div class="rest-props__label">{{ t('editor.note.duration') }}</div>
       <el-radio-group v-model="chronaxie" class="rest-props__radio" size="small">
         <el-radio-button
-          v-for="opt in REST_CHRONAXIE_OPTIONS"
-          :key="opt.value"
-          :label="opt.value"
+          v-for="value in REST_CHRONAXIE_VALUES"
+          :key="value"
+          :label="value"
         >
-          {{ opt.label }}
+          {{ resolveRestDurationLabel(value) }}
         </el-radio-button>
       </el-radio-group>
     </section>
 
     <section class="rest-props__section">
-      <div class="rest-props__label">附点</div>
+      <div class="rest-props__label">{{ t('editor.note.augmentationDot') }}</div>
       <el-radio-group v-model="augmentationDot" class="rest-props__radio" size="small">
         <el-radio-button
-          v-for="opt in AUGMENTATION_DOT_OPTIONS"
-          :key="opt.value"
-          :label="opt.value"
+          v-for="value in AUGMENTATION_DOT_VALUES"
+          :key="value"
+          :label="value"
         >
-          {{ opt.label }}
+          {{ resolveAugmentationDotLabel(value) }}
         </el-radio-button>
       </el-radio-group>
     </section>

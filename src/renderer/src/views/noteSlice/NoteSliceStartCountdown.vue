@@ -1,7 +1,8 @@
 <script lang="ts" setup>
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
-  NOTE_SLICE_START_COUNTDOWN_LABELS,
+  NOTE_SLICE_START_COUNTDOWN_NUMERIC_STEPS,
   NOTE_SLICE_START_COUNTDOWN_STEP_MS
 } from '@renderer/views/noteSlice/noteSliceGameMode'
 
@@ -9,19 +10,26 @@ const emit = defineEmits<{
   complete: []
 }>()
 
-const currentLabel = ref<string>(NOTE_SLICE_START_COUNTDOWN_LABELS[0]!)
+const { t } = useI18n()
+
+const countdownLabels = computed(() => [
+  ...NOTE_SLICE_START_COUNTDOWN_NUMERIC_STEPS,
+  t('noteSlice.countdown.start')
+])
+
+const currentLabel = ref<string>(countdownLabels.value[0]!)
 let timerId = 0
 let stepIndex = 0
 
 onMounted(() => {
   timerId = window.setInterval(() => {
     stepIndex += 1
-    if (stepIndex >= NOTE_SLICE_START_COUNTDOWN_LABELS.length) {
+    if (stepIndex >= countdownLabels.value.length) {
       window.clearInterval(timerId)
       emit('complete')
       return
     }
-    currentLabel.value = NOTE_SLICE_START_COUNTDOWN_LABELS[stepIndex]!
+    currentLabel.value = countdownLabels.value[stepIndex]!
   }, NOTE_SLICE_START_COUNTDOWN_STEP_MS)
 })
 

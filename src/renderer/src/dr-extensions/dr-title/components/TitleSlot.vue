@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type { MusicScore, SlotConfig, VDom } from 'deciphony-renderer'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { readTitleField, writeTitleField, type TitleFieldKey } from '../titleFields'
 import { computeTitleContentRect } from '../titleLayout'
 import type { TitleMode } from '../types'
@@ -11,6 +12,8 @@ const props = defineProps<{
   mode: TitleMode
   slotConfig?: SlotConfig
 }>()
+
+const { t } = useI18n()
 
 const contentRect = computed(() => computeTitleContentRect(props.node, props.slotConfig))
 const contentX = computed(() => contentRect.value.x)
@@ -67,7 +70,7 @@ function onFieldInput(key: TitleFieldKey, event: Event) {
           <div class="dr-title-slot__center">
             <input
               class="dr-title-slot__input dr-title-slot__input--title"
-              placeholder="标题"
+              :placeholder="t('editor.titleFields.title')"
               type="text"
               :value="readTitleField(musicScore, 'title')"
               @click.stop
@@ -76,7 +79,7 @@ function onFieldInput(key: TitleFieldKey, event: Event) {
             />
             <input
               class="dr-title-slot__input dr-title-slot__input--subtitle"
-              placeholder="副标题"
+              :placeholder="t('editor.titleFields.subTitle')"
               type="text"
               :value="readTitleField(musicScore, 'subTitle')"
               @click.stop
@@ -86,7 +89,7 @@ function onFieldInput(key: TitleFieldKey, event: Event) {
           </div>
           <input
             class="dr-title-slot__input dr-title-slot__input--author"
-            placeholder="作者"
+            :placeholder="t('editor.titleFields.author')"
             type="text"
             :value="readTitleField(musicScore, 'author')"
             @click.stop

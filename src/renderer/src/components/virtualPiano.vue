@@ -9,6 +9,7 @@ import {
   ref,
   watch
 } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { parseAndFormatDimension } from '@renderer/utils/commonUtil'
 import {
   AccidentalEnum,
@@ -19,13 +20,17 @@ import {
 import vDrag from '@renderer/directivces/drag'
 import { useMidiStore } from '@renderer/store/midi.store'
 import { useVirtualPianoSkin } from '@renderer/utils/collection/useVirtualPianoSkin'
-import { INTERVAL_SLIDER_STEPS, isIntervalSliderAnchor } from '@renderer/utils/intervalSliderData'
+import {
+  INTERVAL_SLIDER_STEP_DEFS,
+  isIntervalSliderAnchor
+} from '@renderer/utils/intervalSliderData'
 
 defineOptions({
   name: 'DsPiano'
 })
 
 const midiStore = useMidiStore()
+const { t } = useI18n()
 
 const props = defineProps({
   /** whiteKeyWidth：固定白键宽度；fillParent：铺满父级并按 midi 范围均分白键宽 */
@@ -203,7 +208,7 @@ const pianoContainerStyle = computed((): CSSProperties => {
   if (isFillParentMode.value) {
     return {
       width: '100%',
-      height: '100%',
+      height: props.height,
       position: 'relative',
       background: '#eee'
     }
@@ -309,93 +314,87 @@ function isWhiteKey(midi: number) {
   return ![1, 3, 6, 8, 10].includes(noteIndex)
 }
 
-const groupColorMap = ref({
-  大字三组: 'rgba(255, 99, 132, 0.2)', // 粉红
-  大字二组: 'rgba(54, 162, 235, 0.2)', // 天蓝
-  大字一组: 'rgba(255, 206, 86, 0.2)', // 明黄
-  小字组: 'rgba(75, 192, 192, 0.2)', // 青绿
-  小字一组: 'rgba(153, 102, 255, 0.2)', // 紫色
-  小字二组: 'rgba(255, 159, 64, 0.2)', // 橙色
-  小字三组: 'rgba(0, 200, 83, 0.2)', // 草绿
-  小字四组: 'rgba(233, 30, 99, 0.2)', // 洋红
-  小字五组: 'rgba(0, 188, 212, 0.2)', // 湖蓝
-  小字六组: 'rgba(255, 87, 34, 0.2)', // 橘红
-  小字七组: 'rgba(63, 81, 181, 0.2)', // 靛蓝
-  小字八组: 'rgba(139, 195, 74, 0.2)' // 苹果绿
-})
+type PianoGroupKey =
+  | 'great4'
+  | 'great3'
+  | 'great2'
+  | 'great1'
+  | 'small'
+  | 'small1'
+  | 'small2'
+  | 'small3'
+  | 'small4'
+  | 'small5'
+  | 'small6'
+  | 'small7'
+  | 'small8'
+
+const GROUP_COLOR_BY_KEY: Record<PianoGroupKey, string> = {
+  great4: 'rgba(120, 144, 156, 0.2)',
+  great3: 'rgba(255, 99, 132, 0.2)',
+  great2: 'rgba(54, 162, 235, 0.2)',
+  great1: 'rgba(255, 206, 86, 0.2)',
+  small: 'rgba(75, 192, 192, 0.2)',
+  small1: 'rgba(153, 102, 255, 0.2)',
+  small2: 'rgba(255, 159, 64, 0.2)',
+  small3: 'rgba(0, 200, 83, 0.2)',
+  small4: 'rgba(233, 30, 99, 0.2)',
+  small5: 'rgba(0, 188, 212, 0.2)',
+  small6: 'rgba(255, 87, 34, 0.2)',
+  small7: 'rgba(63, 81, 181, 0.2)',
+  small8: 'rgba(139, 195, 74, 0.2)'
+}
+
+function octaveToGroupKey(octave: number): PianoGroupKey | null {
+  switch (octave) {
+    case 0:
+      return 'great4'
+    case 1:
+      return 'great3'
+    case 2:
+      return 'great2'
+    case 3:
+      return 'great1'
+    case 4:
+      return 'small'
+    case 5:
+      return 'small1'
+    case 6:
+      return 'small2'
+    case 7:
+      return 'small3'
+    case 8:
+      return 'small4'
+    case 9:
+      return 'small5'
+    default:
+      return null
+  }
+}
+
 // 分组蒙层数组
 const groupMaskList = computed(
-  (): { whiteKeyCount: number; groupName: string; color: string }[] => {
+  (): { whiteKeyCount: number; groupKey: PianoGroupKey; groupLabel: string; color: string }[] => {
     const min = props.midi.min
     const max = props.midi.max
 
-    const groupNames = [
-      '大字三组',
-      '大字二组',
-      '大字一组',
-      '小字组',
-      '小字一组',
-      '小字二组',
-      '小字三组',
-      '小字四组',
-      '小字五组',
-      '小字六组',
-      '小字七组',
-      '小字八组'
-    ]
-
-    const res: { whiteKeyCount: number; groupName: string; color: string }[] = []
+    const res: {
+      whiteKeyCount: number
+      groupKey: PianoGroupKey
+      groupLabel: string
+      color: string
+    }[] = []
     let whiteKeyCount = 0
     for (let i = min; i <= max; i++) {
       whiteKeyCount += isWhiteKey(i) ? 1 : 0
       const ocatve = Math.floor(i / 12)
-      let groupName: string = ''
-      switch (ocatve) {
-        case 0: {
-          groupName = '大字四组'
-          break
-        }
-        case 1: {
-          groupName = '大字三组'
-          break
-        }
-        case 2: {
-          groupName = '大字二组'
-          break
-        }
-        case 3: {
-          groupName = '大字一组'
-          break
-        }
-        case 4: {
-          groupName = '小字组'
-          break
-        }
-        case 5: {
-          groupName = '小字一组'
-          break
-        }
-        case 6: {
-          groupName = '小字二组'
-          break
-        }
-        case 7: {
-          groupName = '小字三组'
-          break
-        }
-        case 8: {
-          groupName = '小字四组'
-          break
-        }
-        case 9: {
-          groupName = '小字五组'
-          break
-        }
-      }
+      const groupKey = octaveToGroupKey(ocatve)
+      if (!groupKey) continue
       const cur = {
         whiteKeyCount,
-        groupName,
-        color: groupColorMap.value[groupName]
+        groupKey,
+        groupLabel: t(`whiteboard.pianoGroup.${groupKey}`),
+        color: GROUP_COLOR_BY_KEY[groupKey]
       }
       // 加上最后一组
       if (max % 12 !== 11 && i === max) {
@@ -412,8 +411,8 @@ const groupMaskList = computed(
 )
 
 const groupStyle = computed(
-  (): ((item: { whiteKeyCount: number; groupName: string; color: string }) => CSSProperties) => {
-    return (item: { whiteKeyCount: number; groupName: string; color: string }) => {
+  (): ((item: { whiteKeyCount: number; color: string }) => CSSProperties) => {
+    return (item: { whiteKeyCount: number; color: string }) => {
       return {
         width: dim(item.whiteKeyCount * whiteKeyWidthNum.value),
         backgroundColor: item.color,
@@ -425,8 +424,8 @@ const groupStyle = computed(
   }
 )
 const groupNameStyle = computed(
-  (): ((item: { whiteKeyCount: number; groupName: string; color: string }) => CSSProperties) => {
-    return (item: { whiteKeyCount: number; groupName: string; color: string }) => {
+  (): ((item: { whiteKeyCount: number; color: string }) => CSSProperties) => {
+    return (item: { whiteKeyCount: number; color: string }) => {
       return {
         width: dim(item.whiteKeyCount * whiteKeyWidthNum.value),
         backgroundColor: item.color,
@@ -453,58 +452,62 @@ const intervalSliderHeight = computed(() => {
 })
 
 function intervalSliderMarkerClass(index: number): string {
-  if (isIntervalSliderAnchor(index)) return 'interval-slider__marker interval-slider__marker--anchor'
+  if (isIntervalSliderAnchor(index))
+    return 'interval-slider__marker interval-slider__marker--anchor'
   return index % 2 === 0
     ? 'interval-slider__marker interval-slider__marker--mid'
     : 'interval-slider__marker interval-slider__marker--minor'
 }
+
+const intervalSteps = computed(() =>
+  INTERVAL_SLIDER_STEP_DEFS.map((step) => ({
+    ...step,
+    name: t(`whiteboard.interval.${step.key}`)
+  }))
+)
+
+const CHORD_DEFS = [
+  { key: 'majorTriad', keyList: [0, 4, 7] },
+  { key: 'minorTriad', keyList: [0, 3, 7] },
+  { key: 'augmentedTriad', keyList: [0, 4, 8] },
+  { key: 'diminishedTriad', keyList: [0, 3, 6] },
+  { key: 'sus4', keyList: [0, 5, 7] },
+  { key: 'sus2', keyList: [0, 2, 7] },
+  { key: 'major7', keyList: [0, 4, 7, 11] },
+  { key: 'dominant7', keyList: [0, 4, 7, 10] },
+  { key: 'minor7', keyList: [0, 3, 7, 10] },
+  { key: 'halfDim7', keyList: [0, 3, 6, 10] },
+  { key: 'dim7', keyList: [0, 3, 6, 9] },
+  { key: 'minorMajor7', keyList: [0, 3, 7, 11] },
+  { key: 'augMajor7', keyList: [0, 4, 8, 11] },
+  { key: 'aug7', keyList: [0, 4, 8, 10] },
+  { key: 'major6', keyList: [0, 4, 7, 9] },
+  { key: 'minor6', keyList: [0, 3, 7, 9] },
+  { key: 'dominant9', keyList: [0, 4, 7, 10, 14] },
+  { key: 'major9', keyList: [0, 4, 7, 11, 14] },
+  { key: 'minor9', keyList: [0, 3, 7, 10, 14] },
+  { key: 'dominant11', keyList: [0, 4, 7, 10, 14, 17] },
+  { key: 'minor11', keyList: [0, 3, 7, 10, 14, 17] },
+  { key: 'major11', keyList: [0, 4, 7, 11, 14, 17] },
+  { key: 'dominant13', keyList: [0, 4, 7, 10, 14, 21] },
+  { key: 'minor13', keyList: [0, 3, 7, 10, 14, 21] },
+  { key: 'major13', keyList: [0, 4, 7, 11, 14, 21] },
+  { key: 'sus4add7', keyList: [0, 5, 7, 10] },
+  { key: 'sus2add7', keyList: [0, 2, 7, 10] },
+  { key: 'major7sharp11', keyList: [0, 4, 7, 11, 18] },
+  { key: 'major7sharp5', keyList: [0, 4, 8, 11] },
+  { key: 'dominant7flat9', keyList: [0, 4, 7, 10, 13] },
+  { key: 'dominant7sharp9', keyList: [0, 4, 7, 10, 15] }
+] as const
+
 // 和弦滑块
-const chordList = ref([
-  // 三和弦 Triads
-  { name: '大三和弦', keyList: [0, 4, 7] }, // Major
-  { name: '小三和弦', keyList: [0, 3, 7] }, // Minor
-  { name: '增三和弦', keyList: [0, 4, 8] }, // Augmented
-  { name: '减三和弦', keyList: [0, 3, 6] }, // Diminished
-  { name: '挂四和弦', keyList: [0, 5, 7] }, // Sus4
-  { name: '挂二和弦', keyList: [0, 2, 7] }, // Sus2
-
-  // 七和弦 Seventh Chords
-  { name: '大七和弦', keyList: [0, 4, 7, 11] }, // Major 7 (maj7)
-  { name: '属七和弦', keyList: [0, 4, 7, 10] }, // Dominant 7 (7)
-  { name: '小七和弦', keyList: [0, 3, 7, 10] }, // Minor 7 (m7)
-  { name: '半减七和弦', keyList: [0, 3, 6, 10] }, // Half-diminished 7 (m7♭5)
-  { name: '减七和弦', keyList: [0, 3, 6, 9] }, // Fully diminished 7 (dim7)
-  { name: '小大七和弦', keyList: [0, 3, 7, 11] }, // Minor Major 7 (mMaj7)
-  { name: '增大七和弦', keyList: [0, 4, 8, 11] }, // Augmented Major 7 (augMaj7)
-  { name: '增七和弦', keyList: [0, 4, 8, 10] }, // Augmented 7 (aug7)
-
-  // 六和弦 Sixth Chords
-  { name: '大六和弦', keyList: [0, 4, 7, 9] }, // Major 6 (6)
-  { name: '小六和弦', keyList: [0, 3, 7, 9] }, // Minor 6 (m6)
-
-  // 九和弦 Ninth Chords
-  { name: '属九和弦', keyList: [0, 4, 7, 10, 14] }, // 9
-  { name: '大九和弦', keyList: [0, 4, 7, 11, 14] }, // maj9
-  { name: '小九和弦', keyList: [0, 3, 7, 10, 14] }, // m9
-
-  // 十一和弦 Eleventh Chords
-  { name: '属十一和弦', keyList: [0, 4, 7, 10, 14, 17] }, // 11
-  { name: '小十一和弦', keyList: [0, 3, 7, 10, 14, 17] }, // m11
-  { name: '大十一和弦', keyList: [0, 4, 7, 11, 14, 17] }, // maj11
-
-  // 十三和弦 Thirteenth Chords
-  { name: '属十三和弦', keyList: [0, 4, 7, 10, 14, 21] }, // 13
-  { name: '小十三和弦', keyList: [0, 3, 7, 10, 14, 21] }, // m13
-  { name: '大十三和弦', keyList: [0, 4, 7, 11, 14, 21] }, // maj13
-
-  // 其他常见扩展与变化
-  { name: 'sus4 加七', keyList: [0, 5, 7, 10] }, // 7sus4
-  { name: 'sus2 加七', keyList: [0, 2, 7, 10] }, // 7sus2
-  { name: '大七#11', keyList: [0, 4, 7, 11, 18] }, // maj7#11
-  { name: '大七#5', keyList: [0, 4, 8, 11] }, // maj7#5
-  { name: '属七b9', keyList: [0, 4, 7, 10, 13] }, // 7b9
-  { name: '属七#9', keyList: [0, 4, 7, 10, 15] } // 7#9
-])
+const chordList = computed(() =>
+  CHORD_DEFS.map((chord) => ({
+    key: chord.key,
+    name: t(`whiteboard.pianoChord.${chord.key}`),
+    keyList: [...chord.keyList]
+  }))
+)
 const chordBoxLayout = computed(() => {
   const keyW = Math.max(whiteKeyWidthNum.value, 28)
   const rightPad = keyW * 0.85
@@ -540,19 +543,19 @@ function chordBoxPointerDown(event: PointerEvent) {
   const solmizationIndex = startMidi % 12 // 比如21键起始9
   // 计算左侧未出现的已经经过的当前组的宽度，只计算白键
   const solmizationOffsetMap: Record<string, number> = {
-      '0': 0,
-      '1': 1,
-      '2': 1,
-      '3': 2,
-      '4': 2,
-      '5': 3,
-      '6': 4,
-      '7': 4,
-      '8': 5,
-      '9': 5,
-      '10': 6,
-      '11': 6
-    }
+    '0': 0,
+    '1': 1,
+    '2': 1,
+    '3': 2,
+    '4': 2,
+    '5': 3,
+    '6': 4,
+    '7': 4,
+    '8': 5,
+    '9': 5,
+    '10': 6,
+    '11': 6
+  }
   const passWidth = (solmizationOffsetMap[String(solmizationIndex)] ?? 0) * whiteKeyWidthNum.value
   // 当前琴键已经走过的八度
   const baseMidi =
@@ -763,7 +766,7 @@ onBeforeUnmount(() => {
       </div>
     </div>
     <div v-show="group" class="stackItem group" comment="分组遮罩">
-      <div v-for="item in groupMaskList" :key="item.groupName" :style="groupStyle(item)"></div>
+      <div v-for="item in groupMaskList" :key="item.groupKey" :style="groupStyle(item)"></div>
     </div>
     <!--  这里移动端拖动有问题，以后再说吧      -->
     <div :style="{ height: 0, zIndex: 100 }" class="stackItem" comment="滑块功能层">
@@ -774,11 +777,11 @@ onBeforeUnmount(() => {
       >
         <div
           v-for="item in groupMaskList"
-          :key="item.groupName"
+          :key="item.groupKey"
           class="group-name-cell"
           :style="groupNameStyle(item)"
         >
-          <span class="group-name-cell__text">{{ item.groupName }}</span>
+          <span class="group-name-cell__text">{{ item.groupLabel }}</span>
         </div>
       </div>
       <div
@@ -790,11 +793,11 @@ onBeforeUnmount(() => {
       >
         <div class="interval-slider__head">
           <span class="interval-slider__grip" aria-hidden="true" />
-          <span class="interval-slider__title">音程滑块</span>
+          <span class="interval-slider__title">{{ t('whiteboard.toolbar.intervalSlider') }}</span>
         </div>
         <div class="interval-slider__track">
           <div
-            v-for="(item, index) in INTERVAL_SLIDER_STEPS"
+            v-for="(item, index) in intervalSteps"
             :key="item.semitones"
             class="interval-slider__col"
             :style="{ width: intervalSliderColWidth }"
@@ -815,11 +818,11 @@ onBeforeUnmount(() => {
       >
         <div class="chord-slider__head">
           <span class="chord-slider__grip" aria-hidden="true" />
-          <span class="chord-slider__title">和弦滑块</span>
+          <span class="chord-slider__title">{{ t('whiteboard.toolbar.chordSlider') }}</span>
         </div>
         <div class="chord-slider__body">
           <select v-model.number="curChordIndex" class="chord-slider__select">
-            <option v-for="(item, index) in chordList" :key="item.name" :value="index">
+            <option v-for="(item, index) in chordList" :key="item.key" :value="index">
               {{ item.name }}
             </option>
           </select>
@@ -829,7 +832,7 @@ onBeforeUnmount(() => {
             @pointerup="chordBoxPointerUp($event)"
             @pointerdown.stop="chordBoxPointerDown($event)"
           >
-            叩
+            {{ t('whiteboard.pianoChord.play') }}
           </button>
         </div>
       </div>

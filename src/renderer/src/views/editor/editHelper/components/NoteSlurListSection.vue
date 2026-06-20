@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type {MusicScore} from 'deciphony-renderer'
 import {computed} from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   DEFAULT_SLUR_THICKNESS,
   getSlurThickness,
@@ -21,6 +22,8 @@ const props = defineProps<{
 const emit = defineEmits<{
   add: [span: SlurSpan]
 }>()
+
+const { t } = useI18n()
 
 const slurs = computed(() => {
   void props.musicScore.affiliatedSymbols.length
@@ -44,7 +47,7 @@ function onThicknessChange(slurId: string, value: number | undefined) {
 
 <template>
   <section class="note-slur-list">
-    <div class="note-slur-list__label">连音线</div>
+    <div class="note-slur-list__label">{{ t('editor.note.slur') }}</div>
 
     <div v-if="slurs.length" class="note-slur-list__items">
       <div v-for="slur in slurs" :key="slur.id" class="note-slur-list__item">
@@ -58,7 +61,9 @@ function onThicknessChange(slurId: string, value: number | undefined) {
           controls-position="right"
           @update:model-value="onThicknessChange(slur.id, $event)"
         />
-        <el-button size="small" type="danger" plain @click="onDelete(slur.id)">删除</el-button>
+        <el-button size="small" type="danger" plain @click="onDelete(slur.id)">
+          {{ t('common.delete') }}
+        </el-button>
       </div>
     </div>
 

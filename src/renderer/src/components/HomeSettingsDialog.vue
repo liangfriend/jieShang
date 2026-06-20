@@ -1,8 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { GAME_DIFFICULTY_OPTIONS } from '@renderer/constant/gameSettings'
+import { LOCALE_OPTIONS, type AppLocale } from '@renderer/i18n/locale'
+import { resolveGameDifficultyLabel } from '@renderer/i18n/helpers'
 import { useGameSettingsStore } from '@renderer/store/gameSettings.store'
+import { useLocaleStore } from '@renderer/store/locale.store'
 
 defineOptions({ name: 'HomeSettingsDialog' })
 
@@ -14,27 +18,33 @@ const emit = defineEmits<{
   'update:modelValue': [value: boolean]
 }>()
 
+const { t } = useI18n()
 const settings = useGameSettingsStore()
+const localeStore = useLocaleStore()
 const { difficulty, noteBlockSoundVolume } = storeToRefs(settings)
+const { locale } = storeToRefs(localeStore)
 
 const visible = computed({
   get: () => props.modelValue,
   set: (value) => emit('update:modelValue', value)
 })
 
-/** 音量用 0~100 展示，存储为 0~1 */
 const noteBlockSoundVolumePercent = computed({
   get: () => Math.round(noteBlockSoundVolume.value * 100),
   set: (value: number) => {
     noteBlockSoundVolume.value = value / 100
   }
 })
+
+function onLocaleChange(value: AppLocale) {
+  localeStore.setLocale(value)
+}
 </script>
 
 <template>
   <el-dialog
     v-model="visible"
-    title="设置"
+    :title="t('settings.title')"
     width="420px"
     class="home-settings-dialog cute-dialog"
     append-to-body
@@ -42,22 +52,32 @@ const noteBlockSoundVolumePercent = computed({
   >
     <el-form label-position="top" class="home-settings-form">
       <section class="home-settings-section">
+        <el-form-item :label="t('settings.language.label')">
+          <el-radio-group :model-value="locale" @change="onLocaleChange">
+            <el-radio v-for="opt in LOCALE_OPTIONS" :key="opt.value" :value="opt.value">
+              {{ t(opt.labelKey) }}
+            </el-radio>
+          </el-radio-group>
+        </el-form-item>
+      </section>
+
+      <section class="home-settings-section">
         <div class="home-settings-difficulty-row">
-          <span class="home-settings-difficulty-row__label">街机/无限模式难度：</span>
+          <span class="home-settings-difficulty-row__label">{{ t('settings.gameDifficulty.label') }}</span>
           <el-radio-group v-model="difficulty" class="home-settings-difficulty">
             <el-radio
               v-for="opt in GAME_DIFFICULTY_OPTIONS"
               :key="opt.value"
               :value="opt.value"
             >
-              {{ opt.label }}
+              {{ resolveGameDifficultyLabel(opt.value) }}
             </el-radio>
           </el-radio-group>
         </div>
       </section>
 
       <section class="home-settings-section">
-        <el-form-item label="音符块声音">
+        <el-form-item :label="t('settings.noteBlockSound.label')">
           <el-slider v-model="noteBlockSoundVolumePercent" :min="0" :max="100" show-input />
         </el-form-item>
       </section>
@@ -65,7 +85,7 @@ const noteBlockSoundVolumePercent = computed({
 
     <template #footer>
       <button type="button" class="home-settings-dialog__btn" @click="visible = false">
-        完成
+        {{ t('common.done') }}
       </button>
     </template>
   </el-dialog>

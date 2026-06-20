@@ -8,6 +8,7 @@ import singleVoiceJianpuTemplate from '@renderer/template/singleVoiceJianpu'
 import doubleVoiceTemplate from '@renderer/template/doubleVoice'
 import doubleVoiceJianpuTemplate from '@renderer/template/doubleVoiceJianpu'
 import { getGrandStaffSingleStaffMismatchMessage } from '@renderer/dr-extensions/scoreUtil'
+import i18n from '@renderer/i18n'
 import { useDataStore } from '@renderer/store/data.store'
 import { loadScoreFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper'
 import { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from '@renderer/constant'
@@ -129,7 +130,7 @@ export async function loadScoreFromRoute(
   if (scoreId) {
     const record = await loadScoreFromDatabase(scoreId)
     if (!record?.data) {
-      ElMessage.error('曲谱加载失败')
+      ElMessage.error(i18n.global.t('common.scoreLoadFailed'))
       return null
     }
     const score = parseScoreJson(record.data)
@@ -177,12 +178,13 @@ export async function guardSingleLineModeEnter(
   const score = await loadScoreFromRoute(to)
   if (!score) return true
 
-  const message = getGrandStaffSingleStaffMismatchMessage(score)
-  if (!message) return true
+  if (getGrandStaffSingleStaffMismatchMessage(score)) {
+    ElMessage.warning(i18n.global.t('play.messages.grandStaffMismatch'))
+    if (from.name === 'play') return false
+    return { name: 'play', query: buildScoreRouteQuery(to) }
+  }
 
-  ElMessage.warning(message)
-  if (from.name === 'play') return false
-  return { name: 'play', query: buildScoreRouteQuery(to) }
+  return true
 }
 
 export const SCORE_SLOT_CONFIG = {

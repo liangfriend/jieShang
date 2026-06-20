@@ -2,6 +2,7 @@
 import { ref, computed } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import HomeSettingsDialog from '@renderer/components/HomeSettingsDialog.vue'
 import { HOME_TEMPLATE_TO_ROUTE } from '@renderer/utils/scoreRoute'
 import { useMidiStore } from '@renderer/store/midi.store'
@@ -18,6 +19,7 @@ import settingsIcon from '@renderer/assets/homeView/icon-settings.svg'
 import midiIcon from '@renderer/assets/homeView/icon-midi.svg'
 import midiOffIcon from '@renderer/assets/homeView/icon-midi-off.svg'
 
+const { t } = useI18n()
 const router = useRouter()
 const { hasConnectedInput } = storeToRefs(useMidiStore())
 const templateVisible = ref(false)
@@ -25,50 +27,50 @@ const settingsVisible = ref(false)
 
 const midiStatusIcon = computed(() => (hasConnectedInput.value ? midiIcon : midiOffIcon))
 
-const gameModes = [
+const gameModes = computed(() => [
   {
-    route: 'noteSliceArcade',
-    title: '街机模式',
-    desc: '60 秒限时，冲高分',
+    route: 'noteSliceArcade' as const,
+    title: t('home.gameModes.arcade.title'),
+    desc: t('home.gameModes.arcade.desc'),
     icon: arcadeIcon,
     tint: '#fff0c9'
   },
   {
-    route: 'noteSliceEndless',
-    title: '无限模式',
-    desc: '三条命，看你能撑多久',
+    route: 'noteSliceEndless' as const,
+    title: t('home.gameModes.endless.title'),
+    desc: t('home.gameModes.endless.desc'),
     icon: endlessIcon,
     tint: '#d4f0ff'
   },
   {
-    route: 'noteSliceExtreme',
-    title: '极限模式',
-    desc: '不准漏音，挑战存活',
+    route: 'noteSliceExtreme' as const,
+    title: t('home.gameModes.extreme.title'),
+    desc: t('home.gameModes.extreme.desc'),
     icon: extremeIcon,
     tint: '#ffd6e8'
   }
-] as const
+])
 
-const templateGroups = [
+const templateGroups = computed(() => [
   {
-    title: '线谱',
+    title: t('home.templateDialog.staff'),
     items: [
-      { key: 'empty', label: '空' },
-      { key: 'single', label: '单声部' },
-      { key: 'double', label: '双声部' }
+      { key: 'empty', label: t('home.templateDialog.empty') },
+      { key: 'single', label: t('home.templateDialog.single') },
+      { key: 'double', label: t('home.templateDialog.double') }
     ]
   },
   {
-    title: '简谱',
+    title: t('home.templateDialog.jianpu'),
     items: [
-      { key: 'jianpuEmpty', label: '空' },
-      { key: 'jianpuSingle', label: '单声部' },
-      { key: 'jianpuDouble', label: '双声部' }
+      { key: 'jianpuEmpty', label: t('home.templateDialog.empty') },
+      { key: 'jianpuSingle', label: t('home.templateDialog.single') },
+      { key: 'jianpuDouble', label: t('home.templateDialog.double') }
     ]
   }
-]
+])
 
-function goToGameMode(routeName: (typeof gameModes)[number]['route']) {
+function goToGameMode(routeName: (typeof gameModes.value)[number]['route']) {
   router.push({ name: routeName })
 }
 
@@ -110,10 +112,10 @@ function goToAchievements() {
 
     <header class="home-header">
       <div class="logo-wrap">
-        <img class="logo-face" :src="logoIcon" alt="解熵" />
+        <img class="logo-face" :src="logoIcon" :alt="t('home.brand.logoAlt')" />
         <div>
-          <h1 class="title">解熵</h1>
-          <p class="subtitle">助力你的音乐梦想</p>
+          <h1 class="title">{{ t('home.brand.title') }}</h1>
+          <p class="subtitle">{{ t('home.brand.subtitle') }}</p>
         </div>
       </div>
     </header>
@@ -136,44 +138,55 @@ function goToAchievements() {
 
       <section class="action-row">
         <button type="button" class="action-btn action-collection" @click="goToCollection">
-          <img class="action-btn__icon" :src="collectionIcon" alt="藏品" />
-          <span class="action-label">藏品</span>
+          <img
+            class="action-btn__icon"
+            :src="collectionIcon"
+            :alt="t('home.actions.collection')"
+          />
+          <span class="action-label">{{ t('home.actions.collection') }}</span>
         </button>
 
         <button type="button" class="action-btn action-compose" @click="templateVisible = true">
-          <img class="action-btn__icon" :src="composeIcon" alt="曲谱制作" />
-          <span class="action-label">曲谱制作</span>
+          <img class="action-btn__icon" :src="composeIcon" :alt="t('home.actions.compose')" />
+          <span class="action-label">{{ t('home.actions.compose') }}</span>
         </button>
 
         <button type="button" class="action-btn action-scores" @click="goToScores">
-          <img class="action-btn__icon" :src="scoresIcon" alt="我的曲谱" />
-          <span class="action-label">我的曲谱</span>
+          <img class="action-btn__icon" :src="scoresIcon" :alt="t('home.actions.scores')" />
+          <span class="action-label">{{ t('home.actions.scores') }}</span>
         </button>
       </section>
 
       <section class="action-row action-row--dual">
         <button type="button" class="action-btn action-whiteboard" @click="goToWhiteboard">
-          <img class="action-btn__icon" :src="whiteboardIcon" alt="教学白板" />
-          <span class="action-label">教学白板</span>
+          <img
+            class="action-btn__icon"
+            :src="whiteboardIcon"
+            :alt="t('home.actions.whiteboard')"
+          />
+          <span class="action-label">{{ t('home.actions.whiteboard') }}</span>
         </button>
 
         <button type="button" class="action-btn action-achievements" @click="goToAchievements">
-          <img class="action-btn__icon" :src="achievementsIcon" alt="成就" />
-          <span class="action-label">成就</span>
+          <img
+            class="action-btn__icon"
+            :src="achievementsIcon"
+            :alt="t('home.actions.achievements')"
+          />
+          <span class="action-label">{{ t('home.actions.achievements') }}</span>
         </button>
       </section>
     </main>
 
-    <!-- 曲谱模版弹窗 UI -->
     <el-dialog
       v-model="templateVisible"
-      title="选择模版"
+      :title="t('home.templateDialog.title')"
       width="480px"
       class="cute-dialog"
       append-to-body
       align-center
     >
-      <p class="dialog-desc">选好模版后，就可以进入曲谱编辑啦</p>
+      <p class="dialog-desc">{{ t('home.templateDialog.desc') }}</p>
       <div class="template-groups">
         <section v-for="group in templateGroups" :key="group.title" class="template-group">
           <h3 class="template-group__title">{{ group.title }}</h3>
@@ -197,8 +210,8 @@ function goToAchievements() {
     <button
       type="button"
       class="home-settings-btn"
-      title="设置"
-      aria-label="设置"
+      :title="t('home.settingsAria')"
+      :aria-label="t('home.settingsAria')"
       @click="settingsVisible = true"
     >
       <img class="home-settings-btn__icon" :src="settingsIcon" alt="" />
@@ -207,9 +220,9 @@ function goToAchievements() {
     <div
       class="midi-status"
       :class="hasConnectedInput ? 'is-connected' : 'is-disconnected'"
-      :title="hasConnectedInput ? 'MIDI 琴已连接' : 'MIDI 琴未连接'"
+      :title="hasConnectedInput ? t('home.midi.connected') : t('home.midi.disconnected')"
       aria-live="polite"
-      :aria-label="hasConnectedInput ? 'MIDI 琴已连接' : 'MIDI 琴未连接'"
+      :aria-label="hasConnectedInput ? t('home.midi.connected') : t('home.midi.disconnected')"
     >
       <img class="midi-status__icon" :src="midiStatusIcon" alt="" />
     </div>

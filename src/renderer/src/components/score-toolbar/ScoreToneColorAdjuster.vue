@@ -2,11 +2,14 @@
 import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { usePlayStore } from '@renderer/store/play.store'
 import {
   fetchOwnedToneColorOptions,
   type ToneColorOption
 } from '@renderer/utils/collection/toneColorUsage'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -24,7 +27,7 @@ const optionsLoading = ref(false)
 
 const toneColorLabel = computed(() => {
   const current = options.value.find((item) => item.id === collectionToneColorId.value)
-  return current?.name ?? '音色'
+  return current?.name ?? t('play.toneColor.label')
 })
 
 const panelLoading = computed(() => optionsLoading.value || collectionToneColorLoading.value)
@@ -56,7 +59,7 @@ onMounted(async () => {
     options.value = await fetchOwnedToneColorOptions()
     await playStore.ensureCollectionToneColorInitialized()
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '音色加载失败')
+    ElMessage.error(error instanceof Error ? error.message : t('play.toneColor.loadFailed'))
   } finally {
     optionsLoading.value = false
   }
@@ -73,7 +76,7 @@ async function onToneColorChange(event: Event) {
   try {
     await playStore.setCollectionToneColor(id)
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '音色切换失败')
+    ElMessage.error(error instanceof Error ? error.message : t('play.toneColor.switchFailed'))
   }
 }
 </script>
@@ -86,7 +89,7 @@ async function onToneColorChange(event: Event) {
       :disabled="buttonDisabled"
       @click="togglePanel"
     >
-      音色 {{ toneColorLabel }}
+      {{ t('play.toneColor.label') }} {{ toneColorLabel }}
     </button>
     <div
       v-if="activePanel"
@@ -95,7 +98,7 @@ async function onToneColorChange(event: Event) {
       @pointerdown.stop
     >
       <div class="score-tone-color__field">
-        <span class="score-tone-color__field-label">音色</span>
+        <span class="score-tone-color__field-label">{{ t('play.toneColor.label') }}</span>
         <select
           class="score-tone-color__select"
           :value="collectionToneColorId"

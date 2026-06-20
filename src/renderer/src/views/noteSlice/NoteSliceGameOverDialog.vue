@@ -1,9 +1,15 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import type { AchievementDefinition } from '@renderer/constant/achievements'
-import { GAME_DIFFICULTY_OPTIONS } from '@renderer/constant/gameSettings'
+import {
+  resolveAchievementDescription,
+  resolveAchievementName,
+  resolveAchievementReward,
+  resolveGameDifficultyLabel
+} from '@renderer/i18n/helpers'
 import { useGameSettingsStore } from '@renderer/store/gameSettings.store'
 import { formatNoteSliceExtremeHighScore } from '@renderer/utils/noteSliceHighScoreHelper'
 import type { NoteSliceGameEndReason, NoteSliceGameMode } from '@renderer/views/noteSlice/noteSliceGameMode'
@@ -24,16 +30,17 @@ const emit = defineEmits<{
 }>()
 
 const router = useRouter()
+const { t } = useI18n()
 const gameSettings = useGameSettingsStore()
 const { difficulty } = storeToRefs(gameSettings)
 
 const isExtreme = computed(() => props.mode === 'extreme')
 
 const title = computed(() => {
-  if (props.mode === 'arcade' && props.reason === 'time_up') return '时间到'
-  if (props.mode === 'endless') return '命用完了'
-  if (props.mode === 'extreme') return '挑战结束'
-  return '游戏结束'
+  if (props.mode === 'arcade' && props.reason === 'time_up') return t('noteSlice.gameOver.timeUp')
+  if (props.mode === 'endless') return t('noteSlice.gameOver.outOfLives')
+  if (props.mode === 'extreme') return t('noteSlice.gameOver.challengeEnd')
+  return t('noteSlice.gameOver.default')
 })
 
 const modeEmoji = computed(() => {
@@ -44,16 +51,20 @@ const modeEmoji = computed(() => {
 
 const difficultyLabel = computed(() => {
   if (isExtreme.value) return ''
-  return GAME_DIFFICULTY_OPTIONS.find((opt) => opt.value === difficulty.value)?.label ?? ''
+  return resolveGameDifficultyLabel(difficulty.value)
 })
 
-const primaryLabel = computed(() => (isExtreme.value ? '本局存活' : '本局得分'))
+const primaryLabel = computed(() =>
+  isExtreme.value ? t('noteSlice.gameOver.survivalThisRound') : t('noteSlice.gameOver.scoreThisRound')
+)
 
 const primaryDisplay = computed(() =>
   isExtreme.value ? formatNoteSliceExtremeHighScore(props.score) : String(props.score)
 )
 
-const bestLabel = computed(() => (isExtreme.value ? '历史最长存活' : '历史最高分'))
+const bestLabel = computed(() =>
+  isExtreme.value ? t('noteSlice.gameOver.bestSurvival') : t('noteSlice.gameOver.bestScore')
+)
 
 const bestDisplay = computed(() => {
   const best = props.isNewPersonalBest ? props.score : props.previousBest
@@ -75,6 +86,11 @@ function onGoHome(): void {
   close()
   router.push('/')
 }
+
+function hasAchievementReward(item: AchievementDefinition): boolean {
+  const reward = resolveAchievementReward(item)
+  return reward !== '' && reward !== t('common.none')
+}
 </script>
 
 <template>
@@ -83,14 +99,16 @@ function onGoHome(): void {
       <div class="note-slice-game-over__backdrop" />
 
       <div class="note-slice-game-over__card">
-        <span v-if="isNewPersonalBest" class="note-slice-game-over__corner-badge">新 PR</span>
+        <span v-if="isNewPersonalBest" class="note-slice-game-over__corner-badge">
+          {{ t('noteSlice.gameOver.newPr') }}
+        </span>
 
         <div class="note-slice-game-over__glow" aria-hidden="true" />
 
         <div class="note-slice-game-over__emoji" aria-hidden="true">{{ modeEmoji }}</div>
         <h2 class="note-slice-game-over__title">{{ title }}</h2>
         <p v-if="difficultyLabel" class="note-slice-game-over__subtitle">
-          {{ difficultyLabel }}难度
+          {{ difficultyLabel }}{{ t('noteSlice.difficulty.suffix') }}
         </p>
 
         <div class="note-slice-game-over__stats">
@@ -109,7 +127,9 @@ function onGoHome(): void {
         </div>
 
         <section v-if="unlockedAchievements.length > 0" class="note-slice-game-over__achievements">
-          <h3 class="note-slice-game-over__achievements-title">本局获得成就</h3>
+          <h3 class="note-slice-game-over__achievements-title">
+            {{ t('noteSlice.gameOver.achievementsTitle') }}
+          </h3>
           <div class="note-slice-game-over__achievements-scroll">
             <article
               v-for="item in unlockedAchievements"
@@ -117,12 +137,18 @@ function onGoHome(): void {
               class="note-slice-game-over__achievement"
             >
               <div class="note-slice-game-over__achievement-head">
-                <span class="note-slice-game-over__achievement-name">{{ item.name }}</span>
-                <span class="note-slice-game-over__achievement-badge">新</span>
+                <span class="note-slice-game-over__achievement-name">
+                  {{ resolveAchievementName(item) }}
+                </span>
+                <span class="note-slice-game-over__achievement-badge">
+                  {{ t('noteSlice.gameOver.newBadge') }}
+                </span>
               </div>
-              <p class="note-slice-game-over__achievement-desc">{{ item.description }}</p>
-              <p v-if="item.reward !== '无'" class="note-slice-game-over__achievement-reward">
-                奖励：{{ item.reward }}
+              <p class="note-slice-game-over__achievement-desc">
+                {{ resolveAchievementDescription(item) }}
+              </p>
+              <p v-if="hasAchievementReward(item)" class="note-slice-game-over__achievement-reward">
+                {{ t('noteSlice.gameOver.reward', { reward: resolveAchievementReward(item) }) }}
               </p>
             </article>
           </div>
@@ -130,10 +156,10 @@ function onGoHome(): void {
 
         <div class="note-slice-game-over__actions">
           <button type="button" class="note-slice-game-over__btn note-slice-game-over__btn--primary" @click="onPlayAgain">
-            再来一局
+            {{ t('noteSlice.gameOver.playAgain') }}
           </button>
           <button type="button" class="note-slice-game-over__btn note-slice-game-over__btn--ghost" @click="onGoHome">
-            回到首页
+            {{ t('noteSlice.gameOver.goHome') }}
           </button>
         </div>
       </div>

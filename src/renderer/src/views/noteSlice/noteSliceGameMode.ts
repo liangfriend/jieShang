@@ -16,8 +16,14 @@ export type NoteSliceGameEndPayload = {
   newlyUnlockedAchievements: AchievementDefinition[]
 }
 
-/** 开局倒计时文案（共 4 步，每步 1s） */
-export const NOTE_SLICE_START_COUNTDOWN_LABELS = ['3', '2', '1', '开始!'] as const
+/** 开局倒计时数字步（共 3 步，每步 1s；最终「开始」文案由 Vue i18n 提供） */
+export const NOTE_SLICE_START_COUNTDOWN_NUMERIC_STEPS = ['3', '2', '1'] as const
+
+/** @deprecated 使用 NOTE_SLICE_START_COUNTDOWN_NUMERIC_STEPS + noteSlice.countdown.start */
+export const NOTE_SLICE_START_COUNTDOWN_LABELS = [
+  ...NOTE_SLICE_START_COUNTDOWN_NUMERIC_STEPS,
+  'start'
+] as const
 
 /** 开局倒计时单步时长（ms） */
 export const NOTE_SLICE_START_COUNTDOWN_STEP_MS = 1000

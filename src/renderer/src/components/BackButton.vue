@@ -1,5 +1,7 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { ArrowLeft } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 
 const props = withDefaults(
@@ -8,12 +10,15 @@ const props = withDefaults(
     fallback?: string
   }>(),
   {
-    label: '返回',
+    label: '',
     fallback: '/'
   }
 )
 
+const { t } = useI18n()
 const router = useRouter()
+
+const displayLabel = computed(() => props.label || t('common.back'))
 
 function handleBack() {
   const back = window.history.state?.back
@@ -28,7 +33,7 @@ function handleBack() {
 <template>
   <button type="button" class="back-button" @click="handleBack">
     <el-icon class="back-button__icon"><ArrowLeft /></el-icon>
-    <span>{{ label }}</span>
+    <span>{{ displayLabel }}</span>
   </button>
 </template>
 

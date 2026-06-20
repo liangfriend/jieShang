@@ -1,5 +1,22 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
+import i18n from '@renderer/i18n'
 import { guardSingleLineModeEnter } from '@renderer/utils/scoreRoute'
+
+const ROUTE_TITLE_KEYS: Record<string, string> = {
+  home: 'router.home',
+  edit: 'router.edit',
+  play: 'router.play',
+  practice: 'router.practice',
+  forBeginner: 'router.forBeginner',
+  scores: 'router.scores',
+  whiteboard: 'router.whiteboard',
+  literacyCamp: 'router.literacyCamp',
+  achievements: 'router.achievements',
+  collection: 'router.collection',
+  noteSliceArcade: 'router.noteSliceArcade',
+  noteSliceEndless: 'router.noteSliceEndless',
+  noteSliceExtreme: 'router.noteSliceExtreme'
+}
 
 const routes: RouteRecordRaw[] = [
   {
@@ -87,6 +104,16 @@ const routes: RouteRecordRaw[] = [
 const router = createRouter({
   history: createWebHashHistory(),
   routes
+})
+
+router.afterEach((to) => {
+  const routeName = typeof to.name === 'string' ? to.name : ''
+  const titleKey = ROUTE_TITLE_KEYS[routeName]
+  if (!titleKey) return
+  const title = i18n.global.t(titleKey)
+  if (title && title !== titleKey) {
+    document.title = title
+  }
 })
 
 export default router

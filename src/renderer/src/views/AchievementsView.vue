@@ -1,6 +1,13 @@
 <script lang="ts" setup>
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
+import {
+  resolveAchievementDescription,
+  resolveAchievementName,
+  resolveAchievementReward,
+  resolveGameDifficultyLabel
+} from '@renderer/i18n/helpers'
 import {
   formatAchievementCompletedAt,
   loadAchievementListItems,
@@ -13,11 +20,23 @@ import {
   type NoteSliceHighScoreRecord
 } from '@renderer/utils/noteSliceHighScoreHelper'
 
+const { t } = useI18n()
+
 const loading = ref(true)
 const achievements = ref<AchievementListItem[]>([])
 const highScores = ref<NoteSliceHighScoreRecord[]>([])
 
-const highScoreMatrix = computed(() => buildNoteSliceHighScoreMatrix(highScores.value))
+const highScoreMatrix = computed(() => {
+  const matrix = buildNoteSliceHighScoreMatrix(highScores.value)
+  return matrix.map((row) => ({
+    ...row,
+    modeLabel: t(`noteSlice.modes.${row.mode}`),
+    scores: row.scores?.map((scoreItem) => ({
+      ...scoreItem,
+      difficultyLabel: resolveGameDifficultyLabel(scoreItem.difficulty)
+    }))
+  }))
+})
 
 onMounted(async () => {
   loading.value = true
@@ -38,12 +57,12 @@ onMounted(async () => {
   <div class="achievements-page">
     <header class="achievements-page__header">
       <BackButton fallback="/" />
-      <h1 class="achievements-page__title">成就</h1>
+      <h1 class="achievements-page__title">{{ t('achievements.title') }}</h1>
     </header>
 
     <main class="achievements-page__main">
       <section class="achievements-page__scores">
-        <h2 class="achievements-page__section-title">历史最高分</h2>
+        <h2 class="achievements-page__section-title">{{ t('achievements.highScores') }}</h2>
 
         <div
           v-for="modeRow in highScoreMatrix"
@@ -72,9 +91,9 @@ onMounted(async () => {
         </div>
       </section>
 
-      <h2 class="achievements-page__section-title">全部成就</h2>
+      <h2 class="achievements-page__section-title">{{ t('achievements.allAchievements') }}</h2>
 
-      <p v-if="loading" class="achievements-page__status">加载中…</p>
+      <p v-if="loading" class="achievements-page__status">{{ t('common.loading') }}</p>
 
       <ul v-else class="achievements-page__list">
         <li
@@ -87,7 +106,7 @@ onMounted(async () => {
             <img
               v-if="item.illustrationInactiveUrl && item.illustrationActiveUrl"
               :src="item.completed ? item.illustrationActiveUrl : item.illustrationInactiveUrl"
-              :alt="item.name"
+              :alt="resolveAchievementName(item)"
               class="achievement-card__image"
             />
             <span v-else class="achievement-card__illus-placeholder">🏅</span>
@@ -95,13 +114,21 @@ onMounted(async () => {
 
           <div class="achievement-card__body">
             <div class="achievement-card__head">
-              <h2 class="achievement-card__name">{{ item.name }}</h2>
-              <span v-if="item.completed" class="achievement-card__badge">已达成</span>
+              <h2 class="achievement-card__name">{{ resolveAchievementName(item) }}</h2>
+              <span v-if="item.completed" class="achievement-card__badge">{{
+                t('achievements.completed')
+              }}</span>
             </div>
-            <p class="achievement-card__desc">{{ item.description }}</p>
-            <p class="achievement-card__reward">奖励：{{ item.reward }}</p>
+            <p class="achievement-card__desc">{{ resolveAchievementDescription(item) }}</p>
+            <p class="achievement-card__reward">
+              {{ t('achievements.reward', { reward: resolveAchievementReward(item) }) }}
+            </p>
             <p v-if="item.completed && item.completedAt" class="achievement-card__time">
-              完成于 {{ formatAchievementCompletedAt(item.completedAt) }}
+              {{
+                t('achievements.completedAt', {
+                  date: formatAchievementCompletedAt(item.completedAt)
+                })
+              }}
             </p>
           </div>
         </li>

@@ -1,8 +1,8 @@
 import type { Chronaxie } from 'deciphony-renderer'
 import type { NotesNumberInfo } from 'deciphony-renderer'
 import {
-  ADD_NOTE_KIND_OPTIONS as STAFF_KIND_OPTIONS,
-  CHRONAXIE_OPTIONS,
+  ADD_NOTE_KIND_VALUES as STAFF_KIND_VALUES,
+  CHRONAXIE_VALUES,
   DEFAULT_ADD_NOTE_STATE as STAFF_DEFAULT,
   type AddNoteSlotKind
 } from '../renderEditAddNoteState'
@@ -21,12 +21,12 @@ export const DEFAULT_ADD_NUMBER_STATE: AddNumberState = {
   syllable: 1
 }
 
-export const ADD_NUMBER_KIND_OPTIONS: { value: AddNumberSlotKind; label: string }[] = [
-  ...STAFF_KIND_OPTIONS
-  // {value: 'rhythm', label: '节奏音符'}, // TODO 这一版节奏音符展示不用户加
+export const ADD_NUMBER_KIND_VALUES: AddNumberSlotKind[] = [
+  ...STAFF_KIND_VALUES
+  // 'rhythm', // TODO 这一版节奏音符展示不用户加
 ]
 
-export { CHRONAXIE_OPTIONS }
+export { CHRONAXIE_VALUES }
 
 export function syllableForAddState(state: AddNumberState): NotesNumberInfo['syllable'] {
   if (state.kind === 'rest') return 0

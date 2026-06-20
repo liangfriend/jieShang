@@ -5,6 +5,7 @@ import musicScoreVue from 'deciphony-renderer'
 import { ElMessage } from 'element-plus'
 import { MusicScoreTypeEnum } from 'deciphony-renderer'
 import { onBeforeUnmount, onMounted, provide, ref, computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { TitleSlot } from '@renderer/dr-extensions/dr-title'
 import { PracticeModeToolbar } from '@renderer/components/score-toolbar'
@@ -57,6 +58,7 @@ const PRACTICE_PIANO_HEIGHT = '100%'
 /** 每个小节对应的曲谱宽度 */
 const PRACTICE_MEASURE_WIDTH = 200
 
+const { t } = useI18n()
 const route = useRoute()
 const playStore = usePlayStore()
 const metronomeStore = useMetronomeStore()
@@ -236,7 +238,7 @@ function onNotationTypeChange(targetType: MusicScoreTypeEnum) {
     scoreOverlayRef.value?.clearResults()
     rebuildPracticeSequences(musicScoreData.value)
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '曲谱类型切换失败')
+    ElMessage.error(error instanceof Error ? error.message : t('practice.messages.notationTypeSwitchFailed'))
   }
 }
 
@@ -271,7 +273,7 @@ watch(
 )
 
 onMounted(async () => {
-  globalLoading.show('加载中…')
+  globalLoading.show(t('common.loading'))
   try {
     const [, , , , loaded] = await Promise.all([
       waitScoreSkin(),
@@ -341,18 +343,32 @@ onBeforeUnmount(() => {
     </section>
 
     <section class="practice-page__stats">
-      <span class="practice-page__stat">音符总数 {{ pianoWaterfallRef?.stats?.total ?? 0 }}</span>
-      <span class="practice-page__stat">漏弹 {{ pianoWaterfallRef?.stats?.miss ?? 0 }}</span>
-      <span class="practice-page__stat">弹早 {{ pianoWaterfallRef?.stats?.early ?? 0 }}</span>
-      <span class="practice-page__stat">弹晚 {{ pianoWaterfallRef?.stats?.late ?? 0 }}</span>
-      <span class="practice-page__stat">及格 {{ pianoWaterfallRef?.stats?.pass ?? 0 }}</span>
-      <span class="practice-page__stat">优秀 {{ pianoWaterfallRef?.stats?.good ?? 0 }}</span>
-      <span class="practice-page__stat">完美 {{ pianoWaterfallRef?.stats?.perfect ?? 0 }}</span>
-      <span class="practice-page__stat practice-page__stat--score">
-        实时分 {{ (pianoWaterfallRef?.stats?.realScore ?? 0).toFixed(1) }}
+      <span class="practice-page__stat">
+        {{ t('practice.stats.totalNotes') }} {{ pianoWaterfallRef?.stats?.total ?? 0 }}
+      </span>
+      <span class="practice-page__stat">
+        {{ t('practice.result.miss') }} {{ pianoWaterfallRef?.stats?.miss ?? 0 }}
+      </span>
+      <span class="practice-page__stat">
+        {{ t('practice.result.early') }} {{ pianoWaterfallRef?.stats?.early ?? 0 }}
+      </span>
+      <span class="practice-page__stat">
+        {{ t('practice.result.late') }} {{ pianoWaterfallRef?.stats?.late ?? 0 }}
+      </span>
+      <span class="practice-page__stat">
+        {{ t('practice.result.pass') }} {{ pianoWaterfallRef?.stats?.pass ?? 0 }}
+      </span>
+      <span class="practice-page__stat">
+        {{ t('practice.result.good') }} {{ pianoWaterfallRef?.stats?.good ?? 0 }}
+      </span>
+      <span class="practice-page__stat">
+        {{ t('practice.result.perfect') }} {{ pianoWaterfallRef?.stats?.perfect ?? 0 }}
       </span>
       <span class="practice-page__stat practice-page__stat--score">
-        总分 {{ (pianoWaterfallRef?.stats?.totalScore ?? 0).toFixed(1) }}
+        {{ t('practice.stats.realScore') }} {{ (pianoWaterfallRef?.stats?.realScore ?? 0).toFixed(1) }}
+      </span>
+      <span class="practice-page__stat practice-page__stat--score">
+        {{ t('practice.stats.totalScore') }} {{ (pianoWaterfallRef?.stats?.totalScore ?? 0).toFixed(1) }}
       </span>
     </section>
 
@@ -378,7 +394,7 @@ onBeforeUnmount(() => {
 
       <div v-if="settings.coverWaterfall" class="practice-page__waterfall-cover">
         <span class="practice-page__waterfall-cover-emoji">🎵</span>
-        <span class="practice-page__waterfall-cover-text">强者之遮挡</span>
+        <span class="practice-page__waterfall-cover-text">{{ t('practice.coverText') }}</span>
       </div>
     </section>
 

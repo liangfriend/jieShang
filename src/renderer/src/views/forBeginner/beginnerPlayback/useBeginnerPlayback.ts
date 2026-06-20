@@ -1,5 +1,6 @@
 import type { MusicScore } from 'deciphony-renderer'
 import { ElMessage } from 'element-plus'
+import i18n from '@renderer/i18n'
 import type { Ref } from 'vue'
 import { computed, ref } from 'vue'
 import type { BeginnerPlaybackController, BeginnerPlaybackState } from './types'
@@ -36,7 +37,7 @@ export function useBeginnerPlayback(
   async function handlePlay() {
     if (playDisabled.value) return
     if (options.hasSequence?.() === false) {
-      ElMessage.warning('当前曲谱没有可练习的音符')
+      ElMessage.warning(i18n.global.t('beginner.messages.noPracticeableNotes'))
       return
     }
 

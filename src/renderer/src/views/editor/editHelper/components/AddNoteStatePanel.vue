@@ -1,14 +1,18 @@
 <script lang="ts" setup>
 import type { Chronaxie } from 'deciphony-renderer'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { resolveAddNoteKindLabel, resolveNoteDurationLabel, resolveRestDurationLabel } from '@renderer/i18n/helpers'
 import {
-  ADD_NOTE_KIND_OPTIONS,
-  chronaxieOptionsForKind,
+  ADD_NOTE_KIND_VALUES,
+  chronaxieValuesForKind,
   type AddNoteSlotKind,
   type AddNoteState
 } from '../renderEditAddNoteState'
 
 const model = defineModel<AddNoteState>({ required: true })
+
+const { t } = useI18n()
 
 const kind = computed({
   get: () => model.value.kind,
@@ -24,26 +28,28 @@ const chronaxie = computed({
   }
 })
 
-const chronaxieOptions = computed(() => chronaxieOptionsForKind(model.value.kind))
-
-const durationLabel = computed(() => (model.value.kind === 'rest' ? '时值' : '时值'))
+const chronaxieValues = computed(() => chronaxieValuesForKind(model.value.kind))
 </script>
 
 <template>
   <div class="add-note-state">
     <div class="add-note-state__row">
-      <span class="add-note-state__label">添加</span>
+      <span class="add-note-state__label">{{ t('editor.addNote.add') }}</span>
       <el-radio-group v-model="kind" size="small">
-        <el-radio-button v-for="opt in ADD_NOTE_KIND_OPTIONS" :key="opt.value" :label="opt.value">
-          {{ opt.label }}
+        <el-radio-button v-for="value in ADD_NOTE_KIND_VALUES" :key="value" :label="value">
+          {{ resolveAddNoteKindLabel(value) }}
         </el-radio-button>
       </el-radio-group>
     </div>
     <div class="add-note-state__row">
-      <span class="add-note-state__label">{{ durationLabel }}</span>
+      <span class="add-note-state__label">{{ t('editor.addNote.duration') }}</span>
       <el-radio-group v-model="chronaxie" size="small">
-        <el-radio-button v-for="opt in chronaxieOptions" :key="opt.value" :label="opt.value">
-          {{ opt.label }}
+        <el-radio-button v-for="value in chronaxieValues" :key="value" :label="value">
+          {{
+            model.kind === 'rest'
+              ? resolveRestDurationLabel(value)
+              : resolveNoteDurationLabel(value)
+          }}
         </el-radio-button>
       </el-radio-group>
     </div>

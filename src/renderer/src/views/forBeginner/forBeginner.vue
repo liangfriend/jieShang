@@ -5,6 +5,7 @@ import musicScoreVue from 'deciphony-renderer'
 import { ElMessage } from 'element-plus'
 import { MusicScoreTypeEnum } from 'deciphony-renderer'
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { BeginnerModeToolbar } from '@renderer/components/score-toolbar'
 import PianoMidiBox from '@renderer/components/pianoMidiBoxCanvas.vue'
@@ -47,6 +48,7 @@ const PIANO_SECTION_HEIGHT = '15%'
 const PIANO_HEIGHT = '100%'
 const MEASURE_WIDTH = 200
 
+const { t } = useI18n()
 const route = useRoute()
 const playStore = usePlayStore()
 const metronomeStore = useMetronomeStore()
@@ -223,7 +225,7 @@ function onNotationTypeChange(targetType: MusicScoreTypeEnum) {
     scoreOverlayRef.value?.clearBeginner()
     rebuildSequences(musicScoreData.value)
   } catch (error) {
-    ElMessage.error(error instanceof Error ? error.message : '曲谱类型切换失败')
+    ElMessage.error(error instanceof Error ? error.message : t('beginner.messages.notationTypeSwitchFailed'))
   }
 }
 
@@ -244,7 +246,7 @@ watch(
 )
 
 onMounted(async () => {
-  globalLoading.show('加载中…')
+  globalLoading.show(t('common.loading'))
   try {
     const [, , , , loaded] = await Promise.all([
       waitScoreSkin(),
@@ -332,7 +334,7 @@ function handleMidiBoxFinished() {
 
       <div v-if="settings.coverMidiBox" class="beginner-page__midi-box-cover">
         <span class="beginner-page__midi-box-cover-emoji">🎵</span>
-        <span class="beginner-page__midi-box-cover-text">强者之遮挡</span>
+        <span class="beginner-page__midi-box-cover-text">{{ t('beginner.coverText') }}</span>
       </div>
     </section>
 

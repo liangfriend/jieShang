@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import type {SlotData} from 'deciphony-renderer'
 import {computed} from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   canMoveSlurEndEarlier,
   canMoveSlurEndLater,
@@ -15,6 +16,8 @@ import SlurThicknessControl from './SlurThicknessControl.vue'
 const props = defineProps<{
   editSlot: SlotData
 }>()
+
+const { t } = useI18n()
 
 const slurEditSlot = computed(() => props.editSlot as SlurEditSlot)
 const musicScore = computed(() => slurEditSlot.value.musicScore)
@@ -43,10 +46,14 @@ function onMoveLater() {
       <SlurThicknessControl v-model="thickness" />
     </section>
     <section class="slur-props__section">
-      <div class="slur-props__label">尾部锚点</div>
+      <div class="slur-props__label">{{ t('editor.slur.tailAnchor') }}</div>
       <div class="slur-props__row">
-        <el-button :disabled="!canEarlier" size="small" @click="onMoveEarlier">尾部前移</el-button>
-        <el-button :disabled="!canLater" size="small" @click="onMoveLater">尾部后移</el-button>
+        <el-button :disabled="!canEarlier" size="small" @click="onMoveEarlier">
+          {{ t('editor.slur.moveEarlier') }}
+        </el-button>
+        <el-button :disabled="!canLater" size="small" @click="onMoveLater">
+          {{ t('editor.slur.moveLater') }}
+        </el-button>
       </div>
     </section>
   </div>

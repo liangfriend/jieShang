@@ -1,4 +1,11 @@
 import { ClefTypeEnum, KeySignatureTypeEnum } from 'deciphony-renderer'
+import {
+  resolveWhiteboardClefLabel as resolveWhiteboardClefLabelI18n,
+  resolveWhiteboardKeyCountLabel as resolveWhiteboardKeyCountLabelI18n,
+  resolveWhiteboardKeySignatureLabel as resolveWhiteboardKeySignatureLabelI18n,
+  resolveWhiteboardPitchNotationLabel as resolveWhiteboardPitchNotationLabelI18n,
+  resolveWhiteboardWidthTypeLabel as resolveWhiteboardWidthTypeLabelI18n
+} from '@renderer/i18n/helpers'
 
 export const WHITEBOARD_STORAGE_KEY = 'whiteboard.settings'
 
@@ -110,21 +117,21 @@ export function resolveWhiteboardMidiRange(keyCount: WhiteboardKeyCount): Whiteb
 }
 
 export function resolveWhiteboardKeyCountLabel(keyCount: WhiteboardKeyCount): string {
-  return WHITEBOARD_KEY_COUNT_OPTIONS.find((item) => item.value === keyCount)?.label ?? `${keyCount}键`
+  return resolveWhiteboardKeyCountLabelI18n(keyCount)
 }
 
 export function resolveWhiteboardWidthTypeLabel(widthType: WhiteboardWidthType): string {
-  return WHITEBOARD_WIDTH_TYPE_OPTIONS.find((item) => item.value === widthType)?.label ?? widthType
+  return resolveWhiteboardWidthTypeLabelI18n(widthType)
 }
 
 export function resolveWhiteboardPitchNotationLabel(notation: WhiteboardPitchNotation): string {
-  return WHITEBOARD_PITCH_NOTATION_OPTIONS.find((item) => item.value === notation)?.label ?? notation
+  return resolveWhiteboardPitchNotationLabelI18n(notation)
 }
 
 export function resolveWhiteboardClefLabel(clef: WhiteboardClef): string {
-  return WHITEBOARD_CLEF_OPTIONS.find((item) => item.value === clef)?.label ?? '高音谱号'
+  return resolveWhiteboardClefLabelI18n(clef)
 }
 
 export function resolveWhiteboardKeySignatureLabel(key: KeySignatureTypeEnum): string {
-  return WHITEBOARD_KEY_SIGNATURE_OPTIONS.find((item) => item.value === key)?.label ?? 'C (无升降)'
+  return resolveWhiteboardKeySignatureLabelI18n(key)
 }

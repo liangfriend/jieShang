@@ -45,10 +45,10 @@ export {
 export {deleteSelectedItem, isRestSelected} from './renderEditDelete'
 export {resolvePropertyPanelKind, type PropertyPanelKind} from './renderEditPropertyPanel'
 export {
-  ADD_NOTE_KIND_OPTIONS,
-  CHRONAXIE_OPTIONS,
-  REST_CHRONAXIE_OPTIONS,
-  chronaxieOptionsForKind,
+  ADD_NOTE_KIND_VALUES,
+  CHRONAXIE_VALUES,
+  REST_CHRONAXIE_VALUES,
+  chronaxieValuesForKind,
   DEFAULT_ADD_NOTE_STATE,
   type AddNoteSlotKind,
   type AddNoteState,
@@ -122,7 +122,7 @@ export {default as GhostNotePreview} from './standardStaff/components/GhostNoteP
 
 // —— 简谱 ——
 export {
-  ADD_NUMBER_KIND_OPTIONS,
+  ADD_NUMBER_KIND_VALUES,
   DEFAULT_ADD_NUMBER_STATE,
   type AddNumberSlotKind,
   type AddNumberState,

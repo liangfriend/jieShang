@@ -1,17 +1,13 @@
 import { createI18n } from 'vue-i18n'
-import en from '../locales/en.json'
-import zh from '../locales/zh.json'
-import jp from '../locales/jp.json'
-
-const messages = {
-  en,
-  zh
-}
+import { DEFAULT_LOCALE, FALLBACK_LOCALE, loadPersistedLocale } from './locale'
+import zh from './messages/zh'
+import en from './messages/en'
 
 const i18n = createI18n({
-  locale: 'zh', // 设置默认语言
-  fallbackLocale: 'en', // 设置备用语言
-  messages // 设置语言翻译
+  legacy: false,
+  locale: loadPersistedLocale() || DEFAULT_LOCALE,
+  fallbackLocale: FALLBACK_LOCALE,
+  messages: { zh, en }
 })
 
 export default i18n

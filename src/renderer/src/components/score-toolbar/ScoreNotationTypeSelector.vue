@@ -2,6 +2,9 @@
 import { MusicScoreTypeEnum } from 'deciphony-renderer'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { SCORE_NOTATION_TYPE_OPTIONS, resolveScoreNotationTypeLabel } from '@renderer/constant/scoreNotationType'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = withDefaults(
   defineProps<{
@@ -77,11 +80,11 @@ function onSelectChange(event: Event) {
         :disabled="disabled"
         @click="togglePanel"
       >
-        曲谱类型 {{ typeLabel }}
+        {{ t('editor.toolbar.notationType') }} {{ typeLabel }}
       </button>
       <div v-if="activePanel" class="score-toolbar__popup score-notation-type__popup" @pointerdown.stop>
         <div class="score-notation-type__field">
-          <span class="score-notation-type__field-label">曲谱类型</span>
+          <span class="score-notation-type__field-label">{{ t('editor.toolbar.notationType') }}</span>
           <select
             class="score-notation-type__select"
             :value="modelValue"
@@ -89,7 +92,7 @@ function onSelectChange(event: Event) {
             @change="onSelectChange"
           >
             <option v-for="item in SCORE_NOTATION_TYPE_OPTIONS" :key="item.value" :value="item.value">
-              {{ item.label }}
+              {{ resolveScoreNotationTypeLabel(item.value) }}
             </option>
           </select>
         </div>
@@ -98,7 +101,7 @@ function onSelectChange(event: Event) {
 
     <template v-else>
       <label class="score-notation-type__inline">
-        <span class="score-notation-type__inline-label">曲谱类型</span>
+        <span class="score-notation-type__inline-label">{{ t('editor.toolbar.notationType') }}</span>
         <select
           class="score-notation-type__select score-notation-type__select--inline"
           :value="modelValue"
@@ -106,7 +109,7 @@ function onSelectChange(event: Event) {
           @change="onSelectChange"
         >
           <option v-for="item in SCORE_NOTATION_TYPE_OPTIONS" :key="item.value" :value="item.value">
-            {{ item.label }}
+            {{ resolveScoreNotationTypeLabel(item.value) }}
           </option>
         </select>
       </label>

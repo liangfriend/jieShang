@@ -1,11 +1,17 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
-import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store'
-import { NOTE_RESULT_LABEL, NOTE_RESULT_LEGEND_STYLE } from '@renderer/constant/practice'
+import type { PracticeDifficulty } from '@renderer/constant/practice'
+import { NOTE_RESULT_LEGEND_STYLE } from '@renderer/constant/practice'
 import { PLAY_BPM_MAX, PLAY_BPM_MIN } from '@renderer/constant/play'
+import { resolveNoteResultLabel } from '@renderer/i18n/helpers'
+import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store'
+import type { NoteScoreResult } from '@renderer/types/types'
 
 defineOptions({ name: 'PracticeSettingsDialog' })
+
+const { t } = useI18n()
 
 const props = defineProps<{
   modelValue: boolean
@@ -42,14 +48,22 @@ const metronomeVolumePercent = computed({
   set: (value: number) => (metronomeVolume.value = value / 100)
 })
 
-const difficultyOptions = [
-  { label: '新手', value: 'beginner', desc: '判定窗口较宽，适合入门' },
-  { label: '老手', value: 'intermediate', desc: '标准判定，适合日常练习' },
-  { label: '大师', value: 'master', desc: '判定严格，挑战极限' }
-] as const
+const difficultyValues: PracticeDifficulty[] = ['beginner', 'intermediate', 'master']
 
-const noteColorLegend = (Object.keys(NOTE_RESULT_LABEL) as (keyof typeof NOTE_RESULT_LABEL)[]).map(
-  (key) => ({ label: NOTE_RESULT_LABEL[key], style: NOTE_RESULT_LEGEND_STYLE[key] })
+const difficultyOptions = computed(() =>
+  difficultyValues.map((value) => ({
+    value,
+    label: t(`settings.practice.difficulty.${value}`),
+    desc: t(`settings.practice.difficulty.${value}Desc`)
+  }))
+)
+
+const noteColorLegend = computed(() =>
+  (Object.keys(NOTE_RESULT_LEGEND_STYLE) as NoteScoreResult[]).map((key) => ({
+    key,
+    label: resolveNoteResultLabel(key),
+    style: NOTE_RESULT_LEGEND_STYLE[key]
+  }))
 )
 
 const appendixOpen = ref(false)
@@ -58,71 +72,71 @@ const appendixOpen = ref(false)
 <template>
   <el-dialog
     v-model="visible"
-    title="练习设置"
+    :title="t('practice.settings.title')"
     width="560px"
     class="practice-settings-dialog cute-dialog"
     append-to-body
     align-center
     destroy-on-close
   >
-    <p class="practice-settings-dialog__desc">调整练习体验，功能稍后接入</p>
+    <p class="practice-settings-dialog__desc">{{ t('practice.settings.desc') }}</p>
 
     <el-form label-position="top" class="practice-settings-form">
       <section class="practice-settings-section">
-        <h3 class="practice-settings-section__title">显示</h3>
+        <h3 class="practice-settings-section__title">{{ t('practice.settings.display') }}</h3>
         <div class="practice-settings-row">
           <div class="practice-settings-row__label">
-            <span>实时显示音符结果</span>
-            <small>弹对、弹早、弹晚、漏弹以不同颜色标注（漏弹为红色）</small>
+            <span>{{ t('practice.settings.showNoteResult') }}</span>
+            <small>{{ t('practice.settings.showNoteResultHint') }}</small>
           </div>
           <el-switch v-model="showNoteResult" />
         </div>
         <div class="practice-settings-row">
           <div class="practice-settings-row__label">
-            <span>遮盖瀑布流</span>
-            <small>用可爱背景图挡住瀑布流，凭听觉练习</small>
+            <span>{{ t('practice.settings.coverWaterfall') }}</span>
+            <small>{{ t('practice.settings.coverWaterfallHint') }}</small>
           </div>
           <el-switch v-model="coverWaterfall" />
         </div>
       </section>
 
       <section class="practice-settings-section">
-        <h3 class="practice-settings-section__title">音量与速度</h3>
-        <el-form-item label="曲谱音量">
+        <h3 class="practice-settings-section__title">{{ t('practice.settings.volumeAndSpeed') }}</h3>
+        <el-form-item :label="t('practice.settings.scoreVolume')">
           <el-slider v-model="scoreVolumePercent" :min="0" :max="100" show-input />
         </el-form-item>
-        <el-form-item label="节拍器音量">
+        <el-form-item :label="t('practice.settings.metronomeVolume')">
           <el-slider v-model="metronomeVolumePercent" :min="0" :max="100" show-input />
         </el-form-item>
-        <el-form-item label="BPM">
+        <el-form-item :label="t('practice.settings.bpm')">
           <el-input-number v-model="bpm" :min="PLAY_BPM_MIN" :max="PLAY_BPM_MAX" :step="1" />
         </el-form-item>
         <div class="practice-settings-row">
           <div class="practice-settings-row__label">
-            <span>播放过程开启节拍器</span>
+            <span>{{ t('practice.settings.metronomeDuringPlay') }}</span>
           </div>
           <el-switch v-model="metronomeDuringPlay" />
         </div>
       </section>
 
       <section class="practice-settings-section">
-        <h3 class="practice-settings-section__title">声部选择</h3>
-        <p class="practice-settings-section__hint">选择参与弹奏的声部</p>
+        <h3 class="practice-settings-section__title">{{ t('practice.settings.staffSelection') }}</h3>
+        <p class="practice-settings-section__hint">{{ t('practice.settings.staffSelectionHint') }}</p>
         <div v-if="staffEnabled.length" class="practice-settings-staff-list">
           <div
             v-for="(_, index) in staffEnabled"
             :key="index"
             class="practice-settings-row practice-settings-row--staff"
           >
-            <span>单谱表 {{ index + 1 }}</span>
+            <span>{{ t('practice.settings.singleStaff', { n: index + 1 }) }}</span>
             <el-switch v-model="staffEnabled[index]" />
           </div>
         </div>
-        <p v-else class="practice-settings-empty">当前曲谱暂无单谱表</p>
+        <p v-else class="practice-settings-empty">{{ t('practice.settings.noSingleStaff') }}</p>
       </section>
 
       <section class="practice-settings-section">
-        <h3 class="practice-settings-section__title">难度</h3>
+        <h3 class="practice-settings-section__title">{{ t('practice.settings.difficulty') }}</h3>
         <el-radio-group v-model="difficulty" class="practice-settings-difficulty">
           <el-radio
             v-for="opt in difficultyOptions"
@@ -143,16 +157,16 @@ const appendixOpen = ref(false)
           class="practice-settings-appendix-toggle"
           @click="appendixOpen = !appendixOpen"
         >
-          <span>附录：颜色含义</span>
+          <span>{{ t('practice.settings.appendix') }}</span>
           <span class="practice-settings-appendix-toggle__arrow" :class="{ open: appendixOpen }"
             >›</span
           >
         </button>
         <div v-show="appendixOpen" class="practice-settings-appendix">
           <div class="practice-settings-legend">
-            <p class="practice-settings-legend__title">音符颜色</p>
+            <p class="practice-settings-legend__title">{{ t('practice.settings.noteColors') }}</p>
             <ul>
-              <li v-for="item in noteColorLegend" :key="item.label">
+              <li v-for="item in noteColorLegend" :key="item.key">
                 <span class="practice-settings-legend__dot" :style="{ background: item.style }" />
                 {{ item.label }}
               </li>
@@ -164,7 +178,7 @@ const appendixOpen = ref(false)
 
     <template #footer>
       <button type="button" class="practice-settings-dialog__btn" @click="visible = false">
-        知道了
+        {{ t('common.gotIt') }}
       </button>
     </template>
   </el-dialog>

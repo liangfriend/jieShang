@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import {computed} from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   setVoltaText,
   setVoltaValue,
@@ -14,6 +15,8 @@ import VoltaValueEditor from './VoltaValueEditor.vue'
 const props = defineProps<{
   editSlot: VoltaEditSlot
 }>()
+
+const { t } = useI18n()
 
 const volta = computed(() => props.editSlot.self)
 
@@ -31,12 +34,12 @@ const value = computed({
 <template>
   <div class="volta-props">
     <section class="volta-props__section">
-      <div class="volta-props__label">文案</div>
-      <el-input v-model="text" placeholder="如 1." size="small"/>
+      <div class="volta-props__label">{{ t('editor.volta.text') }}</div>
+      <el-input v-model="text" :placeholder="t('editor.volta.textPlaceholder')" size="small"/>
     </section>
 
     <section class="volta-props__section">
-      <div class="volta-props__label">反复值</div>
+      <div class="volta-props__label">{{ t('editor.volta.value') }}</div>
       <VoltaValueEditor v-model="value"/>
     </section>
   </div>

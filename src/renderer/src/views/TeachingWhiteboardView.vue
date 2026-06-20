@@ -18,6 +18,7 @@ import {
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import { useVirtualPianoSkin } from '@renderer/utils/collection/useVirtualPianoSkin'
 import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
+import { t } from '@renderer/i18n/helpers'
 
 const WHITEBOARD_SLOT_CONFIG = {
   'g-l': { w: 50 },
@@ -103,7 +104,7 @@ function fitScoreToSection() {
 let scoreResizeObserver: ResizeObserver | null = null
 
 onMounted(async () => {
-  globalLoading.show('加载中…')
+  globalLoading.show(t('common.loading'))
   try {
     await Promise.all([
       waitScoreSkin(),

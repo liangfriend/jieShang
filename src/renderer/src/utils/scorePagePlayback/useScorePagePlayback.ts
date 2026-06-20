@@ -1,5 +1,6 @@
 import type { MusicScore } from 'deciphony-renderer'
 import { ElMessage } from 'element-plus'
+import i18n from '@renderer/i18n'
 import type { Ref as VueRef } from 'vue'
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { storeToRefs } from 'pinia'
@@ -86,7 +87,7 @@ export function useScorePagePlayback(
   async function handlePlay() {
     const sequence = options.getPlaySequence?.() ?? toPlaySequence(musicScore.value)
     if (sequence.length === 0) {
-      ElMessage.warning('当前曲谱没有可播放的内容')
+      ElMessage.warning(i18n.global.t('play.messages.noPlayableContent'))
       return
     }
 
