@@ -1,4 +1,7 @@
-export { default as MusicXmlNoticeDialog } from './MusicXmlNoticeDialog.vue'
+export { default as EditorNoticeDialog } from './EditorNoticeDialog.vue'
+export { default as NotationTypeConvertDialog } from './NotationTypeConvertDialog.vue'
+/** @deprecated 使用 EditorNoticeDialog */
+export { default as MusicXmlNoticeDialog } from './EditorNoticeDialog.vue'
 export { default as ScoreNotationTypeSelector } from './ScoreNotationTypeSelector.vue'
 export { default as BeginnerModeToolbar } from './BeginnerModeToolbar.vue'
 export { default as EditModeToolbar } from './EditModeToolbar.vue'

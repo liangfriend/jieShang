@@ -9,16 +9,17 @@ import {
   deleteSingleStaffBtnY
 } from '../renderEditSlotLayout'
 
-const props = defineProps<{ node: VDom }>()
+const props = defineProps<{ node: VDom; disabled?: boolean }>()
 
 const transform = computed(
   () => `translate(${deleteSingleStaffBtnX(props.node)}, ${deleteSingleStaffBtnY(props.node)})`
 )
 
 const canDelete = computed(() => (props.node.slotData?.grandStaff?.staves.length ?? 0) > 1)
+const isDisabled = computed(() => props.disabled || !canDelete.value)
 
 function onClick() {
-  if (!canDelete.value) return
+  if (isDisabled.value) return
   const slot = props.node.slotData
   if (slot) deleteSingleStaffFromSlot(slot)
 }
@@ -26,7 +27,7 @@ function onClick() {
 
 <template>
   <g
-    :class="['delete-single-staff-btn', { 'delete-single-staff-btn--disabled': !canDelete }]"
+    :class="['delete-single-staff-btn', { 'delete-single-staff-btn--disabled': isDisabled }]"
     :transform="transform"
     @click.stop="onClick"
     @pointerdown.stop
@@ -67,6 +68,7 @@ function onClick() {
 .delete-single-staff-btn--disabled {
   cursor: not-allowed;
   opacity: 0.45;
+  pointer-events: none;
 }
 
 .delete-single-staff-btn--disabled:hover {

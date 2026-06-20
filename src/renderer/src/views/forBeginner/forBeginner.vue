@@ -43,7 +43,8 @@ import empty from '@renderer/template/empty'
 
 const MIDI_RANGE = { min: 21, max: 108 } as const
 const MIDI_BOX_HEIGHT = '100%'
-const PIANO_HEIGHT = '96px'
+const PIANO_SECTION_HEIGHT = '15%'
+const PIANO_HEIGHT = '100%'
 const MEASURE_WIDTH = 200
 
 const route = useRoute()
@@ -424,7 +425,7 @@ function handleMidiBoxFinished() {
 
 .beginner-page__piano {
   flex-shrink: 0;
-  height: 96px;
+  height: v-bind(PIANO_SECTION_HEIGHT);
   overflow: hidden;
   background: rgba(255, 255, 255, 0.72);
 }

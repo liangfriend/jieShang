@@ -9,13 +9,14 @@ import {
   addMeasureBtnY,
 } from '../renderEditSlotLayout'
 
-const props = defineProps<{ node: VDom }>()
+const props = defineProps<{ node: VDom; disabled?: boolean }>()
 
 const transform = computed(
   () => `translate(${addMeasureBtnX(props.node)}, ${addMeasureBtnY(props.node)})`,
 )
 
 function onClick() {
+  if (props.disabled) return
   const slot = props.node.slotData
   if (slot) addMeasureFromSlot(slot)
 }
@@ -23,8 +24,8 @@ function onClick() {
 
 <template>
   <g
+    :class="['add-measure-btn', { 'add-measure-btn--disabled': disabled }]"
     :transform="transform"
-    class="add-measure-btn"
     @click.stop="onClick"
     @pointerdown.stop
     @pointerup.stop
@@ -58,5 +59,15 @@ function onClick() {
 
 .add-measure-btn:hover {
   filter: brightness(1.06) drop-shadow(0 2px 5px rgba(123, 201, 150, 0.45));
+}
+
+.add-measure-btn--disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.add-measure-btn--disabled:hover {
+  filter: none;
 }
 </style>

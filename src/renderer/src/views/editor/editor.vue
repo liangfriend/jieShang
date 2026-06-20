@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { MusicScoreTypeEnum } from 'deciphony-renderer'
 import { computed, onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
@@ -11,7 +11,7 @@ import {
   importSjFromDisk,
   saveScoreToDatabase
 } from '@renderer/utils/fileHelper'
-import { EditModeToolbar, MusicXmlNoticeDialog } from '@renderer/components/score-toolbar'
+import { EditModeToolbar, EditorNoticeDialog, NotationTypeConvertDialog } from '@renderer/components/score-toolbar'
 import {
   applyMusicScoreInPlace,
   initEditorScoreFromRoute,
@@ -34,7 +34,8 @@ const musicScoreData = ref(initEditorScoreFromRoute(route))
 const notationWorkspaceKey = ref(0)
 const workspaceRef = ref<InstanceType<typeof EditorScoreWorkspace> | null>(null)
 const fileBusy = ref(false)
-const musicXmlNoticeVisible = ref(false)
+const editorNoticeVisible = ref(false)
+const notationConvertDialogRef = ref<InstanceType<typeof NotationTypeConvertDialog> | null>(null)
 const { waitScoreSkin } = useScoreSkin()
 const globalLoading = useGlobalLoadingStore()
 
@@ -45,19 +46,8 @@ function clearSelection() {
 async function handleNotationTypeChange(targetType: MusicScoreTypeEnum) {
   if (targetType === musicScoreData.value.type) return
 
-  try {
-    await ElMessageBox.confirm(
-      '切换谱子类型只能保证播放信息一致，样式信息会有部分丢失，确定要转换吗？',
-      '切换曲谱类型',
-      {
-        type: 'warning',
-        confirmButtonText: '确定',
-        cancelButtonText: '取消'
-      }
-    )
-  } catch {
-    return
-  }
+  const confirmed = await notationConvertDialogRef.value?.open()
+  if (!confirmed) return
 
   try {
     const converted = convertScoreNotationType(musicScoreData.value, targetType)
@@ -192,8 +182,8 @@ onMounted(async () => {
             :disabled="fileBusy"
             @change="handleNotationTypeChange"
           />
-          <el-button class="toolbar-btn" size="small" @click="musicXmlNoticeVisible = true">
-            需知
+          <el-button class="toolbar-btn" size="small" @click="editorNoticeVisible = true">
+            须知
           </el-button>
           <el-button
             class="toolbar-btn"
@@ -232,7 +222,9 @@ onMounted(async () => {
 
     <EditModeToolbar />
 
-    <MusicXmlNoticeDialog v-model="musicXmlNoticeVisible" />
+    <EditorNoticeDialog v-model="editorNoticeVisible" />
+
+    <NotationTypeConvertDialog ref="notationConvertDialogRef" />
   </div>
 </template>
 

@@ -12,18 +12,18 @@ export const DIFFICULTY_POLICY: Record<PracticeDifficulty, HighlightPolicy> = {
     perfectThresdhold: 90
   },
   intermediate: {
-    startTriggerThreshold: 200,
-    postTriggerThreshold: 200,
-    passThreshold: 150,
-    goodThreshold: 100,
-    perfectThresdhold: 70
-  },
-  master: {
     startTriggerThreshold: 150,
     postTriggerThreshold: 150,
     passThreshold: 100,
     goodThreshold: 60,
     perfectThresdhold: 35
+  },
+  master: {
+    startTriggerThreshold: 100,
+    postTriggerThreshold: 100,
+    passThreshold: 60,
+    goodThreshold: 35,
+    perfectThresdhold: 20
   }
 }
 

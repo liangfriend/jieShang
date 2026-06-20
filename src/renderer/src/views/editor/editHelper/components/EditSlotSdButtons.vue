@@ -5,11 +5,11 @@ import AddSingleStaffButton from './AddSingleStaffButton.vue'
 import DeleteSingleStaffButton from './DeleteSingleStaffButton.vue'
 
 /** s-d 插槽：单谱表 + 小节添加按钮组合 */
-defineProps<{ node: VDom }>()
+defineProps<{ node: VDom; disabled?: boolean }>()
 </script>
 
 <template>
-  <DeleteSingleStaffButton :node="node" />
-  <AddSingleStaffButton :node="node" />
-  <AddMeasureButton :node="node" />
+  <DeleteSingleStaffButton :disabled="disabled" :node="node" />
+  <AddSingleStaffButton :disabled="disabled" :node="node" />
+  <AddMeasureButton :disabled="disabled" :node="node" />
 </template>

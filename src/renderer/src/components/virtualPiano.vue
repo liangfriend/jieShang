@@ -166,7 +166,12 @@ const whiteKeyWidthNum = computed(() => {
   return fixedWhiteKeyWidthNum.value
 })
 
-const containerHeightNum = computed(() => fixedContainerHeightNum.value)
+const containerHeightNum = computed(() => {
+  if (isFillParentMode.value && containerSize.value.height > 0) {
+    return containerSize.value.height
+  }
+  return fixedContainerHeightNum.value
+})
 
 const blackKeyWidthNum = computed(() => whiteKeyWidthNum.value * props.blackKeyWidthRatio)
 const blackKeyHeightNum = computed(() => containerHeightNum.value * props.blackKeyHeightRatio)
@@ -198,7 +203,7 @@ const pianoContainerStyle = computed((): CSSProperties => {
   if (isFillParentMode.value) {
     return {
       width: '100%',
-      height: props.height,
+      height: '100%',
       position: 'relative',
       background: '#eee'
     }

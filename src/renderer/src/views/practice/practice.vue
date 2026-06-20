@@ -50,8 +50,9 @@ const PRACTICE_MIDI_RANGE = { min: 21, max: 108 } as const
 /** 瀑布流区域高度 */
 const PRACTICE_WATERFALL_HEIGHT = '100%'
 
-/** 虚拟钢琴高度（比教学白板更紧凑） */
-const PRACTICE_PIANO_HEIGHT = '96px'
+/** 虚拟钢琴区域高度（占页面 15%，组件内铺满该区域） */
+const PRACTICE_PIANO_SECTION_HEIGHT = '15%'
+const PRACTICE_PIANO_HEIGHT = '100%'
 
 /** 每个小节对应的曲谱宽度 */
 const PRACTICE_MEASURE_WIDTH = 200
@@ -491,7 +492,7 @@ onBeforeUnmount(() => {
 
 .practice-page__piano {
   flex-shrink: 0;
-  height: 96px;
+  height: v-bind(PRACTICE_PIANO_SECTION_HEIGHT);
   overflow: hidden;
   background: rgba(255, 255, 255, 0.72);
 }

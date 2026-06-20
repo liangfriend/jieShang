@@ -9,13 +9,14 @@ import {
   addSingleStaffBtnY,
 } from '../renderEditSlotLayout'
 
-const props = defineProps<{ node: VDom }>()
+const props = defineProps<{ node: VDom; disabled?: boolean }>()
 
 const transform = computed(
   () => `translate(${addSingleStaffBtnX(props.node)}, ${addSingleStaffBtnY(props.node)})`,
 )
 
 function onClick() {
+  if (props.disabled) return
   const slot = props.node.slotData
   if (slot) addSingleStaffFromSlot(slot)
 }
@@ -23,8 +24,8 @@ function onClick() {
 
 <template>
   <g
+    :class="['add-single-staff-btn', { 'add-single-staff-btn--disabled': disabled }]"
     :transform="transform"
-    class="add-single-staff-btn"
     @click.stop="onClick"
     @pointerdown.stop
     @pointerup.stop
@@ -58,5 +59,15 @@ function onClick() {
 
 .add-single-staff-btn:hover {
   filter: brightness(1.06) drop-shadow(0 2px 5px rgba(143, 171, 255, 0.45));
+}
+
+.add-single-staff-btn--disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+.add-single-staff-btn--disabled:hover {
+  filter: none;
 }
 </style>

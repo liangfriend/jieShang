@@ -33,6 +33,7 @@ const {
   addNoteState,
   activeGhostPreview,
   propertyPanelKind,
+  isMeasureSelected,
   slurHandlePoints,
   voltaHandlePoints,
   handleDrClick,
@@ -138,7 +139,7 @@ defineExpose({ clearSelection })
             <EditSlotGdButtons :node="node" />
           </template>
           <template #s-d="{ node }">
-            <EditSlotSdButtons :node="node" />
+            <EditSlotSdButtons :disabled="isMeasureSelected" :node="node" />
           </template>
           <template #m="{ node }">
             <rect
