@@ -1,3 +1,4 @@
+export { default as LinkedStaffModeSwitch } from './LinkedStaffModeSwitch.vue'
 export { default as EditorNoticeDialog } from './EditorNoticeDialog.vue'
 export { default as NotationTypeConvertDialog } from './NotationTypeConvertDialog.vue'
 /** @deprecated 使用 EditorNoticeDialog */

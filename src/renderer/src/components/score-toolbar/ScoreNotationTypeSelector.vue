@@ -52,7 +52,10 @@ function parseType(raw: string): MusicScoreTypeEnum | null {
 }
 
 function onSelectChange(event: Event) {
-  const targetType = parseType((event.target as HTMLSelectElement).value)
+  const select = event.target as HTMLSelectElement
+  const targetType = parseType(select.value)
+  // 先还原显示，等父级确认后再通过 modelValue 更新
+  select.value = String(props.modelValue)
   if (targetType == null || targetType === props.modelValue) return
   emit('change', targetType)
   activePanel.value = false

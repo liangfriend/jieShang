@@ -11,7 +11,7 @@ import {
   importSjFromDisk,
   saveScoreToDatabase
 } from '@renderer/utils/fileHelper'
-import { EditModeToolbar, EditorNoticeDialog, NotationTypeConvertDialog } from '@renderer/components/score-toolbar'
+import { EditModeToolbar, EditorNoticeDialog, LinkedStaffModeSwitch, NotationTypeConvertDialog } from '@renderer/components/score-toolbar'
 import {
   applyMusicScoreInPlace,
   initEditorScoreFromRoute,
@@ -176,6 +176,7 @@ onMounted(async () => {
     >
       <template #top-actions>
         <div class="editor-top-bar__files">
+          <LinkedStaffModeSwitch v-model="musicScoreData" :disabled="fileBusy" />
           <ScoreNotationTypeSelector
             :model-value="musicScoreData.type"
             variant="inline"
