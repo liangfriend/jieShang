@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { Delete, Search } from '@element-plus/icons-vue'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage } from 'element-plus'
 import { onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
+import ScoreDeleteDialog from '@renderer/components/ScoreDeleteDialog.vue'
 import {
   deleteScoreFromDatabase,
   displayScoreName,
@@ -18,6 +19,7 @@ const keyword = ref('')
 const loading = ref(false)
 const deletingId = ref<number | null>(null)
 const scores = ref<ScoreListItem[]>([])
+const deleteDialogRef = ref<InstanceType<typeof ScoreDeleteDialog> | null>(null)
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -51,20 +53,8 @@ async function deleteScore(score: ScoreListItem, event: Event) {
 
   if (deletingId.value != null) return
 
-  try {
-    await ElMessageBox.confirm(
-      t('scores.deleteConfirm', { name: displayScoreName(score.name) }),
-      t('scores.deleteTitle'),
-      {
-        confirmButtonText: t('common.delete'),
-        cancelButtonText: t('common.cancel'),
-        type: 'warning',
-        confirmButtonClass: 'el-button--danger'
-      }
-    )
-  } catch {
-    return
-  }
+  const confirmed = await deleteDialogRef.value?.open()
+  if (!confirmed) return
 
   deletingId.value = score.id
   try {
@@ -127,6 +117,8 @@ onMounted(() => {
         </div>
       </div>
     </main>
+
+    <ScoreDeleteDialog ref="deleteDialogRef" />
   </div>
 </template>
 

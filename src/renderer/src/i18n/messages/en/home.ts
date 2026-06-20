@@ -47,7 +47,8 @@ export default {
     empty: 'No scores yet — create one to get started',
     emptyFiltered: 'No matching scores',
     deleteTitle: 'Delete score',
-    deleteConfirm: 'Delete score "{name}"? This cannot be undone.',
+    deleteMessage: 'Delete this score? ',
+    deleteWarning: 'This cannot be undone.',
     deleteSuccess: 'Score deleted',
     deleteAria: 'Delete score'
   }

@@ -47,7 +47,8 @@ export default {
     empty: '还没有曲谱，先去制作一个吧～',
     emptyFiltered: '没有找到匹配的曲谱',
     deleteTitle: '删除曲谱',
-    deleteConfirm: '确定删除曲谱「{name}」吗？此操作不可恢复。',
+    deleteMessage: '确定要删除这首曲谱吗？',
+    deleteWarning: '此操作不可恢复。',
     deleteSuccess: '曲谱已删除',
     deleteAria: '删除曲谱'
   }
