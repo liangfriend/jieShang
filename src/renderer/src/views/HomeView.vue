@@ -110,10 +110,10 @@ function goToAchievements() {
 
     <header class="home-header">
       <div class="logo-wrap">
-        <img class="logo-face" :src="logoIcon" alt="识音" />
+        <img class="logo-face" :src="logoIcon" alt="解熵" />
         <div>
-          <h1 class="title">识音</h1>
-          <p class="subtitle">切准音符，闯出高分</p>
+          <h1 class="title">解熵</h1>
+          <p class="subtitle">助力你的音乐梦想</p>
         </div>
       </div>
     </header>

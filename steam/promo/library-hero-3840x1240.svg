@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="3840" height="1240" viewBox="0 0 3840 1240">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFF5F9"/>
+      <stop offset="45%" stop-color="#F3EBFF"/>
+      <stop offset="100%" stop-color="#E8F4FF"/>
+    </linearGradient>
+    <linearGradient id="title" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF8FB8"/>
+      <stop offset="100%" stop-color="#C9B8FF"/>
+    </linearGradient>
+    <linearGradient id="cat-bg" x1="10" y1="8" x2="54" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFB8D0"/>
+      <stop offset="1" stop-color="#C9B8FF"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="3840" height="1240" fill="url(#bg)"/>
+
+  <circle cx="3200" cy="220" r="320" fill="#FFFFFF" opacity="0.38"/>
+  <circle cx="620" cy="260" r="200" fill="#FFFFFF" opacity="0.32"/>
+  <circle cx="3360" cy="1020" r="240" fill="#FFFFFF" opacity="0.32"/>
+  <circle cx="420" cy="980" r="150" fill="#FFFFFF" opacity="0.32"/>
+
+  <text x="900" y="360" font-family="Segoe UI Symbol, Microsoft YaHei, sans-serif" font-size="150" fill="#FF8FB8" opacity="0.4">&#9834;</text>
+  <text x="2850" y="420" font-family="Segoe UI Symbol, Microsoft YaHei, sans-serif" font-size="140" fill="#C9B8FF" opacity="0.45">&#9835;</text>
+  <text x="2950" y="930" font-family="Segoe UI Symbol, Microsoft YaHei, sans-serif" font-size="130" fill="#B8E4FF" opacity="0.5">&#9833;</text>
+  <text x="820" y="940" font-family="Segoe UI Symbol, Microsoft YaHei, sans-serif" font-size="120" fill="#FFB8D0" opacity="0.45">&#9836;</text>
+
+  <g opacity="0.65">
+    <rect x="560" y="1050" width="2720" height="120" rx="26" fill="#FFFFFF" opacity="0.55"/>
+    <g fill="#5C4A6A" opacity="0.14">
+      <rect x="700" y="1050" width="40" height="76" rx="8"/>
+      <rect x="900" y="1050" width="40" height="76" rx="8"/>
+      <rect x="1240" y="1050" width="40" height="76" rx="8"/>
+      <rect x="1440" y="1050" width="40" height="76" rx="8"/>
+      <rect x="1640" y="1050" width="40" height="76" rx="8"/>
+      <rect x="1980" y="1050" width="40" height="76" rx="8"/>
+      <rect x="2180" y="1050" width="40" height="76" rx="8"/>
+      <rect x="2520" y="1050" width="40" height="76" rx="8"/>
+      <rect x="2720" y="1050" width="40" height="76" rx="8"/>
+      <rect x="2920" y="1050" width="40" height="76" rx="8"/>
+      <rect x="3120" y="1050" width="40" height="76" rx="8"/>
+    </g>
+  </g>
+
+  <g transform="translate(1290, 300) scale(8.75)">
+    <circle cx="32" cy="32" r="28" fill="url(#cat-bg)" stroke="#FFFFFF" stroke-width="2.5"/>
+    <path d="M17 26 L22 12 L29 23 Z" fill="#FFE8F2" stroke="#FF8FB8" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M20 22 L22 15 L26 21 Z" fill="#FFB8D0"/>
+    <path d="M47 26 L42 12 L35 23 Z" fill="#FFE8F2" stroke="#FF8FB8" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M44 22 L42 15 L38 21 Z" fill="#FFB8D0"/>
+    <ellipse cx="32" cy="31" rx="17" ry="15.5" fill="#FFF5FA" stroke="#FFB8D0" stroke-width="2"/>
+    <ellipse cx="25.5" cy="29" rx="3.2" ry="4.2" fill="#5C4A6A"/>
+    <circle cx="26.6" cy="27.8" r="1.2" fill="#FFFFFF"/>
+    <ellipse cx="38.5" cy="29" rx="3.2" ry="4.2" fill="#5C4A6A"/>
+    <circle cx="39.6" cy="27.8" r="1.2" fill="#FFFFFF"/>
+    <circle cx="20.5" cy="33.5" r="2.8" fill="#FFB8D0" opacity="0.45"/>
+    <circle cx="43.5" cy="33.5" r="2.8" fill="#FFB8D0" opacity="0.45"/>
+    <path d="M32 33.5 L29.8 36.2 H34.2 Z" fill="#FF8FB8" stroke="#FF6B9D" stroke-width="1" stroke-linejoin="round"/>
+    <path d="M32 36.2 C30.2 38.2 28.5 37.6 27.5 36.4" stroke="#9A8AA8" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    <path d="M32 36.2 C33.8 38.2 35.5 37.6 36.5 36.4" stroke="#9A8AA8" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+    <path d="M14 31 H22" stroke="#D9A8C0" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M13 35 H21" stroke="#D9A8C0" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M42 31 H50" stroke="#D9A8C0" stroke-width="1.5" stroke-linecap="round"/>
+    <path d="M43 35 H51" stroke="#D9A8C0" stroke-width="1.5" stroke-linecap="round"/>
+    <ellipse cx="23" cy="50" rx="6.5" ry="7" fill="#FFF5FA" stroke="#FFB8D0" stroke-width="2"/>
+    <circle cx="20.8" cy="46.5" r="1.25" fill="#FF8FB8"/>
+    <circle cx="23" cy="45.5" r="1.25" fill="#FF8FB8"/>
+    <circle cx="25.2" cy="46.5" r="1.25" fill="#FF8FB8"/>
+    <ellipse cx="23" cy="49" rx="2" ry="1.7" fill="#FF8FB8"/>
+    <ellipse cx="41" cy="50" rx="6.5" ry="7" fill="#FFF5FA" stroke="#FFB8D0" stroke-width="2"/>
+    <circle cx="38.8" cy="46.5" r="1.25" fill="#FF8FB8"/>
+    <circle cx="41" cy="45.5" r="1.25" fill="#FF8FB8"/>
+    <circle cx="43.2" cy="46.5" r="1.25" fill="#FF8FB8"/>
+    <ellipse cx="41" cy="49" rx="2" ry="1.7" fill="#FF8FB8"/>
+  </g>
+
+  <text x="2260" y="720" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans SC, sans-serif" font-size="300" font-weight="800" letter-spacing="24" fill="url(#title)">&#35299;&#29109;</text>
+<!--  <text x="2060" y="830" text-anchor="middle" font-family="Microsoft YaHei, PingFang SC, Noto Sans SC, sans-serif" font-size="68" font-weight="600" letter-spacing="14" fill="#9A8AA8">&#21161;&#21147;&#20320;&#30340;&#38899;&#20048;&#26790;&#24819;</text>-->
+</svg>
