@@ -86,14 +86,19 @@ onMounted(() => {
 <template>
   <div class="score-list">
     <header class="score-list__header">
-      <h1 class="score-list__title">我的曲谱</h1>
-      <el-input
-        v-model="keyword"
-        class="score-list__search"
-        clearable
-        placeholder="搜索曲谱名称"
-        :prefix-icon="Search"
-      />
+      <div class="score-list__nav">
+        <BackButton fallback="/" />
+      </div>
+      <div class="score-list__header-main">
+        <h1 class="score-list__title">我的曲谱</h1>
+        <el-input
+          v-model="keyword"
+          class="score-list__search"
+          clearable
+          placeholder="搜索曲谱名称"
+          :prefix-icon="Search"
+        />
+      </div>
     </header>
 
     <main v-loading="loading" class="score-list__main">
@@ -120,8 +125,6 @@ onMounted(() => {
         </div>
       </div>
     </main>
-
-    <BackButton class="score-list__back" fallback="/" />
   </div>
 </template>
 
@@ -143,8 +146,21 @@ onMounted(() => {
 }
 
 .score-list__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
   max-width: 960px;
   margin: 0 auto 28px;
+}
+
+.score-list__nav {
+  flex-shrink: 0;
+  padding-top: 2px;
+}
+
+.score-list__header-main {
+  flex: 1;
+  min-width: 0;
 }
 
 .score-list__title {
@@ -267,12 +283,5 @@ onMounted(() => {
   font-weight: 700;
   line-height: 1.4;
   word-break: break-word;
-}
-
-.score-list__back {
-  position: fixed;
-  left: 16px;
-  bottom: 16px;
-  z-index: 20;
 }
 </style>

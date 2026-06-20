@@ -9,7 +9,6 @@ import {
 import type { NoteHeadGeometry, NoteHeadMarkerStyle } from './types'
 
 const PLAY_COLOR = '#ff4040'
-const BEGINNER_CURRENT_COLOR = '#2eb8a6'
 const BEGINNER_DONE_COLOR = '#15803d'
 
 const OUTLINE_WIDTH = 1.8
@@ -167,7 +166,7 @@ export function drawNoteHeadMarker(
       break
     case 'beginner':
       if (style.beginnerState === 'current') {
-        drawOutline(ctx, geom, BEGINNER_CURRENT_COLOR)
+        drawOutline(ctx, geom, PLAY_COLOR)
       } else if (style.beginnerState === 'done') {
         drawOutline(ctx, geom, BEGINNER_DONE_COLOR)
       }

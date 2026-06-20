@@ -28,7 +28,7 @@ export const migrations: Migrations[] = [
       await AchievementProgressModel.sync()
       await NoteSliceHighScoreModel.sync()
       syncBuiltinCollectionThumbnails()
-      await insertBuiltinCollections()
+      await syncBuiltinCollections()
     },
     async down() {
       await NoteSliceHighScoreModel.drop()
@@ -38,15 +38,6 @@ export const migrations: Migrations[] = [
       await ScoreModel.drop()
       await GroupModel.drop()
       await MigrationModel.drop()
-    }
-  },
-  {
-    id: '002-sync-builtin-collections',
-    async up() {
-      await syncBuiltinCollections()
-    },
-    async down() {
-      // 仅同步元数据，不回滚
     }
   }
 ]

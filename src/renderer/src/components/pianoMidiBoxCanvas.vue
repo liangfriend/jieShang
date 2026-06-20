@@ -320,7 +320,7 @@ const drawBlocks = computed<MidiBoxBlockDraw[]>(() => {
       blocks.push({
         midi,
         batchIndex,
-        highlighted: state.value === 'playing' && batchIndex === currentBatchIndex.value,
+        highlighted: batchIndex < fallenBatchCount.value,
         fallen: batchIndex < fallenBatchCount.value
       })
     }

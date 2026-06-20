@@ -3,7 +3,7 @@ export const GAME_SETTINGS_STORAGE_KEY = 'game.settings'
 /** 音符切切游戏难度 */
 export type GameDifficulty = 'test' | 'easy' | 'standard' | 'hard'
 
-export const DEFAULT_GAME_DIFFICULTY: GameDifficulty = 'test'
+export const DEFAULT_GAME_DIFFICULTY: GameDifficulty = 'easy'
 
 /** 音符块出现时的发声音量（0~1） */
 export const NOTE_BLOCK_SOUND_VOLUME_MIN = 0
@@ -15,11 +15,11 @@ export const GAME_DIFFICULTY_OPTIONS: {
   label: string
   desc: string
 }[] = [
-  {
-    value: 'test',
-    label: '测试',
-    desc: '高音谱号，MIDI 60–61，便于调试'
-  },
+  // {
+  //   value: 'test',
+  //   label: '测试',
+  //   desc: '高音谱号，MIDI 60–61，便于调试'
+  // },
   {
     value: 'easy',
     label: '简单',

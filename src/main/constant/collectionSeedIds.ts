@@ -1,3 +1,5 @@
+import { app } from 'electron'
+
 /**
  * 内置藏品种子 id（与 renderer DEFAULT_COLLECTION_USAGE_IDS 约定一致）
  * 新装 migration 001 写入时显式指定，便于默认项用固定 id 查库。
@@ -89,5 +91,7 @@ export const DEFAULT_BUILTIN_COLLECTION_OWNED_IDS = [
 ] as const
 
 export function isDefaultBuiltinCollectionOwned(id: number): boolean {
-  return true || (DEFAULT_BUILTIN_COLLECTION_OWNED_IDS as readonly number[]).includes(id)
+  const owned = (DEFAULT_BUILTIN_COLLECTION_OWNED_IDS as readonly number[]).includes(id)
+  if (!app.isPackaged) return true || owned
+  return owned
 }

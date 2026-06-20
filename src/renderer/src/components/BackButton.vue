@@ -36,8 +36,12 @@ function handleBack() {
 .back-button {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
-  padding: 8px 14px;
+  box-sizing: border-box;
+  width: 88px;
+  min-width: 88px;
+  padding: 8px 10px;
   border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.92);
