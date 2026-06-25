@@ -8,7 +8,6 @@ import {
   MusicScoreTypeEnum,
   NoteSymbolTypeEnum,
   TimeSignatureTypeEnum,
-  type GrandStaff,
   type NoteSymbol,
 } from 'deciphony-renderer'
 import {
@@ -422,7 +421,7 @@ export function xmlToMusicScore(xmlData: any): MusicScore {
   const measureCount = grandStaff.staves[0]?.measures.length ?? 0
   // 单行展示：每 4 小节切成一行复谱表（系统），保留 uSpace/dSpace/bracket/linkedStaff
   if (measureCount > 0) {
-    const splitGrandStaffs: GrandStaff[] = []
+    const splitGrandStaffs = []
     for (let start = 0; start < measureCount; start += 4) {
       const newGrandStaff = createGrandStaff({withDefaultStaff: false})
       newGrandStaff.uSpace = grandStaff.uSpace
@@ -498,7 +497,7 @@ function measureSwitch(measureData) {
     case 'attributes': {
       // 调号/拍号/谱号/staves 解析已迁移至 xmlToMusicScore 第三步 attributes 分支
       xmlDataFor(measureItem[measureItemKey], (attributesData) => {
-        attributesSwitch(attributesData, null);
+        attributesSwitch(attributesData);
       });
       break;
     }

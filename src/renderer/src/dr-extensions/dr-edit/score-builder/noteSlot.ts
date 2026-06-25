@@ -52,7 +52,12 @@ export function appendNotesNumberInfo(
     syllable: NoteNumber['notesInfo'][number]['syllable'],
     partial?: Parameters<typeof createNotesNumberInfo>[1],
 ): NoteNumber['notesInfo'][number] {
-    const info = createNotesNumberInfo(syllable, partial);
+    const lead = note.notesInfo[0]
+    const info = createNotesNumberInfo(syllable, {
+        chronaxie: lead?.chronaxie,
+        beamType: lead?.beamType,
+        ...partial,
+    });
     note.notesInfo.push(info);
     return info;
 }
@@ -69,17 +74,15 @@ export function appendNotesInfo(
 }
 
 export function isNoteNumberSlot(slot: StaffSlot | NoteNumber): slot is NoteNumber {
-    if (isNoteSymbol(slot) || isNoteRest(slot)) return false
-    return 'notesInfo' in slot && 'chronaxie' in slot && 'beamType' in slot
+    return !('type' in slot);
 }
 
 export function isSlotRestLike(slot: StaffSlot | NoteNumber): boolean {
-    if (isNoteRest(slot)) return true
+    if (isNoteRest(slot)) return true;
     if (isNoteNumberSlot(slot)) {
-        const notesInfo = slot.notesInfo
-        return !notesInfo?.length || notesInfo.every((ni) => ni.syllable === 0)
+        return !slot.notesInfo.length || slot.notesInfo.every((ni) => ni.syllable === 0);
     }
-    return false
+    return false;
 }
 
 export function isSlotNoteLike(slot: StaffSlot | NoteNumber): slot is NoteSymbol | NoteNumber {

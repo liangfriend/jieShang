@@ -5,6 +5,7 @@ import {
     createGrandStaff,
     createMeasure,
     createSingleStaff,
+    cloneMeasureHeaderFromPrev,
 } from './factories';
 
 /** 在曲谱指定下标插入复谱表 */
@@ -34,7 +35,12 @@ function newMeasureForInsert(
 ): Measure {
     const prev = at > 0 ? singleStaff.measures[at - 1] : singleStaff.measures[singleStaff.measures.length - 1];
     if (prev) {
-        return createMeasure();
+        const header = cloneMeasureHeaderFromPrev(prev);
+        return createMeasure({
+            clef: header.clef_f?.type,
+            timeSignature: header.timeSignature_f?.type,
+            keySignature: header.keySignature_f?.type,
+        });
     }
     const isNumberNotation = notationType === MusicScoreTypeEnum.NumberNotation;
     return createMeasure(

@@ -1,7 +1,6 @@
 import type {VDom} from 'deciphony-renderer'
 import type {Ref} from 'vue'
 import {onBeforeUnmount, ref} from 'vue'
-import type {ScoreNoteHeadOverlayApi} from '@renderer/components/scoreNoteHeadOverlay'
 import {createPlayHighlight} from './playHighlight'
 import {createPlayHighlightScheduler, type PlayHighlightProgressData} from './playHighlightScheduler'
 
@@ -11,7 +10,6 @@ export type MusicScoreHighlightExpose = {
 
 export type UsePlayHighlightOptions = {
     musicScoreRef: Ref<MusicScoreHighlightExpose | null>
-    getOverlay?: () => ScoreNoteHeadOverlayApi | null
     getBpm?: () => number
     getBeatUnit?: () => number
     getRate?: () => number
@@ -26,7 +24,6 @@ export function usePlayHighlight(options: UsePlayHighlightOptions) {
     const playHighlight = createPlayHighlight({
         getVDomList: () => vDomList.value,
         findElementByVDom: (node) => options.musicScoreRef.value?.findElementByVDom(node) ?? null,
-        getOverlay: options.getOverlay,
     })
 
     const scheduler = createPlayHighlightScheduler({

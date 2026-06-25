@@ -1,6 +1,5 @@
 import {isNoteRest, isNoteSymbol} from 'deciphony-renderer';
 import type {MusicScore, NoteNumber, NotesInfo, NotesNumberInfo, NoteSymbol, StaffSlot} from 'deciphony-renderer';
-import {isNoteNumberSlot} from './noteSlot';
 import type {
   GrandStaffPath,
   LocatedGrandStaff,
@@ -56,6 +55,10 @@ export function resolveNoteRest(score: MusicScore, path: NotePath): import('deci
     throw new TypeError(`notes[${path.noteIndex}] 不是 NoteRest`);
   }
   return slot;
+}
+
+export function isNoteNumberSlot(slot: StaffSlot | NoteNumber): slot is NoteNumber {
+  return !('type' in slot);
 }
 
 export function resolveNoteNumber(score: MusicScore, path: NotePath): NoteNumber {

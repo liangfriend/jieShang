@@ -62,7 +62,7 @@ function resolveAccidental(
 }
 
 function resolveAugmentationDot(
-    input: AugmentationDot | (1 | 2 | 3) | undefined,
+    input: AugmentationDot | AccidentalTypeEnum | undefined,
 ): AugmentationDot | undefined {
     if (input == null) return undefined;
     if (typeof input === 'object' && 'count' in input) return input;
@@ -76,7 +76,6 @@ export function createMusicScore(options: CreateMusicScoreOptions = {}): MusicSc
         id: options.id ?? newId(),
         type: options.type ?? MusicScoreTypeEnum.StandardStaff,
         title: options.title ?? '',
-        description: options.description ?? '',
         bpm: options.bpm ?? 120,
         topSpaceHeight: options.topSpaceHeight ?? 0,
         width: options.width ?? 800,
@@ -348,38 +347,50 @@ export function createNoteRest(options: CreateNoteRestOptions = {}): NoteRest {
 
 export function createNotesNumberInfo(
     syllable: NotesNumberInfo['syllable'],
-    partial?: Partial<Pick<NotesNumberInfo, 'octaveDot' | 'accidental'>>,
+    partial?: Partial<Pick<NotesNumberInfo, 'octaveDot' | 'accidental' | 'chronaxie' | 'beamType' | 'augmentationDot'>>,
 ): NotesNumberInfo {
     const accidental = partial?.accidental
         ? typeof partial.accidental === 'object'
             ? partial.accidental
             : createAccidental(partial.accidental)
         : undefined;
+    const augmentationDot = resolveAugmentationDot(partial?.augmentationDot);
     return {
         id: newId(),
         syllable,
+        chronaxie: partial?.chronaxie ?? 64,
+        beamType: partial?.beamType ?? BeamTypeEnum.None,
         octaveDot: partial?.octaveDot ?? 0,
         ...(accidental ? {accidental} : {}),
+        ...(augmentationDot ? {augmentationDot} : {}),
     };
 }
 
 export function createNoteNumber(options: CreateNoteNumberOptions): NoteNumber {
     const widthRatio = options.widthRatio ?? DEFAULT_SPACING.noteWidthRatio;
     const chronaxie = options.chronaxie ?? 64;
+    const beamType = options.beamType ?? BeamTypeEnum.None;
+    const augmentationDot = resolveAugmentationDot(options.augmentationDot);
 
     let notesInfo: NotesNumberInfo[];
     if (options.notesInfo?.length) {
         notesInfo = options.notesInfo.map((ni) =>
             createNotesNumberInfo(ni.syllable, {
                 octaveDot: ni.octaveDot,
-                accidental: resolveAccidental(ni.accidental),
+                accidental: ni.accidental,
+                chronaxie: ni.chronaxie ?? chronaxie,
+                beamType: ni.beamType ?? beamType,
+                augmentationDot: ni.augmentationDot ?? augmentationDot,
             }),
         );
     } else {
         notesInfo = [
             createNotesNumberInfo(options.syllable, {
                 octaveDot: options.octaveDot,
-                accidental: resolveAccidental(options.accidental),
+                accidental: options.accidental,
+                chronaxie,
+                beamType,
+                augmentationDot,
             }),
         ];
     }
@@ -387,9 +398,7 @@ export function createNoteNumber(options: CreateNoteNumberOptions): NoteNumber {
     return {
         ...ZERO_FRAME,
         id: newId(),
-        chronaxie,
         notesInfo,
-        beamType: options.beamType ?? BeamTypeEnum.None,
         affiliatedSymbols: [],
         widthRatio,
         widthRatioForMeasure: options.widthRatioForMeasure ?? widthRatio,
@@ -429,8 +438,6 @@ export function createVolta(options: CreateVoltaOptions): DoubleMeasureAffiliate
 /** 连音线 / 延音线：startId、endId 必须为 NotesInfo.id */
 export function createSlur(options: CreateSlurOptions): DoubleNoteAffiliatedSymbol {
     const {startId, endId, partial} = options;
-    const slurOverride = partial?.data?.slur;
-    const {data: _partialData, ...partialRest} = partial ?? {};
     return {
         ...ZERO_FRAME,
         id: partial?.id ?? newId(),
@@ -439,12 +446,13 @@ export function createSlur(options: CreateSlurOptions): DoubleNoteAffiliatedSymb
         endId,
         data: {
             slur: {
-                relativeStartPoint: slurOverride?.relativeStartPoint ?? {x: 0, y: 0},
-                relativeEndPoint: slurOverride?.relativeEndPoint ?? {x: 0, y: 0},
-                relativeControlPoint: slurOverride?.relativeControlPoint ?? {x: 0, y: 0},
-                thickness: slurOverride?.thickness ?? 4,
+                relativeStartPoint: {x: 0, y: 0},
+                relativeEndPoint: {x: 0, y: 0},
+                relativeControlPoint: {x: 0, y: 0},
+                thickness: 2,
+                ...partial?.data?.slur,
             },
         },
-        ...partialRest,
+        ...partial,
     };
 }

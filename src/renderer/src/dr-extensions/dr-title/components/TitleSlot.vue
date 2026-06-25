@@ -1,27 +1,20 @@
 <script lang="ts" setup>
-import type { MusicScore, SlotConfig, VDom } from 'deciphony-renderer'
-import { computed } from 'vue'
-import { useI18n } from 'vue-i18n'
-import { readTitleField, writeTitleField, type TitleFieldKey } from '../titleFields'
-import { computeTitleContentRect } from '../titleLayout'
-import type { TitleMode } from '../types'
+import type {MusicScore, VDom} from 'deciphony-renderer'
+import {computed} from 'vue'
+import {readTitleField, writeTitleField, type TitleFieldKey} from '../titleFields'
+import type {TitleMode} from '../types'
 
 const props = defineProps<{
   node: VDom
   musicScore: MusicScore
   mode: TitleMode
-  slotConfig?: SlotConfig
 }>()
 
-const { t } = useI18n()
-
-const contentRect = computed(() => computeTitleContentRect(props.node, props.slotConfig))
-const contentX = computed(() => contentRect.value.x)
-const contentW = computed(() => contentRect.value.w)
-const slotH = computed(() => contentRect.value.h)
+const slotW = computed(() => props.node.w)
+const slotH = computed(() => props.node.h)
 
 const centerY = computed(() => slotH.value * 0.42)
-const authorX = computed(() => contentW.value - 10)
+const authorX = computed(() => slotW.value - 10)
 const authorY = computed(() => slotH.value - 8)
 
 function onFieldInput(key: TitleFieldKey, event: Event) {
@@ -31,74 +24,69 @@ function onFieldInput(key: TitleFieldKey, event: Event) {
 
 <template>
   <g class="dr-title-slot">
-    <g :transform="`translate(${contentX}, 0)`">
-      <template v-if="mode === 'show'">
-        <text
-          v-if="musicScore.title"
-          class="dr-title-slot__title"
-          :x="contentW / 2"
-          :y="centerY - (musicScore.subTitle ? 10 : 0)"
-          dominant-baseline="middle"
-          text-anchor="middle"
-          >{{ musicScore.title }}</text
-        >
-        <text
-          v-if="musicScore.subTitle"
-          class="dr-title-slot__subtitle"
-          :x="contentW / 2"
-          :y="centerY + 16"
-          dominant-baseline="middle"
-          text-anchor="middle"
-          >{{ musicScore.subTitle }}</text
-        >
-        <text
-          v-if="musicScore.author"
-          class="dr-title-slot__author"
-          :x="authorX"
-          :y="authorY"
-          text-anchor="end"
-          >{{ musicScore.author }}</text
-        >
-      </template>
+    <template v-if="mode === 'show'">
+      <text
+        v-if="musicScore.title"
+        class="dr-title-slot__title"
+        :x="slotW / 2"
+        :y="centerY - (musicScore.subTitle ? 10 : 0)"
+        dominant-baseline="middle"
+        text-anchor="middle"
+      >{{ musicScore.title }}</text>
+      <text
+        v-if="musicScore.subTitle"
+        class="dr-title-slot__subtitle"
+        :x="slotW / 2"
+        :y="centerY + 16"
+        dominant-baseline="middle"
+        text-anchor="middle"
+      >{{ musicScore.subTitle }}</text>
+      <text
+        v-if="musicScore.author"
+        class="dr-title-slot__author"
+        :x="authorX"
+        :y="authorY"
+        text-anchor="end"
+      >{{ musicScore.author }}</text>
+    </template>
 
-      <foreignObject v-else :height="slotH" :width="contentW" x="0" y="0">
-        <div
-          class="dr-title-slot__editor"
-          xmlns="http://www.w3.org/1999/xhtml"
-          :style="{ width: `${contentW}px`, height: `${slotH}px` }"
-        >
-          <div class="dr-title-slot__center">
-            <input
-              class="dr-title-slot__input dr-title-slot__input--title"
-              :placeholder="t('editor.titleFields.title')"
-              type="text"
-              :value="readTitleField(musicScore, 'title')"
-              @click.stop
-              @input="onFieldInput('title', $event)"
-              @pointerdown.stop
-            />
-            <input
-              class="dr-title-slot__input dr-title-slot__input--subtitle"
-              :placeholder="t('editor.titleFields.subTitle')"
-              type="text"
-              :value="readTitleField(musicScore, 'subTitle')"
-              @click.stop
-              @input="onFieldInput('subTitle', $event)"
-              @pointerdown.stop
-            />
-          </div>
+    <foreignObject v-else :height="slotH" :width="slotW" x="0" y="0">
+      <div
+        class="dr-title-slot__editor"
+        xmlns="http://www.w3.org/1999/xhtml"
+        :style="{width: `${slotW}px`, height: `${slotH}px`}"
+      >
+        <div class="dr-title-slot__center">
           <input
-            class="dr-title-slot__input dr-title-slot__input--author"
-            :placeholder="t('editor.titleFields.author')"
+            class="dr-title-slot__input dr-title-slot__input--title"
+            placeholder="标题"
             type="text"
-            :value="readTitleField(musicScore, 'author')"
+            :value="readTitleField(musicScore, 'title')"
             @click.stop
-            @input="onFieldInput('author', $event)"
+            @input="onFieldInput('title', $event)"
+            @pointerdown.stop
+          />
+          <input
+            class="dr-title-slot__input dr-title-slot__input--subtitle"
+            placeholder="副标题"
+            type="text"
+            :value="readTitleField(musicScore, 'subTitle')"
+            @click.stop
+            @input="onFieldInput('subTitle', $event)"
             @pointerdown.stop
           />
         </div>
-      </foreignObject>
-    </g>
+        <input
+          class="dr-title-slot__input dr-title-slot__input--author"
+          placeholder="作者"
+          type="text"
+          :value="readTitleField(musicScore, 'author')"
+          @click.stop
+          @input="onFieldInput('author', $event)"
+          @pointerdown.stop
+        />
+      </div>
+    </foreignObject>
   </g>
 </template>
 
@@ -138,7 +126,7 @@ function onFieldInput(key: TitleFieldKey, event: Event) {
 
 .dr-title-slot__input {
   box-sizing: border-box;
-  width: min(300px, 100%);
+  width: min(420px, 100%);
   padding: 4px 8px;
   border: 1px solid #dcdfe6;
   border-radius: 4px;
@@ -164,7 +152,7 @@ function onFieldInput(key: TitleFieldKey, event: Event) {
 
 .dr-title-slot__input--author {
   position: absolute;
-  right: 0px;
+  right: 10px;
   bottom: 6px;
   width: 160px;
   font-size: 12px;

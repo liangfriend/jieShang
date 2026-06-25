@@ -290,14 +290,12 @@ export function getAllNoteRegion(
   for (const written of ALL_WRITTEN_ACCIDENTALS) {
     if (written === AccidentalTypeEnum.Natural) {
       const region = getNoteRegion(clef, midi, null)
-      result[written] =
-        region !== null && getNoteMidi(clef, region, null) === midi ? region : null
+      result[written] = region !== null && getNoteMidi(clef, region, null) === midi ? region : null
       continue
     }
     const needed = written as AlteredAccidental
     const region = getNoteRegion(clef, midi, needed)
-    result[written] =
-      region !== null && getNoteMidi(clef, region, needed) === midi ? region : null
+    result[written] = region !== null && getNoteMidi(clef, region, needed) === midi ? region : null
   }
 
   result.none = null
@@ -1007,28 +1005,16 @@ function expandMeasuresByPlayIndexes(
 /**
  * 曲谱转换为单个复谱表模式
  */
-export function hasGrandStaffSingleStaffMismatch(musicScore: MusicScore): boolean {
-  if (musicScore.grandStaffs.length === 0) return false
-
-  const staffCounts = musicScore.grandStaffs.map((gs) => gs.staves.length)
-  const expectedCount = staffCounts[0]!
-  return staffCounts.some((count) => count !== expectedCount)
-}
-
-/** @deprecated 使用 hasGrandStaffSingleStaffMismatch */
-export function getGrandStaffSingleStaffMismatchMessage(musicScore: MusicScore): string | null {
-  return hasGrandStaffSingleStaffMismatch(musicScore) ? 'mismatch' : null
-}
-
 export function mergeGrandStaff(musicScore: MusicScore): MusicScore {
   if (musicScore.grandStaffs.length === 0) return musicScore
 
-  if (hasGrandStaffSingleStaffMismatch(musicScore)) {
-    throw new Error('Grand staff single-staff line count mismatch')
+  const staffCounts = musicScore.grandStaffs.map((gs) => gs.staves.length)
+  const expectedCount = staffCounts[0]!
+  if (staffCounts.some((count) => count !== expectedCount)) {
+    throw new Error('单谱表数量不一致，无法转换')
   }
 
   const mergedGrandStaff = musicScore.grandStaffs[0]!
-  const expectedCount = mergedGrandStaff.staves.length
   for (let staffIndex = 0; staffIndex < expectedCount; staffIndex++) {
     const measures: Measure[] = []
     for (const grandStaff of musicScore.grandStaffs) {
@@ -1121,4 +1107,14 @@ export function getNoteNumberMidi(noteNumberInfo: NotesNumberInfo): number {
   const octaveDot = noteNumberInfo.octaveDot ?? 0
   const semitone = (((baseSemitone + accOffset) % 12) + 12) % 12
   return (octaveDot + 5) * 12 + semitone
+}
+/**
+ * 曲谱转换为单个复谱表模式
+ */
+export function hasGrandStaffSingleStaffMismatch(musicScore: MusicScore): boolean {
+  if (musicScore.grandStaffs.length === 0) return false
+
+  const staffCounts = musicScore.grandStaffs.map((gs) => gs.staves.length)
+  const expectedCount = staffCounts[0]!
+  return staffCounts.some((count) => count !== expectedCount)
 }

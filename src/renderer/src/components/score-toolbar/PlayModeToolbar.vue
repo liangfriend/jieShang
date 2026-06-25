@@ -8,7 +8,7 @@ import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import BackButton from '@renderer/components/BackButton.vue'
 import VerticalDragSlider from '@renderer/components/VerticalDragSlider.vue'
-import { getGrandStaffSingleStaffMismatchMessage } from '@renderer/dr-extensions/scoreUtil'
+import { hasGrandStaffSingleStaffMismatch } from '@renderer/dr-extensions/scoreUtil'
 import { scorePlaybackKey } from '@renderer/utils/scorePagePlayback'
 import {
   PLAY_BPM_MAX,
@@ -87,7 +87,7 @@ function switchToEdit() {
 }
 
 function goSingleLineMode(name: 'practice' | 'forBeginner') {
-  if (getGrandStaffSingleStaffMismatchMessage(props.musicScore)) {
+  if (hasGrandStaffSingleStaffMismatch(props.musicScore)) {
     ElMessage.warning(t('play.messages.grandStaffMismatch'))
     return
   }
@@ -128,7 +128,12 @@ function goForBeginner() {
         <el-icon><VideoPlay /></el-icon>
         <span>{{ t('play.toolbar.play') }}</span>
       </button>
-      <button type="button" class="score-toolbar__btn" :disabled="pauseDisabled" @click="handlePause">
+      <button
+        type="button"
+        class="score-toolbar__btn"
+        :disabled="pauseDisabled"
+        @click="handlePause"
+      >
         <el-icon><VideoPause /></el-icon>
         <span>{{ t('play.toolbar.pause') }}</span>
       </button>

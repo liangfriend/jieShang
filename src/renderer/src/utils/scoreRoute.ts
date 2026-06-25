@@ -7,7 +7,7 @@ import singleVoiceTemplate from '@renderer/template/singleVoice'
 import singleVoiceJianpuTemplate from '@renderer/template/singleVoiceJianpu'
 import doubleVoiceTemplate from '@renderer/template/doubleVoice'
 import doubleVoiceJianpuTemplate from '@renderer/template/doubleVoiceJianpu'
-import { getGrandStaffSingleStaffMismatchMessage } from '@renderer/dr-extensions/scoreUtil'
+import { hasGrandStaffSingleStaffMismatch } from '@renderer/dr-extensions/scoreUtil'
 import i18n from '@renderer/i18n'
 import { useDataStore } from '@renderer/store/data.store'
 import { loadScoreFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper'
@@ -178,7 +178,7 @@ export async function guardSingleLineModeEnter(
   const score = await loadScoreFromRoute(to)
   if (!score) return true
 
-  if (getGrandStaffSingleStaffMismatchMessage(score)) {
+  if (hasGrandStaffSingleStaffMismatch(score)) {
     ElMessage.warning(i18n.global.t('play.messages.grandStaffMismatch'))
     if (from.name === 'play') return false
     return { name: 'play', query: buildScoreRouteQuery(to) }

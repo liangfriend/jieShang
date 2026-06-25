@@ -86,7 +86,7 @@ export type LocatedNotesNumberInfo = NotesNumberInfoPath & {
 // —— 创建选项 ——
 
 export type CreateMusicScoreOptions = Partial<
-  Pick<MusicScore, 'id' | 'type' | 'title' | 'description' | 'bpm' | 'width' | 'height' | 'topSpaceHeight'>
+  Pick<MusicScore, 'id' | 'type' | 'title' | 'bpm' | 'width' | 'height' | 'topSpaceHeight'>
 >;
 
 export type CreateGrandStaffOptions = Partial<
@@ -118,7 +118,7 @@ export type CreateNotesInfoOptions = {
   direction?: 'up' | 'down';
   beamType?: BeamTypeEnum;
   accidental?: AccidentalTypeEnum;
-  augmentationDot?: AugmentationDot | (1 | 2 | 3);
+  augmentationDot?: AugmentationDot | AccidentalTypeEnum;
   affiliatedSymbols?: NotesInfo['affiliatedSymbols'];
 };
 
@@ -141,33 +141,34 @@ export type CreateNoteRestOptions = {
   widthRatio?: number;
   widthRatioForMeasure?: number;
   clef?: ClefTypeEnum;
-  augmentationDot?: AugmentationDot | (1 | 2 | 3);
+  augmentationDot?: AugmentationDot | AccidentalTypeEnum;
   affiliatedSymbols?: NoteRest['affiliatedSymbols'];
 };
 
 export type CreateNoteNumberOptions = {
   syllable: NotesNumberInfo['syllable'];
+  /** 写入首个（或全部未指定时值的）notesInfo */
   chronaxie?: Chronaxie;
   octaveDot?: NotesNumberInfo['octaveDot'];
   beamType?: BeamTypeEnum;
   accidental?: AccidentalTypeEnum;
+  augmentationDot?: AugmentationDot | AccidentalTypeEnum;
   widthRatio?: number;
   widthRatioForMeasure?: number;
   notesInfo?: Array<{
     syllable: NotesNumberInfo['syllable'];
     octaveDot?: NotesNumberInfo['octaveDot'];
     accidental?: AccidentalTypeEnum;
+    chronaxie?: Chronaxie;
+    beamType?: BeamTypeEnum;
+    augmentationDot?: AugmentationDot | AccidentalTypeEnum;
   }>;
 };
 
 export type CreateSlurOptions = {
   startId: string;
   endId: string;
-  partial?: Partial<Omit<DoubleNoteAffiliatedSymbol, 'data'>> & {
-    data?: {
-      slur?: Partial<NonNullable<DoubleNoteAffiliatedSymbol['data']['slur']>>;
-    };
-  };
+  partial?: Partial<DoubleNoteAffiliatedSymbol>;
 };
 
 export type FramePartial = Partial<Pick<Accidental | Clef, 'relativeX' | 'relativeY' | 'relativeW' | 'relativeH'>>;
