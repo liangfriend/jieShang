@@ -2,12 +2,14 @@ import WorkModel from '../models/WorkModel'
 import ScoreModel from '../models/ScoreModel'
 import { Op } from 'sequelize'
 
+const WORK_LIST_ATTRIBUTES = ['id', 'name', 'score_id', 'url', 'created_at', 'updated_at'] as const
+
 export class WorkRepository {
-  async create(payload: { name: string; score_id?: number | null; data?: string }) {
+  async create(payload: { name: string; score_id?: number | null; url: string }) {
     const result = await WorkModel.create({
       name: payload.name,
       score_id: payload.score_id ?? null,
-      data: payload.data ?? '{}'
+      url: payload.url
     })
     return result.toJSON()
   }
@@ -18,7 +20,7 @@ export class WorkRepository {
 
   async update(
     id: string | number,
-    updateData: Partial<{ name: string; score_id: number | null; data: string }>
+    updateData: Partial<{ name: string; score_id: number | null; url: string }>
   ) {
     const [count] = await WorkModel.update(updateData, { where: { id } })
     if (count === 0) return null
@@ -39,6 +41,7 @@ export class WorkRepository {
       if (val !== undefined && val !== null) where[key] = val
     }
     const result = await WorkModel.findAll({
+      attributes: [...WORK_LIST_ATTRIBUTES],
       where: Object.keys(where).length > 0 ? where : undefined,
       order: [['updated_at', 'DESC']]
     })
@@ -46,14 +49,19 @@ export class WorkRepository {
   }
 
   async searchByName(keyword: string) {
+    const trimmed = keyword.trim()
+    if (!trimmed) {
+      return this.query({})
+    }
     const result = await WorkModel.findAll({
-      where: { name: { [Op.like]: `%${keyword}%` } },
+      attributes: [...WORK_LIST_ATTRIBUTES],
+      where: { name: { [Op.like]: `%${trimmed}%` } },
       order: [['updated_at', 'DESC']]
     })
     return result.map((item) => item.toJSON())
   }
 
-  /** 从作品取关联曲谱（独立表数据，不解析作品 data） */
+  /** 从作品取关联曲谱（独立表数据，不解析 sjw） */
   async extractScore(workId: string | number) {
     const work = await WorkModel.findByPk(workId)
     if (!work?.score_id) return null

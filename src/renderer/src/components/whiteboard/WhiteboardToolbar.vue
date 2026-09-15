@@ -4,7 +4,7 @@ import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
 import VerticalDragSlider from '@renderer/components/VerticalDragSlider.vue'
-import { KeySignatureTypeEnum } from 'deciphony-renderer'
+import { KeySignatureTypeEnum } from '@deciphony/renderer'
 import {
   WHITEBOARD_CLEF_OPTIONS,
   WHITEBOARD_KEY_COUNT_OPTIONS,

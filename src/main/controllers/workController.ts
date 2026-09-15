@@ -9,9 +9,21 @@ export class WorkController {
   }
 
   register() {
-    ipcMain.handle('work:create', (_, payload) => this.workService.createWork(payload))
+    ipcMain.handle('work:create', (_, payload) => {
+      const file = payload?.file != null ? Buffer.from(payload.file) : payload?.file
+      return this.workService.createWork({
+        ...payload,
+        file
+      })
+    })
     ipcMain.handle('work:delete', (_, id) => this.workService.deleteWork(id))
-    ipcMain.handle('work:update', (_, id, payload) => this.workService.updateWork(id, payload))
+    ipcMain.handle('work:update', (_, id, payload) => {
+      const next = { ...payload }
+      if (payload?.file != null) {
+        next.file = Buffer.from(payload.file)
+      }
+      return this.workService.updateWork(id, next)
+    })
     ipcMain.handle('work:get', (_, id, includeScore) => this.workService.getWork(id, includeScore))
     ipcMain.handle('work:query', (_, filters) => this.workService.queryWorks(filters))
     ipcMain.handle('work:list', () => this.workService.listWorks())

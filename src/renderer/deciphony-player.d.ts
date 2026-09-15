@@ -1,4 +1,4 @@
-declare module 'deciphony-player' {
+declare module '@deciphony/player' {
   export type PlaySequenceItem = {
     id: string
     midi: number

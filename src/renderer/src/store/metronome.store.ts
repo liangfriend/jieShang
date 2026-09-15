@@ -1,5 +1,5 @@
-import { MPlayer, activeContext, startJPlayer } from 'deciphony-player'
-import type { TimeSignature } from 'deciphony-player'
+import { MPlayer, activeContext, startJPlayer } from '@deciphony/player'
+import type { TimeSignature } from '@deciphony/player'
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { normal } from '@renderer/toneColor/metronomeColor'
@@ -100,6 +100,50 @@ export const useMetronomeStore = defineStore('metronome', () => {
     })
   }
 
+  /**
+   * 按指定拍数播放一小节节拍（如 4 拍 → 4/4），结束后 resolve。
+   * 会临时改写 bpm / timeSignature，结束后恢复。
+   */
+  async function playBeats(beatCount: number, bpmValue: number): Promise<void> {
+    await waitReady()
+    if (!mplayer) return
+    await activeContext()
+
+    const player = mplayer
+    const prevBpm = player.bpm
+    const prevBeatUnit = player.beatUnit
+    const prevTimeSignature = player.timeSignature
+    const beats = Math.max(1, Math.round(beatCount))
+    const nextTs = `${beats}/4` as TimeSignature
+
+    player.stop()
+    player.loop = false
+    player.bpm = clamp(bpmValue, PLAY_BPM_MIN, PLAY_BPM_MAX)
+    player.beatUnit = 4
+    player.timeSignature = nextTs
+    player.sequenceGenOption = { copyCount: 1 }
+    bpm.value = player.bpm
+    beatUnit.value = 4
+    timeSignature.value = nextTs
+
+    try {
+      await new Promise<void>((resolve) => {
+        player.onEnd = () => {
+          player.onEnd = () => {}
+          resolve()
+        }
+        void player.play()
+      })
+    } finally {
+      player.bpm = prevBpm
+      player.beatUnit = prevBeatUnit
+      player.timeSignature = prevTimeSignature
+      bpm.value = prevBpm
+      beatUnit.value = prevBeatUnit
+      timeSignature.value = prevTimeSignature
+    }
+  }
+
   /** 播放过程中持续循环节拍器 */
   async function startLoop(): Promise<void> {
     await waitReady()
@@ -126,6 +170,7 @@ export const useMetronomeStore = defineStore('metronome', () => {
     setVolume,
     setBpm,
     playCountIn,
+    playBeats,
     startLoop,
     stop
   }

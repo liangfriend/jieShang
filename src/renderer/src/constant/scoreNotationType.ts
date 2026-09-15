@@ -1,4 +1,4 @@
-import { MusicScoreTypeEnum } from 'deciphony-renderer'
+import { MusicScoreTypeEnum } from '@deciphony/renderer'
 
 import { resolveNotationTypeLabel } from '@renderer/i18n/helpers'
 

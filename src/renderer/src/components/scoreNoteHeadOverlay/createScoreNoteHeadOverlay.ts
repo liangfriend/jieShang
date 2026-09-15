@@ -1,4 +1,4 @@
-import type { VDom } from 'deciphony-renderer'
+import type { VDom } from '@deciphony/renderer'
 import type { NoteScoreResult } from '@renderer/types/types'
 import { drawNoteHeadMarker } from './drawNoteHeadMarker'
 import { buildNoteHeadGeometryIndex } from './noteHeadGeometry'

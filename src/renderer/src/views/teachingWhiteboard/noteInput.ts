@@ -3,19 +3,19 @@ import {
   ClefTypeEnum,
   KeySignatureTypeEnum,
   NoteSymbolTypeEnum
-} from 'deciphony-renderer'
-import type { Chronaxie, Measure, MusicScore, SingleStaff, StaffSlot } from 'deciphony-renderer'
+} from '@deciphony/renderer'
+import type { Chronaxie, Measure, MusicScore, SingleStaff, StaffSlot } from '@deciphony/renderer'
 import {
   CHRONAXIES,
   createKeySignature,
   createNoteSymbol
-} from '@renderer/dr-extensions/dr-edit/score-builder'
+} from '@deciphony/extensions/dr-edit/score-builder'
 import {
   changeMeasureNotesKeySignature,
   getKeySignatureAccidental,
   getNoteRegionAndAccidental,
   type AlteredAccidental
-} from '@renderer/dr-extensions/scoreUtil'
+} from '@deciphony/extensions/score-util'
 import type { WhiteboardClef } from '@renderer/constant/whiteboard'
 
 /** 一个四分音符（quarter）对应的 Unit256 时值 */

@@ -58,13 +58,14 @@ function monoChromeSplit() {
 }
 
 const thumbs = {
-  // 音色 1-6：居中文字
+  // 音色 1-6、22：居中文字
   1: toneColorLabel('三角钢琴', '#F3E8DC'),
   2: toneColorLabel('亮音钢琴', '#FFF9F0'),
   3: toneColorLabel('电钢琴', '#0E1628', '#E8F4FF'),
   4: toneColorLabel('尼龙弦吉他', '#F5EBE0', '#6B4423'),
   5: toneColorLabel('小提琴', '#F8F0E8', '#8B4513'),
   6: toneColorLabel('八音盒', '#FFF5FA', '#D06090'),
+  22: toneColorLabel('口琴', '#EEF6FF', '#3A6EA5'),
 
   // 7 默认曲谱皮肤
   7: card('#FAFAFA', `

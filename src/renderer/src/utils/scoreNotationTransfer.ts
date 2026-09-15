@@ -1,9 +1,9 @@
-import type { MusicScore } from 'deciphony-renderer'
-import { MusicScoreTypeEnum } from 'deciphony-renderer'
+import type { MusicScore } from '@deciphony/renderer'
+import { MusicScoreTypeEnum } from '@deciphony/renderer'
 import {
   numberNotationToStandardStaff,
   standardStaffToNumberNotation
-} from '@renderer/dr-extensions/dr-numberNotation-transfer'
+} from '@deciphony/extensions/dr-numberNotation-transfer'
 import { isSupportedScoreNotationType } from '@renderer/constant/scoreNotationType'
 
 export function convertScoreNotationType(

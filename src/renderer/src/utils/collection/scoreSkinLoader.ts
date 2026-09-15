@@ -1,4 +1,4 @@
-import type { SkinPack } from 'deciphony-renderer'
+import type { SkinPack } from '@deciphony/renderer'
 import { CollectionTypeEnum } from '@renderer/types/collection'
 import { useActiveScoreSkinId } from '@renderer/utils/collection/collectionActiveStorage'
 import { fetchActiveCollectionUsageId } from '@renderer/utils/collection/initCollectionSelection'

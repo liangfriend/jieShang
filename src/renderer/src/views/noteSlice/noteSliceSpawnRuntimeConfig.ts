@@ -1,4 +1,4 @@
-import { KeySignatureTypeEnum } from 'deciphony-renderer'
+import { KeySignatureTypeEnum } from '@deciphony/renderer'
 import {
   MIDI_BRICK_CLEFS,
   MIDI_BRICK_KEY_SIGNATURES,

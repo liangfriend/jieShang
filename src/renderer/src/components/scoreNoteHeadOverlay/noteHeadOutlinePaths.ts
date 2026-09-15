@@ -1,4 +1,4 @@
-/** 五线谱符头轮廓（与 deciphony-renderer defaultSkin / noteSvg 一致） */
+/** 五线谱符头轮廓（与 @deciphony/renderer defaultSkin / noteSvg 一致） */
 export const STANDARD_WHOLE_NOTE_RING_PATH =
   'M 16 4 A 8 5 0 0 1 0 4 A 8 5 0 0 1 16 4 L 13 4 A 5 2.5 0 0 0 3 4 A 5 2.5 0 0 0 13 4 Z'
 

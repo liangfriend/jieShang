@@ -1,4 +1,4 @@
-import type { VDom } from 'deciphony-renderer'
+import type { VDom } from '@deciphony/renderer'
 
 /** g-d / s-d 插槽内结构按钮的尺寸与定位（仅 UI 布局，数据变更走 renderEditSlotActions → dr-edit） */
 export const ADD_GRAND_STAFF_BTN_W = 96
@@ -14,6 +14,8 @@ export const ADD_MEASURE_BTN_H = 20
 /** 插槽内相邻按钮间距（g-d / s-d 统一） */
 export const SLOT_BTN_GAP = 6
 export const SLOT_BTN_RIGHT_MARGIN = 8
+/** g-d 内复谱表按钮距插槽底边的间距（贴底，避免遮挡歌词） */
+export const GRAND_STAFF_BTN_BOTTOM_MARGIN = 4
 
 function grandStaffBtnGroupWidth() {
   return DELETE_GRAND_STAFF_BTN_W + SLOT_BTN_GAP + ADD_GRAND_STAFF_BTN_W
@@ -23,8 +25,9 @@ export function deleteGrandStaffBtnX(node: VDom) {
   return node.w / 2 - grandStaffBtnGroupWidth() / 2
 }
 
+/** 按钮顶部贴齐 g-d 底部内侧（y = h - 按钮高 - 边距） */
 export function deleteGrandStaffBtnY(node: VDom) {
-  return node.h / 2 - DELETE_GRAND_STAFF_BTN_H / 2
+  return Math.max(0, node.h - DELETE_GRAND_STAFF_BTN_H - GRAND_STAFF_BTN_BOTTOM_MARGIN)
 }
 
 export function addGrandStaffBtnX(node: VDom) {
@@ -32,7 +35,7 @@ export function addGrandStaffBtnX(node: VDom) {
 }
 
 export function addGrandStaffBtnY(node: VDom) {
-  return node.h / 2 - ADD_GRAND_STAFF_BTN_H / 2
+  return Math.max(0, node.h - ADD_GRAND_STAFF_BTN_H - GRAND_STAFF_BTN_BOTTOM_MARGIN)
 }
 
 function sSlotBtnY(node: VDom, btnH: number) {

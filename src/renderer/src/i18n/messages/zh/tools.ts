@@ -1,0 +1,58 @@
+export default {
+  tools: {
+    title: '工具',
+    mic: {
+      title: '麦克风检测',
+      desc: '授权后查看实时波形与音量，确认麦克风可用',
+      controls: '设备与控制',
+      device: '输入设备',
+      unnamedDevice: '未命名麦克风',
+      start: '开始检测',
+      stop: '停止',
+      refresh: '刷新设备',
+      waveform: '实时波形',
+      level: '音量',
+      hint: '对着麦克风发声，波形与音量条应实时变化',
+      unsupported: '当前环境不支持麦克风采集',
+    },
+    midi: {
+      title: 'MIDI 设备检测',
+      desc: '查看输入/输出设备，并用 88 键钢琴与信号灯验信号',
+      devices: '设备列表',
+      inputs: '输入',
+      outputs: '输出',
+      noInputs: '暂无 MIDI 输入设备',
+      noOutputs: '暂无 MIDI 输出设备',
+      deviceConnected: '已连接',
+      deviceDisconnected: '未连接',
+      unsupported: '当前环境不支持 Web MIDI',
+      noAccess: '尚未获得 MIDI 访问权限，请允许后重试',
+      signalsTitle: '信号监视',
+      pianoTitle: '88 键钢琴',
+      pianoHint: '可点击琴键发声，或用实体 MIDI 键盘点亮琴键并观察信号灯',
+      resetSignals: '重置信号',
+      signals: {
+        activity: '活动',
+        noteOn: '按键中',
+        sustain: '延音踏板',
+        soft: '柔音踏板',
+        sostenuto: '持音踏板',
+        pitchBend: '弯音',
+        modulation: '调制轮',
+        expression: '表情',
+        volume: '音量 CC7',
+        channelPressure: '通道压力',
+        polyAftertouch: '复音触后',
+        polyAftertouchNote: '触后音',
+        lastCc: '最近 CC',
+        channel: '通道',
+        program: '音色号',
+        lastNote: '最近 MIDI 音',
+        velocity: '力度',
+        heldNotes: '当前按下',
+        input: '来源设备',
+        raw: '原始字节'
+      }
+    }
+  }
+} as const

@@ -1,5 +1,5 @@
-import type { MusicScore } from 'deciphony-renderer'
-import { MusicScoreTypeEnum } from 'deciphony-renderer'
+import type { MusicScore } from '@deciphony/renderer'
+import { MusicScoreTypeEnum } from '@deciphony/renderer'
 import type { Ref } from 'vue'
 import { ref } from 'vue'
 import { CUR_PLAY_SCORE_TEMP_ID, CUR_PLAY_SCORE_TRANS_TEMP_ID } from '@renderer/constant'

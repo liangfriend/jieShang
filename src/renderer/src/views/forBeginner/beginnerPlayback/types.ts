@@ -1,4 +1,4 @@
-import type { VDom } from 'deciphony-renderer'
+import type { VDom } from '@deciphony/renderer'
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
 
 export type BeginnerPlaybackState = 'stopped' | 'playing'

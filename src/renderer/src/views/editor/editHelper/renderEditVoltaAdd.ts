@@ -1,6 +1,6 @@
-import type {Measure, MusicScore, SingleStaff} from 'deciphony-renderer'
-import {DoubleMeasureAffiliatedSymbolNameEnum, type DoubleMeasureAffiliatedSymbol} from 'deciphony-renderer'
-import {createVolta} from '@renderer/dr-extensions/dr-edit/score-builder'
+import type {Measure, MusicScore, SingleStaff} from '@deciphony/renderer'
+import {DoubleMeasureAffiliatedSymbolNameEnum, type DoubleMeasureAffiliatedSymbol} from '@deciphony/renderer'
+import {createVolta} from '@deciphony/extensions/dr-edit/score-builder'
 import {resolveVoltaMeasureIds} from './renderEditVoltaDrag'
 import type {MeasureEditSlot} from './renderEditMeasureProperties'
 

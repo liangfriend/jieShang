@@ -2,6 +2,7 @@ import accousticGrandPiano from './accoustic_grand_piano.json'
 import acousticGuitarNylon from './acoustic_guitar_nylon.json'
 import brightAcousticPiano from './bright_acoustic_piano.json'
 import electricGrandPiano from './electric_grand_piano.json'
+import harmonica from './harmonica.json'
 import musicBox from './music_box.json'
 import violin from './violin.json'
 
@@ -36,6 +37,11 @@ export const BUILTIN_TONE_COLOR_SEEDS = [
     name: '八音盒',
     content: JSON.stringify(musicBox),
     description: '清脆梦幻的八音盒音色。'
+  },
+  {
+    name: '口琴',
+    content: JSON.stringify(harmonica),
+    description: '清亮悠扬的口琴音色。'
   }
 ] as const
 

@@ -1,4 +1,4 @@
-import type { PlaySequence } from 'deciphony-player'
+import type { PlaySequence } from '@deciphony/player'
 
 /** pianoWaterfall.performSequence：midi → [开始毫秒, 结束毫秒, 附加信息?][] */
 export type PerformSequence = Record<string, [number, number, any?][]>

@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 980 150" width="980" height="150">
+  <defs>
+    <linearGradient id="tremCover" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#f2f5fa"/>
+      <stop offset="40%" stop-color="#c5ceda"/>
+      <stop offset="100%" stop-color="#7a8796"/>
+    </linearGradient>
+    <linearGradient id="tremComb" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#1e2834"/>
+      <stop offset="50%" stop-color="#2e3a48"/>
+      <stop offset="100%" stop-color="#121820"/>
+    </linearGradient>
+    <linearGradient id="tremAccent" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#3d8bfd"/>
+      <stop offset="50%" stop-color="#7eb6ff"/>
+      <stop offset="100%" stop-color="#2f6fd0"/>
+    </linearGradient>
+  </defs>
+  <rect x="12" y="22" width="956" height="106" rx="16" fill="url(#tremCover)" stroke="#4a5564" stroke-width="2"/>
+  <rect x="12" y="22" width="28" height="106" rx="12" fill="url(#tremAccent)"/>
+  <rect x="940" y="22" width="28" height="106" rx="12" fill="url(#tremAccent)"/>
+  <rect x="44" y="46" width="892" height="58" rx="6" fill="url(#tremComb)"/>
+  <line x1="48" y1="40" x2="932" y2="40" stroke="#ffffff" stroke-opacity="0.35" stroke-width="2"/>
+  <line x1="48" y1="110" x2="932" y2="110" stroke="#2a3340" stroke-opacity="0.35" stroke-width="2"/>
+  <text x="490" y="136" text-anchor="middle" fill="#3a4654" font-size="11" font-family="Segoe UI, sans-serif" opacity="0.8">24-HOLE TREMOLO C</text>
+</svg>

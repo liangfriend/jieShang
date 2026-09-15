@@ -21,19 +21,17 @@ export default {
     },
     actions: {
       collection: '藏品',
-      compose: '曲谱制作',
       scores: '我的曲谱',
       whiteboard: '教学白板',
-      achievements: '成就'
-    },
-    templateDialog: {
-      title: '选择模版',
-      desc: '选好模版后，就可以进入曲谱编辑啦',
-      staff: '线谱',
-      jianpu: '简谱',
-      empty: '空',
-      single: '单声部',
-      double: '双声部'
+      achievements: '成就',
+      myWorks: '我的作品',
+      musicEncyclopedia: '音乐百科',
+      abilityTest: '能力测试',
+      myAudio: '我的音频',
+      myImage: '我的图片',
+      myVideo: '我的视频',
+      instrumentSim: '模拟乐器',
+      tools: '工具'
     },
     midi: {
       connected: 'MIDI 琴已连接',
@@ -43,13 +41,23 @@ export default {
   },
   scores: {
     title: '我的曲谱',
+    create: '新建曲谱',
     searchPlaceholder: '搜索曲谱名称',
-    empty: '还没有曲谱，先去制作一个吧～',
+    empty: '还没有曲谱，点右上角新建吧～',
     emptyFiltered: '没有找到匹配的曲谱',
     deleteTitle: '删除曲谱',
     deleteMessage: '确定要删除这首曲谱吗？',
     deleteWarning: '此操作不可恢复。',
     deleteSuccess: '曲谱已删除',
-    deleteAria: '删除曲谱'
+    deleteAria: '删除曲谱',
+    templateDialog: {
+      title: '选择模版',
+      desc: '选好模版后，就可以进入曲谱编辑啦',
+      staff: '线谱',
+      jianpu: '简谱',
+      empty: '空',
+      single: '单声部',
+      double: '双声部'
+    }
   }
 } as const

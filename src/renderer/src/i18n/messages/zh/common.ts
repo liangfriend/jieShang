@@ -19,7 +19,8 @@ export default {
     deleteFailed: '删除失败',
     unknown: '未知',
     unnamedScore: '未命名曲谱',
-    scoreLoadFailed: '曲谱加载失败'
+    scoreLoadFailed: '曲谱加载失败',
+    workLoadFailed: '作品加载失败'
   },
   midi: {
     unknownDevice: '未知 MIDI 设备',

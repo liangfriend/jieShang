@@ -1,6 +1,6 @@
-import type { MusicScore } from 'deciphony-renderer'
-import type { PlaySequence } from 'deciphony-player'
-import { NPlayer, activeContext, startJPlayer } from 'deciphony-player'
+import type { MusicScore } from '@deciphony/renderer'
+import type { PlaySequence } from '@deciphony/player'
+import { NPlayer, activeContext, startJPlayer } from '@deciphony/player'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import i18n from '@renderer/i18n'
@@ -58,6 +58,10 @@ export const usePlayStore = defineStore('play', () => {
   let nplayer: NPlayer | null = null
   let initPromise: Promise<void> | null = null
   let collectionToneColorInitPromise: Promise<void> | null = null
+  /** 音色切换序号：后发起的设置优先生效，忽略过期结果 */
+  let toneSetEpoch = 0
+  /** 进行中的音色加载（含 ensure 触发的默认加载） */
+  let toneSetInFlight: Promise<void> | null = null
   let listenerSeq = 0
   const heldNoteIds = new Map<number, string>()
 
@@ -188,30 +192,42 @@ export const usePlayStore = defineStore('play', () => {
   }
 
   async function setCollectionToneColor(id: number) {
+    const epoch = ++toneSetEpoch
     await waitReady()
     if (!nplayer) return
 
-    collectionToneColorLoading.value = true
-    try {
-      const res = await window.api.collection.get(id)
-      if (!res?.success || !res.data) {
-        throw new Error(i18n.global.t('play.toneColor.notFound'))
-      }
-      const record = res.data as CollectionRecord
-      if (record.type !== 'tone_color' || !record.owned) {
-        throw new Error(i18n.global.t('play.toneColor.unavailable'))
-      }
+    const run = (async () => {
+      collectionToneColorLoading.value = true
+      try {
+        const res = await window.api.collection.get(id)
+        if (!res?.success || !res.data) {
+          throw new Error(i18n.global.t('play.toneColor.notFound'))
+        }
+        const record = res.data as CollectionRecord
+        if (record.type !== 'tone_color' || !record.owned) {
+          throw new Error(i18n.global.t('play.toneColor.unavailable'))
+        }
 
-      const toneData = parseToneColorContent(record.content)
-      const key = toneColorKey(id)
-      await nplayer.addToneColor(key, toneData)
-      collectionToneColorId.value = id
-    } finally {
-      collectionToneColorLoading.value = false
-    }
+        const toneData = parseToneColorContent(record.content)
+        const key = toneColorKey(id)
+        await nplayer!.addToneColor(key, toneData)
+        // 已被更新的请求覆盖则丢弃，避免后设的口琴被抢跑的默认钢琴盖掉
+        if (epoch !== toneSetEpoch) return
+        collectionToneColorId.value = id
+        collectionToneColorInitPromise = Promise.resolve()
+      } finally {
+        if (epoch === toneSetEpoch) collectionToneColorLoading.value = false
+      }
+    })()
+
+    toneSetInFlight = run.finally(() => {
+      if (toneSetInFlight === run) toneSetInFlight = null
+    })
+    await run
   }
 
   async function ensureCollectionToneColorInitialized() {
+    if (toneSetInFlight) await toneSetInFlight
     if (collectionToneColorInitPromise) return collectionToneColorInitPromise
 
     collectionToneColorInitPromise = (async () => {
@@ -234,13 +250,25 @@ export const usePlayStore = defineStore('play', () => {
     if (!nplayer) return
     const isOneShot = options?.duration != null
     if (!isOneShot && heldNoteIds.has(midi)) return
+
+    let toneColor = PIANO_TONE_COLOR_NAME
+    try {
+      // 等页面显式设音色完成，避免抢跑 ensure 灌钢琴
+      if (toneSetInFlight) await toneSetInFlight
+      await ensureCollectionToneColorInitialized()
+      if (toneSetInFlight) await toneSetInFlight
+      toneColor = getActiveToneColorKey()
+    } catch {
+      // 藏品音色未就绪时回退内置 piano，避免无声
+    }
+
     await activeContext()
     const id = options?.id ?? `preview-${midi}`
     const logicalVolume = options?.volume ?? volume.value
     nplayer.trigger({
       id,
       midi,
-      toneColor: getActiveToneColorKey(),
+      toneColor,
       volume: toPlayerVolume(logicalVolume),
       duration: options?.duration ?? WHITEBOARD_NOTE_HOLD_DURATION_SEC
     })

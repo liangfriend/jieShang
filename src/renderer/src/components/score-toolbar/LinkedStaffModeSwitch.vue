@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { MusicScore } from 'deciphony-renderer'
+import type { MusicScore } from '@deciphony/renderer'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 

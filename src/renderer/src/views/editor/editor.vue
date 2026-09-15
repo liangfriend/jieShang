@@ -1,6 +1,6 @@
 <script lang="ts" setup>
 import { ElMessage } from 'element-plus'
-import { MusicScoreTypeEnum } from 'deciphony-renderer'
+import { MusicScoreTypeEnum } from '@deciphony/renderer'
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
@@ -12,7 +12,7 @@ import {
   importSjFromDisk,
   saveScoreToDatabase
 } from '@renderer/utils/fileHelper'
-import { EditModeToolbar, EditorNoticeDialog, LinkedStaffModeSwitch, NotationTypeConvertDialog } from '@renderer/components/score-toolbar'
+import { EditModeToolbar, EditorNoticeDialog, GdSlotHeightControl, LinkedStaffModeSwitch, NotationTypeConvertDialog, ScoreTimeOffsetDrawer } from '@renderer/components/score-toolbar'
 import {
   applyMusicScoreInPlace,
   initEditorScoreFromRoute,
@@ -37,6 +37,7 @@ const notationWorkspaceKey = ref(0)
 const workspaceRef = ref<InstanceType<typeof EditorScoreWorkspace> | null>(null)
 const fileBusy = ref(false)
 const editorNoticeVisible = ref(false)
+const timeOffsetVisible = ref(false)
 const notationConvertDialogRef = ref<InstanceType<typeof NotationTypeConvertDialog> | null>(null)
 const { waitScoreSkin } = useScoreSkin()
 const globalLoading = useGlobalLoadingStore()
@@ -178,6 +179,7 @@ onMounted(async () => {
     >
       <template #top-actions>
         <div class="editor-top-bar__files">
+          <GdSlotHeightControl :disabled="fileBusy" />
           <LinkedStaffModeSwitch v-model="musicScoreData" :disabled="fileBusy" />
           <ScoreNotationTypeSelector
             :model-value="musicScoreData.type"
@@ -223,7 +225,9 @@ onMounted(async () => {
       </template>
     </EditorScoreWorkspace>
 
-    <EditModeToolbar />
+    <EditModeToolbar @open-time-offset="timeOffsetVisible = true" />
+
+    <ScoreTimeOffsetDrawer v-model="timeOffsetVisible" :music-score="musicScoreData" />
 
     <EditorNoticeDialog v-model="editorNoticeVisible" />
 

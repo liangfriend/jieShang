@@ -8,6 +8,10 @@ import { windowInvoke } from './invoke/window'
 import { groupInvoke } from './invoke/group'
 import { achievementInvoke } from './invoke/achievement'
 import { noteSliceHighScoreInvoke } from './invoke/noteSliceHighScore'
+import { audioInvoke } from './invoke/audio'
+import { imageInvoke } from './invoke/image'
+import { videoInvoke } from './invoke/video'
+import { guitarChordInvoke } from './invoke/guitarChord'
 
 const api = {}
 
@@ -17,6 +21,10 @@ if (process.contextIsolated) {
       file: fileInvoke,
       score: scoreInvoke,
       work: workInvoke,
+      audio: audioInvoke,
+      image: imageInvoke,
+      video: videoInvoke,
+      guitarChord: guitarChordInvoke,
       collection: collectionInvoke,
       achievement: achievementInvoke,
       noteSliceHighScore: noteSliceHighScoreInvoke,

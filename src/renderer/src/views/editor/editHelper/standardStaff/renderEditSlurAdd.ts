@@ -1,6 +1,6 @@
-import { isNoteSymbol } from 'deciphony-renderer'
-import type { Measure, MusicScore, NotesInfo, NoteSymbol, SingleStaff } from 'deciphony-renderer'
-import { createSlur } from '@renderer/dr-extensions/dr-edit/score-builder'
+import { isNoteSymbol } from '@deciphony/renderer'
+import type { Measure, MusicScore, NotesInfo, NoteSymbol, SingleStaff } from '@deciphony/renderer'
+import { createSlur } from '@deciphony/extensions/dr-edit/score-builder'
 import { DEFAULT_SLUR_THICKNESS } from '../renderEditSlurProperties'
 import type { NoteHeadEditSlot } from './renderEditNoteHeadProperties'
 

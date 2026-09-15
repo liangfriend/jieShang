@@ -61,13 +61,18 @@ declare global {
       work: {
         create(payload: {
           name: string
+          file: ArrayBuffer | Uint8Array
           score_id?: number | null
-          data?: string
+          originalName?: string
         }): Promise<any>
         delete(id: number | string): Promise<any>
         update(
           id: number | string,
-          payload: Partial<{ name: string; score_id: number | null; data: string }>
+          payload: Partial<{
+            name: string
+            score_id: number | null
+            file: ArrayBuffer | Uint8Array
+          }>
         ): Promise<any>
         get(id: number | string, includeScore?: boolean): Promise<any>
         query(
@@ -76,6 +81,14 @@ declare global {
         list(): Promise<any>
         searchByName(name: string): Promise<any>
         extractScore(id: number | string): Promise<any>
+      }
+      guitarChord: {
+        create(payload: { data: any }): Promise<any>
+        delete(id: number | string): Promise<any>
+        update(id: number | string, payload: { data: any }): Promise<any>
+        get(id: number | string): Promise<any>
+        list(): Promise<any>
+        searchByName(name: string): Promise<any>
       }
       collection: {
         create(payload: {

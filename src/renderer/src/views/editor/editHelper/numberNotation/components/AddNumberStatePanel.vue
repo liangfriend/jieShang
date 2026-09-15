@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type {Chronaxie} from 'deciphony-renderer'
+import type {Chronaxie} from '@deciphony/renderer'
 import { useI18n } from 'vue-i18n'
 import { resolveAddNoteKindLabel, resolveNoteDurationLabel } from '@renderer/i18n/helpers'
 import {

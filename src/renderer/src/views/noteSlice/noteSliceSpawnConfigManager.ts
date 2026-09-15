@@ -1,4 +1,4 @@
-import { ClefTypeEnum, KeySignatureTypeEnum } from 'deciphony-renderer'
+import { ClefTypeEnum, KeySignatureTypeEnum } from '@deciphony/renderer'
 import {
   DEFAULT_GAME_DIFFICULTY,
   type GameDifficulty

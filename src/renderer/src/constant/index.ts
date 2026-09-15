@@ -4,6 +4,13 @@ export {
   EDIT_NEW_SCORE_TEMP_ID
 } from './score'
 export {
+  CUR_SHOW_WORK_TEMP_ID,
+  EDIT_NEW_WORK_TEMP_ID,
+  WORK_SINGING_SCORE_TEMP_ID,
+  workSingingAccompanimentAudioKey,
+  workSingingVocalAudioKey
+} from './work'
+export {
   SCORE_NOTATION_TYPE_OPTIONS,
   isSupportedScoreNotationType,
   resolveScoreNotationTypeLabel,

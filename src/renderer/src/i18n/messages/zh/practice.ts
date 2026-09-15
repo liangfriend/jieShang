@@ -40,7 +40,12 @@ export default {
       pass: '及格',
       early: '弹早',
       late: '弹晚',
-      miss: '漏弹'
+      miss: '漏弹',
+      wrong: '错音',
+      'high-midi': '偏高',
+      'low-midi': '偏低',
+      'quick-end': '结束早',
+      'slow-end': '结束晚'
     },
     stats: {
       totalNotes: '音符总数',

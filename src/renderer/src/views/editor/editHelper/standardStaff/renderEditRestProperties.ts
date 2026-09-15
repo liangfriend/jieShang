@@ -1,5 +1,5 @@
-import type {Chronaxie, Measure, NoteRest, SlotData} from 'deciphony-renderer'
-import {createAugmentationDot} from '@renderer/dr-extensions/dr-edit/score-builder'
+import type {Chronaxie, Measure, NoteRest, SlotData} from '@deciphony/renderer'
+import {createAugmentationDot} from '@deciphony/extensions/dr-edit/score-builder'
 import {setRelativeX} from './renderEditFrameProperties'
 
 export type RestEditSlot = SlotData & {self: NoteRest; measure: Measure}

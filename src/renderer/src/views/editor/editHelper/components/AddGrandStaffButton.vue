@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type {VDom} from 'deciphony-renderer'
+import type {VDom} from '@deciphony/renderer'
 import {computed} from 'vue'
 import { useI18n } from 'vue-i18n'
 import {addGrandStaffFromSlot} from '../renderEditSlotActions'

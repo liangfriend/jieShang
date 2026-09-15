@@ -1,6 +1,6 @@
-import type { MusicScore } from 'deciphony-renderer'
-import type { PlaySequence } from 'deciphony-player'
-import { getDrPlaySequence } from '@renderer/dr-extensions/dr-play'
+import type { MusicScore } from '@deciphony/renderer'
+import type { PlaySequence } from '@deciphony/player'
+import { getDrPlaySequence } from '@deciphony/extensions/dr-play'
 import { usePlayStore } from '@renderer/store/play.store'
 import { buildNoteStaveIndexMap } from '@renderer/utils/staffNotes'
 

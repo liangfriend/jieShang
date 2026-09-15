@@ -2,16 +2,14 @@ import { Model, DataTypes, Optional } from 'sequelize'
 import sequelize from '../database/connection'
 import ScoreModel from './ScoreModel'
 
-/**
- * 作品扩展数据（不含曲谱本体，曲谱在 score 表）
- * 例：{ brushStrokes, mediaResourceIds, audioResourceIds, layers, notes }
- */
+/** 作品：元数据在库，.sjw 本体在磁盘（url 为绝对路径） */
 export interface WorkAttributes {
   id: number
   name: string
-  /** 关联曲谱，便于从作品还原曲谱 */
+  /** 关联曲谱（可选，嵌入谱在 sjw 内） */
   score_id: number | null
-  data: string
+  /** 操作系统绝对路径（文件名即 path.basename(url)） */
+  url: string
   created_at?: Date
   updated_at?: Date
   deleted_at?: Date | null
@@ -27,7 +25,7 @@ export class WorkModel
   declare id: number
   declare name: string
   declare score_id: number | null
-  declare data: string
+  declare url: string
   declare created_at: Date
   declare updated_at: Date
   declare deleted_at: Date | null
@@ -52,10 +50,9 @@ WorkModel.init(
         key: 'id'
       }
     },
-    data: {
+    url: {
       type: DataTypes.TEXT,
-      allowNull: false,
-      defaultValue: '{}'
+      allowNull: false
     },
     created_at: {
       type: DataTypes.DATE,

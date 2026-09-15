@@ -9,12 +9,18 @@ export default {
       bpm: 'BPM',
       practiceMode: '练习模式',
       beginnerMode: '新手模式',
-      notationType: '曲谱类型'
+      singingMode: '演唱模式',
+      notationType: '曲谱类型',
+      sourceScore: '曲谱',
+      sourceVocal: '范唱',
+      sourceAccompaniment: '伴奏'
     },
     messages: {
       notationTypeSwitchFailed: '曲谱类型切换失败',
       noPlayableContent: '当前曲谱没有可播放的内容',
-      grandStaffMismatch: '各复谱表的单谱表行数须一致，无法进入练习/新手模式'
+      grandStaffMismatch: '各复谱表的单谱表行数须一致，无法进入练习/新手模式',
+      boundAudioMissing: '未找到绑定音频',
+      audioLoadFailed: '音频加载失败'
     },
     toneColor: {
       label: '音色',

@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type {Chronaxie} from 'deciphony-renderer'
+import type {Chronaxie} from '@deciphony/renderer'
 import {computed} from 'vue'
 import { useI18n } from 'vue-i18n'
 import { resolveAugmentationDotLabel, resolveRestDurationLabel } from '@renderer/i18n/helpers'

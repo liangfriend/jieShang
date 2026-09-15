@@ -21,19 +21,17 @@ export default {
     },
     actions: {
       collection: 'Collection',
-      compose: 'Compose',
       scores: 'My scores',
       whiteboard: 'Whiteboard',
-      achievements: 'Achievements'
-    },
-    templateDialog: {
-      title: 'Choose a template',
-      desc: 'Pick a template to start editing your score',
-      staff: 'Staff',
-      jianpu: 'Number notation',
-      empty: 'Empty',
-      single: 'Single staff',
-      double: 'Double staff'
+      achievements: 'Achievements',
+      myWorks: 'My works',
+      musicEncyclopedia: 'Encyclopedia',
+      abilityTest: 'Ability tests',
+      myAudio: 'My audio',
+      myImage: 'My images',
+      myVideo: 'My videos',
+      instrumentSim: 'Instruments',
+      tools: 'Tools'
     },
     midi: {
       connected: 'MIDI keyboard connected',
@@ -43,13 +41,23 @@ export default {
   },
   scores: {
     title: 'My scores',
+    create: 'New score',
     searchPlaceholder: 'Search scores',
-    empty: 'No scores yet — create one to get started',
+    empty: 'No scores yet — tap New to create one',
     emptyFiltered: 'No matching scores',
     deleteTitle: 'Delete score',
     deleteMessage: 'Delete this score? ',
     deleteWarning: 'This cannot be undone.',
     deleteSuccess: 'Score deleted',
-    deleteAria: 'Delete score'
+    deleteAria: 'Delete score',
+    templateDialog: {
+      title: 'Choose a template',
+      desc: 'Pick a template to start editing your score',
+      staff: 'Staff',
+      jianpu: 'Number notation',
+      empty: 'Empty',
+      single: 'Single staff',
+      double: 'Double staff'
+    }
   }
 } as const

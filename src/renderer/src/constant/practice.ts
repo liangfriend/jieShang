@@ -36,7 +36,12 @@ export const NOTE_RESULT_COLOR: Record<NoteScoreResult, string> = {
   pass: '#f97316',
   early: '#93c5fd',
   late: '#f9a8d4',
-  miss: '#ef4444'
+  miss: '#ef4444',
+  wrong: '#a855f7',
+  'high-midi': '#fbbf24',
+  'low-midi': '#38bdf8',
+  'quick-end': '#86efac',
+  'slow-end': '#fb923c'
 }
 
 /** 设置附录图例色块（完美为彩虹渐变，红→橙→黄→绿→蓝） */
@@ -55,5 +60,10 @@ export const NOTE_RESULT_LABEL: Record<NoteScoreResult, string> = {
   pass: '及格',
   early: '弹早',
   late: '弹晚',
-  miss: '漏弹'
+  miss: '漏弹',
+  wrong: '错音',
+  'high-midi': '偏高',
+  'low-midi': '偏低',
+  'quick-end': '结束早',
+  'slow-end': '结束晚'
 }

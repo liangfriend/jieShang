@@ -58,6 +58,11 @@ export default {
         description: 'Crisp, dreamy music box tone.',
         howToGet: 'Complete the main story'
       },
+      '22': {
+        name: 'Harmonica',
+        description: 'Bright, lyrical harmonica tone.',
+        howToGet: 'Included with the game'
+      },
       '7': {
         name: 'Default',
         description: 'Classic black-and-white staff symbols — clean and clear.',

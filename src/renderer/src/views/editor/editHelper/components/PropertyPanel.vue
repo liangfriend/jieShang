@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { SlotData } from 'deciphony-renderer'
+import type { SlotData } from '@deciphony/renderer'
 import type { PropertyPanelKind } from '../renderEditPropertyPanel'
 import NumberHeadPropertyPanel from '../numberNotation/components/NumberHeadPropertyPanel.vue'
 import NoteHeadPropertyPanel from '../standardStaff/components/NoteHeadPropertyPanel.vue'

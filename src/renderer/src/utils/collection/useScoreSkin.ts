@@ -1,4 +1,4 @@
-import type { Skin } from 'deciphony-renderer'
+import type { Skin } from '@deciphony/renderer'
 import { computed, onMounted, ref, watch } from 'vue'
 import {
   fetchActiveScoreSkin,

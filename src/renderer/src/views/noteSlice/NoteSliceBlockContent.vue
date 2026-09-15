@@ -1,7 +1,7 @@
 <script lang="ts" setup>
 import { computed } from 'vue'
-import musicScoreVue from 'deciphony-renderer'
-import type { MusicScore, Skin } from 'deciphony-renderer'
+import musicScoreVue from '@deciphony/renderer'
+import type { MusicScore, Skin } from '@deciphony/renderer'
 import type { NoteSliceBlockType } from '@renderer/views/noteSlice/noteSliceBlockFactory'
 import { resolveNoteSliceScoreShellTransform } from '@renderer/views/noteSlice/noteSliceBlockShellLayout'
 import {

@@ -41,7 +41,12 @@ export default {
       pass: 'Pass',
       early: 'Early',
       late: 'Late',
-      miss: 'Miss'
+      miss: 'Miss',
+      wrong: 'Wrong',
+      'high-midi': 'Sharp',
+      'low-midi': 'Flat',
+      'quick-end': 'Ended early',
+      'slow-end': 'Ended late'
     },
     stats: {
       totalNotes: 'Total notes',

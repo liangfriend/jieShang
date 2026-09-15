@@ -1,11 +1,11 @@
-import { BracketTypeEnum, ClefTypeEnum, MusicScore } from 'deciphony-renderer'
+import { BracketTypeEnum, ClefTypeEnum, MusicScore } from '@deciphony/renderer'
 import {
   createBracket,
   createGrandStaff,
   createMeasure,
   createMusicScore,
   createSingleStaff
-} from '../dr-extensions/dr-edit/score-builder'
+} from '@deciphony/extensions/dr-edit/score-builder'
 
 function createWhiteboardStaff(clef: ClefTypeEnum, spacing: { uSpaceI?: number; dSpaceI?: number }) {
   const staff = createSingleStaff({ withDefaultMeasure: false, ...spacing })

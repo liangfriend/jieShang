@@ -9,13 +9,19 @@ export default {
       bpm: 'BPM',
       practiceMode: 'Practice mode',
       beginnerMode: 'Beginner mode',
-      notationType: 'Score type'
+      singingMode: 'Singing mode',
+      notationType: 'Score type',
+      sourceScore: 'Score',
+      sourceVocal: 'Vocal',
+      sourceAccompaniment: 'Accompaniment'
     },
     messages: {
       notationTypeSwitchFailed: 'Failed to switch score type',
       noPlayableContent: 'This score has no playable content',
       grandStaffMismatch:
-        'All grand staves must have the same number of single staves to enter practice or beginner mode'
+        'All grand staves must have the same number of single staves to enter practice or beginner mode',
+      boundAudioMissing: 'Bound audio not found',
+      audioLoadFailed: 'Failed to load audio'
     },
     toneColor: {
       label: 'Tone',

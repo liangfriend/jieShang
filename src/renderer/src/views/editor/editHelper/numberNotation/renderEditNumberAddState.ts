@@ -1,5 +1,5 @@
-import type { Chronaxie } from 'deciphony-renderer'
-import type { NotesNumberInfo } from 'deciphony-renderer'
+import type { Chronaxie } from '@deciphony/renderer'
+import type { NotesNumberInfo } from '@deciphony/renderer'
 import {
   ADD_NOTE_KIND_VALUES as STAFF_KIND_VALUES,
   CHRONAXIE_VALUES,

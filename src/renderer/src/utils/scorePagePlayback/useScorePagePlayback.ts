@@ -1,4 +1,4 @@
-import type { MusicScore } from 'deciphony-renderer'
+import type { MusicScore } from '@deciphony/renderer'
 import { ElMessage } from 'element-plus'
 import i18n from '@renderer/i18n'
 import type { Ref as VueRef } from 'vue'
@@ -7,7 +7,7 @@ import { storeToRefs } from 'pinia'
 import {
   usePlayHighlight,
   type PlayHighlightProgressData
-} from '@renderer/dr-extensions/dr-play-highlight'
+} from '@deciphony/extensions/dr-play-highlight'
 import { usePlayStore } from '@renderer/store/play.store'
 import { toPlaySequence } from './toPlaySequence'
 import type { ScorePagePlaybackController, UseScorePagePlaybackOptions } from './types'
@@ -39,7 +39,6 @@ export function useScorePagePlayback(
   const highlight = options.musicScoreRef
     ? usePlayHighlight({
         musicScoreRef: options.musicScoreRef,
-        getOverlay: options.getOverlay,
         getBpm: () => bpm.value,
         getBeatUnit: () => 4,
         getRate: () => 1
@@ -149,8 +148,17 @@ export function useScorePagePlayback(
     handlePause,
     handleStop,
     handleClearPlayData: hasClearPlayData ? handleClearPlayData : undefined,
-    handleRenderMusicScore: highlight?.handleRenderMusicScore,
+    handleRenderMusicScore: highlight
+      ? (list) => {
+          highlight.on?.renderMusicScore?.(list)
+        }
+      : undefined,
     setHighlightBpm: highlight?.setBpm,
+    addNoteHighlight: highlight ? (noteId: string) => highlight.addNoteHighlight(noteId) : undefined,
+    removeNoteHighlight: highlight
+      ? (noteId: string) => highlight.removeNoteHighlight(noteId)
+      : undefined,
+    clearNoteHighlight: highlight ? () => highlight.clearHighlight() : undefined,
     subscribeProgressStart: playStore.subscribeProgressStart,
     unsubscribeProgressStart: playStore.unsubscribeProgressStart,
     subscribeOnEnd: playStore.subscribeOnEnd,

@@ -2,7 +2,9 @@ export default {
   editor: {
     toolbar: {
       playMode: '播放模式',
+      timeOffset: '谱音同步',
       linkedStaffMode: '连谱模式',
+      gdSlotHeight: '歌词区高度',
       notice: '须知',
       importMusicXml: '导入 musicxml',
       exportMusicXml: '导出 musicxml',
@@ -228,6 +230,18 @@ export default {
       title: '标题',
       subTitle: '副标题',
       author: '作者'
+    },
+    timeOffset: {
+      title: '谱音同步',
+      timeProp: '时间属性',
+      vocalPerformance: '范唱',
+      accompaniment: '伴奏',
+      pxPerSecond: 'px/s',
+      sampleRate: '采样率',
+      selectAudio: '选择音频',
+      bindVocal: '绑定范唱',
+      bindAccompaniment: '绑定伴奏',
+      audioPlaceholder: '从我的音频中选择'
     },
     messages: {
       notationTypeSwitched: '曲谱类型已切换',

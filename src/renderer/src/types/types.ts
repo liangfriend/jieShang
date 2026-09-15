@@ -13,7 +13,23 @@ export interface HighlightPolicy {
 }
 
 /** 单个音符的评分结果 */
-export type NoteScoreResult = 'perfect' | 'good' | 'pass' | 'early' | 'late' | 'miss'
+export type NoteScoreResult =
+  | 'perfect'
+  | 'good'
+  | 'pass'
+  | 'early'
+  | 'late'
+  | 'miss'
+  /** 演唱：错音 */
+  | 'wrong'
+  /** 演唱：偏高 */
+  | 'high-midi'
+  /** 演唱：偏低 */
+  | 'low-midi'
+  /** 演唱：结束早 */
+  | 'quick-end'
+  /** 演唱：结束晚 */
+  | 'slow-end'
 
 /** 瀑布流实时详情信息 */
 export interface WaterfallScoreStats {

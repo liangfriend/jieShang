@@ -11,7 +11,7 @@ import type {
 } from '@renderer/constant/whiteboard'
 import type { AddNoteSlotKind } from '@renderer/views/editor/editHelper/renderEditAddNoteState'
 import type { AddNumberSlotKind } from '@renderer/views/editor/editHelper/numberNotation/renderEditNumberAddState'
-import type { Chronaxie, NotesNumberInfo } from 'deciphony-renderer'
+import type { Chronaxie, NotesNumberInfo } from '@deciphony/renderer'
 import {
   AccidentalTypeEnum,
   BarlineTypeEnum,
@@ -23,7 +23,7 @@ import {
   MusicScoreTypeEnum,
   TimeSignatureTypeEnum,
   timeSignatureTypeToLabel
-} from 'deciphony-renderer'
+} from '@deciphony/renderer'
 
 export function t(key: string, params?: Record<string, unknown>): string {
   return i18n.global.t(key, params ?? {})

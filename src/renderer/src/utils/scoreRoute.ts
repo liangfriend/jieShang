@@ -1,4 +1,4 @@
-import type { MusicScore } from 'deciphony-renderer'
+import type { MusicScore } from '@deciphony/renderer'
 import type { RouteLocationNormalized, RouteLocationNormalizedLoaded } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import emptyTemplate from '@renderer/template/empty'
@@ -7,7 +7,7 @@ import singleVoiceTemplate from '@renderer/template/singleVoice'
 import singleVoiceJianpuTemplate from '@renderer/template/singleVoiceJianpu'
 import doubleVoiceTemplate from '@renderer/template/doubleVoice'
 import doubleVoiceJianpuTemplate from '@renderer/template/doubleVoiceJianpu'
-import { hasGrandStaffSingleStaffMismatch } from '@renderer/dr-extensions/scoreUtil'
+import { hasGrandStaffSingleStaffMismatch } from '@deciphony/extensions/score-util'
 import i18n from '@renderer/i18n'
 import { useDataStore } from '@renderer/store/data.store'
 import { loadScoreFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper'
@@ -190,7 +190,7 @@ export async function guardSingleLineModeEnter(
 export const SCORE_SLOT_CONFIG = {
   'g-r': { w: 50 },
   'g-l': { w: 50 },
-  'g-d': { h: 40 },
+  // g-d 高度由 dr-lyrics 扩展按歌词行数同步，勿在此写死覆盖
   's-d': { h: 20 },
   t: { h: 100 }
 } as const

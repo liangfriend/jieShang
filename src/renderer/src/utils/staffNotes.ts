@@ -1,5 +1,5 @@
-import type { Measure, MusicScore, NoteNumber, NotesInfo, StaffSlot } from 'deciphony-renderer'
-import { NoteSymbolTypeEnum } from 'deciphony-renderer'
+import type { Measure, MusicScore, NoteNumber, NotesInfo, StaffSlot } from '@deciphony/renderer'
+import { NoteSymbolTypeEnum } from '@deciphony/renderer'
 
 function collectNotesInfoIds(ni: NotesInfo, onId: (id: string) => void) {
   onId(ni.id)

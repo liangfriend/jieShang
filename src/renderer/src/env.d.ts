@@ -51,13 +51,18 @@ declare global {
       work: {
         create(payload: {
           name: string
+          file: ArrayBuffer | Uint8Array
           score_id?: number | null
-          data?: string
+          originalName?: string
         }): Promise<any>
         delete(id: number | string): Promise<any>
         update(
           id: number | string,
-          payload: Partial<{ name: string; score_id: number | null; data: string }>
+          payload: Partial<{
+            name: string
+            score_id: number | null
+            file: ArrayBuffer | Uint8Array
+          }>
         ): Promise<any>
         get(id: number | string, includeScore?: boolean): Promise<any>
         query(
@@ -66,6 +71,56 @@ declare global {
         list(): Promise<any>
         searchByName(name: string): Promise<any>
         extractScore(id: number | string): Promise<any>
+      }
+      audio: {
+        create(payload: {
+          name: string
+          file: ArrayBuffer | Uint8Array
+          originalName?: string
+        }): Promise<any>
+        delete(id: number | string): Promise<any>
+        update(id: number | string, payload: Partial<{ name: string }>): Promise<any>
+        get(id: number | string): Promise<any>
+        query(filters: Partial<{ id: number | string; name: string }>): Promise<any>
+        list(): Promise<any>
+        searchByName(name: string): Promise<any>
+      }
+      image: {
+        create(payload: {
+          name: string
+          file: ArrayBuffer | Uint8Array
+          originalName?: string
+        }): Promise<any>
+        delete(id: number | string): Promise<any>
+        update(id: number | string, payload: Partial<{ name: string }>): Promise<any>
+        get(id: number | string): Promise<any>
+        query(filters: Partial<{ id: number | string; name: string }>): Promise<any>
+        list(): Promise<any>
+        searchByName(name: string): Promise<any>
+      }
+      video: {
+        create(payload: {
+          name: string
+          file: ArrayBuffer | Uint8Array
+          originalName?: string
+        }): Promise<any>
+        delete(id: number | string): Promise<any>
+        update(id: number | string, payload: Partial<{ name: string }>): Promise<any>
+        get(id: number | string): Promise<any>
+        query(filters: Partial<{ id: number | string; name: string }>): Promise<any>
+        list(): Promise<any>
+        searchByName(name: string): Promise<any>
+      }
+      guitarChord: {
+        create(payload: { data: import('@deciphony/renderer').tabChord }): Promise<any>
+        delete(id: number | string): Promise<any>
+        update(
+          id: number | string,
+          payload: { data: import('@deciphony/renderer').tabChord }
+        ): Promise<any>
+        get(id: number | string): Promise<any>
+        list(): Promise<any>
+        searchByName(name: string): Promise<any>
       }
       group: {
         create(payload: any): Promise<any>

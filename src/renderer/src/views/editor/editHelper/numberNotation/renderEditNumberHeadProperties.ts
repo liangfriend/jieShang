@@ -1,9 +1,9 @@
-import type { Chronaxie, Measure, NoteNumber, NotesNumberInfo, SlotData } from 'deciphony-renderer'
-import { AccidentalTypeEnum, BeamTypeEnum } from 'deciphony-renderer'
+import type { Chronaxie, Measure, NoteNumber, NotesNumberInfo, SlotData } from '@deciphony/renderer'
+import { AccidentalTypeEnum, BeamTypeEnum } from '@deciphony/renderer'
 import {
   createAccidental,
   createAugmentationDot
-} from '@renderer/dr-extensions/dr-edit/score-builder'
+} from '@deciphony/extensions/dr-edit/score-builder'
 import {setRelativeX} from '../standardStaff/renderEditFrameProperties'
 
 export type NumberHeadEditSlot = SlotData & {

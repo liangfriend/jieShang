@@ -1,4 +1,4 @@
-import { isNoteRest, isNoteSymbol } from 'deciphony-renderer'
+import { isNoteRest, isNoteSymbol } from '@deciphony/renderer'
 import type {
   Chronaxie,
   Measure,
@@ -7,12 +7,12 @@ import type {
   NotesInfo,
   SlotData,
   VDom
-} from 'deciphony-renderer'
+} from '@deciphony/renderer'
 import {
   createNoteRest,
   createNoteSymbol,
   createNotesInfo
-} from '@renderer/dr-extensions/dr-edit/score-builder/factories'
+} from '@deciphony/extensions/dr-edit/score-builder'
 import {
   DEFAULT_ADD_NOTE_STATE,
   type AddNoteSlotKind,

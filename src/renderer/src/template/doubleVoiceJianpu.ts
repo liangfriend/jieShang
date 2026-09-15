@@ -1,11 +1,11 @@
-import { BracketTypeEnum, MusicScore, MusicScoreTypeEnum } from 'deciphony-renderer'
+import { BracketTypeEnum, MusicScore, MusicScoreTypeEnum } from '@deciphony/renderer'
 import {
   createBracket,
   createGrandStaff,
   createMeasure,
   createMusicScore,
   createSingleStaff
-} from '../dr-extensions/dr-edit/score-builder'
+} from '@deciphony/extensions/dr-edit/score-builder'
 
 const GRAND_STAFF_COUNT = 4
 const MEASURES_PER_STAFF = 4

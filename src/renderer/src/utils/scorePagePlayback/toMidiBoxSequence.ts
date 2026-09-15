@@ -1,4 +1,4 @@
-import type { PlaySequence } from 'deciphony-player'
+import type { PlaySequence } from '@deciphony/player'
 
 /** midi → [批次索引, 附加信息][] */
 export type MidiBoxSequence = Record<string, [number, any?][]>

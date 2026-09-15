@@ -1,13 +1,12 @@
 <script lang="ts" setup>
-import type { MusicScore, VDom } from 'deciphony-renderer'
-import type { PlaySequence } from 'deciphony-player'
-import musicScoreVue from 'deciphony-renderer'
+import type { MusicScore, VDom } from '@deciphony/renderer'
+import type { PlaySequence } from '@deciphony/player'
+import musicScoreVue from '@deciphony/renderer'
 import { ElMessage } from 'element-plus'
-import { MusicScoreTypeEnum } from 'deciphony-renderer'
+import { MusicScoreTypeEnum } from '@deciphony/renderer'
 import { onBeforeUnmount, onMounted, provide, ref, computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { TitleSlot } from '@renderer/dr-extensions/dr-title'
 import { PracticeModeToolbar } from '@renderer/components/score-toolbar'
 import PianoWaterfall from '@renderer/components/pianoWaterfallCanvas.vue'
 import VirtualPiano from '@renderer/components/virtualPiano.vue'
@@ -20,11 +19,11 @@ import {
   type PianoWaterfallPlaybackExpose
 } from '@renderer/utils/scorePagePlayback'
 import type { NoteScoreResult } from '@renderer/types/types'
-import { mergeGrandStaff } from '@renderer/dr-extensions/scoreUtil'
+import { mergeGrandStaff } from '@deciphony/extensions/score-util'
 import type {
   MusicScoreHighlightExpose,
   PlayHighlightProgressData
-} from '@renderer/dr-extensions/dr-play-highlight'
+} from '@deciphony/extensions/dr-play-highlight'
 import {
   ScoreNoteHeadOverlay,
   type ScoreNoteHeadOverlayApi
@@ -33,7 +32,8 @@ import { usePlayStore } from '@renderer/store/play.store'
 import { useMetronomeStore } from '@renderer/store/metronome.store'
 import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store'
 import { NOTE_RESULT_COLOR } from '@renderer/constant/practice'
-import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
+import { loadScoreFromRoute } from '@renderer/utils/scoreRoute'
+import { createScoreLyricsExtension } from '@renderer/utils/createScoreLyricsExtension'
 import { applySingleLineModeScoreHeight } from '@renderer/utils/singleLineModeScoreLayout'
 import { practiceContextKey } from '@renderer/views/practice/practiceContext'
 import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
@@ -70,6 +70,8 @@ const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin
 const { pianoSkin, virtualPianoSkinId, waitVirtualPianoSkin } = useVirtualPianoSkin()
 const { performSkinReady, performSkinId, waitPerformSkin } = usePerformSkin()
 const { initAfterLoad, applyDisplayType } = usePlayScoreNotationDisplay(musicScoreData, displayType)
+const { extensions: scoreExtensions, slotConfig: scoreSlotConfig } =
+  createScoreLyricsExtension('show')
 
 const maxStaffCount = computed(() => {
   let max = 0
@@ -108,7 +110,6 @@ let scrollProgressSubId: string | null = null
 
 const playback = useScorePagePlayback(musicScoreData, {
   musicScoreRef,
-  getOverlay: () => scoreOverlayRef.value,
   waterfallRef: pianoWaterfallRef,
   getPlaySequence: () => playSequence.value,
   countIn: () => metronomeStore.playCountIn(),
@@ -329,6 +330,8 @@ onBeforeUnmount(() => {
           ref="musicScoreRef"
           class="practice-page__score-svg"
           :data="musicScoreData"
+          :slot-config="scoreSlotConfig"
+          :extensions="scoreExtensions"
           :skin="scoreSkin"
           :skin-name="scoreSkinName"
           @renderMusicScore="handleRenderMusicScore"

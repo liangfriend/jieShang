@@ -1,6 +1,6 @@
-import type { VDom } from 'deciphony-renderer'
-import { NOTE_PART_TAGS } from '@renderer/dr-extensions/dr-play-highlight/constants'
-import type { PlayHighlightProgressData } from '@renderer/dr-extensions/dr-play-highlight'
+import type { VDom } from '@deciphony/renderer'
+import { NOTE_PART_TAGS } from '@deciphony/extensions/dr-play-highlight'
+import type { PlayHighlightProgressData } from '@deciphony/extensions/dr-play-highlight'
 
 export type ScoreScrollToPlayingNoteDeps = {
   getScrollContainer: () => HTMLElement | null

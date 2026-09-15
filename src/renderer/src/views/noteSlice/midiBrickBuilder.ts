@@ -10,21 +10,21 @@ import {
   MusicScore,
   TimeSignatureTypeEnum,
   type Chronaxie
-} from 'deciphony-renderer'
+} from '@deciphony/renderer'
 import {
   createGrandStaff,
   createMeasure,
   createMusicScore,
   createNoteSymbol,
   createSingleStaff
-} from '@renderer/dr-extensions/dr-edit/score-builder'
+} from '@deciphony/extensions/dr-edit/score-builder'
 import {
   NOTE_SLICE_BRICK_GRAND_STAFF_SPACING,
   NOTE_SLICE_BRICK_SCORE_HEIGHT,
   NOTE_SLICE_BRICK_SCORE_SPACE,
   NOTE_SLICE_BRICK_SINGLE_STAFF_SPACING
 } from '@renderer/views/noteSlice/noteSliceBrickLayout'
-import { getAllNoteRegion, type NoteRegionsByAccidental } from '@renderer/dr-extensions/scoreUtil'
+import { getAllNoteRegion, type NoteRegionsByAccidental } from '@deciphony/extensions/score-util'
 
 /** 音符块可用的谱号（不含次中音） */
 export const MIDI_BRICK_CLEFS = [ClefTypeEnum.Treble, ClefTypeEnum.Bass, ClefTypeEnum.Alto] as const

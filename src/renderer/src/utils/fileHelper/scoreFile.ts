@@ -1,11 +1,11 @@
-import type { MusicScore } from 'deciphony-renderer'
+import type { MusicScore } from '@deciphony/renderer'
 import { toRaw } from 'vue'
-import { readTitleField } from '@renderer/dr-extensions/dr-title/titleFields'
+import { readTitleField } from '@deciphony/extensions/dr-title'
 import {
   getXmlJson,
   musicScoreToXml,
   xmlToMusicScore
-} from '@renderer/dr-extensions/dr-musicxml-transfer'
+} from '@deciphony/extensions/dr-musicxml-transfer'
 
 export type SjImportResult = {
   canceled: boolean

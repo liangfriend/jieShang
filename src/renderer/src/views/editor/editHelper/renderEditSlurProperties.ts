@@ -1,4 +1,4 @@
-import {DoubleNoteAffiliatedSymbolNameEnum, isNoteRest, isNoteSymbol} from 'deciphony-renderer'
+import {DoubleNoteAffiliatedSymbolNameEnum, isNoteRest, isNoteSymbol} from '@deciphony/renderer'
 import type {
   DoubleNoteAffiliatedSymbol,
   MusicScore,
@@ -6,12 +6,12 @@ import type {
   SingleStaff,
   SlotData,
   StaffSlot,
-} from 'deciphony-renderer'
+} from '@deciphony/renderer'
 import {
   locateNotesInfoById,
   locateNotesNumberInfoById,
-} from '@renderer/dr-extensions/dr-edit/score-builder/locate'
-import {isNoteNumberSlot, isSlotRestLike} from '@renderer/dr-extensions/dr-edit/score-builder/noteSlot'
+} from '@deciphony/extensions/dr-edit/score-builder'
+import {isNoteNumberSlot, isSlotRestLike} from '@deciphony/extensions/dr-edit/score-builder'
 
 export const DEFAULT_SLUR_THICKNESS = 4
 export const SLUR_THICKNESS_MIN = 2

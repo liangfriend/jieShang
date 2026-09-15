@@ -1,10 +1,10 @@
-import { MusicScore, MusicScoreTypeEnum } from 'deciphony-renderer'
+import { MusicScore, MusicScoreTypeEnum } from '@deciphony/renderer'
 import {
   createGrandStaff,
   createMeasure,
   createMusicScore,
   createSingleStaff
-} from '../dr-extensions/dr-edit/score-builder'
+} from '@deciphony/extensions/dr-edit/score-builder'
 
 const data: MusicScore = createMusicScore({
   height: 10000,

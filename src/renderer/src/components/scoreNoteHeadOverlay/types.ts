@@ -30,7 +30,7 @@ export type NoteHeadMarkerStyle = {
 }
 
 export type ScoreNoteHeadOverlayApi = {
-  onRenderMusicScore: (list: readonly import('deciphony-renderer').VDom[]) => void
+  onRenderMusicScore: (list: readonly import('@deciphony/renderer').VDom[]) => void
   setPlayActive: (noteIdInput: unknown, active: boolean) => void
   clearPlay: () => void
   setNoteResult: (noteIdInput: unknown, result: NoteScoreResult | null) => void

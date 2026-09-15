@@ -1,11 +1,11 @@
-import {isNoteSymbol} from 'deciphony-renderer'
+import {isNoteSymbol} from '@deciphony/renderer'
 import type {
     MusicScore,
     NoteNumber,
     NoteSymbol,
     SlotData,
     VDom,
-} from 'deciphony-renderer'
+} from '@deciphony/renderer'
 import {
     locateGrandStaff,
     locateMeasure,
@@ -13,7 +13,7 @@ import {
     locateNotesInfoById,
     locateNotesNumberInfoById,
     locateSingleStaff,
-} from '@renderer/dr-extensions/dr-edit/score-builder/locate'
+} from '@deciphony/extensions/dr-edit/score-builder'
 
 const MEASURE_SYMBOL_KEYS = [
     'barline_f',

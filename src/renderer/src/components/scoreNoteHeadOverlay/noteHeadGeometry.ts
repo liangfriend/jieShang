@@ -1,4 +1,4 @@
-import type { VDom } from 'deciphony-renderer'
+import type { VDom } from '@deciphony/renderer'
 import {
   isNumberNotationSkinKey,
   resolveStandardNoteHeadShape

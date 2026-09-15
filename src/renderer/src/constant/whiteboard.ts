@@ -1,4 +1,4 @@
-import { ClefTypeEnum, KeySignatureTypeEnum } from 'deciphony-renderer'
+import { ClefTypeEnum, KeySignatureTypeEnum } from '@deciphony/renderer'
 import {
   resolveWhiteboardClefLabel as resolveWhiteboardClefLabelI18n,
   resolveWhiteboardKeyCountLabel as resolveWhiteboardKeyCountLabelI18n,

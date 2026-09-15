@@ -114,6 +114,11 @@ export const ToneColorBuiltinMeta = {
     name: '八音盒',
     howToGet: '完成主线剧情',
     description: '清脆梦幻的八音盒音色。'
+  },
+  口琴: {
+    name: '口琴',
+    howToGet: '买游戏就送',
+    description: '清亮悠扬的口琴音色。'
   }
 } satisfies Record<string, BuiltinCollectionMeta>
 

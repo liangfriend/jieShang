@@ -1,11 +1,12 @@
 <script setup lang="ts">
-import { Delete, Search } from '@element-plus/icons-vue'
+import { Delete, Plus, Search } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
-import { onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
 import ScoreDeleteDialog from '@renderer/components/ScoreDeleteDialog.vue'
+import { HOME_TEMPLATE_TO_ROUTE } from '@renderer/utils/scoreRoute'
 import {
   deleteScoreFromDatabase,
   displayScoreName,
@@ -19,7 +20,27 @@ const keyword = ref('')
 const loading = ref(false)
 const deletingId = ref<number | null>(null)
 const scores = ref<ScoreListItem[]>([])
+const templateVisible = ref(false)
 const deleteDialogRef = ref<InstanceType<typeof ScoreDeleteDialog> | null>(null)
+
+const templateGroups = computed(() => [
+  {
+    title: t('scores.templateDialog.staff'),
+    items: [
+      { key: 'empty', label: t('scores.templateDialog.empty') },
+      { key: 'single', label: t('scores.templateDialog.single') },
+      { key: 'double', label: t('scores.templateDialog.double') }
+    ]
+  },
+  {
+    title: t('scores.templateDialog.jianpu'),
+    items: [
+      { key: 'jianpuEmpty', label: t('scores.templateDialog.empty') },
+      { key: 'jianpuSingle', label: t('scores.templateDialog.single') },
+      { key: 'jianpuDouble', label: t('scores.templateDialog.double') }
+    ]
+  }
+])
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -45,6 +66,14 @@ function openScore(score: ScoreListItem) {
     query: {
       scoreId: String(score.id)
     }
+  })
+}
+
+function onTemplateSelect(key: string) {
+  templateVisible.value = false
+  router.push({
+    name: 'edit',
+    query: { template: HOME_TEMPLATE_TO_ROUTE[key] ?? 'empty' }
   })
 }
 
@@ -82,7 +111,13 @@ onMounted(() => {
         <BackButton fallback="/" />
       </div>
       <div class="score-list__header-main">
-        <h1 class="score-list__title">{{ t('scores.title') }}</h1>
+        <div class="score-list__title-row">
+          <h1 class="score-list__title">{{ t('scores.title') }}</h1>
+          <button type="button" class="score-list__add" @click="templateVisible = true">
+            <el-icon><Plus /></el-icon>
+            <span>{{ t('scores.create') }}</span>
+          </button>
+        </div>
         <el-input
           v-model="keyword"
           class="score-list__search"
@@ -117,6 +152,33 @@ onMounted(() => {
         </div>
       </div>
     </main>
+
+    <el-dialog
+      v-model="templateVisible"
+      :title="t('scores.templateDialog.title')"
+      width="480px"
+      class="cute-dialog"
+      append-to-body
+      align-center
+    >
+      <p class="dialog-desc">{{ t('scores.templateDialog.desc') }}</p>
+      <div class="template-groups">
+        <section v-for="group in templateGroups" :key="group.title" class="template-group">
+          <h3 class="template-group__title">{{ group.title }}</h3>
+          <div class="template-list">
+            <button
+              v-for="tpl in group.items"
+              :key="tpl.key"
+              type="button"
+              class="template-item"
+              @click="onTemplateSelect(tpl.key)"
+            >
+              {{ tpl.label }}
+            </button>
+          </div>
+        </section>
+      </div>
+    </el-dialog>
 
     <ScoreDeleteDialog ref="deleteDialogRef" />
   </div>
@@ -157,8 +219,16 @@ onMounted(() => {
   min-width: 0;
 }
 
+.score-list__title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 .score-list__title {
-  margin: 0 0 16px;
+  margin: 0;
   font-size: 28px;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -166,6 +236,21 @@ onMounted(() => {
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+}
+
+.score-list__add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: none;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(90deg, #ff8fb8, #c9b8ff);
 }
 
 .score-list__search {
@@ -277,5 +362,72 @@ onMounted(() => {
   font-weight: 700;
   line-height: 1.4;
   word-break: break-word;
+}
+
+.dialog-desc {
+  margin: 0 0 16px;
+  font-size: 13px;
+  color: var(--text-soft);
+  text-align: center;
+}
+
+.template-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.template-group__title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #8a5a72;
+}
+
+.template-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.template-item {
+  min-width: 88px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 184, 208, 0.55);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 13px;
+  font-weight: 700;
+  color: #5c4a6a;
+  cursor: pointer;
+}
+
+.template-item:hover {
+  background: rgba(255, 214, 232, 0.75);
+}
+</style>
+
+<style>
+.cute-dialog.el-dialog {
+  border-radius: 24px;
+  overflow: hidden;
+  background: linear-gradient(180deg, #fff8fb 0%, #f8f0ff 100%);
+}
+
+.cute-dialog .el-dialog__header {
+  padding: 20px 24px 8px;
+}
+
+.cute-dialog .el-dialog__title {
+  font-weight: 800;
+  color: #5c4a6a;
+}
+
+.cute-dialog .el-dialog__body {
+  padding: 8px 24px 12px;
+}
+
+.cute-dialog .el-dialog__footer {
+  padding: 8px 24px 20px;
 }
 </style>

@@ -1,5 +1,5 @@
-import type { KeySignatureTypeEnum, MusicScore } from 'deciphony-renderer'
-import { KEY_ALTERATION } from '@renderer/dr-extensions/scoreUtil'
+import type { KeySignatureTypeEnum, MusicScore } from '@deciphony/renderer'
+import { KEY_ALTERATION } from '@deciphony/extensions/score-util'
 
 /** C 调下单小节音符块的谱宽（实测） */
 export const NOTE_SLICE_BRICK_SCORE_WIDTH_C = 150

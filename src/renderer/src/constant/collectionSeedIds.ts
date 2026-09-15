@@ -9,7 +9,8 @@ export const BUILTIN_COLLECTION_SEED_IDS = {
     电钢琴: 3,
     尼龙弦吉他: 4,
     小提琴: 5,
-    八音盒: 6
+    八音盒: 6,
+    口琴: 22
   },
   scoreSkin: {
     默认: 7,
@@ -42,7 +43,8 @@ export const BUILTIN_COLLECTION_LEVELS = {
     电钢琴: 1,
     尼龙弦吉他: 1,
     小提琴: 1,
-    八音盒: 1
+    八音盒: 1,
+    口琴: 1
   },
   scoreSkin: {
     默认: 1,
@@ -70,11 +72,12 @@ export const BUILTIN_COLLECTION_LEVELS = {
 export type CollectionLevel = 1 | 2 | 3 | 4 | 5 | 6
 
 /** 种子写入后 sqlite 自增序列续号起点 */
-export const BUILTIN_COLLECTION_MAX_SEED_ID = 21
+export const BUILTIN_COLLECTION_MAX_SEED_ID = 22
 
 /** 各类型默认赠送、初始 owned=true 的藏品 id（与 main 一致） */
 export const DEFAULT_BUILTIN_COLLECTION_OWNED_IDS = [
   BUILTIN_COLLECTION_SEED_IDS.toneColor.三角钢琴,
+  BUILTIN_COLLECTION_SEED_IDS.toneColor.口琴,
   BUILTIN_COLLECTION_SEED_IDS.scoreSkin.默认,
   BUILTIN_COLLECTION_SEED_IDS.performSkin.默认演奏皮肤,
   BUILTIN_COLLECTION_SEED_IDS.pianoSkin.经典纯色

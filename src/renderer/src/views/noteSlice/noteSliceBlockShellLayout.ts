@@ -1,4 +1,4 @@
-import type { MusicScore } from 'deciphony-renderer'
+import type { MusicScore } from '@deciphony/renderer'
 import {
   NOTE_SLICE_BLOCK_SHELL_HEIGHT,
   NOTE_SLICE_BLOCK_SHELL_WIDTH

@@ -1,4 +1,4 @@
-import type { MetronomeColor } from 'deciphony-player';
+import type { MetronomeColor } from '@deciphony/player';
 
 /**
  * 常规：metronome/low | middle | high.mp3（→ weak / secondary / strong）

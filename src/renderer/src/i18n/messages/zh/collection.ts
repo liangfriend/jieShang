@@ -58,6 +58,11 @@ export default {
         description: '清脆梦幻的八音盒音色。',
         howToGet: '完成主线剧情'
       },
+      '22': {
+        name: '口琴',
+        description: '清亮悠扬的口琴音色。',
+        howToGet: '买游戏就送'
+      },
       '7': {
         name: '默认',
         description: '经典黑白五线谱符号，简洁清晰。',

@@ -8,6 +8,10 @@ export async function registerController() {
   container.resolve('groupController').register()
   container.resolve('achievementProgressController').register()
   container.resolve('noteSliceHighScoreController').register()
+  container.resolve('audioController').register()
+  container.resolve('imageController').register()
+  container.resolve('videoController').register()
+  container.resolve('guitarChordController').register()
   container.resolve('fileController').register()
   container.resolve('windowController').register()
 

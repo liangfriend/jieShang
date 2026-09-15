@@ -1,16 +1,18 @@
 <script lang="ts" setup>
-import musicScoreVue from 'deciphony-renderer'
+import musicScoreVue from '@deciphony/renderer'
 import { ElMessage } from 'element-plus'
-import { MusicScoreTypeEnum } from 'deciphony-renderer'
-import { computed, onMounted, provide, ref } from 'vue'
+import { MusicScoreTypeEnum } from '@deciphony/renderer'
+import { computed, onMounted, onUnmounted, provide, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
-import { TitleSlot } from '@renderer/dr-extensions/dr-title'
-import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
+import { TitleSlot } from '@deciphony/extensions/dr-title'
+import type { MusicScoreHighlightExpose } from '@deciphony/extensions/dr-play-highlight'
 import { PlayModeToolbar } from '@renderer/components/score-toolbar'
 import { scorePlaybackKey, useScorePagePlayback } from '@renderer/utils/scorePagePlayback'
 import { usePlayStore } from '@renderer/store/play.store'
+import { useAudioPlayerStore } from '@renderer/store/audioPlayer.store'
 import { loadScoreFromRoute, SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
+import { createScoreLyricsExtension } from '@renderer/utils/createScoreLyricsExtension'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotationDisplay'
 import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
@@ -19,6 +21,7 @@ import empty from '@renderer/template/empty'
 const { t } = useI18n()
 const route = useRoute()
 const playStore = usePlayStore()
+const audioPlayerStore = useAudioPlayerStore()
 const globalLoading = useGlobalLoadingStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)))
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
@@ -26,6 +29,8 @@ const displayType = ref<MusicScoreTypeEnum>(MusicScoreTypeEnum.StandardStaff)
 const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin()
 const playback = useScorePagePlayback(musicScoreData, { musicScoreRef })
 const { initAfterLoad, applyDisplayType } = usePlayScoreNotationDisplay(musicScoreData, displayType)
+const { extensions: scoreExtensions, slotConfig: scoreSlotConfig } =
+  createScoreLyricsExtension('show')
 
 const notationTypeDisabled = computed(
   () => playback.playbackState.value !== 'stopped' || playback.countingIn.value
@@ -57,6 +62,10 @@ onMounted(async () => {
     globalLoading.hide()
   }
 })
+
+onUnmounted(() => {
+  audioPlayerStore.stop()
+})
 </script>
 
 <template>
@@ -68,7 +77,8 @@ onMounted(async () => {
         ref="musicScoreRef"
         class="score-page__svg"
         :data="musicScoreData"
-        :slot-config="SCORE_SLOT_CONFIG"
+        :slot-config="scoreSlotConfig"
+        :extensions="scoreExtensions"
         :skin="scoreSkin"
         :skin-name="scoreSkinName"
         @renderMusicScore="playback.handleRenderMusicScore"

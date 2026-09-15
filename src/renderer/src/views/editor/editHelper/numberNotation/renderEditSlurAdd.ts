@@ -4,12 +4,12 @@ import type {
   NoteNumber,
   NotesNumberInfo,
   SingleStaff
-} from 'deciphony-renderer'
-import { createSlur } from '@renderer/dr-extensions/dr-edit/score-builder'
+} from '@deciphony/renderer'
+import { createSlur } from '@deciphony/extensions/dr-edit/score-builder'
 import {
   isNoteNumberSlot,
   isSlotRestLike
-} from '@renderer/dr-extensions/dr-edit/score-builder/noteSlot'
+} from '@deciphony/extensions/dr-edit/score-builder'
 import { DEFAULT_SLUR_THICKNESS } from '../renderEditSlurProperties'
 
 import type { NumberHeadEditSlot } from './renderEditNumberHeadProperties'

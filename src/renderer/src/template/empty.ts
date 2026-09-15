@@ -8,7 +8,7 @@ import {
   MeasureStartRepeatEnum,
   MusicScore,
   TimeSignatureTypeEnum
-} from 'deciphony-renderer'
+} from '@deciphony/renderer'
 import {
   createBarline,
   createClef,
@@ -20,7 +20,7 @@ import {
   createNoteSymbol,
   createSingleStaff,
   createTimeSignature
-} from '../dr-extensions/dr-edit/score-builder'
+} from '@deciphony/extensions/dr-edit/score-builder'
 // 曲谱结构
 
 const data: MusicScore = createMusicScore({ height: 10000, width: 800 })

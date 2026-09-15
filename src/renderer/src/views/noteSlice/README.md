@@ -322,7 +322,7 @@ NoteSliceGameLayer.tick()  （isRunning 时）
 
 
 
-- `deciphony-renderer`：`musicScoreVue` 渲染谱面
+- `@deciphony/renderer`：`musicScoreVue` 渲染谱面
 
 - `@renderer/store/midi.store`：MIDI 设备与消息
 

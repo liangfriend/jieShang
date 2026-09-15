@@ -1,8 +1,7 @@
-import type { VDom } from 'deciphony-renderer'
-import type { PlaySequence } from 'deciphony-player'
+import type { VDom } from '@deciphony/renderer'
+import type { PlaySequence } from '@deciphony/player'
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
-import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
-import type { ScoreNoteHeadOverlayApi } from '@renderer/components/scoreNoteHeadOverlay'
+import type { MusicScoreHighlightExpose } from '@deciphony/extensions/dr-play-highlight'
 import type { EndListener, PlaybackState, ProgressListener } from '@renderer/store/play.store'
 
 export type { ProgressListener }
@@ -12,8 +11,6 @@ export type { PlaybackState }
 
 export type UseScorePagePlaybackOptions = {
   musicScoreRef?: Ref<MusicScoreHighlightExpose | null>
-  /** 曲谱符头 canvas 叠层（练习模式播放高亮） */
-  getOverlay?: () => ScoreNoteHeadOverlayApi | null
   /** 与曲谱播放同步的瀑布流控制（play / pause / stop） */
   waterfallRef?: Ref<PianoWaterfallPlaybackExpose | null>
   /** 正式播放前的预备拍（练习模式打一小节节拍器），结束后 resolve */
@@ -52,6 +49,10 @@ export type ScorePagePlaybackController = {
   handleClearPlayData?: () => void
   handleRenderMusicScore?: (list: VDom[]) => void
   setHighlightBpm?: (bpm: number) => void
+  /** 按音符 id 高亮（范唱/伴奏 APlayer 进度对齐用） */
+  addNoteHighlight?: (noteId: string) => void
+  removeNoteHighlight?: (noteId: string) => void
+  clearNoteHighlight?: () => void
   /** 订阅播放进度开始（页面可二次订阅，做滚动等独有逻辑） */
   subscribeProgressStart: (listener: ProgressListener) => string
   unsubscribeProgressStart: (id: string) => void

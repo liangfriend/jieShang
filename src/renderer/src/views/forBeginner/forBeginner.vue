@@ -1,21 +1,22 @@
 <script lang="ts" setup>
-import type { MusicScore, VDom } from 'deciphony-renderer'
-import type { PlaySequence } from 'deciphony-player'
-import musicScoreVue from 'deciphony-renderer'
+import type { MusicScore, VDom } from '@deciphony/renderer'
+import type { PlaySequence } from '@deciphony/player'
+import musicScoreVue from '@deciphony/renderer'
 import { ElMessage } from 'element-plus'
-import { MusicScoreTypeEnum } from 'deciphony-renderer'
+import { MusicScoreTypeEnum } from '@deciphony/renderer'
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import { BeginnerModeToolbar } from '@renderer/components/score-toolbar'
 import PianoMidiBox from '@renderer/components/pianoMidiBoxCanvas.vue'
 import VirtualPiano from '@renderer/components/virtualPiano.vue'
-import { mergeGrandStaff } from '@renderer/dr-extensions/scoreUtil'
+import { mergeGrandStaff } from '@deciphony/extensions/score-util'
 import { useMetronomeStore } from '@renderer/store/metronome.store'
 import { useBeginnerSettingsStore } from '@renderer/store/beginnerSettings.store'
 import { usePlayStore } from '@renderer/store/play.store'
 import { resolvePlayBpm } from '@renderer/constant/play'
 import { loadScoreFromRoute } from '@renderer/utils/scoreRoute'
+import { createScoreLyricsExtension } from '@renderer/utils/createScoreLyricsExtension'
 import { applySingleLineModeScoreHeight } from '@renderer/utils/singleLineModeScoreLayout'
 import {
   toMidiBoxSequence,
@@ -30,7 +31,7 @@ import {
 import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
 import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
 import type { MidiBoxBatchPayload } from '@renderer/views/forBeginner/beginnerNoteProgressHighlight'
-import type { MusicScoreHighlightExpose } from '@renderer/dr-extensions/dr-play-highlight'
+import type { MusicScoreHighlightExpose } from '@deciphony/extensions/dr-play-highlight'
 import {
   ScoreNoteHeadOverlay,
   type ScoreNoteHeadOverlayApi
@@ -60,6 +61,8 @@ const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin
 const { pianoSkin, virtualPianoSkinId, waitVirtualPianoSkin } = useVirtualPianoSkin()
 const { performSkinReady, performSkinId, waitPerformSkin } = usePerformSkin()
 const { initAfterLoad, applyDisplayType } = usePlayScoreNotationDisplay(musicScoreData, displayType)
+const { extensions: scoreExtensions, slotConfig: scoreSlotConfig } =
+  createScoreLyricsExtension('show')
 
 const maxStaffCount = computed(() => {
   let max = 0
@@ -301,6 +304,8 @@ function handleMidiBoxFinished() {
           ref="musicScoreRef"
           class="beginner-page__score-svg"
           :data="musicScoreData"
+          :slot-config="scoreSlotConfig"
+          :extensions="scoreExtensions"
           :skin="scoreSkin"
           :skin-name="scoreSkinName"
           @renderMusicScore="handleRenderMusicScore"

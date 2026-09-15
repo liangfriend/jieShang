@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { MusicScoreTypeEnum } from 'deciphony-renderer'
+import { MusicScoreTypeEnum } from '@deciphony/renderer'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { SCORE_NOTATION_TYPE_OPTIONS, resolveScoreNotationTypeLabel } from '@renderer/constant/scoreNotationType'
 import { useI18n } from 'vue-i18n'

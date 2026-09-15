@@ -3,7 +3,7 @@ import type {
   MusicScore,
   SingleStaff,
   SlotData,
-} from 'deciphony-renderer'
+} from '@deciphony/renderer'
 import {
   BarlineTypeEnum,
   ClefTypeEnum,
@@ -12,8 +12,8 @@ import {
   MeasureStartRepeatEnum,
   TIME_SIGNATURE_TYPES_ORDERED,
   TimeSignatureTypeEnum,
-} from 'deciphony-renderer'
-import {insertMeasure} from '@renderer/dr-extensions/dr-edit/edit-util'
+} from '@deciphony/renderer'
+import {insertMeasure} from '@deciphony/extensions/dr-edit'
 import {
   createBarline,
   createClef,
@@ -21,7 +21,7 @@ import {
   createMeasureEndRepeat,
   createMeasureStartRepeat,
   createTimeSignature,
-} from '@renderer/dr-extensions/dr-edit/score-builder'
+} from '@deciphony/extensions/dr-edit/score-builder'
 
 export type MeasureEditSlot = SlotData & {measure: Measure; singleStaff: SingleStaff}
 

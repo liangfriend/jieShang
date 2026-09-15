@@ -8,15 +8,37 @@ const ROUTE_TITLE_KEYS: Record<string, string> = {
   play: 'router.play',
   practice: 'router.practice',
   forBeginner: 'router.forBeginner',
+  singing: 'router.singing',
   scores: 'router.scores',
   whiteboard: 'router.whiteboard',
-  literacyCamp: 'router.literacyCamp',
+  myWorks: 'router.myWorks',
+  workEdit: 'router.workEdit',
+  workShow: 'router.workShow',
+  musicEncyclopedia: 'router.musicEncyclopedia',
+  abilityTest: 'router.abilityTest',
+  rhythmSenseTest: 'router.rhythmSenseTest',
+  absolutePitchTest: 'router.absolutePitchTest',
+  keyNoteNameQuiz: 'router.keyNoteNameQuiz',
+  chordRecognitionQuiz: 'router.chordRecognitionQuiz',
+  myAudio: 'router.myAudio',
+  myImage: 'router.myImage',
+  myVideo: 'router.myVideo',
+  instrumentSim: 'router.instrumentSim',
+  guitarSim: 'router.guitarSim',
+  guitarChordManage: 'router.guitarChordManage',
+  harmonicaSim: 'router.harmonicaSim',
+  violinSim: 'router.violinSim',
+  tools: 'router.tools',
+  micTool: 'router.micTool',
+  midiTool: 'router.midiTool',
   achievements: 'router.achievements',
   collection: 'router.collection',
   noteSliceArcade: 'router.noteSliceArcade',
   noteSliceEndless: 'router.noteSliceEndless',
   noteSliceExtreme: 'router.noteSliceExtreme'
 }
+
+const placeholder = () => import('./views/PhasePlaceholderView.vue')
 
 const routes: RouteRecordRaw[] = [
   {
@@ -52,6 +74,13 @@ const routes: RouteRecordRaw[] = [
     beforeEnter: guardSingleLineModeEnter
   },
   {
+    path: '/singing',
+    name: 'singing',
+    component: () => import('./views/singing/singing.vue'),
+    meta: { title: '演唱模式' },
+    beforeEnter: guardSingleLineModeEnter
+  },
+  {
     path: '/scores',
     name: 'scores',
     component: () => import('./views/ScoreListView.vue'),
@@ -64,10 +93,133 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '教学白板' }
   },
   {
-    path: '/literacy-camp',
-    name: 'literacyCamp',
-    component: () => import('./views/LiteracyCampView.vue'),
-    meta: { title: '素养训练营' }
+    path: '/my-works',
+    name: 'myWorks',
+    component: () => import('./views/WorkListView.vue'),
+    meta: { title: '我的作品' }
+  },
+  {
+    path: '/work-edit',
+    name: 'workEdit',
+    component: () => import('./views/work/WorkStudioView.vue'),
+    meta: { title: '作品编辑' }
+  },
+  {
+    path: '/work-show',
+    name: 'workShow',
+    component: () => import('./views/work/WorkStudioView.vue'),
+    meta: { title: '作品展示' }
+  },
+  {
+    path: '/music-encyclopedia',
+    name: 'musicEncyclopedia',
+    component: placeholder,
+    meta: {
+      title: '音乐百科',
+      titleKey: 'router.musicEncyclopedia',
+      placeholderKey: 'router.musicEncyclopediaPlaceholder'
+    }
+  },
+  {
+    path: '/ability-test',
+    name: 'abilityTest',
+    component: () => import('./views/AbilityTestView.vue'),
+    meta: { title: '能力测试' }
+  },
+  {
+    path: '/ability-test/rhythm',
+    name: 'rhythmSenseTest',
+    component: () => import('./views/abilityTest/RhythmSenseTestView.vue'),
+    meta: { title: '节奏感测试' }
+  },
+  {
+    path: '/ability-test/absolute-pitch',
+    name: 'absolutePitchTest',
+    component: () => import('./views/abilityTest/AbsolutePitchTestView.vue'),
+    meta: { title: '音感测试' }
+  },
+  {
+    path: '/ability-test/key-note-quiz',
+    name: 'keyNoteNameQuiz',
+    component: () => import('./views/abilityTest/KeyNoteNameQuizView.vue'),
+    meta: { title: '琴键音名识别' }
+  },
+  {
+    path: '/ability-test/chord-quiz',
+    name: 'chordRecognitionQuiz',
+    component: () => import('./views/abilityTest/ChordRecognitionQuizView.vue'),
+    meta: { title: '和弦识别' }
+  },
+  {
+    path: '/my-audio',
+    name: 'myAudio',
+    component: () => import('./views/myAudio/MyAudioView.vue'),
+    meta: { title: '我的音频' }
+  },
+  {
+    path: '/my-images',
+    name: 'myImage',
+    component: () => import('./views/myImage/MyImageView.vue'),
+    meta: { title: '我的图片' }
+  },
+  {
+    path: '/my-videos',
+    name: 'myVideo',
+    component: () => import('./views/myVideo/MyVideoView.vue'),
+    meta: { title: '我的视频' }
+  },
+  {
+    path: '/instrument-sim',
+    name: 'instrumentSim',
+    component: () => import('./views/instrumentSim/InstrumentSimView.vue'),
+    meta: { title: '模拟乐器' }
+  },
+  {
+    path: '/instrument-sim/guitar',
+    name: 'guitarSim',
+    component: () => import('./views/instrumentSim/GuitarSimView.vue'),
+    meta: { title: '模拟吉他' }
+  },
+  {
+    path: '/instrument-sim/guitar/chords',
+    name: 'guitarChordManage',
+    component: () => import('./views/instrumentSim/GuitarChordListView.vue'),
+    meta: { title: '和弦符号' }
+  },
+  {
+    path: '/instrument-sim/harmonica',
+    name: 'harmonicaSim',
+    component: () => import('./views/instrumentSim/HarmonicaSimView.vue'),
+    meta: { title: '模拟口琴' }
+  },
+  {
+    path: '/instrument-sim/violin',
+    name: 'violinSim',
+    component: placeholder,
+    meta: {
+      title: '模拟小提琴',
+      titleKey: 'router.violinSim',
+      placeholderKey: 'router.violinSimPlaceholder',
+      backFallback: '/instrument-sim'
+    }
+  },
+  {
+    path: '/tools',
+    name: 'tools',
+    component: () => import('./views/tools/ToolsView.vue'),
+    meta: { title: '工具' }
+  },
+  {
+    path: '/tools/microphone',
+    name: 'micTool',
+    component: () => import('./views/tools/MicrophoneToolView.vue'),
+    meta: { title: '麦克风检测' }
+  },
+  {
+    path: '/tools/midi',
+    name: 'midiTool',
+    component: () => import('./views/tools/MidiDeviceToolView.vue'),
+    meta: { title: 'MIDI 设备检测' }
   },
   {
     path: '/achievements',
@@ -98,6 +250,14 @@ const routes: RouteRecordRaw[] = [
     name: 'noteSliceExtreme',
     component: () => import('./views/noteSlice/NoteSliceExtremeView.vue'),
     meta: { title: '极限模式' }
+  },
+  {
+    path: '/literacy-camp',
+    redirect: { name: 'abilityTest' }
+  },
+  {
+    path: '/work-studio',
+    redirect: { name: 'myWorks' }
   }
 ]
 

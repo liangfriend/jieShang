@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import musicScoreVue from 'deciphony-renderer'
-import { MusicScoreTypeEnum, type MusicScore } from 'deciphony-renderer'
+import musicScoreVue from '@deciphony/renderer'
+import { MusicScoreTypeEnum, type MusicScore } from '@deciphony/renderer'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import type { MusicScoreComponentExpose } from '@renderer/views/editor/editHelper/useRenderEdit'
 import {
@@ -15,8 +15,10 @@ import {
   VoltaDragHandles,
   useRenderEdit
 } from '@renderer/views/editor/editHelper'
-import { TitleSlot } from '@renderer/dr-extensions/dr-title'
+import { TitleSlot } from '@deciphony/extensions/dr-title'
+import { LyricsSlot } from '@deciphony/extensions/dr-lyrics'
 import { SCORE_SLOT_CONFIG } from '@renderer/utils/scoreRoute'
+import { createScoreLyricsExtension } from '@renderer/utils/createScoreLyricsExtension'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 
 const musicScoreData = defineModel<MusicScore>({ required: true })
@@ -26,6 +28,8 @@ const isNumberNotation = computed(
   () => musicScoreData.value.type === MusicScoreTypeEnum.NumberNotation
 )
 const { skin: scoreSkin, skinName: scoreSkinName } = useScoreSkin()
+const { extensions: scoreExtensions, slotProps: lyricsSlotProps, slotConfig: scoreSlotConfig } =
+  createScoreLyricsExtension('edit')
 
 const {
   scoreRootRef,
@@ -115,7 +119,8 @@ defineExpose({ clearSelection })
           ref="musicScoreRef"
           class="score-page__svg"
           :data="musicScoreData"
-          :slot-config="SCORE_SLOT_CONFIG"
+          :slot-config="scoreSlotConfig"
+          :extensions="scoreExtensions"
           :skin="scoreSkin"
           :skin-name="scoreSkinName"
           @renderMusicScore="handleRenderMusicScore"
@@ -136,6 +141,12 @@ defineExpose({ clearSelection })
             />
           </template>
           <template #g-d="{ node }">
+            <!-- 宿主 #g-d 会覆盖扩展默认槽，需手动挂 LyricsSlot，扩展仍负责 slotConfig / vDom -->
+            <LyricsSlot
+              :music-score="musicScoreData"
+              :node="node"
+              v-bind="lyricsSlotProps"
+            />
             <EditSlotGdButtons :node="node" />
           </template>
           <template #s-d="{ node }">

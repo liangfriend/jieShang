@@ -1,5 +1,5 @@
-import type { MusicScore, VDom } from 'deciphony-renderer'
-import { NOTE_PART_TAGS } from '@renderer/dr-extensions/dr-play-highlight/constants'
+import type { MusicScore, VDom } from '@deciphony/renderer'
+import { NOTE_PART_TAGS } from '@deciphony/extensions/dr-play-highlight'
 import { collectSingleStaffNoteIds } from '@renderer/utils/staffNotes'
 
 const STAFF_DIM_CLASS = 'dr-practice-staff-dim'

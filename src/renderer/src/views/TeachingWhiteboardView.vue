@@ -1,6 +1,6 @@
 <script lang="ts" setup>
-import type { KeySignatureTypeEnum } from 'deciphony-renderer'
-import musicScoreVue from 'deciphony-renderer'
+import type { KeySignatureTypeEnum } from '@deciphony/renderer'
+import musicScoreVue from '@deciphony/renderer'
 import { storeToRefs } from 'pinia'
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { WhiteboardToolbar } from '@renderer/components/whiteboard'

@@ -1,4 +1,4 @@
-/** virtualPiano 音名显示工具（自 deciphony-core 精简，避免未发布包导致构建失败） */
+/** virtualPiano 音名显示工具（自旧 deciphony-core 精简） */
 
 export enum AccidentalEnum {
   None = '',

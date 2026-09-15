@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type { VDom } from 'deciphony-renderer'
+import type { VDom } from '@deciphony/renderer'
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { createScoreNoteHeadOverlay } from './createScoreNoteHeadOverlay'
 import type { ScoreNoteHeadOverlayApi } from './types'

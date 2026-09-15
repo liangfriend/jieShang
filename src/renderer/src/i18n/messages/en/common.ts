@@ -19,7 +19,8 @@ export default {
     deleteFailed: 'Delete failed',
     unknown: 'Unknown',
     unnamedScore: 'Untitled score',
-    scoreLoadFailed: 'Failed to load score'
+    scoreLoadFailed: 'Failed to load score',
+    workLoadFailed: 'Failed to load work'
   },
   midi: {
     unknownDevice: 'Unknown MIDI device',

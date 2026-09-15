@@ -4,16 +4,22 @@ import { storeToRefs } from 'pinia'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import HomeSettingsDialog from '@renderer/components/HomeSettingsDialog.vue'
-import { HOME_TEMPLATE_TO_ROUTE } from '@renderer/utils/scoreRoute'
 import { useMidiStore } from '@renderer/store/midi.store'
 import arcadeIcon from '@renderer/assets/homeView/icon-arcade.svg'
 import endlessIcon from '@renderer/assets/homeView/icon-endless.svg'
 import extremeIcon from '@renderer/assets/homeView/icon-extreme.svg'
 import collectionIcon from '@renderer/assets/homeView/icon-collection.svg'
-import composeIcon from '@renderer/assets/homeView/icon-compose.svg'
 import scoresIcon from '@renderer/assets/homeView/icon-scores.svg'
 import whiteboardIcon from '@renderer/assets/homeView/icon-whiteboard.svg'
 import achievementsIcon from '@renderer/assets/homeView/icon-achievements.svg'
+import myWorksIcon from '@renderer/assets/homeView/icon-my-works.svg'
+import encyclopediaIcon from '@renderer/assets/homeView/icon-encyclopedia.svg'
+import literacyIcon from '@renderer/assets/homeView/icon-literacy.svg'
+import audioIcon from '@renderer/assets/homeView/icon-audio.svg'
+import imageIcon from '@renderer/assets/homeView/icon-image.svg'
+import videoIcon from '@renderer/assets/homeView/icon-video.svg'
+import instrumentSimIcon from '@renderer/assets/homeView/icon-instrument-sim.svg'
+import toolsIcon from '@renderer/assets/homeView/icon-tools.svg'
 import logoIcon from '@renderer/assets/homeView/icon-logo.svg'
 import settingsIcon from '@renderer/assets/homeView/icon-settings.svg'
 import midiIcon from '@renderer/assets/homeView/icon-midi.svg'
@@ -22,7 +28,6 @@ import midiOffIcon from '@renderer/assets/homeView/icon-midi-off.svg'
 const { t } = useI18n()
 const router = useRouter()
 const { hasConnectedInput } = storeToRefs(useMidiStore())
-const templateVisible = ref(false)
 const settingsVisible = ref(false)
 
 const midiStatusIcon = computed(() => (hasConnectedInput.value ? midiIcon : midiOffIcon))
@@ -51,51 +56,85 @@ const gameModes = computed(() => [
   }
 ])
 
-const templateGroups = computed(() => [
+const secondaryActions = computed(() => [
   {
-    title: t('home.templateDialog.staff'),
-    items: [
-      { key: 'empty', label: t('home.templateDialog.empty') },
-      { key: 'single', label: t('home.templateDialog.single') },
-      { key: 'double', label: t('home.templateDialog.double') }
-    ]
+    route: 'whiteboard' as const,
+    labelKey: 'home.actions.whiteboard' as const,
+    icon: whiteboardIcon,
+    className: 'action-whiteboard'
   },
   {
-    title: t('home.templateDialog.jianpu'),
-    items: [
-      { key: 'jianpuEmpty', label: t('home.templateDialog.empty') },
-      { key: 'jianpuSingle', label: t('home.templateDialog.single') },
-      { key: 'jianpuDouble', label: t('home.templateDialog.double') }
-    ]
+    route: 'musicEncyclopedia' as const,
+    labelKey: 'home.actions.musicEncyclopedia' as const,
+    icon: encyclopediaIcon,
+    className: 'action-encyclopedia'
+  },
+  {
+    route: 'abilityTest' as const,
+    labelKey: 'home.actions.abilityTest' as const,
+    icon: literacyIcon,
+    className: 'action-literacy'
+  },
+  {
+    route: 'instrumentSim' as const,
+    labelKey: 'home.actions.instrumentSim' as const,
+    icon: instrumentSimIcon,
+    className: 'action-instrument-sim'
+  },
+  {
+    route: 'myAudio' as const,
+    labelKey: 'home.actions.myAudio' as const,
+    icon: audioIcon,
+    className: 'action-audio'
+  },
+  {
+    route: 'myImage' as const,
+    labelKey: 'home.actions.myImage' as const,
+    icon: imageIcon,
+    className: 'action-image'
+  },
+  {
+    route: 'myVideo' as const,
+    labelKey: 'home.actions.myVideo' as const,
+    icon: videoIcon,
+    className: 'action-video'
+  },
+  {
+    route: 'tools' as const,
+    labelKey: 'home.actions.tools' as const,
+    icon: toolsIcon,
+    className: 'action-tools'
   }
 ])
+
+const utilityActions = computed(() => [
+  {
+    route: 'collection' as const,
+    labelKey: 'home.actions.collection' as const,
+    icon: collectionIcon,
+    className: 'action-collection'
+  },
+  {
+    route: 'achievements' as const,
+    labelKey: 'home.actions.achievements' as const,
+    icon: achievementsIcon,
+    className: 'action-achievements'
+  }
+])
+
+const moreActions = computed(() => [...secondaryActions.value, ...utilityActions.value])
 
 function goToGameMode(routeName: (typeof gameModes.value)[number]['route']) {
   router.push({ name: routeName })
 }
 
-function onTemplateSelect(key: string) {
-  templateVisible.value = false
-  router.push({
-    name: 'edit',
-    query: { template: HOME_TEMPLATE_TO_ROUTE[key] ?? 'empty' }
-  })
-}
-
-function goToScores() {
-  router.push({ name: 'scores' })
-}
-
-function goToCollection() {
-  router.push({ name: 'collection' })
-}
-
-function goToWhiteboard() {
-  router.push({ name: 'whiteboard' })
-}
-
-function goToAchievements() {
-  router.push({ name: 'achievements' })
+function goToNamedRoute(
+  routeName:
+    | (typeof moreActions.value)[number]['route']
+    | 'myWorks'
+    | 'scores'
+) {
+  router.push({ name: routeName })
 }
 </script>
 
@@ -136,74 +175,32 @@ function goToAchievements() {
         </button>
       </section>
 
-      <section class="action-row">
-        <button type="button" class="action-btn action-collection" @click="goToCollection">
-          <img
-            class="action-btn__icon"
-            :src="collectionIcon"
-            :alt="t('home.actions.collection')"
-          />
-          <span class="action-label">{{ t('home.actions.collection') }}</span>
-        </button>
-
-        <button type="button" class="action-btn action-compose" @click="templateVisible = true">
-          <img class="action-btn__icon" :src="composeIcon" :alt="t('home.actions.compose')" />
-          <span class="action-label">{{ t('home.actions.compose') }}</span>
-        </button>
-
-        <button type="button" class="action-btn action-scores" @click="goToScores">
+      <section class="action-row action-row--primary">
+        <button type="button" class="action-btn action-scores" @click="goToNamedRoute('scores')">
           <img class="action-btn__icon" :src="scoresIcon" :alt="t('home.actions.scores')" />
           <span class="action-label">{{ t('home.actions.scores') }}</span>
         </button>
+
+        <button type="button" class="action-btn action-my-works" @click="goToNamedRoute('myWorks')">
+          <img class="action-btn__icon" :src="myWorksIcon" :alt="t('home.actions.myWorks')" />
+          <span class="action-label">{{ t('home.actions.myWorks') }}</span>
+        </button>
       </section>
 
-      <section class="action-row action-row--dual">
-        <button type="button" class="action-btn action-whiteboard" @click="goToWhiteboard">
-          <img
-            class="action-btn__icon"
-            :src="whiteboardIcon"
-            :alt="t('home.actions.whiteboard')"
-          />
-          <span class="action-label">{{ t('home.actions.whiteboard') }}</span>
-        </button>
-
-        <button type="button" class="action-btn action-achievements" @click="goToAchievements">
-          <img
-            class="action-btn__icon"
-            :src="achievementsIcon"
-            :alt="t('home.actions.achievements')"
-          />
-          <span class="action-label">{{ t('home.actions.achievements') }}</span>
+      <section class="action-row action-row--more">
+        <button
+          v-for="action in moreActions"
+          :key="action.route"
+          type="button"
+          class="action-btn"
+          :class="action.className"
+          @click="goToNamedRoute(action.route)"
+        >
+          <img class="action-btn__icon" :src="action.icon" :alt="t(action.labelKey)" />
+          <span class="action-label">{{ t(action.labelKey) }}</span>
         </button>
       </section>
     </main>
-
-    <el-dialog
-      v-model="templateVisible"
-      :title="t('home.templateDialog.title')"
-      width="480px"
-      class="cute-dialog"
-      append-to-body
-      align-center
-    >
-      <p class="dialog-desc">{{ t('home.templateDialog.desc') }}</p>
-      <div class="template-groups">
-        <section v-for="group in templateGroups" :key="group.title" class="template-group">
-          <h3 class="template-group__title">{{ group.title }}</h3>
-          <div class="template-list">
-            <button
-              v-for="tpl in group.items"
-              :key="tpl.key"
-              type="button"
-              class="template-item"
-              @click="onTemplateSelect(tpl.key)"
-            >
-              {{ tpl.label }}
-            </button>
-          </div>
-        </section>
-      </div>
-    </el-dialog>
 
     <HomeSettingsDialog v-model="settingsVisible" />
 
@@ -380,27 +377,27 @@ function goToAchievements() {
   position: relative;
   z-index: 1;
   width: 100%;
-  max-width: 640px;
+  max-width: 720px;
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 18px;
 }
 
 .play-zone {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 12px;
 }
 
 .mode-card {
   border: 2px solid rgba(255, 255, 255, 0.9);
   background: linear-gradient(160deg, rgba(255, 255, 255, 0.92) 0%, var(--card-tint) 100%);
-  border-radius: 24px;
+  border-radius: 22px;
   box-shadow: var(--shadow);
   cursor: pointer;
   text-align: center;
   color: inherit;
-  padding: 22px 16px;
+  padding: 18px 14px 16px;
   transition:
     transform 0.2s ease,
     box-shadow 0.2s ease;
@@ -413,65 +410,80 @@ function goToAchievements() {
 
 .mode-card__icon {
   display: block;
-  width: 64px;
-  height: 64px;
-  margin: 0 auto 10px;
+  width: 52px;
+  height: 52px;
+  margin: 0 auto 8px;
   object-fit: contain;
   user-select: none;
   pointer-events: none;
 }
 
 .mode-card__title {
-  margin: 0 0 8px;
-  font-size: 17px;
+  margin: 0 0 6px;
+  font-size: 16px;
   font-weight: 700;
 }
 
 .mode-card__desc {
   margin: 0;
   font-size: 12px;
-  line-height: 1.5;
+  line-height: 1.45;
   color: var(--text-soft);
 }
 
 .action-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  gap: 12px;
 }
 
-.action-row--dual {
-  grid-template-columns: repeat(2, 1fr);
+.action-row--primary {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.action-row--more {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
 }
 
 .action-btn {
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 20px 12px;
   border: 2px solid rgba(255, 255, 255, 0.9);
-  border-radius: 20px;
   background: var(--card);
   box-shadow: var(--shadow);
   cursor: pointer;
   color: inherit;
   transition:
     transform 0.2s ease,
-    background 0.2s ease;
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.action-row--primary .action-btn {
+  flex-direction: row;
+  gap: 12px;
+  min-height: 64px;
+  padding: 12px 16px;
+  border-radius: 18px;
+  justify-content: flex-start;
+}
+
+.action-row--more .action-btn {
+  flex-direction: column;
+  gap: 6px;
+  min-height: 88px;
+  padding: 12px 8px;
+  border-radius: 16px;
 }
 
 .action-btn:hover {
-  transform: translateY(-2px) scale(1.02);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(200, 140, 180, 0.22);
 }
 
 .action-collection:hover {
   background: rgba(255, 240, 201, 0.9);
-}
-
-.action-compose:hover {
-  background: rgba(255, 214, 232, 0.9);
 }
 
 .action-scores:hover {
@@ -486,67 +498,84 @@ function goToAchievements() {
   background: rgba(255, 232, 180, 0.92);
 }
 
+.action-my-works:hover {
+  background: rgba(232, 213, 255, 0.92);
+}
+
+.action-encyclopedia:hover {
+  background: rgba(220, 250, 236, 0.95);
+}
+
+.action-literacy:hover {
+  background: rgba(255, 232, 214, 0.95);
+}
+
+.action-audio:hover {
+  background: rgba(212, 240, 255, 0.9);
+}
+
+.action-image:hover {
+  background: rgba(255, 232, 240, 0.95);
+}
+
+.action-video:hover {
+  background: rgba(236, 228, 255, 0.95);
+}
+
+.action-instrument-sim:hover {
+  background: rgba(255, 244, 201, 0.95);
+}
+
+.action-tools:hover {
+  background: rgba(232, 236, 242, 0.95);
+}
+
+.action-row--primary .action-btn__icon {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+}
+
+.action-row--more .action-btn__icon {
+  width: 36px;
+  height: 36px;
+}
+
 .action-btn__icon {
-  width: 48px;
-  height: 48px;
   object-fit: contain;
   user-select: none;
   pointer-events: none;
 }
 
-.action-label {
+.action-row--primary .action-label {
   font-size: 14px;
-  font-weight: 700;
+  text-align: left;
 }
 
-.dialog-desc {
-  margin: 0 0 16px;
-  font-size: 13px;
-  color: var(--text-soft);
+.action-row--more .action-label {
+  font-size: 12px;
   text-align: center;
 }
 
-.template-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.template-group__title {
-  margin: 0 0 10px;
-  font-size: 13px;
+.action-label {
   font-weight: 700;
-  color: #8a5a72;
+  line-height: 1.3;
 }
 
-.template-list {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+@media (max-width: 720px) {
+  .action-row--more {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
 }
 
-.template-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px 20px;
-  border: 2px solid rgba(255, 184, 208, 0.4);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.7);
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-  cursor: pointer;
-  transition:
-    transform 0.15s ease,
-    border-color 0.15s ease,
-    background 0.15s ease;
-}
+@media (max-width: 560px) {
+  .action-row--primary {
+    grid-template-columns: 1fr;
+  }
 
-.template-item:hover {
-  transform: translateX(4px);
-  border-color: var(--pink-deep);
-  background: rgba(255, 214, 232, 0.5);
+  .action-row--more {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
 .midi-status {

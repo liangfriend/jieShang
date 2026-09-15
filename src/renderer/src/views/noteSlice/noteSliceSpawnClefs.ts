@@ -1,4 +1,4 @@
-import { ClefTypeEnum } from 'deciphony-renderer'
+import { ClefTypeEnum } from '@deciphony/renderer'
 import { getActiveNoteSliceDifficultyConfig } from '@renderer/views/noteSlice/noteSliceDifficultyConfig'
 import type { MidiBrickClef } from '@renderer/views/noteSlice/midiBrickBuilder'
 

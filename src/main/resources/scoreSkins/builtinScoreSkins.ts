@@ -5,7 +5,7 @@ import defaultScoreSkin from './default.json'
 import glacierScoreSkin from './glacier.json'
 import moHuaScoreSkin from './moHua.json'
 
-/** 内置曲谱皮肤：content 存 deciphony-renderer SkinPack JSON */
+/** 内置曲谱皮肤：content 存 @deciphony/renderer SkinPack JSON */
 export const BUILTIN_SCORE_SKIN_SEEDS = [
   {
     name: '默认',

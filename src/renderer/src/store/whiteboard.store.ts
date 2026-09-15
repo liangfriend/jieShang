@@ -1,4 +1,4 @@
-import { KeySignatureTypeEnum } from 'deciphony-renderer'
+import { KeySignatureTypeEnum } from '@deciphony/renderer'
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
 import {

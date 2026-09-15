@@ -45,6 +45,61 @@ class PathManager {
     return dir
   }
 
+  /** 用户上传音频目录：userData/resources/audio */
+  getAudioDir() {
+    return this.getResourceDir('audio')
+  }
+
+  /** 音频目录下的文件名 → 绝对路径（防目录穿越） */
+  resolveAudioFileName(fileName: string) {
+    return this.resolveResourceFileName('audio', fileName)
+  }
+
+  /** 图片目录下的文件名 → 绝对路径（防目录穿越） */
+  resolveImageFileName(fileName: string) {
+    return this.resolveResourceFileName('image', fileName)
+  }
+
+  /** 视频目录下的文件名 → 绝对路径（防目录穿越） */
+  resolveVideoFileName(fileName: string) {
+    return this.resolveResourceFileName('video', fileName)
+  }
+
+  /** resources/{type} 下的文件名 → 绝对路径（防目录穿越） */
+  resolveResourceFileName(type: 'image' | 'audio' | 'video', fileName: string) {
+    const base = path.resolve(this.getResourceDir(type))
+    const normalized = path.basename(fileName.replace(/\\/g, '/'))
+    if (!normalized || normalized === '.' || normalized === '..') {
+      throw new Error(`Invalid ${type} file name: ${fileName}`)
+    }
+    const abs = path.resolve(base, normalized)
+    if (abs !== base && !abs.startsWith(base + path.sep)) {
+      throw new Error(`Invalid ${type} file name: ${fileName}`)
+    }
+    return abs
+  }
+
+  /** 用户作品 sjw 目录：userData/resources/sjw */
+  getSjwDir() {
+    const dir = path.join(this.userDataPath, 'resources', 'sjw')
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true })
+    return dir
+  }
+
+  /** sjw 目录下的文件名 → 绝对路径（防目录穿越） */
+  resolveSjwFileName(fileName: string) {
+    const base = path.resolve(this.getSjwDir())
+    const normalized = path.basename(fileName.replace(/\\/g, '/'))
+    if (!normalized || normalized === '.' || normalized === '..') {
+      throw new Error(`Invalid sjw file name: ${fileName}`)
+    }
+    const abs = path.resolve(base, normalized)
+    if (abs !== base && !abs.startsWith(base + path.sep)) {
+      throw new Error(`Invalid sjw file name: ${fileName}`)
+    }
+    return abs
+  }
+
   /** 安装包内置缩略图源目录 */
   getBundledThumbnailsDir() {
     return this.isDev
@@ -124,7 +179,17 @@ class PathManager {
 
   /** 自动创建基础目录 */
   private ensureBaseDirectories() {
-    const dirs = ['resources', 'database', 'logs', 'temp', 'config']
+    const dirs = [
+      'resources',
+      'resources/image',
+      'resources/audio',
+      'resources/video',
+      'resources/sjw',
+      'database',
+      'logs',
+      'temp',
+      'config'
+    ]
 
     for (const dir of dirs) {
       const fullPath = path.join(this.userDataPath, dir)

@@ -2,7 +2,9 @@ export default {
   editor: {
     toolbar: {
       playMode: 'Play mode',
+      timeOffset: 'Score-audio sync',
       linkedStaffMode: 'Linked staves',
+      gdSlotHeight: 'Lyrics area',
       notice: 'Notice',
       importMusicXml: 'Import MusicXML',
       exportMusicXml: 'Export MusicXML',
@@ -238,6 +240,18 @@ export default {
       title: 'Title',
       subTitle: 'Subtitle',
       author: 'Author'
+    },
+    timeOffset: {
+      title: 'Score-audio sync',
+      timeProp: 'Time property',
+      vocalPerformance: 'Vocal',
+      accompaniment: 'Accompaniment',
+      pxPerSecond: 'px/s',
+      sampleRate: 'Sample rate',
+      selectAudio: 'Audio',
+      bindVocal: 'Bind vocal',
+      bindAccompaniment: 'Bind accompaniment',
+      audioPlaceholder: 'Select from My Audio'
     },
     messages: {
       notationTypeSwitched: 'Score type switched',

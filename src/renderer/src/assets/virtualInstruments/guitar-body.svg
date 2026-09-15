@@ -1,0 +1,197 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 1000" width="400" height="1000">
+  <!--
+    Steel-string acoustic, front view.
+    Scale length 520 units (nut 148 -> saddle 668).
+    20 frets, equal temperament; 14th fret meets the body.
+    Soundboard is an OM figure-8: round upper/lower bouts, concave waist,
+    quarter-ellipse bottom with a horizontal tangent (not pointed).
+  -->
+  <defs>
+    <linearGradient id="soundboard" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#C48A4A"/>
+      <stop offset="22%" stop-color="#E2B57A"/>
+      <stop offset="50%" stop-color="#F3D09A"/>
+      <stop offset="78%" stop-color="#E0B174"/>
+      <stop offset="100%" stop-color="#C08648"/>
+    </linearGradient>
+    <linearGradient id="neckWood" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#4A301C"/>
+      <stop offset="50%" stop-color="#7A5230"/>
+      <stop offset="100%" stop-color="#3F2818"/>
+    </linearGradient>
+    <linearGradient id="headWood" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#2A1810"/>
+      <stop offset="50%" stop-color="#4A3220"/>
+      <stop offset="100%" stop-color="#24140C"/>
+    </linearGradient>
+    <radialGradient id="holeDepth" cx="50%" cy="40%" r="65%">
+      <stop offset="0%" stop-color="#4A3018"/>
+      <stop offset="55%" stop-color="#1A0E08"/>
+      <stop offset="100%" stop-color="#090604"/>
+    </radialGradient>
+    <path id="bodyOutline" d="
+         M 222.00 436.37
+         C 264.00 444.37, 318.00 486.35, 318.00 548.00
+         C 318.00 574.24, 294.00 603.76, 294.00 630.00
+         C 294.00 667.76, 358.00 710.24, 358.00 748.00
+         C 358.00 814.27, 287.26 868.00, 200.00 868.00
+         C 112.74 868.00, 42.00 814.27, 42.00 748.00
+         C 42.00 710.24, 106.00 667.76, 106.00 630.00
+         C 106.00 603.76, 82.00 574.24, 82.00 548.00
+         C 82.00 486.35, 136.00 444.37, 178.00 436.37
+         Z"/>
+    <clipPath id="bodyClip">
+      <use href="#bodyOutline"/>
+    </clipPath>
+  </defs>
+
+  <use href="#bodyOutline" fill="url(#soundboard)"/>
+
+  <g clip-path="url(#bodyClip)" stroke="#A56B38" stroke-width="0.65" opacity="0.22">
+    <line x1="60" y1="430" x2="60" y2="880"/><line x1="76" y1="430" x2="76" y2="880"/><line x1="92" y1="430" x2="92" y2="880"/><line x1="108" y1="430" x2="108" y2="880"/><line x1="124" y1="430" x2="124" y2="880"/><line x1="140" y1="430" x2="140" y2="880"/><line x1="156" y1="430" x2="156" y2="880"/><line x1="172" y1="430" x2="172" y2="880"/><line x1="188" y1="430" x2="188" y2="880"/><line x1="204" y1="430" x2="204" y2="880"/><line x1="220" y1="430" x2="220" y2="880"/><line x1="236" y1="430" x2="236" y2="880"/><line x1="252" y1="430" x2="252" y2="880"/><line x1="268" y1="430" x2="268" y2="880"/><line x1="284" y1="430" x2="284" y2="880"/><line x1="300" y1="430" x2="300" y2="880"/><line x1="316" y1="430" x2="316" y2="880"/><line x1="332" y1="430" x2="332" y2="880"/><line x1="348" y1="430" x2="348" y2="880"/>
+  </g>
+
+  <g clip-path="url(#bodyClip)" opacity="0.22">
+    <use href="#bodyOutline" fill="none" stroke="#7A4A22" stroke-width="22"/>
+  </g>
+
+  <use href="#bodyOutline" fill="none" stroke="#3A2414" stroke-width="5"/>
+  <use href="#bodyOutline" fill="none" stroke="#F2D9A8" stroke-width="1.8"/>
+
+  <!-- Sound hole + rosette (below fret 20, above the bridge) -->
+  <g transform="translate(200 582)">
+    <circle r="58" fill="none" stroke="#2C1A10" stroke-width="1.2"/>
+    <circle r="55" fill="none" stroke="#C9A56A" stroke-width="5"/>
+    <circle r="50.5" fill="none" stroke="#3A2414" stroke-width="1.4"/>
+    <circle r="48.2" fill="none" stroke="#E8D2A4" stroke-width="2"/>
+    <circle r="45.4" fill="none" stroke="#2C1A10" stroke-width="2.2"/>
+    <circle r="43" fill="url(#holeDepth)"/>
+  </g>
+
+  <!-- Heel -->
+  <path d="M 170 436.37 L 230 436.37 L 236 498 C 236 512, 222 520, 200 520 C 178 520, 164 512, 164 498 Z"
+        fill="#3A2416"/>
+
+  <!-- Neck shaft -->
+  <path d="M 179 148 L 221 148 L 230 444.4 L 170 444.4 Z" fill="url(#neckWood)"/>
+
+  <!-- Fretboard (nut -> fret 20) -->
+  <path d="M 181.00 148.00
+           L 219.00 148.00
+           L 224.00 504.21
+           L 176.00 504.21 Z"
+        fill="#140C08"/>
+
+  <!-- Position markers first, then fret wires on top so they stay visible -->
+  <g>
+    <circle cx="200.0" cy="467.43" r="3.2" fill="#F4EFE3"/>
+    <circle cx="200.0" cy="217.73" r="3.6" fill="#F4EFE3"/>
+    <circle cx="200.0" cy="489.31" r="3.2" fill="#F4EFE3"/>
+    <circle cx="200.0" cy="266.86" r="3.6" fill="#F4EFE3"/>
+    <circle cx="200.0" cy="310.62" r="3.6" fill="#F4EFE3"/>
+    <circle cx="200.0" cy="349.61" r="3.6" fill="#F4EFE3"/>
+    <circle cx="200.0" cy="442.87" r="3.2" fill="#F4EFE3"/>
+    <circle cx="189.0" cy="400.27" r="3.6" fill="#F4EFE3"/>
+    <circle cx="211.0" cy="400.27" r="3.6" fill="#F4EFE3"/>
+  </g>
+  <g>
+    <rect x="179.19" y="175.39" width="41.62" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="179.19" y="175.39" width="41.62" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="178.80" y="202.93" width="42.39" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="178.80" y="202.93" width="42.39" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="178.44" y="228.93" width="43.12" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="178.44" y="228.93" width="43.12" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="178.09" y="253.48" width="43.81" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="178.09" y="253.48" width="43.81" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="177.77" y="276.64" width="44.46" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="177.77" y="276.64" width="44.46" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="177.46" y="298.50" width="45.08" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="177.46" y="298.50" width="45.08" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="177.17" y="319.14" width="45.66" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="177.17" y="319.14" width="45.66" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="176.90" y="338.62" width="46.20" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="176.90" y="338.62" width="46.20" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="176.64" y="357.01" width="46.72" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="176.64" y="357.01" width="46.72" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="176.40" y="374.36" width="47.21" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="176.40" y="374.36" width="47.21" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="176.17" y="390.74" width="47.67" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="176.17" y="390.74" width="47.67" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="175.95" y="406.20" width="48.10" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="175.95" y="406.20" width="48.10" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="175.75" y="420.79" width="48.51" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="175.75" y="420.79" width="48.51" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="175.55" y="434.57" width="48.90" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="175.55" y="434.57" width="48.90" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="175.37" y="447.57" width="49.26" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="175.37" y="447.57" width="49.26" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="175.20" y="459.84" width="49.60" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="175.20" y="459.84" width="49.60" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="175.03" y="471.42" width="49.93" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="175.03" y="471.42" width="49.93" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="174.88" y="482.35" width="50.24" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="174.88" y="482.35" width="50.24" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="174.74" y="492.67" width="50.53" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="174.74" y="492.67" width="50.53" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+    <rect x="174.60" y="502.41" width="50.80" height="3.6" rx="0.9" fill="#EDEDED" stroke="#7A7A7A" stroke-width="0.45"/>
+    <rect x="174.60" y="502.41" width="50.80" height="1.15" rx="0.6" fill="#FFFFFF" opacity="0.75"/>
+  </g>
+
+  <!-- Nut -->
+  <rect x="180.00" y="141.00" width="40.00"
+        height="7.5" rx="1.4" fill="#F4EFE0" stroke="#B0A48C" stroke-width="0.7"/>
+
+  <!-- Headstock -->
+  <path d="M 178 148
+           L 172 132
+           C 166 108, 164 84, 164 58
+           C 164 38, 176 26, 196 24
+           L 204 24
+           C 224 26, 236 38, 236 58
+           C 236 84, 234 108, 228 132
+           L 222 148 Z"
+        fill="url(#headWood)" stroke="#140C08" stroke-width="1.4"/>
+  <ellipse cx="200" cy="46" rx="18" ry="8" fill="#C9A56A" opacity="0.28"/>
+
+  <g stroke="#5A6A74" stroke-width="0.8">
+    <rect x="148" y="49" width="24" height="6.5" rx="3" fill="#B4C0C8"/>
+    <rect x="148" y="77" width="24" height="6.5" rx="3" fill="#B4C0C8"/>
+    <rect x="148" y="105" width="24" height="6.5" rx="3" fill="#B4C0C8"/>
+    <rect x="228" y="49" width="24" height="6.5" rx="3" fill="#B4C0C8"/>
+    <rect x="228" y="77" width="24" height="6.5" rx="3" fill="#B4C0C8"/>
+    <rect x="228" y="105" width="24" height="6.5" rx="3" fill="#B4C0C8"/>
+    <ellipse cx="146" cy="52.2" rx="8.5" ry="5.4" fill="#E8EEF2"/>
+    <ellipse cx="146" cy="80.2" rx="8.5" ry="5.4" fill="#E8EEF2"/>
+    <ellipse cx="146" cy="108.2" rx="8.5" ry="5.4" fill="#E8EEF2"/>
+    <ellipse cx="254" cy="52.2" rx="8.5" ry="5.4" fill="#E8EEF2"/>
+    <ellipse cx="254" cy="80.2" rx="8.5" ry="5.4" fill="#E8EEF2"/>
+    <ellipse cx="254" cy="108.2" rx="8.5" ry="5.4" fill="#E8EEF2"/>
+  </g>
+  <g fill="#C5D0D8" stroke="#6A7A84" stroke-width="0.8">
+    <circle cx="180" cy="52" r="4.3"/>
+    <circle cx="180" cy="80" r="4.3"/>
+    <circle cx="180" cy="108" r="4.3"/>
+    <circle cx="220" cy="52" r="4.3"/>
+    <circle cx="220" cy="80" r="4.3"/>
+    <circle cx="220" cy="108" r="4.3"/>
+  </g>
+
+  <!-- Bridge + saddle + pins -->
+  <path d="M 142 656
+           C 142 650, 148 647, 156 647
+           L 244 647
+           C 252 647, 258 650, 258 656
+           L 258 674
+           C 264 680, 266 692, 260 700
+           C 252 710, 232 714, 200 714
+           C 168 714, 148 710, 140 700
+           C 134 692, 136 680, 142 674 Z"
+        fill="#2A1A10" stroke="#140C08" stroke-width="1.1"/>
+  <rect x="152" y="665.0" width="96" height="6.5" rx="1.8"
+        fill="#F3EBDA" stroke="#B8AD96" stroke-width="0.6"/>
+  <g fill="#EDE6D8" stroke="#3A2A1C" stroke-width="0.9">
+    <ellipse cx="176.0" cy="686.0" rx="4.1" ry="4.7"/><ellipse cx="185.6" cy="686.0" rx="4.1" ry="4.7"/><ellipse cx="195.2" cy="686.0" rx="4.1" ry="4.7"/><ellipse cx="204.8" cy="686.0" rx="4.1" ry="4.7"/><ellipse cx="214.4" cy="686.0" rx="4.1" ry="4.7"/><ellipse cx="224.0" cy="686.0" rx="4.1" ry="4.7"/>
+  </g>
+
+  <ellipse cx="200" cy="864" rx="5.2" ry="5.6" fill="#EDE6D8" stroke="#3A2A1C" stroke-width="0.9"/>
+</svg>

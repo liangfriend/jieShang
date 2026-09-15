@@ -1,4 +1,4 @@
-import type { MusicScore } from 'deciphony-renderer'
+import type { MusicScore } from '@deciphony/renderer'
 import {
   generateRandomMidiBrickScore
 } from '@renderer/views/noteSlice/midiBrickBuilder'
