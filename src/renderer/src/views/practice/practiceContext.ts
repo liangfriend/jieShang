@@ -6,6 +6,11 @@ export type PracticeContext = {
   maxStaffCount: Ref<number>
   /** 当前 BPM（设置表单初始值） */
   bpm: Ref<number>
+  /** 演示播放中（含倒计时） */
+  demoSession: Ref<boolean>
+  /** 演示倒计时剩余秒数，0 表示不在倒计时 */
+  demoCountdown: Ref<number>
+  handleToggleDemo: () => Promise<void>
 }
 
 export const practiceContextKey: InjectionKey<PracticeContext> = Symbol('practiceContext')

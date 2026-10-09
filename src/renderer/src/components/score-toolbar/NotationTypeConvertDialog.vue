@@ -7,13 +7,17 @@ defineOptions({ name: 'NotationTypeConvertDialog' })
 const { t } = useI18n()
 
 const visible = ref(false)
+const titleText = ref('')
+const messageText = ref('')
 let resolveFn: ((confirmed: boolean) => void) | null = null
 let settled = false
 
-function open(): Promise<boolean> {
+function open(options?: { title?: string; message?: string }): Promise<boolean> {
   return new Promise((resolve) => {
     settled = false
     resolveFn = resolve
+    titleText.value = options?.title ?? t('editor.convertDialog.title')
+    messageText.value = options?.message ?? t('editor.convertDialog.message')
     visible.value = true
   })
 }
@@ -41,7 +45,7 @@ defineExpose({ open })
 <template>
   <el-dialog
     v-model="visible"
-    :title="t('editor.convertDialog.title')"
+    :title="titleText"
     width="440px"
     class="notation-convert-dialog cute-dialog"
     append-to-body
@@ -51,7 +55,7 @@ defineExpose({ open })
     @close="onCancel"
   >
     <p class="notation-convert-dialog__text">
-      {{ t('editor.convertDialog.message') }}
+      {{ messageText }}
     </p>
 
     <template #footer>

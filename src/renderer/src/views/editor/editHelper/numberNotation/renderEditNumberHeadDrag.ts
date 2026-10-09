@@ -1,8 +1,8 @@
-import type {Measure, NoteNumber, NotesNumberInfo, SlotData, VDom} from '@deciphony/renderer'
+import type { Measure, NoteNumber, NotesNumberInfo, SlotData, VDom } from '@deciphony/renderer'
 import {
   pointerToSvg,
   resolveMeasureBounds,
-  type MeasureBounds,
+  type MeasureBounds
 } from './renderEditNumberAddAction'
 
 type DiatonicSyllable = Exclude<NotesNumberInfo['syllable'], 0 | 'X'>
@@ -15,8 +15,8 @@ const ABS_INDEX_MAX = OCTAVE_DOT_MAX * 7 + 6
 
 /** 当前选中项是否为「简谱音符头选中」模式 */
 export function isNumberHeadSelected(
-  selected: SlotData | null,
-): selected is SlotData & {info: NotesNumberInfo; note: NoteNumber; measure: Measure} {
+  selected: SlotData | null
+): selected is SlotData & { info: NotesNumberInfo; note: NoteNumber; measure: Measure } {
   if (!selected?.info || !selected.note || !selected.measure) return false
   const info = selected.info
   return selected.self === info && 'syllable' in info
@@ -39,20 +39,21 @@ function toAbsIndex(syllable: DiatonicSyllable, octaveDot: number): number {
 }
 
 /** 绝对音高刻度分解回唱名(1-7)+八度点 */
-function fromAbsIndex(absIndex: number): {syllable: DiatonicSyllable; octaveDot: number} {
+function fromAbsIndex(absIndex: number): { syllable: DiatonicSyllable; octaveDot: number } {
   const octaveDot = Math.floor(absIndex / 7)
   const syllable = (absIndex - octaveDot * 7 + 1) as DiatonicSyllable
-  return {syllable, octaveDot}
+  return { syllable, octaveDot }
 }
 
 export function createNumberHeadDragSession(
   event: PointerEvent,
-  slot: SlotData & {info: NotesNumberInfo; note: NoteNumber; measure: Measure},
+  slot: SlotData & { info: NotesNumberInfo; note: NoteNumber; measure: Measure }
 ): NumberHeadDragSession {
   const info = slot.info
-  const startAbsIndex = info.syllable === 0 || info.syllable === 'X'
-    ? 0
-    : toAbsIndex(info.syllable, info.octaveDot ?? 0)
+  const startAbsIndex =
+    info.syllable === 0 || info.syllable === 'X'
+      ? 0
+      : toAbsIndex(info.syllable, info.octaveDot ?? 0)
   return {
     pointerId: event.pointerId,
     notesNumberInfoId: info.id,
@@ -60,7 +61,7 @@ export function createNumberHeadDragSession(
     note: slot.note,
     measureId: slot.measure.id,
     startSvgY: null,
-    startAbsIndex,
+    startAbsIndex
   }
 }
 
@@ -68,11 +69,14 @@ export function createNumberHeadDragSession(
  * 上下拖拽改音高（绝对映射，不累加）：
  * 相对拖拽起点每移动一格改 1 级唱名；唱名越过 1↔7 边界时八度点 ∓1 并环绕。
  * 休止符 / 节奏音符不修改。
+ *
+ * 与 deciphony-test / 五线谱音符头一致：直接写源数据 syllable/octaveDot，
+ * 由 musicScore deep watch 整谱刷新（八度点、连音线 numberNotationExtent 锚点同步）。
  */
 export function updateNumberHeadSyllableByPointerY(
   session: NumberHeadDragSession,
   bounds: MeasureBounds,
-  svgY: number,
+  svgY: number
 ): DiatonicSyllable | null {
   const info = session.info
   if (info.syllable === 0 || info.syllable === 'X') return null
@@ -82,16 +86,15 @@ export function updateNumberHeadSyllableByPointerY(
     session.startAbsIndex = toAbsIndex(info.syllable, info.octaveDot ?? 0)
   }
 
-  // 小节内 7 个唱名位，每格高度 = h / 6；向上(svgY 变小)音高升高
   const stepHeight = bounds.h / 6
   if (stepHeight <= 0) return null
   const steps = Math.round((session.startSvgY - svgY) / stepHeight)
 
   const targetAbsIndex = Math.max(
     ABS_INDEX_MIN,
-    Math.min(ABS_INDEX_MAX, session.startAbsIndex + steps),
+    Math.min(ABS_INDEX_MAX, session.startAbsIndex + steps)
   )
-  const {syllable, octaveDot} = fromAbsIndex(targetAbsIndex)
+  const { syllable, octaveDot } = fromAbsIndex(targetAbsIndex)
 
   if (info.syllable === syllable && (info.octaveDot ?? 0) === octaveDot) return null
   info.syllable = syllable
@@ -105,10 +108,10 @@ export function updateNumberHeadDragFromPointer(
   root: ParentNode,
   vDomList: VDom[],
   clientX: number,
-  clientY: number,
+  clientY: number
 ): DiatonicSyllable | null {
   const bounds = resolveMeasureBounds(root, session.measureId, vDomList)
   if (!bounds) return null
-  const {y} = pointerToSvg(svg, clientX, clientY)
+  const { y } = pointerToSvg(svg, clientX, clientY)
   return updateNumberHeadSyllableByPointerY(session, bounds, y)
 }

@@ -10,6 +10,10 @@ import {
   searchScoresFromDatabase,
   type ScoreListItem
 } from '@renderer/utils/fileHelper'
+import {
+  fetchOwnedScoreSkinOptions,
+  type ScoreSkinOption
+} from '@renderer/utils/collection/scoreSkinUsage'
 
 defineOptions({ name: 'WorkEditToolbar' })
 
@@ -20,15 +24,19 @@ const props = defineProps<{
   drawing: boolean
   drawTool: DrawToolEnum
   drawLineWidth: number
+  drawColor: string
 }>()
 
 const emit = defineEmits<{
   openAssets: []
+  openBackground: []
+  clearBackground: []
   addText: [payload: { text: string; fontSize: number; color: string }]
-  addScore: [payload: { musicScore: unknown; scale: number }]
+  addScore: [payload: { musicScore: unknown; scale: number; skinId?: number | null }]
   'toggle-draw': []
   'update:drawTool': [tool: DrawToolEnum]
   'update:drawLineWidth': [width: number]
+  'update:drawColor': [color: string]
   'clear-drawings': []
 }>()
 
@@ -43,6 +51,10 @@ const scores = ref<ScoreListItem[]>([])
 const selectedScoreId = ref<number | null>(null)
 const scoreScale = ref(0.5)
 const scoreLoading = ref(false)
+/** null = 无（不附加皮肤） */
+const selectedSkinId = ref<number | null>(null)
+const skinOptions = ref<ScoreSkinOption[]>([])
+const skinLoading = ref(false)
 
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -52,6 +64,15 @@ async function fetchScores() {
     scores.value = await searchScoresFromDatabase(scoreKeyword.value)
   } finally {
     scoreLoading.value = false
+  }
+}
+
+async function fetchSkins() {
+  skinLoading.value = true
+  try {
+    skinOptions.value = await fetchOwnedScoreSkinOptions()
+  } finally {
+    skinLoading.value = false
   }
 }
 
@@ -66,6 +87,7 @@ watch(scoreKeyword, scheduleScoreSearch)
 
 onMounted(() => {
   void fetchScores()
+  void fetchSkins()
 })
 
 function onAddText() {
@@ -85,7 +107,8 @@ async function onAddScore() {
   const musicScore = parseScoreJson(record.data)
   emit('addScore', {
     musicScore,
-    scale: Number(scoreScale.value) > 0 ? Number(scoreScale.value) : 0.5
+    scale: Number(scoreScale.value) > 0 ? Number(scoreScale.value) : 0.5,
+    skinId: selectedSkinId.value
   })
 }
 
@@ -103,6 +126,10 @@ function onLineWidthChange(value: number | undefined) {
   const w = Number(value)
   if (!Number.isFinite(w) || w <= 0) return
   emit('update:drawLineWidth', w)
+}
+
+function onDrawColorChange(value: string | null) {
+  emit('update:drawColor', value || '#000000')
 }
 </script>
 
@@ -143,6 +170,15 @@ function onLineWidthChange(value: number | undefined) {
         </button>
       </div>
 
+      <label class="field field--inline" :class="{ 'is-disabled': !drawing || drawTool !== DrawToolEnum.Pen }">
+        <span>{{ t('work.toolbar.penColor') }}</span>
+        <el-color-picker
+          :model-value="drawColor"
+          :disabled="!drawing || drawTool !== DrawToolEnum.Pen"
+          @update:model-value="onDrawColorChange"
+        />
+      </label>
+
       <label class="field field--inline" :class="{ 'is-disabled': !drawing }">
         <span>{{ t('work.toolbar.lineWidth') }}</span>
         <el-input-number
@@ -163,6 +199,17 @@ function onLineWidthChange(value: number | undefined) {
         @click="emit('clear-drawings')"
       >
         {{ t('work.toolbar.clearDrawings') }}
+      </button>
+    </section>
+
+    <section class="panel">
+      <h3>{{ t('work.toolbar.background') }}</h3>
+      <p class="hint">{{ t('work.toolbar.backgroundHint') }}</p>
+      <button type="button" class="primary-btn" @click="emit('openBackground')">
+        {{ t('work.toolbar.setBackground') }}
+      </button>
+      <button type="button" class="ghost-btn" @click="emit('clearBackground')">
+        {{ t('work.toolbar.clearBackground') }}
       </button>
     </section>
 
@@ -229,6 +276,23 @@ function onLineWidthChange(value: number | undefined) {
           controls-position="right"
         />
       </label>
+      <label class="field">
+        <span>{{ t('work.toolbar.scoreSkin') }}</span>
+        <el-select
+          v-model="selectedSkinId"
+          clearable
+          :loading="skinLoading"
+          :placeholder="t('work.toolbar.scoreSkinNone')"
+        >
+          <el-option :label="t('work.toolbar.scoreSkinNone')" :value="null" />
+          <el-option
+            v-for="skin in skinOptions"
+            :key="skin.id"
+            :label="skin.name"
+            :value="skin.id"
+          />
+        </el-select>
+      </label>
       <button
         type="button"
         class="primary-btn"
@@ -293,6 +357,10 @@ function onLineWidthChange(value: number | undefined) {
   font-size: 12px;
   font-weight: 700;
   color: #8a5a72;
+}
+
+.field :deep(.el-select) {
+  width: 100%;
 }
 
 .field--inline {

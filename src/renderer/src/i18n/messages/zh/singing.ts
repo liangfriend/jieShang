@@ -8,7 +8,13 @@ export default {
       bpm: 'BPM',
       notes: '音符',
       detecting: '检测中',
-      countdown: '准备中'
+      countdown: '准备中',
+      currentOffset: '当前偏移'
+    },
+    offset: {
+      initial: '初始音高偏移',
+      semitone: '半音',
+      hint: '保存后下次演唱从此偏移开始'
     },
     waterfall: {
       reference: '标准音',
@@ -31,7 +37,8 @@ export default {
     messages: {
       noSequence: '当前没有可测评的音符序列',
       notationTypeSwitchFailed: '曲谱类型切换失败',
-      audioMissing: '未找到可播放的范唱或伴奏音频'
+      audioMissing: '未找到可播放的范唱或伴奏音频',
+      offsetSaved: '音高偏移已保存'
     }
   }
 } as const

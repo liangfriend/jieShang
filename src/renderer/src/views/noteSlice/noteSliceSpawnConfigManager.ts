@@ -204,15 +204,24 @@ export function createExtremeSpawnConfigManager(): NoteSliceSpawnConfigManager {
 let activeManager: NoteSliceSpawnConfigManager | null = null
 /** tick 每帧写入，供生成逻辑读取当前 passTime */
 let activePassTimeMs = 0
+/**
+ * 绑定世代：再来一局 :key 重挂载时，新实例可能先 bind、旧实例后 clear。
+ * clear 仅在 generation 仍匹配时生效，避免清掉新局的管理器。
+ */
+let spawnConfigBindGeneration = 0
 
-export function bindNoteSliceSpawnConfigManager(manager: NoteSliceSpawnConfigManager): void {
+export function bindNoteSliceSpawnConfigManager(manager: NoteSliceSpawnConfigManager): number {
   activeManager = manager
   activePassTimeMs = 0
+  spawnConfigBindGeneration += 1
+  return spawnConfigBindGeneration
 }
 
-export function clearNoteSliceSpawnConfigManager(): void {
+export function clearNoteSliceSpawnConfigManager(generation?: number): boolean {
+  if (generation != null && generation !== spawnConfigBindGeneration) return false
   activeManager = null
   activePassTimeMs = 0
+  return true
 }
 
 /** 由 GameLayer 每帧 tick 开始时调用 */

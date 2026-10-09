@@ -27,6 +27,73 @@ for (let n = 1; n <= GUITAR_VIEW.fretCount; n++) {
 export const NYLON_GUITAR_COLLECTION_ID = 4
 
 export const GUITAR_SHORTCUT_STORAGE_KEY = 'jieShang.guitarChordShortcuts'
+export const GUITAR_PREF_STORAGE_KEY = 'jieShang.guitarSimPrefs'
+
+/**
+ * 曲谱上 tabChord 框体/字号（相对 Chord 默认 50×60 / nameSize 32 缩小，避免盖住谱面）
+ */
+export const SCORE_TAB_CHORD_LAYOUT = {
+  width: 34,
+  height: 40,
+  textSize: 7,
+  nameSize: 12
+} as const
+
+/** 写入曲谱音符时套用谱面尺寸，不改库里的编辑尺寸逻辑时可直接覆写 */
+export function applyScoreTabChordLayout<T extends {
+  width?: number
+  height?: number
+  textSize?: number
+  nameSize?: number
+}>(chord: T): T {
+  return {
+    ...chord,
+    width: SCORE_TAB_CHORD_LAYOUT.width,
+    height: SCORE_TAB_CHORD_LAYOUT.height,
+    textSize: SCORE_TAB_CHORD_LAYOUT.textSize,
+    nameSize: SCORE_TAB_CHORD_LAYOUT.nameSize
+  }
+}
+
+/** 首次无快捷键时：主键盘 1~9 按此顺序绑定内置和弦 */
+export const GUITAR_DEFAULT_SHORTCUT_NAMES = [
+  'C',
+  'G',
+  'Am',
+  'Em',
+  'D',
+  'F',
+  'E',
+  'A',
+  'Dm'
+] as const
+
+/** 平缓模式：拨弦 A/D + duration 后 R（秒） */
+export const GUITAR_SMOOTH_ATTACK_SEC = 0.02
+export const GUITAR_SMOOTH_DECAY_SEC = 0.12
+export const GUITAR_SMOOTH_PEAK_VOLUME = 1.2
+export const GUITAR_SMOOTH_RELEASE_SEC = 0.35
+export const GUITAR_NOTE_DURATION_SEC = 1.2
+
+export type GuitarSimPrefs = {
+  /** 平缓：拨弦带 ADSR 包络 */
+  smoothEnvelope?: boolean
+}
+
+export function loadGuitarPrefs(): GuitarSimPrefs {
+  try {
+    const raw = localStorage.getItem(GUITAR_PREF_STORAGE_KEY)
+    if (!raw) return { smoothEnvelope: false }
+    const parsed = JSON.parse(raw) as Partial<GuitarSimPrefs>
+    return { smoothEnvelope: Boolean(parsed.smoothEnvelope) }
+  } catch {
+    return { smoothEnvelope: false }
+  }
+}
+
+export function saveGuitarPrefs(prefs: GuitarSimPrefs): void {
+  localStorage.setItem(GUITAR_PREF_STORAGE_KEY, JSON.stringify(prefs))
+}
 
 /** 弦号 1..6 → frets 数组下标（0=6弦） */
 export function stringNumberToFretIndex(stringNumber: number): number {
@@ -119,14 +186,21 @@ export function midiForStringFret(stringNumber: number, fret: number): number | 
 
 /**
  * tabChord.stringStates 索引 0=1弦 → 绝对品位数组 [6弦…1弦]
- * -1 闷音，0 空弦，>0 绝对品位
+ * -1 闷音，0 空弦，>0 绝对品位。
+ * 横按会抬高被覆盖的空弦/未标明弦；闷音仍闷；已按更高品位保持更高品位。
  */
 export function tabChordToFrets(chord: {
   baseFret?: number
   stringCount?: number
   stringStates?: Array<{ finger: 'x' | 'o' | number }>
+  barres?: Array<{
+    fret?: number
+    startStringNumber?: number
+    endStringNumber?: number
+  }>
 }): number[] {
   const frets = [-1, -1, -1, -1, -1, -1]
+  const explicit = [false, false, false, false, false, false]
   const base = Number(chord.baseFret) || 0
   const states = chord.stringStates ?? []
   const count = Math.min(6, chord.stringCount ?? states.length)
@@ -135,11 +209,68 @@ export function tabChordToFrets(chord: {
     const fretIndex = stringNumberToFretIndex(stringNumber)
     const state = states[i]
     if (!state) continue
+    explicit[fretIndex] = true
     if (state.finger === 'x') frets[fretIndex] = -1
     else if (state.finger === 'o') frets[fretIndex] = 0
     else if (typeof state.finger === 'number') frets[fretIndex] = base + state.finger + 1
   }
+
+  for (const barre of chord.barres ?? []) {
+    const absFret = base + Number(barre.fret) + 1
+    if (!Number.isFinite(absFret) || absFret <= 0) continue
+    const start = Math.min(Number(barre.startStringNumber) || 0, Number(barre.endStringNumber) || 0)
+    const end = Math.max(Number(barre.startStringNumber) || 0, Number(barre.endStringNumber) || 0)
+    for (let stringIndex = start; stringIndex <= end; stringIndex++) {
+      const stringNumber = stringIndex + 1
+      if (stringNumber < 1 || stringNumber > 6) continue
+      const fretIndex = stringNumberToFretIndex(stringNumber)
+      const current = frets[fretIndex] ?? -1
+      const marked = explicit[fretIndex]
+      if (marked && current < 0) continue
+      if (!marked || current === 0 || current < absFret) {
+        frets[fretIndex] = absFret
+      }
+    }
+  }
   return frets
+}
+
+export type GuitarBarreMark = {
+  fret: number
+  y: number
+  x1: number
+  x2: number
+}
+
+/** 模拟吉他上的横按条：绝对品位 + 覆盖弦的 x 范围 */
+export function tabChordToBarreMarks(chord: {
+  baseFret?: number
+  barres?: Array<{
+    fret?: number
+    startStringNumber?: number
+    endStringNumber?: number
+  }>
+} | null): GuitarBarreMark[] {
+  if (!chord?.barres?.length) return []
+  const base = Number(chord.baseFret) || 0
+  const marks: GuitarBarreMark[] = []
+  for (const barre of chord.barres) {
+    const absFret = base + Number(barre.fret) + 1
+    if (!Number.isFinite(absFret) || absFret <= 0) continue
+    const start = Math.min(Number(barre.startStringNumber) || 0, Number(barre.endStringNumber) || 0)
+    const end = Math.max(Number(barre.startStringNumber) || 0, Number(barre.endStringNumber) || 0)
+    if (end < start) continue
+    const y = fretFingerY(absFret)
+    const xA = stringXAtY(stringNumberToFretIndex(start + 1), y)
+    const xB = stringXAtY(stringNumberToFretIndex(end + 1), y)
+    marks.push({
+      fret: absFret,
+      y,
+      x1: Math.min(xA, xB),
+      x2: Math.max(xA, xB)
+    })
+  }
+  return marks
 }
 
 /** 从 tabChord 生成吉他面板指位点（优先用 stringStates.text 作为指法号） */

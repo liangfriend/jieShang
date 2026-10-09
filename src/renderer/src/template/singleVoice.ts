@@ -10,7 +10,7 @@ const GRAND_STAFF_COUNT = 4
 const MEASURES_PER_STAFF = 4
 
 function createSingleVoiceGrandStaff() {
-  const grandStaff = createGrandStaff({ withDefaultStaff: false })
+  const grandStaff = createGrandStaff({ withDefaultStaff: false, linkedStaff: true })
   const singleStaff = createSingleStaff({ withDefaultMeasure: false })
 
   for (let i = 0; i < MEASURES_PER_STAFF; i++) {

@@ -30,6 +30,12 @@ export default {
   notation: {
     staff: 'Staff',
     jianpu: 'Number notation',
+    guitarTab: 'Guitar tab',
+    ukuleleTab: 'Ukulele tab',
+    bass4Tab: '4-string bass tab',
+    bass5Tab: '5-string bass tab',
+    bass6Tab: '6-string bass tab',
+    drum: 'Drum score',
     unknown: 'Unknown'
   }
 } as const

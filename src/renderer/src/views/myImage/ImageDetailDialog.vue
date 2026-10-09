@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { toBcp47 } from '@renderer/i18n/locale'
 import type { ImageListItem } from '@renderer/utils/fileHelper/imageFile'
 import {
   displayMediaName,
@@ -43,7 +44,7 @@ const createdText = computed(() => {
   if (!raw) return '—'
   const date = new Date(raw)
   if (Number.isNaN(date.getTime())) return String(raw)
-  return date.toLocaleString(locale.value === 'en' ? 'en-US' : 'zh-CN')
+  return date.toLocaleString(toBcp47(locale.value))
 })
 
 watch(

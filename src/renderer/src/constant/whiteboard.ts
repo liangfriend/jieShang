@@ -81,6 +81,9 @@ export const WHITEBOARD_DEFAULT_CLEF: WhiteboardClef = ClefTypeEnum.Treble
 
 /** 添加音符默认开启 */
 export const WHITEBOARD_DEFAULT_ADD_NOTE = true
+/** 自动清空：和弦连击共用同一清空窗口（ms） */
+export const WHITEBOARD_AUTO_CLEAR_THROTTLE_MS = 60
+export const WHITEBOARD_DEFAULT_AUTO_CLEAR = false
 
 /** 按键时值推断使用的 BPM（不作用于 NPlayer） */
 export const WHITEBOARD_NOTE_BPM_MIN = 30

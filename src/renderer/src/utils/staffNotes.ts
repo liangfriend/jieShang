@@ -1,24 +1,54 @@
-import type { Measure, MusicScore, NoteNumber, NotesInfo, StaffSlot } from '@deciphony/renderer'
-import { NoteSymbolTypeEnum } from '@deciphony/renderer'
+import type {Measure, MusicScore, NoteNumber, NotesInfo, StaffSlot} from '@deciphony/renderer'
+import {getMeasureSlots, isNoteRest, isNoteSymbol, NoteSymbolTypeEnum, slotSymbol} from '@deciphony/renderer'
 
 function collectNotesInfoIds(ni: NotesInfo, onId: (id: string) => void) {
   onId(ni.id)
 }
 
+type HeadLike = {
+  id: string
+  notesInfo?: Array<{id: string}>
+  graceNotes?: Array<{id: string}>
+  graceNotesAfter?: Array<{id: string}>
+}
+
+/** measure.notes 为 MeasureNoteSlot（含 symbol）；兼容旧数据上直接挂记谱体 */
+function noteBodyOf(slot: Measure['notes'][number]): HeadLike | StaffSlot | NoteNumber {
+  if (slot && typeof slot === 'object' && 'symbol' in slot && (slot as {symbol?: unknown}).symbol) {
+    return slotSymbol(slot as never) as HeadLike | StaffSlot | NoteNumber
+  }
+  return slot as HeadLike | StaffSlot | NoteNumber
+}
+
+function walkHeadIds(body: HeadLike, onId: (id: string) => void) {
+  const infos = body.notesInfo
+  if (!Array.isArray(infos)) return
+  for (const ni of infos) onId(ni.id)
+  for (const g of body.graceNotes ?? []) onId(g.id)
+  for (const g of body.graceNotesAfter ?? []) onId(g.id)
+}
+
 function walkMeasureNoteIds(measure: Measure, onId: (id: string) => void) {
-  for (const slot of measure.notes) {
-    if (!('type' in slot)) {
-      const note = slot as NoteNumber
-      for (const ni of note.notesInfo) onId(ni.id)
+  for (const raw of measure.notes ? getMeasureSlots(measure) : []) {
+    const body = noteBodyOf(raw)
+
+    // TabNote：带 isSlap；只取各 info id
+    if ('isSlap' in body) {
+      walkHeadIds(body as HeadLike, onId)
       continue
     }
-    const s = slot as StaffSlot
-    if (s.type === NoteSymbolTypeEnum.Rest) {
+
+    // 简谱 NoteNumber：无 type
+    if (!('type' in body)) {
+      walkHeadIds(body as HeadLike, onId)
+      continue
+    }
+
+    const s = body as StaffSlot
+    if (isNoteRest(s) || s.type === NoteSymbolTypeEnum.Rest) {
       onId(s.id)
-    } else if (s.type === NoteSymbolTypeEnum.Note) {
-      for (const ni of s.notesInfo) collectNotesInfoIds(ni, onId)
-      for (const g of s.graceNotes ?? []) collectNotesInfoIds(g, onId)
-      for (const g of s.graceNotesAfter ?? []) collectNotesInfoIds(g, onId)
+    } else if (isNoteSymbol(s) || s.type === NoteSymbolTypeEnum.Note) {
+      walkHeadIds(s as HeadLike, onId)
     }
   }
 }

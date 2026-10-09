@@ -18,6 +18,9 @@
     "paths": {
       "@renderer/*": [
         "src/renderer/src/*"
+      ],
+      "@deciphony/pitch-detection": [
+        "../deciphony/packages/deciphony-pitch-detection/src/index.ts"
       ]
     }
   }

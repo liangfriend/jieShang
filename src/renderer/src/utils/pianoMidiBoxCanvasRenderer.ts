@@ -127,7 +127,16 @@ export function drawMidiBoxNormalLayer(input: DrawMidiBoxNormalLayerInput) {
   }
 
   const columns = collectMidiBoxColumnClips(visible, midiLayouts, command)
-  drawLayerWithUnifiedColumnClip(ctx, width, height, dpr, time, columns, command.drawBackground)
+  drawLayerWithUnifiedColumnClip(
+    ctx,
+    width,
+    height,
+    dpr,
+    time,
+    columns,
+    command.drawBackground,
+    command.drawColumns
+  )
 }
 
 /** 第三层：整层背景一次 + 所有 active 方块统一 clip */
@@ -167,5 +176,14 @@ export function drawMidiBoxActiveLayer(input: DrawMidiBoxActiveLayerInput) {
   }
 
   const columns = collectMidiBoxColumnClips(visible, midiLayouts, command)
-  drawLayerWithUnifiedColumnClip(ctx, width, height, dpr, time, columns, command.drawBackground)
+  drawLayerWithUnifiedColumnClip(
+    ctx,
+    width,
+    height,
+    dpr,
+    time,
+    columns,
+    command.drawBackground,
+    command.drawColumns
+  )
 }

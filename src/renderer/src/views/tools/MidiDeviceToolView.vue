@@ -9,6 +9,7 @@ import { useMidiStore } from '@renderer/store/midi.store'
 import { useVirtualPianoSkin } from '@renderer/utils/collection/useVirtualPianoSkin'
 import { useMidiDiagnostics } from '@renderer/views/tools/useMidiDiagnostics'
 import { usePlayStore } from '@renderer/store/play.store'
+import { pianoHoldTriggerOptions, pianoReleaseOptions } from '@renderer/utils/pianoEnvelope'
 
 defineOptions({ name: 'MidiDeviceToolView' })
 
@@ -46,14 +47,14 @@ const outputRows = computed(() =>
 
 async function onPianoKeyDown(midi: number) {
   try {
-    await playStore.triggerNote(midi, { id: `midi-tool-${midi}` })
+    await playStore.triggerNote(midi, pianoHoldTriggerOptions({ id: `midi-tool-${midi}` }))
   } catch {
     // ignore
   }
 }
 
 function onPianoKeyUp(midi: number) {
-  playStore.releaseNote(midi)
+  playStore.releaseNote(midi, pianoReleaseOptions())
 }
 
 onMounted(async () => {
@@ -142,14 +143,16 @@ onMounted(async () => {
 
 <style scoped>
 .tool-page {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   color: #5c4a6a;
   background: linear-gradient(145deg, #fff5f9 0%, #f3ebff 45%, #e8f4ff 100%);
 }
 
 .tool-page__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -179,6 +182,8 @@ onMounted(async () => {
 
 .tool-page__main {
   flex: 1;
+  min-height: 0;
+  overflow: auto;
   display: flex;
   flex-direction: column;
   gap: 16px;

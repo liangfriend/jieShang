@@ -3,9 +3,13 @@ export default {
     toolbar: {
       settings: '设置',
       play: '播放',
+      demoPlay: '演示播放',
+      stopDemo: '停止演示',
       pause: '暂停',
       stop: '停止',
-      clearPlayData: '清空弹奏数据'
+      clearPlayData: '清空弹奏数据',
+      hideScore: '隐藏曲谱',
+      showScore: '显示曲谱'
     },
     settings: {
       title: '练习设置',
@@ -50,7 +54,7 @@ export default {
     stats: {
       totalNotes: '音符总数',
       realScore: '实时分',
-      totalScore: '总分'
+      totalScore: '进度'
     },
     coverText: '强者之遮挡',
     messages: {

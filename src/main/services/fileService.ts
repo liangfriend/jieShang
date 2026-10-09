@@ -8,7 +8,7 @@ const SJ_FILTER: Electron.FileFilter[] = [{ name: 'SJ 曲谱', extensions: ['sj'
 const MUSICXML_FILTER: Electron.FileFilter[] = [
   { name: 'MusicXML', extensions: ['xml', 'musicxml'] }
 ]
-
+const MIDI_FILTER: Electron.FileFilter[] = [{ name: 'MIDI', extensions: ['mid', 'midi'] }]
 function getDialogParent(window?: BrowserWindow | null): BrowserWindow | null {
   return window ?? BrowserWindow.getFocusedWindow()
 }
@@ -154,6 +154,56 @@ export class FileService {
     }
 
     fs.writeFileSync(filePath, content, 'utf-8')
+
+    return {
+      canceled: false as const,
+      filePath
+    }
+  }
+
+  /** 通过系统对话框导入 MIDI 文件（二进制） */
+  async importMidi(window?: BrowserWindow | null) {
+    const { canceled, filePaths } = await showOpenDialog(
+      {
+        title: '导入 MIDI',
+        filters: MIDI_FILTER,
+        properties: ['openFile']
+      },
+      window
+    )
+
+    if (canceled || !filePaths[0]) {
+      return { canceled: true as const }
+    }
+
+    const filePath = filePaths[0]
+    const buffer = fs.readFileSync(filePath)
+
+    return {
+      canceled: false as const,
+      filePath,
+      fileName: path.basename(filePath),
+      content: new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength)
+    }
+  }
+
+  /** 通过系统对话框导出 MIDI 文件（二进制） */
+  async exportMidi(content: Uint8Array, defaultName = '未命名曲谱', window?: BrowserWindow | null) {
+    const safeName = defaultName.replace(/[<>:"/\\|?*]/g, '_').trim() || '未命名曲谱'
+    const { canceled, filePath } = await showSaveDialog(
+      {
+        title: '导出 MIDI',
+        defaultPath: `${safeName}.mid`,
+        filters: [...MIDI_FILTER]
+      },
+      window
+    )
+
+    if (canceled || !filePath) {
+      return { canceled: true as const }
+    }
+
+    fs.writeFileSync(filePath, Buffer.from(content))
 
     return {
       canceled: false as const,

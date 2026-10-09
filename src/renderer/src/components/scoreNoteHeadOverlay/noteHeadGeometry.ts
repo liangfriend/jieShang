@@ -3,9 +3,18 @@ import {
   isNumberNotationSkinKey,
   resolveStandardNoteHeadShape
 } from './noteHeadOutlinePaths'
-import type { NoteHeadGeometry, NoteHeadShapeKind } from './types'
+import type { NoteHeadGeometry, NoteHeadShapeKind, NoteHeadVDomTag } from './types'
 
 type VDomBox = VDom & { x?: number; y?: number; w?: number; h?: number }
+
+const NOTE_HEAD_TAGS = new Set<NoteHeadVDomTag>([
+  'noteHead',
+  'noteNumber',
+  'rest',
+  'tabNoteNumber',
+  'arpeggio',
+  'strumming'
+])
 
 function readVDomBox(node: VDom): Pick<NoteHeadGeometry, 'x' | 'y' | 'w' | 'h'> | null {
   const n = node as VDomBox
@@ -29,19 +38,21 @@ function normalizeNoteId(noteId: unknown): string | null {
   return id || null
 }
 
-function resolveShapeKind(tag: 'noteHead' | 'rest', skinKey?: string): NoteHeadShapeKind {
+function resolveShapeKind(tag: NoteHeadVDomTag, skinKey?: string): NoteHeadShapeKind {
   if (tag === 'rest') return 'rest'
+  if (tag === 'tabNoteNumber' || tag === 'arpeggio' || tag === 'strumming') return 'tab'
+  // 简谱数字头：一律用方框包裹
+  if (tag === 'noteNumber' || isNumberNotationSkinKey(skinKey)) return 'number'
   const standard = resolveStandardNoteHeadShape(skinKey)
   if (standard === 'whole') return 'standard-whole'
   if (standard === 'tilted-ring') return 'standard-tilted-ring'
   if (standard === 'tilted-filled') return 'standard-tilted-filled'
-  if (isNumberNotationSkinKey(skinKey)) return 'number'
   return 'fallback'
 }
 
 /**
- * 从 vDom 列表构建 noteId → 符头/休止符几何（SVG 用户坐标）。
- * 优先 noteHead；无符头时用 rest。vDom 缺尺寸时回退 DOM getBBox。
+ * 从 vDom 列表构建 noteId → 符头/数字头/Tab 品格/休止符几何（SVG 用户坐标）。
+ * 优先 noteHead / noteNumber / tabNoteNumber；无符头时用 rest。vDom 缺尺寸时回退 DOM getBBox。
  */
 export function buildNoteHeadGeometryIndex(
   vDomList: readonly VDom[],
@@ -50,7 +61,7 @@ export function buildNoteHeadGeometryIndex(
   const map = new Map<string, NoteHeadGeometry>()
 
   for (const node of vDomList) {
-    if (node.tag !== 'noteHead' && node.tag !== 'rest') continue
+    if (!NOTE_HEAD_TAGS.has(node.tag as NoteHeadVDomTag)) continue
     const noteId = normalizeNoteId(node.targetId)
     if (!noteId) continue
     if (node.tag === 'rest' && map.has(noteId)) continue
@@ -63,24 +74,28 @@ export function buildNoteHeadGeometryIndex(
     if (!box) continue
 
     const skinKey = node.skinKey as string | undefined
+    const tag = node.tag as NoteHeadVDomTag
     map.set(noteId, {
       noteId,
       ...box,
-      tag: node.tag,
+      tag,
       skinKey,
-      shapeKind: resolveShapeKind(node.tag, skinKey)
+      shapeKind: resolveShapeKind(tag, skinKey)
     })
   }
 
   return map
 }
 
-export function findNoteHeadVDom(vDomList: readonly VDom[], noteId: string): VDom | null {
-  const id = noteId.trim()
-  if (!id) return null
+export function findNoteHeadVDom(vDomList: readonly VDom[], noteId: string): VDom | undefined {
+  const id = normalizeNoteId(noteId)
+  if (!id) return undefined
   return (
+    vDomList.find((node) => node.tag === 'tabNoteNumber' && node.targetId === id) ??
+    vDomList.find((node) => node.tag === 'arpeggio' && node.targetId === id) ??
+    vDomList.find((node) => node.tag === 'strumming' && node.targetId === id) ??
     vDomList.find((node) => node.tag === 'noteHead' && node.targetId === id) ??
-    vDomList.find((node) => node.tag === 'rest' && node.targetId === id) ??
-    null
+    vDomList.find((node) => node.tag === 'noteNumber' && node.targetId === id) ??
+    vDomList.find((node) => node.tag === 'rest' && node.targetId === id)
   )
 }

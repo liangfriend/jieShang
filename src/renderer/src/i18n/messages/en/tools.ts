@@ -1,6 +1,59 @@
 export default {
   tools: {
     title: 'Tools',
+    metronome: {
+      title: 'Metronome',
+      desc: 'Drag the vertical scale to set BPM; adjust meter and volume, then loop',
+      timeSignature: 'Meter',
+      volume: 'Volume',
+      play: 'Play',
+      stop: 'Stop'
+    },
+    guitarTune: {
+      title: 'Tuner',
+      desc: 'Guitar, bass, and ukulele with sharp/flat guidance',
+      instrument: 'Instrument',
+      instruments: {
+        guitarStandard: 'Guitar: Standard',
+        bass4: '4-string bass',
+        ukulele: 'Ukulele'
+      },
+      start: 'Start',
+      stop: 'Stop',
+      unsupported: 'Microphone capture is not supported here',
+      hint: 'Selected: string {string} ({note}). Pluck the open string.',
+      stringN: 'String {n}',
+      tuneUp: 'Tune up!',
+      tuneDown: 'Tune down!',
+      inTune: 'In tune!',
+      listening: 'Listening…',
+      calculating: 'Calculating…',
+      flatSide: 'Flat',
+      sharpSide: 'Sharp',
+      target: 'Target · string {string} {note}'
+    },
+    pitch: {
+      title: 'Pitch detection',
+      desc: 'Live mic pitch name, frequency, and MIDI',
+      controls: 'Controls',
+      start: 'Start',
+      stop: 'Stop',
+      readout: 'Live result',
+      frequency: 'Frequency',
+      silenceThreshold: 'Silence threshold',
+      silenceHint: 'Raise in noisy rooms to cut false pitches',
+      hint: 'Click Start, allow the mic, then sing or play a steady note',
+      waiting: 'Listening… try a steady pitch',
+      unsupported: 'Microphone capture is not supported here',
+      bands: {
+        bass: 'Bass',
+        averageMale: 'Avg. male',
+        tenor: 'Tenor',
+        alto: 'Alto',
+        averageFemale: 'Avg. female',
+        soprano: 'Soprano'
+      }
+    },
     mic: {
       title: 'Microphone check',
       desc: 'Grant access to see live waveform and level',

@@ -3,9 +3,11 @@
  *
  * 分层：
  * - dr-edit：曲谱数据变更
- * - editHelper/shared：两种谱面共用
+ * - editHelper/shared：共用
  * - editHelper/standardStaff：五线谱专有
  * - editHelper/numberNotation：简谱专有
+ * - editHelper/tab：吉他 / 尤克里里专有
+ * - editHelper/drumNotation：鼓谱专有
  */
 
 export {EXCLUDED_INTERACTION_TAGS, HIGHLIGHT_CLASS} from './constants'
@@ -43,7 +45,24 @@ export {
   deleteSingleStaffBtnY,
 } from './renderEditSlotLayout'
 export {deleteSelectedItem, isRestSelected} from './renderEditDelete'
+export {
+  resolveNeighborMeasureSlot,
+  type MeasureNavDirection,
+} from './renderEditMeasureNavigate'
+export {
+  applyMidiNoteToSelectedMeasure,
+  resolveClefAndKeyAtMeasure,
+} from './renderEditMidiAdd'
 export {resolvePropertyPanelKind, type PropertyPanelKind} from './renderEditPropertyPanel'
+export {
+  BRACKET_TYPE_VALUES,
+  BRACKET_TYPE_SELECT_VALUES,
+  isBracketSelected,
+  removeBracket,
+  setBracketType,
+  setGrandStaffBracketType,
+  type BracketEditSlot,
+} from './renderEditBracketProperties'
 export {
   ADD_NOTE_KIND_VALUES,
   CHRONAXIE_VALUES,
@@ -64,11 +83,27 @@ export {
   createSlurDragSession,
   isSlurSelected,
   isSlurVDom,
-  updateSlurDragFromPointer,
+  previewSlurDrag,
+  nextSlurGeomFromPointer,
   type SlurDragSession,
   type SlurHandleKind,
   type SlurHandlePoints,
 } from './renderEditSlurDrag'
+export {
+  SCORE_WRITE_DEBOUNCE_MS,
+  createScoreWriteGate,
+  scoreWriteGateFor,
+  flushScoreWrites,
+  captureScoreVDomBaseline,
+  findScoreVDom,
+  shiftVDomPatch,
+  frameShiftVDomPatch,
+  type ScorePatch,
+  type ScoreWriteGate,
+  type ScoreVDomMirror,
+  type UpdateVDomFn,
+  type ScoreVDomUpdater,
+} from './scoreWriteGate'
 export {
   canMoveSlurEndEarlier,
   canMoveSlurEndLater,
@@ -87,6 +122,7 @@ export {
   createVoltaDragSession,
   isVoltaSelected,
   isVoltaVDom,
+  previewVoltaDrag,
   resolveVoltaMeasureIds,
   updateVoltaDragFromPointer,
   type VoltaDragSession,
@@ -111,8 +147,16 @@ export {
   createNoteHeadDragSession,
   isNoteHeadSelected,
   updateNoteHeadDragFromPointer,
+  updateNoteHeadRegionByPointerY,
   type NoteHeadDragSession,
 } from './standardStaff/renderEditNoteHeadDrag'
+export {
+  previewRelativeX,
+  readRelativeX,
+  setRelativeX,
+  RELATIVE_X_OFFSET_MIN,
+  RELATIVE_X_OFFSET_MAX,
+} from './standardStaff/renderEditFrameProperties'
 export {tryAddSlurFromNoteHead} from './standardStaff/renderEditSlurAdd'
 export {useStandardStaffRenderEdit} from './standardStaff/useRenderEdit'
 export {default as NoteHeadPropertyPanel} from './standardStaff/components/NoteHeadPropertyPanel.vue'
@@ -143,8 +187,43 @@ export {useNumberNotationRenderEdit} from './numberNotation/useRenderEdit'
 export {default as NumberHeadPropertyPanel} from './numberNotation/components/NumberHeadPropertyPanel.vue'
 export {default as GhostNumberPreview} from './numberNotation/components/GhostNumberPreview.vue'
 export {default as AddNumberStatePanel} from './numberNotation/components/AddNumberStatePanel.vue'
+export {default as AddTabStatePanel} from './tab/components/AddTabStatePanel.vue'
+export {
+  createTabHeadDragSession,
+  updateTabHeadDragFromPointer,
+  updateTabHeadRegionByPointerY,
+  previewTabHeadRegionDrag,
+  type TabHeadDragSession,
+} from './tab/renderEditTabHeadDrag'
+export {useTabRenderEdit} from './tab/useRenderEdit'
 export type { GhostNotePreview as GhostNotePreviewState } from './standardStaff/renderEditSymbolAddAction'
 export type { GhostNumberPreview as GhostNumberPreviewState } from './numberNotation/renderEditNumberAddAction'
+
+// —— 鼓谱 ——
+export {
+  DEFAULT_ADD_DRUM_STATE,
+  DRUM_ADD_KIND_OPTIONS,
+  DRUM_CHRONAXIE_OPTIONS,
+  DRUM_DOT_OPTIONS,
+  DRUM_HEAD_OPTIONS,
+  DRUM_VOICE_OPTIONS,
+  normalizeAddDrumState,
+  type AddDrumState,
+  type DrumAddKind,
+} from './drumNotation/renderEditDrumAddState'
+export {
+  applyDrumMeasureAddAction,
+  drumRegionCenterY,
+  drumRegionFromRelativeY,
+  resolveGhostDrumPreview,
+  type DrumMeasureAddResult,
+  type GhostDrumPreview as DrumGhostPreview,
+} from './drumNotation/renderEditDrumAddAction'
+export {useDrumRenderEdit} from './drumNotation/useRenderEdit'
+export {default as AddDrumStatePanel} from './drumNotation/components/AddDrumStatePanel.vue'
+export {default as GhostDrumPreview} from './drumNotation/components/GhostDrumPreview.vue'
+export {default as DrumNotePropertyPanel} from './drumNotation/components/DrumNotePropertyPanel.vue'
+export {default as DrumRestPropertyPanel} from './drumNotation/components/DrumRestPropertyPanel.vue'
 
 // —— 共用 UI ——
 export {default as AddNoteStatePanel} from './components/AddNoteStatePanel.vue'
@@ -152,8 +231,15 @@ export {default as PropertyPanel} from './components/PropertyPanel.vue'
 export {default as MeasurePropertyPanel} from './components/MeasurePropertyPanel.vue'
 export {default as VoltaPropertyPanel} from './components/VoltaPropertyPanel.vue'
 export {default as SlurPropertyPanel} from './components/SlurPropertyPanel.vue'
+export {default as BracketPropertyPanel} from './components/BracketPropertyPanel.vue'
 export {default as VoltaDragHandles} from './components/VoltaDragHandles.vue'
 export {default as SlurDragHandles} from './components/SlurDragHandles.vue'
+export {default as VerticalDragHandles} from './components/VerticalDragHandles.vue'
+export {default as HorizontalDragHandles} from './components/HorizontalDragHandles.vue'
+export {default as MoveDragHandle} from './components/MoveDragHandle.vue'
+export {default as PitchPropertyPanel} from './components/PitchPropertyPanel.vue'
+export {default as GracePropertyPanel} from './components/GracePropertyPanel.vue'
+export {default as NoteGraceSection} from './components/NoteGraceSection.vue'
 export {default as AddGrandStaffButton} from './components/AddGrandStaffButton.vue'
 export {default as DeleteGrandStaffButton} from './components/DeleteGrandStaffButton.vue'
 export {default as EditSlotGdButtons} from './components/EditSlotGdButtons.vue'
@@ -161,3 +247,12 @@ export {default as AddSingleStaffButton} from './components/AddSingleStaffButton
 export {default as DeleteSingleStaffButton} from './components/DeleteSingleStaffButton.vue'
 export {default as AddMeasureButton} from './components/AddMeasureButton.vue'
 export {default as EditSlotSdButtons} from './components/EditSlotSdButtons.vue'
+export {default as EditContextMenu} from './components/EditContextMenu.vue'
+
+export type {
+  EditContextMenuItem,
+  EditContextMenuPayload,
+  EditContextMenuState,
+  EditContextMenuEntry
+} from './renderEditContextMenu'
+export {useScoreEditContextMenu} from './useScoreEditContextMenu'

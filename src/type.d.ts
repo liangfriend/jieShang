@@ -34,6 +34,19 @@ declare global {
           content: string,
           defaultName?: string
         ): Promise<{ canceled: boolean; filePath?: string }>
+        importMidi(): Promise<{
+          canceled: boolean
+          filePath?: string
+          fileName?: string
+          content?: Uint8Array
+        }>
+        exportMidi(
+          content: Uint8Array,
+          defaultName?: string
+        ): Promise<{ canceled: boolean; filePath?: string }>
+      }
+      omr: {
+        recognize(image: Uint8Array): Promise<any>
       }
       resource: {
         create(payload: any): Promise<any>
@@ -83,12 +96,18 @@ declare global {
         extractScore(id: number | string): Promise<any>
       }
       guitarChord: {
-        create(payload: { data: any }): Promise<any>
+        create(payload: { data: any; hand_pose?: any; tab_type?: 'tab4' | 'tab6' }): Promise<any>
         delete(id: number | string): Promise<any>
-        update(id: number | string, payload: { data: any }): Promise<any>
+        update(id: number | string, payload: { data: any; hand_pose?: any }): Promise<any>
         get(id: number | string): Promise<any>
-        list(): Promise<any>
-        searchByName(name: string): Promise<any>
+        list(filter?: {
+          keyword?: string
+          tabType?: 'tab4' | 'tab6' | 'all' | null
+        }): Promise<any>
+        searchByName(
+          name: string,
+          tabType?: 'tab4' | 'tab6' | 'all' | null
+        ): Promise<any>
       }
       collection: {
         create(payload: {
@@ -99,6 +118,7 @@ declare global {
           owned?: boolean
           level?: number
           thumbnail?: string | null
+          option?: string
         }): Promise<any>
         delete(id: number | string): Promise<any>
         update(
@@ -111,6 +131,7 @@ declare global {
             owned: boolean
             level: number
             thumbnail: string | null
+            option: string
           }>
         ): Promise<any>
         get(id: number | string): Promise<any>
@@ -138,13 +159,15 @@ declare global {
             id: number
             mode: 'arcade' | 'endless' | 'extreme'
             difficulty: 'easy' | 'standard' | 'hard'
+            notation: 'staff' | 'jianpu'
             high_score: number
           }>
         }>
         upsertIfHigher(
           mode: 'arcade' | 'endless' | 'extreme',
           difficulty: 'easy' | 'standard' | 'hard',
-          score: number
+          score: number,
+          notation?: 'staff' | 'jianpu'
         ): Promise<any>
       }
       window: {

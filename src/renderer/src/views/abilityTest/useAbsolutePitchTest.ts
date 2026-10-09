@@ -1,5 +1,6 @@
 import { computed, onUnmounted, ref, shallowRef } from 'vue'
 import { usePlayStore } from '@renderer/store/play.store'
+import { pianoOneShotTriggerOptions } from '@renderer/utils/pianoEnvelope'
 import {
   ABSOLUTE_PITCH_DEFAULT_COUNTDOWN_SEC,
   ABSOLUTE_PITCH_DEFAULT_ROUNDS,
@@ -116,10 +117,12 @@ export function useAbsolutePitchTest() {
 
   async function playTarget(midi = targetMidi.value) {
     try {
-      await playStore.triggerNote(midi, {
-        duration: ABSOLUTE_PITCH_NOTE_DURATION_SEC,
-        id: `absolute-pitch-${midi}-${Date.now()}`
-      })
+      await playStore.triggerNote(
+        midi,
+        pianoOneShotTriggerOptions(ABSOLUTE_PITCH_NOTE_DURATION_SEC, {
+          id: `absolute-pitch-${midi}-${Date.now()}`
+        })
+      )
     } catch {
       // 播放失败不阻断答题
     }

@@ -3,12 +3,12 @@ import { storeToRefs } from 'pinia'
 import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
 
 const globalLoading = useGlobalLoadingStore()
-const { visible, text } = storeToRefs(globalLoading)
+const { visible, text, instant } = storeToRefs(globalLoading)
 </script>
 
 <template>
   <Teleport to="body">
-    <Transition name="global-loading-fade">
+    <Transition name="global-loading-fade" :css="!instant">
       <div v-if="visible" class="global-loading" role="status" aria-live="polite" aria-busy="true">
         <div class="global-loading__panel">
           <div class="global-loading__spinner" aria-hidden="true" />

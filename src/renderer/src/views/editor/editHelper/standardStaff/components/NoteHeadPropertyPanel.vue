@@ -5,11 +5,7 @@ import {computed} from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   resolveAccidentalSelectLabel,
-  resolveAugmentationDotLabel,
-  resolveBeamTypeLabel,
   resolveClefSelectLabel,
-  resolveNoteDurationLabel,
-  resolveStemDirectionLabel
 } from '@renderer/i18n/helpers'
 import {CHRONAXIE_VALUES} from '../../renderEditAddNoteState'
 import {
@@ -29,8 +25,18 @@ import {
   setNoteClefRelativeX,
   type NoteHeadEditSlot,
 } from '../renderEditNoteHeadProperties'
-import {tryAddSlurFromNoteHead, type SlurSpan} from '../renderEditSlurAdd'
-import NoteSlurListSection from '../../components/NoteSlurListSection.vue'
+import {readRelativeX} from '../renderEditFrameProperties'
+import {findSlurEndFromNoteHead, tryAddSlurFromNoteHead, type SlurSpan} from '../renderEditSlurAdd'
+import {warnNotEnoughSpanNotes} from '../../renderEditSlotSymbolAdd'
+import NoteGraceSection from '../../components/NoteGraceSection.vue'
+import NoteMarkPalette from '../../components/NoteMarkPalette.vue'
+import NoteSpanSymbolSection from '../../components/NoteSpanSymbolSection.vue'
+import PanelField from '../../components/panel/PanelField.vue'
+import PanelGroup from '../../components/panel/PanelGroup.vue'
+import PanelSegmented from '../../components/panel/PanelSegmented.vue'
+import PanelTabs from '../../components/panel/PanelTabs.vue'
+import {useNoteSegmentOptions} from '../../components/panel/noteOptions'
+import {usePanelTab} from '../../components/panel/usePanelTab'
 import RelativeXOffsetControl from './RelativeXOffsetControl.vue'
 
 const props = defineProps<{
@@ -38,9 +44,18 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const options = useNoteSegmentOptions()
+const tab = usePanelTab('noteHead', 'basic')
 
 const notesInfo = computed(() => props.editSlot.info)
 const note = computed(() => props.editSlot.note)
+const musicScore = computed(() => props.editSlot.musicScore as MusicScore)
+
+const tabs = computed(() => [
+  {name: 'basic', label: t('editor.panelTab.basic')},
+  {name: 'marks', label: t('editor.panelTab.marks'), badge: notesInfo.value.affiliatedSymbols?.length ?? 0},
+  {name: 'span', label: t('editor.panelTab.span')},
+])
 
 const noteClef = computed({
   get: () => note.value.clef?.type ?? '',
@@ -74,155 +89,99 @@ const augmentationDot = computed({
 })
 
 const relativeX = computed({
-  get: () => notesInfo.value.relativeX ?? 0,
-  set: (v: number) => setNotesInfoRelativeX(notesInfo.value, v),
+  get: () => readRelativeX(notesInfo.value),
+  set: (v: number) => setNotesInfoRelativeX(musicScore.value, notesInfo.value, v),
 })
 
 const noteClefRelativeX = computed({
-  get: () => note.value.clef?.relativeX ?? 0,
-  set: (v: number) => setNoteClefRelativeX(note.value, v),
+  get: () => (note.value.clef ? readRelativeX(note.value.clef) : 0),
+  set: (v: number) => setNoteClefRelativeX(musicScore.value, note.value, v),
 })
 
 const accidentalRelativeX = computed({
-  get: () => notesInfo.value.accidental?.relativeX ?? 0,
-  set: (v: number) => setNotesInfoAccidentalRelativeX(notesInfo.value, v),
+  get: () => (notesInfo.value.accidental ? readRelativeX(notesInfo.value.accidental) : 0),
+  set: (v: number) => setNotesInfoAccidentalRelativeX(musicScore.value, notesInfo.value, v),
 })
 
 const hasNoteClef = computed(() => Boolean(note.value.clef))
 const hasAccidental = computed(() => Boolean(notesInfo.value.accidental))
 
-const musicScore = computed(() => props.editSlot.musicScore as MusicScore)
+function onAddSlur(span: SlurSpan, endInfoId: string | null) {
+  if (!tryAddSlurFromNoteHead(props.editSlot, span, endInfoId)) warnNotEnoughSpanNotes(t)
+}
 
-function onAddSlur(span: SlurSpan) {
-  tryAddSlurFromNoteHead(props.editSlot, span)
+function findSlurEnd(span: SlurSpan) {
+  return findSlurEndFromNoteHead(props.editSlot, span)?.id ?? null
 }
 </script>
 
 <template>
-  <div class="note-head-props">
-    <section class="note-head-props__section">
-      <div class="note-head-props__label">{{ t('editor.note.duration') }}</div>
-      <el-radio-group v-model="chronaxie" class="note-head-props__radio" size="small">
-        <el-radio-button
-          v-for="value in CHRONAXIE_VALUES"
-          :key="value"
-          :label="value"
-        >
-          {{ resolveNoteDurationLabel(value) }}
-        </el-radio-button>
-      </el-radio-group>
-    </section>
+  <PanelTabs v-model="tab" :tabs="tabs">
+    <template #basic>
+      <PanelGroup :title="t('editor.panelGroup.rhythm')">
+        <PanelField :label="t('editor.note.duration')" stacked>
+          <PanelSegmented v-model="chronaxie" :options="options.durations(CHRONAXIE_VALUES)" />
+        </PanelField>
+        <PanelField :label="t('editor.note.augmentationDot')">
+          <PanelSegmented v-model="augmentationDot" :options="options.dots(AUGMENTATION_DOT_VALUES)" />
+        </PanelField>
+        <PanelField :label="t('editor.note.beam')">
+          <PanelSegmented v-model="beamType" :options="options.beams(BEAM_TYPE_VALUES)" />
+        </PanelField>
+        <PanelField :label="t('editor.note.stemDirection')">
+          <PanelSegmented v-model="direction" :options="options.stems(STEM_DIRECTION_VALUES)" />
+        </PanelField>
+      </PanelGroup>
 
-    <section class="note-head-props__section">
-      <div class="note-head-props__label">{{ t('editor.note.noteClef') }}</div>
-      <el-select v-model="noteClef" class="note-head-props__select" size="small">
-        <el-option
-          v-for="value in NOTE_CLEF_SELECT_VALUES"
-          :key="value || 'none'"
-          :label="resolveClefSelectLabel(value)"
-          :value="value"
-        />
-      </el-select>
-      <RelativeXOffsetControl
-        v-if="hasNoteClef"
-        v-model="noteClefRelativeX"
-        nested
+      <PanelGroup :title="t('editor.panelGroup.pitch')">
+        <PanelField :label="t('editor.note.accidental')">
+          <el-select v-model="accidental" :placeholder="t('common.none')" size="small">
+            <el-option
+              v-for="value in ACCIDENTAL_SELECT_VALUES"
+              :key="value || 'none'"
+              :label="resolveAccidentalSelectLabel(value)"
+              :value="value"
+            />
+          </el-select>
+        </PanelField>
+        <PanelField v-if="hasAccidental" :label="t('editor.note.relativeX')">
+          <RelativeXOffsetControl v-model="accidentalRelativeX" bare />
+        </PanelField>
+        <PanelField :label="t('editor.note.noteClef')">
+          <el-select v-model="noteClef" :placeholder="t('common.none')" size="small">
+            <el-option
+              v-for="value in NOTE_CLEF_SELECT_VALUES"
+              :key="value || 'none'"
+              :label="resolveClefSelectLabel(value)"
+              :value="value"
+            />
+          </el-select>
+        </PanelField>
+        <PanelField v-if="hasNoteClef" :label="t('editor.note.relativeX')">
+          <RelativeXOffsetControl v-model="noteClefRelativeX" bare />
+        </PanelField>
+      </PanelGroup>
+
+      <PanelGroup :title="t('editor.note.relativeX')">
+        <RelativeXOffsetControl v-model="relativeX" bare />
+      </PanelGroup>
+
+      <PanelGroup :title="t('editor.note.grace')">
+        <NoteGraceSection :edit-slot="editSlot" bare />
+      </PanelGroup>
+    </template>
+
+    <template #marks>
+      <NoteMarkPalette :host="notesInfo" :notation-type="musicScore.type" />
+    </template>
+
+    <template #span>
+      <NoteSpanSymbolSection
+        :edit-slot="editSlot"
+        :notes-info-id="notesInfo.id"
+        :find-slur-end="findSlurEnd"
+        @add-slur="onAddSlur"
       />
-    </section>
-
-    <section class="note-head-props__section">
-      <div class="note-head-props__label">{{ t('editor.note.beam') }}</div>
-      <el-radio-group v-model="beamType" class="note-head-props__radio" size="small">
-        <el-radio-button
-          v-for="value in BEAM_TYPE_VALUES"
-          :key="value"
-          :label="value"
-        >
-          {{ resolveBeamTypeLabel(value) }}
-        </el-radio-button>
-      </el-radio-group>
-    </section>
-
-    <section class="note-head-props__section">
-      <div class="note-head-props__label">{{ t('editor.note.stemDirection') }}</div>
-      <el-radio-group v-model="direction" class="note-head-props__radio" size="small">
-        <el-radio-button
-          v-for="value in STEM_DIRECTION_VALUES"
-          :key="value"
-          :label="value"
-        >
-          {{ resolveStemDirectionLabel(value) }}
-        </el-radio-button>
-      </el-radio-group>
-    </section>
-
-    <section class="note-head-props__section">
-      <div class="note-head-props__label">{{ t('editor.note.accidental') }}</div>
-      <el-select
-        v-model="accidental"
-        class="note-head-props__select"
-        size="small"
-      >
-        <el-option
-          v-for="value in ACCIDENTAL_SELECT_VALUES"
-          :key="value || 'none'"
-          :label="resolveAccidentalSelectLabel(value)"
-          :value="value"
-        />
-      </el-select>
-      <RelativeXOffsetControl
-        v-if="hasAccidental"
-        v-model="accidentalRelativeX"
-        nested
-      />
-    </section>
-
-    <section class="note-head-props__section">
-      <div class="note-head-props__label">{{ t('editor.note.augmentationDot') }}</div>
-      <el-radio-group v-model="augmentationDot" class="note-head-props__radio" size="small">
-        <el-radio-button
-          v-for="value in AUGMENTATION_DOT_VALUES"
-          :key="value"
-          :label="value"
-        >
-          {{ resolveAugmentationDotLabel(value) }}
-        </el-radio-button>
-      </el-radio-group>
-    </section>
-
-    <RelativeXOffsetControl v-model="relativeX" />
-
-    <NoteSlurListSection
-      :music-score="musicScore"
-      :notes-info-id="notesInfo.id"
-      @add="onAddSlur"
-    />
-  </div>
+    </template>
+  </PanelTabs>
 </template>
-
-<style scoped>
-.note-head-props__section {
-  margin-bottom: 14px;
-}
-
-.note-head-props__label {
-  margin-bottom: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #606266;
-}
-
-.note-head-props__radio {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.note-head-props__select {
-  width: 100%;
-}
-
-.note-head-props__row {
-  display: flex;
-  gap: 8px;
-}
-</style>

@@ -1,7 +1,7 @@
 import fs from 'node:fs'
 import path from 'node:path'
+import { createRequire } from 'node:module'
 import { app } from 'electron'
-import { electronEnableSteamOverlay, init as initSteamworks } from 'steamworks.js'
 import type { Client } from 'steamworks.js'
 import { getLogger } from '../utils/log'
 
@@ -9,10 +9,28 @@ const logger = getLogger('Steam')
 
 let steamClient: Omit<Client, 'init' | 'runCallbacks'> | null = null
 
+type SteamworksModule = typeof import('steamworks.js')
+
+let steamworksModule: SteamworksModule | null | undefined
+
+/** 原生模块缺依赖（如目标机无 VC++ 运行库）时 require 会抛错，不能用静态 import，否则主进程启动即崩溃 */
+function loadSteamworks(): SteamworksModule | null {
+  if (steamworksModule !== undefined) return steamworksModule
+  try {
+    steamworksModule = createRequire(import.meta.url)('steamworks.js') as SteamworksModule
+  } catch (error) {
+    logger.warn('steamworks.js 原生模块加载失败，Steam 功能不可用', error)
+    steamworksModule = null
+  }
+  return steamworksModule
+}
+
 /** Overlay 须在创建窗口前启用（追加 Chromium 启动参数） */
 export function enableSteamOverlay(): void {
+  const steamworks = loadSteamworks()
+  if (!steamworks) return
   try {
-    electronEnableSteamOverlay()
+    steamworks.electronEnableSteamOverlay()
     logger.info('Steam Overlay 已启用')
   } catch (error) {
     logger.warn('Steam Overlay 启用失败', error)
@@ -43,10 +61,13 @@ function readSteamAppIdFromFile(): number | undefined {
 export function initSteam(): Omit<Client, 'init' | 'runCallbacks'> | null {
   if (steamClient) return steamClient
 
+  const steamworks = loadSteamworks()
+  if (!steamworks) return null
+
   const appId = readSteamAppIdFromFile()
 
   try {
-    steamClient = initSteamworks(appId)
+    steamClient = steamworks.init(appId)
     const { localplayer, utils } = steamClient
     const steamId = localplayer.getSteamId()
     const name = localplayer.getName()

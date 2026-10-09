@@ -5,9 +5,10 @@ import { storeToRefs } from 'pinia'
 import { nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { WhiteboardToolbar } from '@renderer/components/whiteboard'
 import VirtualPiano from '@renderer/components/virtualPiano.vue'
-import { WHITEBOARD_PIANO_SECTION_HEIGHT } from '@renderer/constant/whiteboard'
+import { WHITEBOARD_AUTO_CLEAR_THROTTLE_MS, WHITEBOARD_PIANO_SECTION_HEIGHT } from '@renderer/constant/whiteboard'
 import { usePlayStore } from '@renderer/store/play.store'
 import { useWhiteboardStore } from '@renderer/store/whiteboard.store'
+import { pianoHoldTriggerOptions, pianoReleaseOptions } from '@renderer/utils/pianoEnvelope'
 import buildTeachingWhiteboardScore from '@renderer/template/teachingWhiteboard'
 import {
   addNoteToWhiteboardScore,
@@ -43,6 +44,7 @@ const {
   intervalRulerEnabled,
   pitchNotation,
   addNoteEnabled,
+  autoClearEnabled,
   targetClef,
   noteInputBpm,
   isCustomWidth
@@ -50,14 +52,23 @@ const {
 
 /** 记录每个按下中的琴键开始时间戳，keyup 时据此推断时值 */
 const keyDownAt = new Map<number, number>()
+/** 自动清空节流：和弦多键几乎同时按下时只清空一次 */
+let lastAutoClearAt = 0
 
 function onPianoKeyDown(midi: number) {
+  if (autoClearEnabled.value) {
+    const now = performance.now()
+    if (now - lastAutoClearAt >= WHITEBOARD_AUTO_CLEAR_THROTTLE_MS) {
+      lastAutoClearAt = now
+      clearAllWhiteboardNotes(musicScoreData.value)
+    }
+  }
   keyDownAt.set(midi, performance.now())
-  void playStore.triggerNote(midi)
+  void playStore.triggerNote(midi, pianoHoldTriggerOptions())
 }
 
 function onPianoKeyUp(midi: number) {
-  playStore.releaseNote(midi)
+  playStore.releaseNote(midi, pianoReleaseOptions())
   const start = keyDownAt.get(midi)
   keyDownAt.delete(midi)
   if (!addNoteEnabled.value || start == null) return
@@ -110,7 +121,7 @@ onMounted(async () => {
       waitScoreSkin(),
       waitVirtualPianoSkin(),
       playStore.waitReady(),
-      playStore.ensureCollectionToneColorInitialized()
+      playStore.resetCollectionToneColorToDefault()
     ])
     await nextTick()
     fitScoreToSection()

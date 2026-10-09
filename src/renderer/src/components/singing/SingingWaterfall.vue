@@ -1,11 +1,14 @@
 <script lang="ts" setup>
-import { computed, nextTick, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 const MIDI_LO = 36
 const MIDI_HI = 84
-const ROW_H = 11
+const MIDI_COUNT = MIDI_HI - MIDI_LO + 1
+/** 左侧音名栏宽度 */
 const LABEL_W = 36
+/** 基准线距内容区左侧的固定位置（含音名栏） */
+const BASELINE_X = LABEL_W + 64
 const PX_PER_UNIT = 0.55
 
 type TrackBar = { midi: number; start: number; end: number }
@@ -20,8 +23,17 @@ const props = defineProps<{
 
 const { t } = useI18n()
 
-const scrollRef = ref<HTMLElement | null>(null)
-const trackHeight = (MIDI_HI - MIDI_LO + 1) * ROW_H
+const viewportRef = ref<HTMLElement | null>(null)
+const viewportHeight = ref(0)
+
+const rowH = computed(() => {
+  if (viewportHeight.value <= 0) return 11
+  return viewportHeight.value / MIDI_COUNT
+})
+
+const trackHeight = computed(() =>
+  viewportHeight.value > 0 ? viewportHeight.value : MIDI_COUNT * rowH.value
+)
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'] as const
 
@@ -42,15 +54,18 @@ const timelineWidthPx = computed(() => {
   for (const b of props.playBars) max = Math.max(max, b.end)
   for (const b of props.playedBars) max = Math.max(max, b.end)
   max = Math.max(max, props.progressUnit)
-  return Math.ceil(max * PX_PER_UNIT) + 80
+  return Math.ceil(max * PX_PER_UNIT) + 120
 })
 
 const progressX = computed(() => props.progressUnit * PX_PER_UNIT)
 
+/** 水柱层整体平移：进度前进 → 向左移，基准线不动 */
+const notesTranslateX = computed(() => BASELINE_X - progressX.value)
+
 const pitchDotTop = computed(() => {
   if (props.liveMidi == null) return 0
   const m = Math.min(MIDI_HI, Math.max(MIDI_LO, props.liveMidi))
-  return (MIDI_HI - m) * ROW_H + ROW_H / 2
+  return (MIDI_HI - m) * rowH.value + rowH.value / 2
 })
 
 const pitchDotVisible = computed(
@@ -67,29 +82,35 @@ function isBlackKey(midi: number): boolean {
 }
 
 function barStyle(bar: TrackBar): Record<string, string> {
+  const h = rowH.value
+  const gap = Math.min(2, h * 0.2)
   return {
-    left: `${LABEL_W + bar.start * PX_PER_UNIT}px`,
+    left: `${bar.start * PX_PER_UNIT}px`,
     width: `${Math.max(4, (bar.end - bar.start) * PX_PER_UNIT)}px`,
-    top: `${(MIDI_HI - bar.midi) * ROW_H + 1.5}px`,
-    height: `${ROW_H - 3}px`
+    top: `${(MIDI_HI - bar.midi) * h + gap / 2}px`,
+    height: `${Math.max(2, h - gap)}px`
   }
 }
 
-async function keepPlayheadInView() {
-  const el = scrollRef.value
-  if (!el || !props.detecting) return
+function syncViewportHeight() {
+  const el = viewportRef.value
+  if (!el) return
+  viewportHeight.value = el.clientHeight
+}
+
+let resizeObserver: ResizeObserver | null = null
+
+onMounted(async () => {
   await nextTick()
-  const x = progressX.value + LABEL_W
-  const pad = el.clientWidth * 0.35
-  const left = el.scrollLeft
-  const right = left + el.clientWidth
-  if (x < left + pad || x > right - pad) {
-    el.scrollTo({ left: Math.max(0, x - pad), behavior: 'auto' })
-  }
-}
+  syncViewportHeight()
+  if (!viewportRef.value) return
+  resizeObserver = new ResizeObserver(() => syncViewportHeight())
+  resizeObserver.observe(viewportRef.value)
+})
 
-watch(() => props.progressUnit, () => {
-  void keepPlayheadInView()
+onBeforeUnmount(() => {
+  resizeObserver?.disconnect()
+  resizeObserver = null
 })
 </script>
 
@@ -107,11 +128,8 @@ watch(() => props.progressUnit, () => {
       }}</span>
     </div>
 
-    <div ref="scrollRef" class="singing-waterfall__scroll">
-      <div
-        class="singing-waterfall__roll"
-        :style="{ width: `${LABEL_W + timelineWidthPx}px`, height: `${trackHeight}px` }"
-      >
+    <div ref="viewportRef" class="singing-waterfall__viewport">
+      <div class="singing-waterfall__roll" :style="{ height: `${trackHeight}px` }">
         <div
           v-for="midi in pianoRollMidis"
           :key="midi"
@@ -120,32 +138,37 @@ watch(() => props.progressUnit, () => {
             'singing-waterfall__row--black': isBlackKey(midi),
             'singing-waterfall__row--c': midi % 12 === 0
           }"
-          :style="{ top: `${(MIDI_HI - midi) * ROW_H}px`, height: `${ROW_H}px` }"
+          :style="{ top: `${(MIDI_HI - midi) * rowH}px`, height: `${rowH}px` }"
         >
           <span v-if="midi % 12 === 0" class="singing-waterfall__row-label">{{
             midiLabel(midi)
           }}</span>
         </div>
 
-        <div class="singing-waterfall__lane" :style="{ left: `${LABEL_W}px` }" />
+        <div class="singing-waterfall__notes-clip" :style="{ left: `${LABEL_W}px` }">
+          <div
+            class="singing-waterfall__notes"
+            :style="{
+              width: `${timelineWidthPx}px`,
+              transform: `translate3d(${notesTranslateX - LABEL_W}px, 0, 0)`
+            }"
+          >
+            <div
+              v-for="(bar, idx) in playBars"
+              :key="`play-${idx}`"
+              class="singing-waterfall__note"
+              :style="barStyle(bar)"
+            />
+            <div
+              v-for="(bar, idx) in playedBars"
+              :key="`played-${idx}`"
+              class="singing-waterfall__note singing-waterfall__note--played"
+              :style="barStyle(bar)"
+            />
+          </div>
+        </div>
 
-        <div
-          v-for="(bar, idx) in playBars"
-          :key="`play-${idx}`"
-          class="singing-waterfall__note"
-          :style="barStyle(bar)"
-        />
-        <div
-          v-for="(bar, idx) in playedBars"
-          :key="`played-${idx}`"
-          class="singing-waterfall__note singing-waterfall__note--played"
-          :style="barStyle(bar)"
-        />
-
-        <div
-          class="singing-waterfall__playhead"
-          :style="{ left: `${LABEL_W + progressX}px` }"
-        >
+        <div class="singing-waterfall__playhead" :style="{ left: `${BASELINE_X}px` }">
           <div class="singing-waterfall__playhead-glow" />
           <div class="singing-waterfall__playhead-line" />
           <div
@@ -216,10 +239,10 @@ watch(() => props.progressUnit, () => {
   box-shadow: 0 0 0 3px rgba(255, 209, 102, 0.25);
 }
 
-.singing-waterfall__scroll {
+.singing-waterfall__viewport {
   flex: 1;
   min-height: 0;
-  overflow: auto;
+  overflow: hidden;
   border-radius: 18px;
   background:
     radial-gradient(120% 80% at 0% 0%, rgba(255, 120, 170, 0.16), transparent 55%),
@@ -233,7 +256,9 @@ watch(() => props.progressUnit, () => {
 
 .singing-waterfall__roll {
   position: relative;
-  margin: 10px 8px 12px;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
 }
 
 .singing-waterfall__row {
@@ -242,6 +267,7 @@ watch(() => props.progressUnit, () => {
   right: 0;
   box-sizing: border-box;
   border-bottom: 1px solid var(--sw-grid);
+  z-index: 0;
 }
 
 .singing-waterfall__row--black {
@@ -253,8 +279,7 @@ watch(() => props.progressUnit, () => {
 }
 
 .singing-waterfall__row-label {
-  position: sticky;
-  left: 0;
+  position: relative;
   z-index: 4;
   display: inline-flex;
   align-items: center;
@@ -269,13 +294,22 @@ watch(() => props.progressUnit, () => {
   box-sizing: border-box;
 }
 
-.singing-waterfall__lane {
+.singing-waterfall__notes-clip {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.singing-waterfall__notes {
   position: absolute;
   top: 0;
   bottom: 0;
-  right: 0;
-  pointer-events: none;
-  border-left: 1px solid rgba(255, 184, 208, 0.12);
+  left: 0;
+  will-change: transform;
 }
 
 .singing-waterfall__note {
@@ -311,12 +345,7 @@ watch(() => props.progressUnit, () => {
   bottom: 0;
   left: -18px;
   width: 36px;
-  background: linear-gradient(
-    90deg,
-    transparent,
-    rgba(255, 120, 170, 0.18),
-    transparent
-  );
+  background: linear-gradient(90deg, transparent, rgba(255, 120, 170, 0.18), transparent);
 }
 
 .singing-waterfall__playhead-line {

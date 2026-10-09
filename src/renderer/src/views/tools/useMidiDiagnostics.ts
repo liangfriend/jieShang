@@ -91,7 +91,7 @@ export function useMidiDiagnostics() {
     signals.lastBytes = formatMidiBytes(data)
     signals.lastInputName = input?.name?.trim() || '—'
 
-    if ('channel' in parsed && parsed.kind !== 'unknown') {
+    if ('channel' in parsed) {
       signals.channel = parsed.channel
     }
 
@@ -103,7 +103,7 @@ export function useMidiDiagnostics() {
     }
     if (parsed.kind === 'noteOff') {
       signals.lastNote = parsed.midi
-      signals.lastVelocity = parsed.velocity
+      // 松键 velocity 常为 0 / 释放力度，不覆盖 noteOn 的击键力度
       setHeld(parsed.midi, false)
       return
     }

@@ -38,6 +38,19 @@ declare global {
           content: string,
           defaultName?: string
         ): Promise<{ canceled: boolean; filePath?: string }>
+        importMidi(): Promise<{
+          canceled: boolean
+          filePath?: string
+          fileName?: string
+          content?: Uint8Array
+        }>
+        exportMidi(
+          content: Uint8Array,
+          defaultName?: string
+        ): Promise<{ canceled: boolean; filePath?: string }>
+      }
+      omr: {
+        recognize(image: Uint8Array): Promise<import('@renderer/types/omr').OmrRecognizeResult>
       }
       score: {
         create(payload: { name: string; data?: string }): Promise<any>
@@ -112,15 +125,54 @@ declare global {
         searchByName(name: string): Promise<any>
       }
       guitarChord: {
-        create(payload: { data: import('@deciphony/renderer').tabChord }): Promise<any>
+        create(payload: {
+          data: import('@deciphony/renderer').tabChord
+          hand_pose?: {
+            thumbF: number[]
+            indexF: number[]
+            middleF: number[]
+            ringF: number[]
+            littleF: number[]
+          } | null
+          tab_type?: 'tab4' | 'tab5' | 'tab6'
+        }): Promise<any>
         delete(id: number | string): Promise<any>
         update(
           id: number | string,
-          payload: { data: import('@deciphony/renderer').tabChord }
+          payload: {
+            data: import('@deciphony/renderer').tabChord
+            hand_pose?: {
+              thumbF: number[]
+              indexF: number[]
+              middleF: number[]
+              ringF: number[]
+              littleF: number[]
+            } | null
+            tab_type?: 'tab4' | 'tab5' | 'tab6'
+          }
         ): Promise<any>
         get(id: number | string): Promise<any>
-        list(): Promise<any>
-        searchByName(name: string): Promise<any>
+        list(filter?: {
+          keyword?: string
+          tabType?: 'tab4' | 'tab5' | 'tab6' | 'all' | null
+        }): Promise<any>
+        searchByName(name: string, tabType?: 'tab4' | 'tab5' | 'tab6' | 'all' | null): Promise<any>
+      }
+      drumMachine: {
+        create(payload: {
+          name: string
+          data: import('@renderer/types/drumMachine').DrumMachineData
+        }): Promise<any>
+        delete(id: number | string): Promise<any>
+        update(
+          id: number | string,
+          payload: Partial<{
+            name: string
+            data: import('@renderer/types/drumMachine').DrumMachineData
+          }>
+        ): Promise<any>
+        get(id: number | string): Promise<any>
+        list(keyword?: string): Promise<any>
       }
       group: {
         create(payload: any): Promise<any>
@@ -145,6 +197,7 @@ declare global {
           owned?: boolean
           level?: number
           thumbnail?: string | null
+          option?: string
         }): Promise<any>
         delete(id: number | string): Promise<any>
         update(
@@ -158,6 +211,7 @@ declare global {
             owned: boolean
             level: number
             thumbnail: string | null
+            option: string
           }>
         ): Promise<any>
         get(id: number | string): Promise<any>
@@ -181,7 +235,8 @@ declare global {
         upsertIfHigher(
           mode: 'arcade' | 'endless' | 'extreme',
           difficulty: 'easy' | 'standard' | 'hard',
-          score: number
+          score: number,
+          notation?: 'staff' | 'jianpu'
         ): Promise<any>
       }
     }

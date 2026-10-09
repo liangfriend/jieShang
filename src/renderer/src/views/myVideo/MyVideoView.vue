@@ -7,7 +7,6 @@ import BackButton from '@renderer/components/BackButton.vue'
 import MediaDeleteDialog from '@renderer/components/MediaDeleteDialog.vue'
 import VideoCard from '@renderer/views/myVideo/VideoCard.vue'
 import VideoDetailDialog from '@renderer/views/myVideo/VideoDetailDialog.vue'
-import { useVideoListPlayer } from '@renderer/views/myVideo/useVideoListPlayer'
 import { forgetVideoMetadata, probeVideoMetadata } from '@renderer/views/myVideo/videoMetadata'
 import {
   createVideoInDatabase,
@@ -22,7 +21,6 @@ defineOptions({ name: 'MyVideoView' })
 const ACCEPTED = 'video/*,.mp4,.webm,.mov,.mkv,.avi,.m4v'
 
 const { t } = useI18n()
-const player = useVideoListPlayer()
 const keyword = ref('')
 const loading = ref(false)
 const uploading = ref(false)
@@ -100,7 +98,6 @@ async function deleteItem(item: VideoListItem, event: Event) {
 
   deletingId.value = item.id
   try {
-    if (player.isActive(item.id)) player.stop()
     await deleteVideoFromDatabase(item.id)
     forgetVideoMetadata(item.id)
     items.value = items.value.filter((row) => row.id !== item.id)
@@ -155,7 +152,6 @@ onMounted(() => {
           v-for="item in items"
           :key="item.id"
           :item="item"
-          :player="player"
           :deleting="deletingId === item.id"
           @open-detail="openDetail(item)"
           @delete="deleteItem(item, $event)"
@@ -188,7 +184,8 @@ onMounted(() => {
   --text-soft: #9a8aa8;
   --shadow: 0 8px 32px rgba(200, 140, 180, 0.18);
 
-  min-height: 100vh;
+  height: 100vh;
+  overflow: auto;
   padding: 32px 32px 80px;
   box-sizing: border-box;
   color: #5c4a6a;

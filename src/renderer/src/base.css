@@ -10,6 +10,13 @@ body {
   overflow: hidden;
   width: 100vw;
   height: 100vh;
+  user-select: none;
+}
+
+input,
+textarea,
+[contenteditable='true'] {
+  user-select: text;
 }
 
 .center {
@@ -55,7 +62,35 @@ body {
   user-select: none;
 }
 
-/** 播放高亮：加在符头/符干等顶层 g 上，用 filter 着色以兼容换肤（@deciphony/extensions/dr-play-highlight） */
-.dr-play-highlight {
-  filter: drop-shadow(0 0 4px rgba(255, 64, 64, 0.95)) brightness(1.18) saturate(1.35);
+/** 播放中锁住曲谱滚动：用户滚不动，跟滚代码写 scrollLeft 仍生效 */
+.score-scroll-locked {
+  overflow: hidden !important;
+}
+
+/** 练习评分 / 新手进度着色（utils/scoreNoteFillMarker）；播放高亮选择器更具体，播放中仍显示红色 */
+.score-note-mark :is(path, rect, circle, ellipse, polygon, text):not([fill='none']) {
+  fill: var(--score-note-mark-fill);
+}
+
+.score-note-mark :is(path, line, rect, circle, ellipse, polygon, polyline)[stroke]:not([stroke='none']) {
+  stroke: var(--score-note-mark-fill);
+}
+
+/**
+ * 播放高亮：dr-play-highlight 会把类加在同一音符的所有部件外层 g（id 为 dr-<tag>_<targetId>_）上，
+ * 含加时线、八度点、减时线、变音记号等；只给音符本体着色。fill 会盖掉皮肤自带颜色。
+ * 不用 filter（drop-shadow 等）：大曲谱上每次切换高亮都会重新栅格化整张 svg，线谱播放明显掉帧
+ */
+.dr-play-highlight:is(
+    [id^='dr-noteHead_'],
+    [id^='dr-noteStem_'],
+    [id^='dr-noteTail_'],
+    [id^='dr-rest_'],
+    [id^='dr-noteNumber_'],
+    [id^='dr-tabNoteNumber_'],
+    [id^='dr-longRest_'],
+    [id^='dr-longRestNumber_']
+  )
+  :is(path, rect, circle, ellipse, polygon, text):not([fill='none']) {
+  fill: #e53935;
 }

@@ -1,5 +1,6 @@
 // src/main/container.ts
 import { createContainer, asClass, asValue } from 'awilix'
+import { DataTypes } from 'sequelize'
 import sequelize from './database/connection'
 import { runMigrations } from './database/migrationRunner'
 
@@ -14,6 +15,8 @@ import { CollectionService } from './services/collectionService'
 import { CollectionController } from './controllers/collectionController'
 import { FileService } from './services/fileService'
 import { FileController } from './controllers/fileController'
+import { OmrService } from './services/omrService'
+import { OmrController } from './controllers/omrController'
 import { GroupService } from './services/groupService'
 import { GroupController } from './controllers/groupController'
 import { GroupRepository } from './repositories/groupRepository'
@@ -37,7 +40,11 @@ import { GuitarChordRepository } from './repositories/guitarChordRepository'
 import { GuitarChordService } from './services/guitarChordService'
 import { GuitarChordController } from './controllers/guitarChordController'
 import GuitarChordModel from './models/GuitarChordModel'
+import { DrumMachineRepository } from './repositories/drumMachineRepository'
+import { DrumMachineService } from './services/drumMachineService'
+import { DrumMachineController } from './controllers/drumMachineController'
 import { syncBuiltinCollectionThumbnails } from './utils/collectionThumbnailSync'
+import { syncBuiltinCollections } from './database/collectionBuiltinSeed'
 
 export const container = createContainer()
 
@@ -45,17 +52,32 @@ export async function setupContainer() {
   await sequelize.authenticate()
   await runMigrations()
   await GuitarChordModel.sync()
-  // 旧版 frets 列 → 重建为 data(tabChord)；开发期可直接删库
+  // 旧版 frets 列 → 重建为 data(tabChord)；缺 hand_pose 时补列
   try {
-    const desc = await sequelize.getQueryInterface().describeTable('guitar_chord')
+    const qi = sequelize.getQueryInterface()
+    const desc = await qi.describeTable('guitar_chord')
     if (desc && !('data' in desc)) {
       await GuitarChordModel.drop()
       await GuitarChordModel.sync()
+    } else if (desc && !('hand_pose' in desc)) {
+      await qi.addColumn('guitar_chord', 'hand_pose', {
+        type: DataTypes.TEXT,
+        allowNull: true,
+        defaultValue: null
+      })
+    }
+    if (desc && !('tab_type' in desc)) {
+      await qi.addColumn('guitar_chord', 'tab_type', {
+        type: DataTypes.STRING,
+        allowNull: false,
+        defaultValue: 'tab6'
+      })
     }
   } catch {
     await GuitarChordModel.sync()
   }
   syncBuiltinCollectionThumbnails()
+  await syncBuiltinCollections()
 
   container.register({
     sequelize: asValue(sequelize),
@@ -100,10 +122,17 @@ export async function setupContainer() {
     guitarChordService: asClass(GuitarChordService).singleton(),
     guitarChordController: asClass(GuitarChordController).singleton(),
 
+    drumMachineRepository: asClass(DrumMachineRepository).singleton(),
+    drumMachineService: asClass(DrumMachineService).singleton(),
+    drumMachineController: asClass(DrumMachineController).singleton(),
+
     windowController: asClass(WindowController).singleton(),
 
     fileService: asClass(FileService).singleton(),
-    fileController: asClass(FileController).singleton()
+    fileController: asClass(FileController).singleton(),
+
+    omrService: asClass(OmrService).singleton(),
+    omrController: asClass(OmrController).singleton()
   })
 
   await container.resolve<GuitarChordService>('guitarChordService').ensureDefaultChords()

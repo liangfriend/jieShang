@@ -184,7 +184,8 @@ onMounted(() => {
   --text-soft: #9a8aa8;
   --shadow: 0 8px 32px rgba(200, 140, 180, 0.18);
 
-  min-height: 100vh;
+  height: 100vh;
+  overflow: auto;
   padding: 32px 32px 80px;
   box-sizing: border-box;
   color: #5c4a6a;

@@ -47,6 +47,7 @@ watch(
         :src="src"
         controls
         autoplay
+        playsinline
       />
     </div>
   </el-dialog>

@@ -8,28 +8,34 @@ import {
   GUITAR_VIEW,
   stringNumberToFretIndex,
   stringXAtY,
+  tabChordToBarreMarks,
   tabChordToFrets
 } from '@renderer/constant/guitar'
 import {
   GUITAR_FINGER_CANVAS,
-  buildChordHandPose,
   buildPickHandPose,
   buildRestFretHandPose,
-  buildRestPickHandPose
+  buildRestPickHandPose,
+  resolveFretHandPose,
+  type FingerPoseMap
 } from '@renderer/utils/guitarFingerPose'
 
 const props = defineProps<{
   chord: tabChord | null
+  handPose?: FingerPoseMap | null
   activeString: number | null
 }>()
 
 const emit = defineEmits<{
   pick: [stringNumber: number]
+  release: [stringNumber: number]
 }>()
 
 const frets = computed(() =>
-  props.chord ? tabChordToFrets(props.chord) : [-1, -1, -1, -1, -1, -1]
+  props.chord ? tabChordToFrets(props.chord) : [0, 0, 0, 0, 0, 0]
 )
+
+const barreMarks = computed(() => tabChordToBarreMarks(props.chord))
 
 const fretHand = reactive(buildRestFretHandPose())
 const pickHand = reactive(buildRestPickHandPose())
@@ -46,8 +52,8 @@ function assignPose(
 }
 
 watch(
-  () => props.chord,
-  (chord) => assignPose(fretHand, buildChordHandPose(chord)),
+  () => props.handPose,
+  (pose) => assignPose(fretHand, resolveFretHandPose(pose)),
   { immediate: true, deep: true }
 )
 
@@ -83,8 +89,21 @@ const openMarks = computed(() => {
   return marks
 })
 
-function hitString(stringNumber: number) {
+function hitString(stringNumber: number, ev: PointerEvent) {
+  if (ev.button !== 0) return
+  ev.preventDefault()
+  ;(ev.currentTarget as Element | null)?.setPointerCapture?.(ev.pointerId)
   emit('pick', stringNumber)
+}
+
+function releaseHit(stringNumber: number, ev: PointerEvent) {
+  if (ev.button !== 0 && ev.type !== 'pointercancel') return
+  try {
+    ;(ev.currentTarget as Element | null)?.releasePointerCapture?.(ev.pointerId)
+  } catch {
+    /* already released */
+  }
+  emit('release', stringNumber)
 }
 
 function stringHitPath(stringNumber: number): string {
@@ -107,13 +126,25 @@ function stringHitPath(stringNumber: number): string {
         <image :href="guitarBodyUrl" x="0" y="0" width="400" height="1000" />
         <image :href="guitarStringsUrl" x="0" y="0" width="400" height="1000" />
 
+        <line
+          v-for="(b, i) in barreMarks"
+          :key="`barre-${b.fret}-${i}`"
+          class="guitar-panel__barre"
+          :x1="b.x1"
+          :y1="b.y"
+          :x2="b.x2"
+          :y2="b.y"
+        />
+
         <path
           v-for="n in 6"
           :key="`hit-${n}`"
           class="guitar-panel__hit"
           :class="{ 'guitar-panel__hit--active': activeString === n }"
           :d="stringHitPath(n)"
-          @click="hitString(n)"
+          @pointerdown="hitString(n, $event)"
+          @pointerup="releaseHit(n, $event)"
+          @pointercancel="releaseHit(n, $event)"
         />
 
         <g v-for="m in openMarks" :key="`open-${m.stringNumber}`">
@@ -211,6 +242,13 @@ function stringHitPath(stringNumber: number): string {
   inset: 0;
   width: 100% !important;
   height: 100% !important;
+  pointer-events: none;
+}
+
+.guitar-panel__barre {
+  stroke: #1a1a1a;
+  stroke-width: 11;
+  stroke-linecap: round;
   pointer-events: none;
 }
 

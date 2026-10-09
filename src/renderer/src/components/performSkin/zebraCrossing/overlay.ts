@@ -1,11 +1,14 @@
 import type { PerformOverlayCanvasCommand } from '../types'
 import { drawTrafficLightHighlight } from '../canvas/overlayDraw'
+import { createZebraCrossingPuffRuntime } from '../canvas/zebraCrossingPuffEffect'
 
 const BASELINE_HEIGHT = 4
 const KEY_ACTIVE_HEIGHT = 24
 
 export const zebraCrossingPerformOverlay: PerformOverlayCanvasCommand = {
   getBaselineHeight: () => BASELINE_HEIGHT,
+
+  createRuntime: createZebraCrossingPuffRuntime(KEY_ACTIVE_HEIGHT),
 
   drawBaseline(ctx, input) {
     const { baselineY, width } = input

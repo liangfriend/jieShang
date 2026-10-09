@@ -25,7 +25,7 @@ export default {
       whiteboard: 'Whiteboard',
       achievements: 'Achievements',
       myWorks: 'My works',
-      musicEncyclopedia: 'Encyclopedia',
+      chordManage: 'Chord manager',
       abilityTest: 'Ability tests',
       myAudio: 'My audio',
       myImage: 'My images',
@@ -37,7 +37,8 @@ export default {
       connected: 'MIDI keyboard connected',
       disconnected: 'MIDI keyboard not connected'
     },
-    settingsAria: 'Settings'
+    settingsAria: 'Settings',
+    community: 'JieShang QQ group 202732106'
   },
   scores: {
     title: 'My scores',
@@ -55,9 +56,17 @@ export default {
       desc: 'Pick a template to start editing your score',
       staff: 'Staff',
       jianpu: 'Number notation',
+      tab: 'TAB',
       empty: 'Empty',
       single: 'Single staff',
-      double: 'Double staff'
+      double: 'Double staff',
+      guitar: 'Guitar tab',
+      ukulele: 'Ukulele tab',
+      bass4: '4-string bass tab',
+      bass5: '5-string bass tab',
+      bass6: '6-string bass tab',
+      drum: 'Drum',
+      drumKit: 'Drum kit score'
     }
   }
 } as const

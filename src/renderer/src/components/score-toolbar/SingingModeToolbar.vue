@@ -3,18 +3,22 @@ import { VideoPause, VideoPlay } from '@element-plus/icons-vue'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
-import type { MusicScoreTypeEnum } from '@deciphony/renderer'
+import type { KeySignatureTypeEnum, MusicScoreTypeEnum } from '@deciphony/renderer'
 import {
   PLAY_SOURCE,
   PLAY_SOURCE_OPTIONS,
   type PlaySource
 } from '@renderer/constant/playSource'
 import ScoreNotationTypeSelector from './ScoreNotationTypeSelector.vue'
+import ScoreTransposeControl from './ScoreTransposeControl.vue'
+import ScoreSemitoneShiftButtons from './ScoreSemitoneShiftButtons.vue'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
 
 const props = defineProps<{
   notationType: MusicScoreTypeEnum
   notationTypeDisabled?: boolean
+  currentKey: KeySignatureTypeEnum
+  transposeDisabled?: boolean
   playSource: PlaySource
   sourceSelectDisabled?: boolean
   vocalEnabled?: boolean
@@ -25,6 +29,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'notation-type-change': [value: MusicScoreTypeEnum]
+  transpose: [payload: { toKey: KeySignatureTypeEnum }]
+  'semitone-shift': [semitones: 1 | -1]
   'play-source-change': [value: PlaySource]
   start: []
   stop: []
@@ -83,6 +89,15 @@ const playSourceModel = computed({
         :model-value="notationType"
         :disabled="notationTypeDisabled || detecting"
         @change="emit('notation-type-change', $event)"
+      />
+      <ScoreTransposeControl
+        :current-key="currentKey"
+        :disabled="transposeDisabled || notationTypeDisabled || detecting"
+        @transpose="emit('transpose', $event)"
+      />
+      <ScoreSemitoneShiftButtons
+        :disabled="transposeDisabled || notationTypeDisabled || detecting"
+        @shift="emit('semitone-shift', $event)"
       />
     </template>
   </ScoreToolbarShell>

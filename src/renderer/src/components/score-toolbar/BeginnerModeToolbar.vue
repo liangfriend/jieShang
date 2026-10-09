@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { Setting, VideoPlay } from '@element-plus/icons-vue'
+import { Hide, Setting, VideoPlay, View } from '@element-plus/icons-vue'
 import { storeToRefs } from 'pinia'
 import { computed, inject, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
@@ -7,9 +7,12 @@ import BackButton from '@renderer/components/BackButton.vue'
 import VerticalDragSlider from '@renderer/components/VerticalDragSlider.vue'
 import { PLAY_VOLUME_MAX, PLAY_VOLUME_MIN } from '@renderer/constant/play'
 import { usePlayStore } from '@renderer/store/play.store'
+import { useBeginnerSettingsStore } from '@renderer/store/beginnerSettings.store'
 import { beginnerPlaybackKey } from '@renderer/views/forBeginner/beginnerPlayback'
-import type { MusicScoreTypeEnum } from '@deciphony/renderer'
+import type { KeySignatureTypeEnum, MusicScoreTypeEnum } from '@deciphony/renderer'
 import ScoreNotationTypeSelector from './ScoreNotationTypeSelector.vue'
+import ScoreTransposeControl from './ScoreTransposeControl.vue'
+import ScoreSemitoneShiftButtons from './ScoreSemitoneShiftButtons.vue'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
 import ScoreToneColorAdjuster from './ScoreToneColorAdjuster.vue'
 import BeginnerSettingsDialog from './BeginnerSettingsDialog.vue'
@@ -17,10 +20,14 @@ import BeginnerSettingsDialog from './BeginnerSettingsDialog.vue'
 defineProps<{
   notationType: MusicScoreTypeEnum
   notationTypeDisabled?: boolean
+  currentKey: KeySignatureTypeEnum
+  transposeDisabled?: boolean
 }>()
 
 const emit = defineEmits<{
   'notation-type-change': [value: MusicScoreTypeEnum]
+  transpose: [payload: { toKey: KeySignatureTypeEnum }]
+  'semitone-shift': [semitones: 1 | -1]
 }>()
 
 const { t } = useI18n()
@@ -28,6 +35,7 @@ const { t } = useI18n()
 const playback = inject(beginnerPlaybackKey)
 const playStore = usePlayStore()
 const { volume } = storeToRefs(playStore)
+const settings = useBeginnerSettingsStore()
 
 if (!playback) {
   throw new Error('BeginnerModeToolbar requires beginnerPlayback from forBeginner.vue')
@@ -115,12 +123,28 @@ onBeforeUnmount(() => {
           />
         </div>
       </div>
-      <ScoreToneColorAdjuster :disabled="toneColorDisabled" />
+      <ScoreToneColorAdjuster :disabled="toneColorDisabled" score-option />
       <ScoreNotationTypeSelector
         :model-value="notationType"
         :disabled="notationTypeDisabled"
         @change="emit('notation-type-change', $event)"
       />
+      <ScoreTransposeControl
+        :current-key="currentKey"
+        :disabled="transposeDisabled || notationTypeDisabled"
+        @transpose="emit('transpose', $event)"
+      />
+      <ScoreSemitoneShiftButtons
+        :disabled="transposeDisabled || notationTypeDisabled"
+        @shift="emit('semitone-shift', $event)"
+      />
+      <button type="button" class="score-toolbar__btn" @click="settings.hideScore = !settings.hideScore">
+        <el-icon>
+          <View v-if="settings.hideScore" />
+          <Hide v-else />
+        </el-icon>
+        <span>{{ settings.hideScore ? t('beginner.toolbar.showScore') : t('beginner.toolbar.hideScore') }}</span>
+      </button>
     </template>
   </ScoreToolbarShell>
 

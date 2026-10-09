@@ -1,6 +1,59 @@
 export default {
   tools: {
     title: '工具',
+    metronome: {
+      title: '节拍器',
+      desc: '垂直刻度调节 BPM，可改拍号与音量并循环播放',
+      timeSignature: '拍号',
+      volume: '音量',
+      play: '播放',
+      stop: '停止'
+    },
+    guitarTune: {
+      title: '调弦',
+      desc: '吉他、贝斯、尤克里里，听音偏高偏低提示拧弦',
+      instrument: '乐器',
+      instruments: {
+        guitarStandard: '吉他：标准',
+        bass4: '四弦贝斯',
+        ukulele: '尤克里里'
+      },
+      start: '开始检测',
+      stop: '停止',
+      unsupported: '当前环境不支持麦克风采集',
+      hint: '当前：第 {string} 弦 {note}，拨空弦对照指示',
+      stringN: '第 {n} 弦',
+      tuneUp: '调高！',
+      tuneDown: '调低！',
+      inTune: '准确！',
+      listening: '聆听中…',
+      calculating: '计算中…',
+      flatSide: '偏低',
+      sharpSide: '偏高',
+      target: '目标 · 第 {string} 弦 {note}'
+    },
+    pitch: {
+      title: '音高检测',
+      desc: '麦克风实时识别音名、频率与 MIDI',
+      controls: '检测控制',
+      start: '开始检测',
+      stop: '停止',
+      readout: '实时结果',
+      frequency: '频率',
+      silenceThreshold: '静音门限',
+      silenceHint: '环境吵可调高，减少误检',
+      hint: '点击开始后允许麦克风，对着唱或弹奏即可',
+      waiting: '聆听中…发出稳定音高试试',
+      unsupported: '当前环境不支持麦克风采集',
+      bands: {
+        bass: '男低音',
+        averageMale: '普通男性',
+        tenor: '男高音',
+        alto: '女低音',
+        averageFemale: '普通女性',
+        soprano: '女高音'
+      }
+    },
     mic: {
       title: '麦克风检测',
       desc: '授权后查看实时波形与音量，确认麦克风可用',

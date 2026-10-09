@@ -149,7 +149,16 @@ export function drawWaterfallNormalLayer(input: DrawWaterfallNormalLayerInput) {
     command.getShape(styleInput as WaterfallColumnStyleInput)
   )
 
-  drawLayerWithUnifiedColumnClip(ctx, width, height, dpr, time, columns, command.drawBackground)
+  drawLayerWithUnifiedColumnClip(
+    ctx,
+    width,
+    height,
+    dpr,
+    time,
+    columns,
+    command.drawBackground,
+    command.drawColumns
+  )
 }
 
 /** 第三层：整层背景一次 + 所有 active 水柱统一 clip */
@@ -200,5 +209,14 @@ export function drawWaterfallActiveLayer(input: DrawWaterfallActiveLayerInput) {
     command.getShape(styleInput as { start: number; end: number; columnHeightConstant: number })
   )
 
-  drawLayerWithUnifiedColumnClip(ctx, width, height, dpr, time, columns, command.drawBackground)
+  drawLayerWithUnifiedColumnClip(
+    ctx,
+    width,
+    height,
+    dpr,
+    time,
+    columns,
+    command.drawBackground,
+    command.drawColumns
+  )
 }

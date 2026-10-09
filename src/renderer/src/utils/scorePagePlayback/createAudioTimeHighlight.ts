@@ -3,6 +3,7 @@ import {
   buildFlattenStaffRows,
   collectHighlightIdsAtTime,
   createNotePassMap,
+  hasTimedFlattenSlots,
   resetNotePassMap,
   type FlattenStaffRow,
   type NotePassMap
@@ -58,9 +59,16 @@ export function createAudioTimeHighlight(deps: {
     lastHighlightIds = ids
   }
 
-  function syncAtTime(currentSec: number) {
+  function syncAtTime(currentSec: number): string[] {
     const rows = ensureRows()
-    applyHighlightIds(collectHighlightIdsAtTime(rows, currentSec, notePassMap))
+    const ids = collectHighlightIdsAtTime(rows, currentSec, notePassMap)
+    applyHighlightIds(ids)
+    return ids
+  }
+
+  /** 当前 timeProp 下是否已有谱音同步时间（未同步时高亮会空，避免「全亮」误导） */
+  function hasTimedSlots(): boolean {
+    return hasTimedFlattenSlots(ensureRows())
   }
 
   /** 停止 / 自然结束：清高亮，遍次 map 置 0（反复再播从第一遍起） */
@@ -80,6 +88,7 @@ export function createAudioTimeHighlight(deps: {
     syncAtTime,
     reset,
     prepare,
+    hasTimedSlots,
     notePassMap
   }
 }

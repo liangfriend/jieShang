@@ -4,12 +4,35 @@ import { getDrPlaySequence } from '@deciphony/extensions/dr-play'
 import { buildFlattenStaffRows } from '@deciphony/extensions/dr-time-offset'
 import { SCORE_TIME_OFFSET_PROP } from '@renderer/constant/scoreTimeOffset'
 import { PLAY_SOURCE, type PlaySource } from '@renderer/constant/playSource'
+import { resolvePlayBpm } from '@renderer/constant/play'
+import { buildNoteStaveIndexMap } from '@renderer/utils/staffNotes'
 
-/** 秒 → Unit256（与 tune-judge 一致：四分=64） */
+/** 秒 → Unit256（与 tune-judge 一致：四分音符=64） */
 export function secondsToUnit256(seconds: number, bpm: number): number {
   if (!Number.isFinite(seconds) || seconds < 0) return 0
   const b = Number.isFinite(bpm) && bpm > 0 ? bpm : 120
   return (seconds * 64 * b) / 60
+}
+
+function noteIdOfSequenceItem(item: Sequence[number]): string | null {
+  const data = item.data
+  if (!data || typeof data !== 'object') return null
+  const id = (data as { note_id?: unknown }).note_id
+  return typeof id === 'string' && id.trim() ? id : null
+}
+
+/** 只保留指定单谱表行的判分音符 */
+export function filterTuneJudgeSequenceByStaff(
+  score: MusicScore,
+  seq: Sequence,
+  staffIndex: number
+): Sequence {
+  const map = buildNoteStaveIndexMap(score)
+  return seq.filter((item) => {
+    const id = noteIdOfSequenceItem(item)
+    if (!id) return false
+    return map.get(id) === staffIndex
+  })
 }
 
 function toScoreJudgeSequence(score: MusicScore): Sequence {
@@ -37,7 +60,8 @@ type TimedSlot = {
 function toTimePropJudgeSequence(
   score: MusicScore,
   timeProp: string,
-  bpm: number
+  bpm: number,
+  singleStaffIndex?: number
 ): Sequence {
   const drSeq = getDrPlaySequence(score)
   const midiById = new Map<string, number>()
@@ -49,7 +73,9 @@ function toTimePropJudgeSequence(
 
   const rows = buildFlattenStaffRows(score, timeProp)
   const timed: TimedSlot[] = []
-  for (const row of rows) {
+  for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+    if (singleStaffIndex != null && rowIndex !== singleStaffIndex) continue
+    const row = rows[rowIndex]!
     for (const slot of row.slots) {
       const notes: TimedSlot['notes'] = []
       if (!slot.isRest) {
@@ -60,6 +86,7 @@ function toTimePropJudgeSequence(
         }
         if (!notes.length) continue
       }
+      if (slot.time == null) continue
       const leadId = slot.highlightIds[0]
       timed.push({
         timeSec: slot.time,
@@ -102,15 +129,35 @@ export function timePropForSingingSource(source: PlaySource): string | null {
   return null
 }
 
-/** 按音源生成 tune-judge Sequence */
+export type ToTuneJudgeSequenceOptions = {
+  /** 只纳入该单谱表行（演唱默认 0）；不传则保留全部 */
+  singleStaffIndex?: number
+}
+
+/** 按音源生成 tune-judge Sequence；bpm 为四分音符基准 */
 export function toTuneJudgeSequence(
   score: MusicScore,
   playSource: PlaySource,
-  bpm = score.bpm ?? 120
+  bpm = resolvePlayBpm(score),
+  options: ToTuneJudgeSequenceOptions = {}
 ): Sequence {
   const prop = timePropForSingingSource(playSource)
-  if (!prop) return toScoreJudgeSequence(score)
-  return toTimePropJudgeSequence(score, prop, bpm)
+  const staff = options.singleStaffIndex
+  if (!prop) {
+    const raw = toScoreJudgeSequence(score)
+    return staff == null ? raw : filterTuneJudgeSequenceByStaff(score, raw, staff)
+  }
+  return toTimePropJudgeSequence(score, prop, bpm, staff)
+}
+
+/** 将整段序列 playTime 整体延后（Unit256），用于倒计时/预备拍对齐 */
+export function offsetTuneJudgeSequence(seq: Sequence, offsetUnit256: number): Sequence {
+  const offset = Number.isFinite(offsetUnit256) ? offsetUnit256 : 0
+  if (offset <= 0) return seq
+  return seq.map((item) => ({
+    ...item,
+    playTime: item.playTime + offset
+  }))
 }
 
 export function sequenceEndUnit256(seq: Sequence): number {

@@ -11,6 +11,24 @@ const router = useRouter()
 
 const items = computed(() => [
   {
+    route: 'guitarTuneTool' as const,
+    title: t('tools.guitarTune.title'),
+    desc: t('tools.guitarTune.desc'),
+    tint: '#ffe0c8'
+  },
+  {
+    route: 'metronomeTool' as const,
+    title: t('tools.metronome.title'),
+    desc: t('tools.metronome.desc'),
+    tint: '#ffe8c8'
+  },
+  {
+    route: 'pitchTool' as const,
+    title: t('tools.pitch.title'),
+    desc: t('tools.pitch.desc'),
+    tint: '#d8ffe8'
+  },
+  {
     route: 'micTool' as const,
     title: t('tools.mic.title'),
     desc: t('tools.mic.desc'),
@@ -54,13 +72,15 @@ function open(routeName: (typeof items.value)[number]['route']) {
 
 <style scoped>
 .tools-page {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: linear-gradient(145deg, #fff5f9 0%, #f3ebff 45%, #e8f4ff 100%);
 }
 
 .tools-page__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -78,6 +98,8 @@ function open(routeName: (typeof items.value)[number]['route']) {
 
 .tools-page__main {
   flex: 1;
+  min-height: 0;
+  overflow: auto;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;

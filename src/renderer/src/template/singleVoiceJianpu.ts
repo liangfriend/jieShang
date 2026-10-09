@@ -1,20 +1,20 @@
-import { MusicScore, MusicScoreTypeEnum } from '@deciphony/renderer'
+import type { MusicScore } from '@deciphony/renderer'
+import { createGrandStaff } from '@deciphony/extensions/dr-edit/score-builder'
 import {
-  createGrandStaff,
-  createMeasure,
-  createMusicScore,
-  createSingleStaff
-} from '@deciphony/extensions/dr-edit/score-builder'
+  createJianpuMeasure,
+  createJianpuMusicScore,
+  createJianpuSingleStaff
+} from './jianpuFactory'
 
 const GRAND_STAFF_COUNT = 4
 const MEASURES_PER_STAFF = 4
 
 function createSingleVoiceJianpuGrandStaff() {
-  const grandStaff = createGrandStaff({ withDefaultStaff: false })
-  const singleStaff = createSingleStaff({ withDefaultMeasure: false })
+  const grandStaff = createGrandStaff({ withDefaultStaff: false, linkedStaff: true })
+  const singleStaff = createJianpuSingleStaff()
 
   for (let i = 0; i < MEASURES_PER_STAFF; i++) {
-    singleStaff.measures.push(createMeasure())
+    singleStaff.measures.push(createJianpuMeasure())
   }
 
   grandStaff.staves.push(singleStaff)
@@ -22,11 +22,7 @@ function createSingleVoiceJianpuGrandStaff() {
 }
 
 export function buildSingleVoiceJianpuScore(): MusicScore {
-  const data = createMusicScore({
-    height: 10000,
-    width: 800,
-    type: MusicScoreTypeEnum.NumberNotation
-  })
+  const data = createJianpuMusicScore()
 
   for (let i = 0; i < GRAND_STAFF_COUNT; i++) {
     data.grandStaffs.push(createSingleVoiceJianpuGrandStaff())
@@ -35,4 +31,4 @@ export function buildSingleVoiceJianpuScore(): MusicScore {
   return data
 }
 
-export default buildSingleVoiceJianpuScore()
+export default buildSingleVoiceJianpuScore

@@ -39,7 +39,7 @@ defineOptions({
 const { skin } = usePerformSkin()
 
 const emit = defineEmits<{
-  /** 单个音符评分完成：评分结果、实时分、总分、第三个附加参数(noteInfo id) */
+  /** 单个音符评分完成：结果、实时分、进度、noteInfo id */
   (e: 'score', result: NoteScoreResult, realScore: number, totalScore: number, info: any): void
 }>()
 
@@ -367,7 +367,8 @@ const stats = computed(() => {
   const total = flatNotes.value.length
   const judged = noteScores.value.size
   const earned = (early + late) * 50 + pass * 60 + good * 80 + perfect * 100
-  const totalScore = total ? (earned / (total * 100)) * 100 : 0
+  /** 进度：已判定音符占比（含 miss），与得分无关 */
+  const totalScore = total ? (judged / total) * 100 : 0
   const realScore = judged ? (earned / (judged * 100)) * 100 : 0
   return { total, miss, early, late, pass, good, perfect, judged, realScore, totalScore }
 })

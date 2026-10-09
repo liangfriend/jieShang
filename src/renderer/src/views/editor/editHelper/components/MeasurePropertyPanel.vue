@@ -5,6 +5,7 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   resolveBarlineLabel,
+  resolveBracketTypeLabel,
   resolveClefLabel,
   resolveEndRepeatLabel,
   resolveKeySignatureLabel,
@@ -22,8 +23,6 @@ import {
   insertMeasureBefore,
   KEY_SIGNATURE_VALUES,
   removeVolta,
-  setMeasureBarlineB,
-  setMeasureBarlineF,
   setMeasureClefB,
   setMeasureClefF,
   setMeasureEndRepeat,
@@ -32,11 +31,22 @@ import {
   setMeasureStartRepeat,
   setMeasureTimeSignatureB,
   setMeasureTimeSignatureF,
+  setSlotBarlineB,
+  setSlotBarlineF,
   START_REPEAT_VALUES,
   TIME_SIGNATURE_VALUES,
   type MeasureEditSlot
 } from '../renderEditMeasureProperties'
 import { VOLTA_SPAN_OPTIONS, tryAddVoltaFromMeasure, type VoltaSpan } from '../renderEditVoltaAdd'
+import {
+  BRACKET_TYPE_SELECT_VALUES,
+  setGrandStaffBracketType
+} from '../renderEditBracketProperties'
+import type { BracketTypeEnum } from '@deciphony/renderer'
+
+import { isTabNotationType } from '@renderer/utils/isTabNotation'
+import PanelField from './panel/PanelField.vue'
+import PanelGroup from './panel/PanelGroup.vue'
 
 const props = defineProps<{
   editSlot: SlotData
@@ -47,18 +57,33 @@ const { t } = useI18n()
 const measureEditSlot = computed(() => props.editSlot as MeasureEditSlot)
 const measure = computed(() => measureEditSlot.value.measure as Measure)
 const musicScore = computed(() => measureEditSlot.value.musicScore)
-const showClef = computed(
-  () => musicScore.value.type !== MusicScoreTypeEnum.NumberNotation,
+const isNumberNotation = computed(
+  () => musicScore.value.type === MusicScoreTypeEnum.NumberNotation
+)
+const isTabNotation = computed(() => isTabNotationType(musicScore.value.type))
+const isDrumNotation = computed(
+  () => musicScore.value.type === MusicScoreTypeEnum.DrumNotation
+)
+/** 鼓谱仍可编辑打击乐谱号；简谱 / Tab 不编辑谱号 */
+const showClef = computed(() => !isNumberNotation.value && !isTabNotation.value)
+/** 简谱 / Tab / 鼓谱小节不编辑调号；拍号只编辑小节自身的 timeSignature_f */
+const showMeasureKey = computed(
+  () => !isNumberNotation.value && !isTabNotation.value && !isDrumNotation.value
+)
+const showMeasureBackKeyTime = computed(
+  () => !isNumberNotation.value && !isTabNotation.value && !isDrumNotation.value
 )
 
 const barlineB = computed({
-  get: () => measure.value.barline_b?.type ?? BarlineTypeEnum.Single_barline,
-  set: (v) => setMeasureBarlineB(measure.value, v)
+  get: (): BarlineTypeEnum | '' => measure.value.barline_b?.type ?? '',
+  set: (v: BarlineTypeEnum | '' | null | undefined) =>
+    setSlotBarlineB(measureEditSlot.value, v ? v : null)
 })
 
 const barlineF = computed({
-  get: () => measure.value.barline_f?.type ?? '',
-  set: (v) => setMeasureBarlineF(measure.value, v === '' ? null : v)
+  get: (): BarlineTypeEnum | '' => measure.value.barline_f?.type ?? '',
+  set: (v: BarlineTypeEnum | '' | null | undefined) =>
+    setSlotBarlineF(measureEditSlot.value, v ? v : null)
 })
 
 const clefF = computed({
@@ -101,6 +126,18 @@ const endRepeat = computed({
   set: (v) => setMeasureEndRepeat(measure.value, v === '' ? null : v)
 })
 
+const grandStaff = computed(() => measureEditSlot.value.grandStaff)
+const showBracket = computed(() => Boolean(grandStaff.value))
+
+const bracketType = computed({
+  get: (): BracketTypeEnum | '' => grandStaff.value?.bracket?.type ?? '',
+  set: (v: BracketTypeEnum | '' | null | undefined) => {
+    const gs = grandStaff.value
+    if (!gs) return
+    setGrandStaffBracketType(gs, v ?? '')
+  }
+})
+
 const voltaAtMeasure = computed(() => findVoltaAtMeasure(musicScore.value, measure.value.id))
 const voltaText = ref('')
 const voltaValueText = ref('')
@@ -141,237 +178,171 @@ function onRemoveVolta() {
 
 <template>
   <div class="measure-props">
-    <section class="measure-props__section">
-      <div class="measure-props__label">{{ t('editor.measure.actions') }}</div>
-      <div class="measure-props__row">
+    <PanelGroup :title="t('editor.panelGroup.structure')">
+      <div class="measure-props__grid">
         <el-button size="small" @click="onInsertBefore">{{ t('editor.measure.insertBefore') }}</el-button>
         <el-button size="small" @click="onInsertAfter">{{ t('editor.measure.insertAfter') }}</el-button>
       </div>
-    </section>
+      <PanelField v-if="showBracket" :label="t('editor.bracket.type')">
+        <el-select v-model="bracketType" clearable :placeholder="t('common.none')" size="small">
+          <el-option
+            v-for="value in BRACKET_TYPE_SELECT_VALUES"
+            :key="value || 'none'"
+            :label="resolveBracketTypeLabel(value)"
+            :value="value"
+          />
+        </el-select>
+      </PanelField>
+    </PanelGroup>
 
-    <section class="measure-props__section">
-      <div class="measure-props__label">{{ t('editor.measure.barlineBack') }}</div>
-      <el-select v-model="barlineB" class="measure-props__select" size="small">
-        <el-option
-          v-for="value in BARLINE_B_VALUES"
-          :key="value"
-          :label="resolveBarlineLabel(value)"
-          :value="value"
-        />
-      </el-select>
-    </section>
+    <PanelGroup :title="t('editor.panelGroup.barline')">
+      <PanelField :label="t('editor.measure.barlineFront')">
+        <el-select v-model="barlineF" clearable :placeholder="t('common.none')" size="small">
+          <el-option
+            v-for="value in BARLINE_F_VALUES"
+            :key="value"
+            :label="resolveBarlineLabel(value)"
+            :value="value"
+          />
+        </el-select>
+      </PanelField>
+      <PanelField :label="t('editor.measure.barlineBack')">
+        <el-select v-model="barlineB" clearable :placeholder="t('common.none')" size="small">
+          <el-option
+            v-for="value in BARLINE_B_VALUES"
+            :key="value"
+            :label="resolveBarlineLabel(value)"
+            :value="value"
+          />
+        </el-select>
+      </PanelField>    </PanelGroup>
 
-    <section class="measure-props__section">
-      <div class="measure-props__label">{{ t('editor.measure.barlineFront') }}</div>
-      <el-select
-        v-model="barlineF"
-        class="measure-props__select"
-        clearable
-        :placeholder="t('common.none')"
-        size="small"
-      >
-        <el-option
-          v-for="value in BARLINE_F_VALUES"
-          :key="value"
-          :label="resolveBarlineLabel(value)"
-          :value="value"
-        />
-      </el-select>
-    </section>
+    <PanelGroup :title="t('editor.panelGroup.front')">
+      <PanelField v-if="showClef" :label="t('editor.measure.fieldClef')">
+        <el-select v-model="clefF" clearable :placeholder="t('common.none')" size="small">
+          <el-option
+            v-for="value in CLEF_VALUES"
+            :key="value"
+            :label="resolveClefLabel(value)"
+            :value="value"
+          />
+        </el-select>
+      </PanelField>
+      <PanelField v-if="showMeasureKey" :label="t('editor.measure.fieldKeySignature')">
+        <el-select v-model="keySignatureF" clearable :placeholder="t('common.none')" size="small">
+          <el-option
+            v-for="value in KEY_SIGNATURE_VALUES"
+            :key="value"
+            :label="resolveKeySignatureLabel(value)"
+            :value="value"
+          />
+        </el-select>
+      </PanelField>
+      <PanelField :label="t('editor.measure.fieldTimeSignature')">
+        <el-select v-model="timeSignatureF" clearable :placeholder="t('common.none')" size="small">
+          <el-option
+            v-for="value in TIME_SIGNATURE_VALUES"
+            :key="value"
+            :label="resolveTimeSignatureLabel(value)"
+            :value="value"
+          />
+        </el-select>
+      </PanelField>
+    </PanelGroup>
 
-    <section v-if="showClef" class="measure-props__section">
-      <div class="measure-props__label">{{ t('editor.measure.clefFront') }}</div>
-      <el-select
-        v-model="clefF"
-        class="measure-props__select"
-        clearable
-        :placeholder="t('common.none')"
-        size="small"
-      >
-        <el-option
-          v-for="value in CLEF_VALUES"
-          :key="value"
-          :label="resolveClefLabel(value)"
-          :value="value"
-        />
-      </el-select>
-    </section>
+    <PanelGroup v-if="showClef || showMeasureBackKeyTime" :title="t('editor.panelGroup.back')">
+      <PanelField v-if="showClef" :label="t('editor.measure.fieldClef')">
+        <el-select v-model="clefB" clearable :placeholder="t('common.none')" size="small">
+          <el-option
+            v-for="value in CLEF_VALUES"
+            :key="value"
+            :label="resolveClefLabel(value)"
+            :value="value"
+          />
+        </el-select>
+      </PanelField>
+      <PanelField v-if="showMeasureBackKeyTime" :label="t('editor.measure.fieldKeySignature')">
+        <el-select v-model="keySignatureB" clearable :placeholder="t('common.none')" size="small">
+          <el-option
+            v-for="value in KEY_SIGNATURE_VALUES"
+            :key="value"
+            :label="resolveKeySignatureLabel(value)"
+            :value="value"
+          />
+        </el-select>
+      </PanelField>
+      <PanelField v-if="showMeasureBackKeyTime" :label="t('editor.measure.fieldTimeSignature')">
+        <el-select v-model="timeSignatureB" clearable :placeholder="t('common.none')" size="small">
+          <el-option
+            v-for="value in TIME_SIGNATURE_VALUES"
+            :key="value"
+            :label="resolveTimeSignatureLabel(value)"
+            :value="value"
+          />
+        </el-select>
+      </PanelField>
+    </PanelGroup>
 
-    <section class="measure-props__section">
-      <div class="measure-props__label">{{ t('editor.measure.keySignatureFront') }}</div>
-      <el-select
-        v-model="keySignatureF"
-        class="measure-props__select"
-        clearable
-        :placeholder="t('common.none')"
-        size="small"
-      >
-        <el-option
-          v-for="value in KEY_SIGNATURE_VALUES"
-          :key="value"
-          :label="resolveKeySignatureLabel(value)"
-          :value="value"
-        />
-      </el-select>
-    </section>
-
-    <section class="measure-props__section">
-      <div class="measure-props__label">{{ t('editor.measure.timeSignatureFront') }}</div>
-      <el-select
-        v-model="timeSignatureF"
-        class="measure-props__select"
-        clearable
-        :placeholder="t('common.none')"
-        size="small"
-      >
-        <el-option
-          v-for="value in TIME_SIGNATURE_VALUES"
-          :key="value"
-          :label="resolveTimeSignatureLabel(value)"
-          :value="value"
-        />
-      </el-select>
-    </section>
-
-    <section v-if="showClef" class="measure-props__section">
-      <div class="measure-props__label">{{ t('editor.measure.clefBack') }}</div>
-      <el-select
-        v-model="clefB"
-        class="measure-props__select"
-        clearable
-        :placeholder="t('common.none')"
-        size="small"
-      >
-        <el-option
-          v-for="value in CLEF_VALUES"
-          :key="value"
-          :label="resolveClefLabel(value)"
-          :value="value"
-        />
-      </el-select>
-    </section>
-
-    <section class="measure-props__section">
-      <div class="measure-props__label">{{ t('editor.measure.keySignatureBack') }}</div>
-      <el-select
-        v-model="keySignatureB"
-        class="measure-props__select"
-        clearable
-        :placeholder="t('common.none')"
-        size="small"
-      >
-        <el-option
-          v-for="value in KEY_SIGNATURE_VALUES"
-          :key="value"
-          :label="resolveKeySignatureLabel(value)"
-          :value="value"
-        />
-      </el-select>
-    </section>
-
-    <section class="measure-props__section">
-      <div class="measure-props__label">{{ t('editor.measure.timeSignatureBack') }}</div>
-      <el-select
-        v-model="timeSignatureB"
-        class="measure-props__select"
-        clearable
-        :placeholder="t('common.none')"
-        size="small"
-      >
-        <el-option
-          v-for="value in TIME_SIGNATURE_VALUES"
-          :key="value"
-          :label="resolveTimeSignatureLabel(value)"
-          :value="value"
-        />
-      </el-select>
-    </section>
-
-    <section class="measure-props__section">
-      <div class="measure-props__label">{{ t('editor.measure.startRepeat') }}</div>
-      <el-select
-        v-model="startRepeat"
-        class="measure-props__select"
-        clearable
-        :placeholder="t('common.none')"
-        size="small"
-      >
-        <el-option
-          v-for="value in START_REPEAT_VALUES"
-          :key="value"
-          :label="resolveStartRepeatLabel(value)"
-          :value="value"
-        />
-      </el-select>
-    </section>
-
-    <section class="measure-props__section">
-      <div class="measure-props__label">{{ t('editor.measure.endRepeat') }}</div>
-      <el-select
-        v-model="endRepeat"
-        class="measure-props__select"
-        clearable
-        :placeholder="t('common.none')"
-        size="small"
-      >
-        <el-option
-          v-for="value in END_REPEAT_VALUES"
-          :key="value"
-          :label="resolveEndRepeatLabel(value)"
-          :value="value"
-        />
-      </el-select>
-    </section>
-
-    <section class="measure-props__section">
-      <div class="measure-props__label">{{ t('editor.measure.volta') }}</div>
-      <template v-if="voltaAtMeasure">
+    <PanelGroup :title="t('editor.panelGroup.repeat')">
+      <PanelField :label="t('editor.measure.startRepeat')">
+        <el-select v-model="startRepeat" clearable :placeholder="t('common.none')" size="small">
+          <el-option
+            v-for="value in START_REPEAT_VALUES"
+            :key="value"
+            :label="resolveStartRepeatLabel(value)"
+            :value="value"
+          />
+        </el-select>
+      </PanelField>
+      <PanelField :label="t('editor.measure.endRepeat')">
+        <el-select v-model="endRepeat" clearable :placeholder="t('common.none')" size="small">
+          <el-option
+            v-for="value in END_REPEAT_VALUES"
+            :key="value"
+            :label="resolveEndRepeatLabel(value)"
+            :value="value"
+          />
+        </el-select>
+      </PanelField>
+      <PanelField :label="t('editor.measure.volta')" stacked>
         <el-button
+          v-if="voltaAtMeasure"
           class="measure-props__btn-block"
           size="small"
           type="danger"
+          plain
           @click="onRemoveVolta"
         >
           {{ t('editor.measure.removeVolta') }}
         </el-button>
-      </template>
-      <div v-else class="measure-props__row">
-        <el-button
-          v-for="span in VOLTA_SPAN_OPTIONS"
-          :key="span"
-          size="small"
-          @click="onAddVolta(span)"
-        >
-          {{ span }}
-        </el-button>
-      </div>
-    </section>
+        <div v-else class="measure-props__grid measure-props__grid--5">
+          <el-button
+            v-for="span in VOLTA_SPAN_OPTIONS"
+            :key="span"
+            size="small"
+            @click="onAddVolta(span)"
+          >
+            {{ span }}
+          </el-button>
+        </div>
+      </PanelField>
+    </PanelGroup>
   </div>
 </template>
 
 <style scoped>
-.measure-props__section {
-  margin-bottom: 14px;
+.measure-props__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
 }
 
-.measure-props__label {
-  margin-bottom: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #606266;
+.measure-props__grid--5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
-.measure-props__row {
-  display: flex;
-  gap: 8px;
-}
-
-.measure-props__select {
-  width: 100%;
-}
-
-.measure-props__input {
-  margin-bottom: 6px;
+.measure-props__grid :deep(.el-button + .el-button) {
+  margin-left: 0;
 }
 
 .measure-props__btn-block {

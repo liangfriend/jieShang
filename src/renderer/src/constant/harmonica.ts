@@ -35,6 +35,12 @@ export type HarmonicaModel = {
   defaultMouthHoles: number
 }
 
+/** 平缓模式：起音 A/D + 抬键 R（秒） */
+export const HARMONICA_SMOOTH_ATTACK_SEC = 0.04
+export const HARMONICA_SMOOTH_DECAY_SEC = 0.08
+export const HARMONICA_SMOOTH_PEAK_VOLUME = 1.15
+export const HARMONICA_SMOOTH_RELEASE_SEC = 0.22
+
 export const HARMONICA_COLLECTION_ID = 22
 
 export const HARMONICA_PREF_STORAGE_KEY = 'jieShang.harmonicaSimPrefs'
@@ -42,6 +48,8 @@ export const HARMONICA_PREF_STORAGE_KEY = 'jieShang.harmonicaSimPrefs'
 export type HarmonicaSimPrefs = {
   modelId: HarmonicaModelId
   mouthHoles: number
+  /** 平缓：抬键用 ADSR 软释放 */
+  smoothEnvelope?: boolean
 }
 
 /** 10 孔 C 调布鲁斯（Richter），C3 起 */
@@ -130,7 +138,8 @@ export function holeSlotWidth(model: HarmonicaModel): number {
 export function loadHarmonicaPrefs(): HarmonicaSimPrefs {
   const fallback: HarmonicaSimPrefs = {
     modelId: DEFAULT_HARMONICA_MODEL_ID,
-    mouthHoles: HARMONICA_MODELS[DEFAULT_HARMONICA_MODEL_ID].defaultMouthHoles
+    mouthHoles: HARMONICA_MODELS[DEFAULT_HARMONICA_MODEL_ID].defaultMouthHoles,
+    smoothEnvelope: false
   }
   try {
     const raw = localStorage.getItem(HARMONICA_PREF_STORAGE_KEY)
@@ -144,7 +153,8 @@ export function loadHarmonicaPrefs(): HarmonicaSimPrefs {
       mouthHoles:
         Number.isFinite(mouth) && mouth > 0
           ? Math.min(12, Math.max(0.5, mouth))
-          : HARMONICA_MODELS[modelId].defaultMouthHoles
+          : HARMONICA_MODELS[modelId].defaultMouthHoles,
+      smoothEnvelope: Boolean(parsed.smoothEnvelope)
     }
   } catch {
     return fallback

@@ -206,12 +206,7 @@ function formatPercent(value: number) {
           @select="selectPitch"
         />
 
-        <button
-          v-if="phase === 'question'"
-          type="button"
-          class="ghost-btn pitch-stage__abort"
-          @click="backToSetup"
-        >
+        <button type="button" class="ghost-btn pitch-stage__abort" @click="backToSetup">
           {{ t('absolutePitchTest.question.abort') }}
         </button>
       </section>

@@ -5,6 +5,15 @@ export default {
       heading: '测试设置',
       beats: '拍数',
       beatsOption: '{count} 拍',
+      beatUnit: '节拍单位',
+      beatUnitOption: {
+        1: '全音符',
+        2: '二分音符',
+        4: '四分音符',
+        8: '八分音符'
+      },
+      bpmRange: 'BPM 范围：{min} - {max}',
+      bpmHint: '每轮在范围内随机取速度（BPM 以四分音符计）',
       rounds: '轮次',
       start: '开始测试'
     },

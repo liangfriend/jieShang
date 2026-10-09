@@ -17,18 +17,97 @@ export default {
     settings: '设置',
     import: '导入',
     export: '导出',
+    volume: '音量',
+    annotate: {
+      start: '绘制',
+      pen: '画笔',
+      eraser: '橡皮',
+      clear: '清空标注',
+      hint: '展示模式临时标注，不写入作品文件；换页保留，清空仅清当前页'
+    },
+    range: {
+      title: '选段',
+      start: '选段',
+      end: '结束选段',
+      clear: '清空选段',
+      play: '播放选段',
+      pickStart: '点击音符设置起始音符',
+      pickEnd: '再点击一个音符设置结束音符',
+      ready: '已选好，可以播放；再点音符会重设起点',
+      incomplete: '请先点击音符选择起始和结束音符'
+    },
     saveSuccess: '保存成功',
     saveFailed: '保存失败',
     exportSuccess: '导出成功',
+    exportFailed: '导出失败',
+    exportProgress: '{text} {done} / {total} 页',
+    exportFormat: {
+      sjw: '解熵作品 (.sjw)',
+      images: '图片',
+      pdf: 'PDF'
+    },
     importSuccess: '导入成功',
     importFailed: '导入失败',
     applyPageSizeSuccess: '已将全部页面改为该尺寸',
+    applyCurrentPageSizeSuccess: '已更改当前页尺寸',
     settingsDialog: {
       title: '作品设置',
-      newPageSize: '新页大小',
+      defaultPageSize: '默认页',
+      currentPageSize: '当前页',
+      applyDefault: '保存',
+      applyCurrent: '应用',
       applyAll: '全页应用',
-      hint: '数字为新页默认宽高；「全页应用」会立刻改写当前作品每一页的尺寸。',
-      confirm: '确定'
+      defaultHint: '「保存」写入本机默认，之后加页、插入页与新建作品首页都会用该尺寸；「全页应用」会先写入默认，再改当前作品每一页。',
+      currentHint: '「应用」只改当前这一页；「全页应用」把这一行的尺寸应用到当前作品每一页。',
+      standardSize: '标准规格',
+      standardPlaceholder: '选择规格',
+      standardGroup: {
+        paper: '纸张',
+        screen: '屏幕'
+      },
+      portrait: '竖版',
+      landscape: '横版',
+      standardHint: '纸张按 96 DPI 换算像素。「应用」只改当前这一页；「全页应用」把所选规格应用到当前作品每一页。',
+      applyDefaultSuccess: '已设为默认页大小'
+    },
+    props: {
+      title: '属性',
+      score: '曲谱',
+      image: '图片',
+      frame: '位置与尺寸',
+      width: '宽',
+      height: '高',
+      rotation: '旋转',
+      lockRatio: '锁定比例',
+      info: '信息',
+      assetName: '名称',
+      vocal: '范唱',
+      accompaniment: '伴奏',
+      none: '无',
+      scoreSize: '曲谱尺寸',
+      sourceSize: '原始尺寸',
+      sourceUnknown: '首次裁剪时读取',
+      crop: '裁剪',
+      cropMode: '拖拽裁剪',
+      finishCropMode: '完成裁剪',
+      cropModeHint: '进入后拖动橙色框四角调整保留区域，向外拖可恢复被裁部分；右键菜单也可进入。',
+      cropModeActiveHint: '拖动四角调整，下方坐标实时更新；按 Esc / Enter 或点空白处完成。',
+      bandCropHint: '按标题 / 复谱表区间裁剪：选起点与终点（先后不限），例如「标题」到「复谱表 2」。',
+      bandFrom: '起点',
+      bandTo: '终点',
+      bandTitle: '标题',
+      bandGrandStaff: '复谱表 {n}',
+      keepY: '锁定起始位置',
+      keepYHint: '开启后框的左上角不动，只缩小宽高；关闭则裁出区域留在页面原位（起点下移时框会下移）。与「保持框大小」同时开时以保持框大小为准。',
+      applyBandCrop: '按复谱表裁剪',
+      cropHint: '也可按原始尺寸坐标精确裁剪：起点与终点框出保留区域，修改后自动生效，再次裁剪仍按原始坐标计算。',
+      startX: '起点 X',
+      startY: '起点 Y',
+      endX: '终点 X',
+      endY: '终点 Y',
+      keepFrame: '保持框大小（拉伸铺满）',
+      clearCrop: '清除裁剪',
+      cropFailed: '裁剪失败'
     },
     saveDialog: {
       title: '保存作品',
@@ -41,7 +120,10 @@ export default {
     pages: {
       add: '加页',
       insert: '插入',
-      remove: '删页'
+      remove: '删页',
+      copy: '复制',
+      paste: '粘贴',
+      delete: '删除'
     },
     toolbar: {
       title: '工具',
@@ -51,8 +133,13 @@ export default {
       endDraw: '取消绘制',
       pen: '画笔',
       eraser: '橡皮',
+      penColor: '画笔颜色',
       lineWidth: '笔触大小',
       clearDrawings: '清空本页笔迹',
+      background: '页面背景',
+      backgroundHint: '从「我的图片」选取一张图，设为当前页背景',
+      setBackground: '设置背景',
+      clearBackground: '清除背景',
       assets: '素材库',
       assetsHint: '从本地图库 / 音频库选取，放到当前页 (100,100)',
       openAssets: '打开素材库',
@@ -65,6 +152,9 @@ export default {
       score: '添加曲谱',
       scoreSearch: '搜索曲谱',
       scoreScale: '缩放',
+      scoreSkin: '曲谱皮肤',
+      scoreSkinNone: '无',
+      scoreSkinLoadFailed: '皮肤加载失败，已按无皮肤添加',
       addScore: '确认添加',
       noScores: '暂无曲谱，请先去我的曲谱制作'
     },
@@ -73,10 +163,17 @@ export default {
       image: '图片',
       audio: '音频',
       video: '视频',
-      videoUnavailable: '视频元素尚在开发中，请先使用图片或音频',
       empty: '该分类暂无素材，请先到对应库上传',
       confirm: '添加到页面',
-      selectOne: '请先选择一项素材'
+      selectOne: '请先选择一项素材',
+      loadFailed: '素材加载失败'
+    },
+    background: {
+      pickerTitle: '设置页面背景',
+      pickerHint: '从「我的图片」选择一张图片作为当前页背景',
+      confirm: '设为背景',
+      setSuccess: '已设置页面背景',
+      clearSuccess: '已清除页面背景'
     },
     menu: {
       enlarge: '放大',
@@ -90,7 +187,11 @@ export default {
       playFailed: '播放失败',
       audioMissing: '找不到可播放的音频',
       scoreMissing: '找不到曲谱',
-      toneLoading: '音色加载中，请稍后再试'
+      toneLoading: '音色加载中，请稍后再试',
+      straighten: '扶正',
+      centerHorizontal: '水平居中',
+      restoreScoreProportion: '比例恢复',
+      restoreProportionFailed: '无法读取素材尺寸'
     }
   }
 } as const

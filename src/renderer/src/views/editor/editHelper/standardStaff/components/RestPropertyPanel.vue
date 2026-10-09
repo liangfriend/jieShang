@@ -1,8 +1,7 @@
 <script lang="ts" setup>
-import type {Chronaxie} from '@deciphony/renderer'
+import type {Chronaxie, MusicScore} from '@deciphony/renderer'
 import {computed} from 'vue'
 import { useI18n } from 'vue-i18n'
-import { resolveAugmentationDotLabel, resolveRestDurationLabel } from '@renderer/i18n/helpers'
 import {REST_CHRONAXIE_VALUES} from '../../renderEditAddNoteState'
 import {AUGMENTATION_DOT_VALUES} from '../renderEditNoteHeadProperties'
 import {
@@ -11,6 +10,14 @@ import {
   setNoteRestRelativeX,
   type RestEditSlot,
 } from '../renderEditRestProperties'
+import {readRelativeX} from '../renderEditFrameProperties'
+import NoteMarkPalette from '../../components/NoteMarkPalette.vue'
+import PanelField from '../../components/panel/PanelField.vue'
+import PanelGroup from '../../components/panel/PanelGroup.vue'
+import PanelSegmented from '../../components/panel/PanelSegmented.vue'
+import PanelTabs from '../../components/panel/PanelTabs.vue'
+import {useNoteSegmentOptions} from '../../components/panel/noteOptions'
+import {usePanelTab} from '../../components/panel/usePanelTab'
 import RelativeXOffsetControl from './RelativeXOffsetControl.vue'
 
 const props = defineProps<{
@@ -18,8 +25,16 @@ const props = defineProps<{
 }>()
 
 const { t } = useI18n()
+const options = useNoteSegmentOptions()
+const tab = usePanelTab('rest', 'basic')
 
 const rest = computed(() => props.editSlot.self)
+const musicScore = computed(() => props.editSlot.musicScore as MusicScore)
+
+const tabs = computed(() => [
+  {name: 'basic', label: t('editor.panelTab.basic')},
+  {name: 'marks', label: t('editor.panelTab.marks'), badge: rest.value.affiliatedSymbols?.length ?? 0},
+])
 
 const chronaxie = computed({
   get: () => rest.value.chronaxie,
@@ -32,57 +47,30 @@ const augmentationDot = computed({
 })
 
 const relativeX = computed({
-  get: () => rest.value.relativeX ?? 0,
-  set: (v: number) => setNoteRestRelativeX(rest.value, v),
+  get: () => readRelativeX(rest.value),
+  set: (v: number) => setNoteRestRelativeX(musicScore.value, rest.value, v),
 })
 </script>
 
 <template>
-  <div class="rest-props">
-    <section class="rest-props__section">
-      <div class="rest-props__label">{{ t('editor.note.duration') }}</div>
-      <el-radio-group v-model="chronaxie" class="rest-props__radio" size="small">
-        <el-radio-button
-          v-for="value in REST_CHRONAXIE_VALUES"
-          :key="value"
-          :label="value"
-        >
-          {{ resolveRestDurationLabel(value) }}
-        </el-radio-button>
-      </el-radio-group>
-    </section>
+  <PanelTabs v-model="tab" :tabs="tabs">
+    <template #basic>
+      <PanelGroup :title="t('editor.panelGroup.rhythm')">
+        <PanelField :label="t('editor.note.duration')" stacked>
+          <PanelSegmented v-model="chronaxie" :options="options.durations(REST_CHRONAXIE_VALUES, 'rest')" />
+        </PanelField>
+        <PanelField :label="t('editor.note.augmentationDot')">
+          <PanelSegmented v-model="augmentationDot" :options="options.dots(AUGMENTATION_DOT_VALUES)" />
+        </PanelField>
+      </PanelGroup>
 
-    <section class="rest-props__section">
-      <div class="rest-props__label">{{ t('editor.note.augmentationDot') }}</div>
-      <el-radio-group v-model="augmentationDot" class="rest-props__radio" size="small">
-        <el-radio-button
-          v-for="value in AUGMENTATION_DOT_VALUES"
-          :key="value"
-          :label="value"
-        >
-          {{ resolveAugmentationDotLabel(value) }}
-        </el-radio-button>
-      </el-radio-group>
-    </section>
+      <PanelGroup :title="t('editor.note.relativeX')">
+        <RelativeXOffsetControl v-model="relativeX" bare />
+      </PanelGroup>
+    </template>
 
-    <RelativeXOffsetControl v-model="relativeX" />
-  </div>
+    <template #marks>
+      <NoteMarkPalette :host="rest" :notation-type="musicScore.type" />
+    </template>
+  </PanelTabs>
 </template>
-
-<style scoped>
-.rest-props__section {
-  margin-bottom: 14px;
-}
-
-.rest-props__label {
-  margin-bottom: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #606266;
-}
-
-.rest-props__radio {
-  display: flex;
-  flex-wrap: wrap;
-}
-</style>

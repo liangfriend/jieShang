@@ -5,6 +5,15 @@ export default {
       heading: 'Test settings',
       beats: 'Beats',
       beatsOption: '{count} beats',
+      beatUnit: 'Beat unit',
+      beatUnitOption: {
+        1: 'Whole note',
+        2: 'Half note',
+        4: 'Quarter note',
+        8: 'Eighth note'
+      },
+      bpmRange: 'BPM range: {min} - {max}',
+      bpmHint: 'Each round picks a random tempo in this range (BPM counts quarter notes)',
       rounds: 'Rounds',
       start: 'Start test'
     },

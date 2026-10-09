@@ -2,9 +2,12 @@ export { toPlaySequence, type ToPlaySequenceOptions } from './toPlaySequence'
 export { toPerformSequence, unit256ToMs, type PerformSequence } from './toPerformSequence'
 export { toMidiBoxSequence, type MidiBoxSequence } from './toMidiBoxSequence'
 export { useScorePagePlayback } from './useScorePagePlayback'
+export { usePlayRangeSelect, type PlayRange, type PlayRangeSelect } from './usePlayRangeSelect'
 export {
   scorePagePlaybackKey,
   scorePlaybackKey,
+  scorePlayRangeKey,
+  scoreScrollFollowKey,
   type PlaybackState,
   type ProgressListener,
   type PianoWaterfallPlaybackExpose,

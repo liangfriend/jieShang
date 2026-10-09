@@ -1,7 +1,8 @@
 import { ipcMain } from 'electron'
 import type {
   NoteSliceHighScoreDifficulty,
-  NoteSliceHighScoreMode
+  NoteSliceHighScoreMode,
+  NoteSliceHighScoreNotation
 } from '../models/NoteSliceHighScoreModel'
 import { NoteSliceHighScoreService } from '../services/noteSliceHighScoreService'
 
@@ -18,8 +19,13 @@ export class NoteSliceHighScoreController {
     )
     ipcMain.handle(
       'noteSliceHighScore:upsertIfHigher',
-      (_, mode: NoteSliceHighScoreMode, difficulty: NoteSliceHighScoreDifficulty, score: number) =>
-        this.noteSliceHighScoreService.upsertIfHigher(mode, difficulty, score)
+      (
+        _,
+        mode: NoteSliceHighScoreMode,
+        difficulty: NoteSliceHighScoreDifficulty,
+        score: number,
+        notation?: NoteSliceHighScoreNotation
+      ) => this.noteSliceHighScoreService.upsertIfHigher(mode, difficulty, score, notation)
     )
   }
 }

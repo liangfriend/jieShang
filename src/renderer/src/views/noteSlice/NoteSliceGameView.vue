@@ -18,6 +18,11 @@ import {
   clearNoteSliceGameDifficulty
 } from '@renderer/views/noteSlice/noteSliceDifficultyConfig'
 import { createExtremeSpawnConfigManager } from '@renderer/views/noteSlice/noteSliceSpawnConfigManager'
+import {
+  bindNoteSliceGameNotationMode,
+  clearNoteSliceGameNotationMode,
+  getActiveNoteSliceNotationMode
+} from '@renderer/views/noteSlice/noteSliceNotationMode'
 import { provideNoteSliceGameSession } from '@renderer/views/noteSlice/useNoteSliceGameSession'
 import { createNoteSliceSessionAchievementManager } from '@renderer/views/noteSlice/noteSliceSessionAchievementManager'
 import { finalizeNoteSliceGameScore } from '@renderer/utils/noteSliceHighScoreHelper'
@@ -33,25 +38,37 @@ const emit = defineEmits<{
 const gameSettings = useGameSettingsStore()
 const playStore = usePlayStore()
 
+/**
+ * 必须在 onMounted 里绑定（不能放 setup 顶层）：
+ * 「再来一局」靠 :key 重挂载时，Vue 会先跑新实例 setup，再跑旧实例 onUnmounted。
+ * 若在 setup 里 bind、在 onUnmounted 里 clear，旧实例会把新局刚绑上的极限管理器清掉，
+ * getActiveSpawnConfig 回退到默认简单难度（全部调号），开局就会出现 F 等调。
+ * clear 时带上本局 generation，即使生命周期顺序变化也不会误清新局。
+ */
+let spawnConfigGeneration: number | undefined
+let notationModeGeneration: number | undefined
+
+function syncSpawnConfigManager(): void {
+  gameSettings.init()
+  // 谱面模式（线谱 / 简谱）对所有游戏模式生效，进入一局时绑定
+  notationModeGeneration = bindNoteSliceGameNotationMode(gameSettings.notationMode)
+  if (props.mode === 'extreme') {
+    spawnConfigGeneration = bindNoteSliceSpawnManager(createExtremeSpawnConfigManager())
+    return
+  }
+  spawnConfigGeneration = bindNoteSliceGameDifficulty(gameSettings.difficulty)
+}
+
 onMounted(async () => {
+  syncSpawnConfigManager()
   await playStore.waitReady()
   await playStore.ensureCollectionToneColorInitialized()
   playStore.setBpm(PLAY_DEFAULT_BPM)
 })
 
-function syncSpawnConfigManager(): void {
-  if (props.mode === 'extreme') {
-    bindNoteSliceSpawnManager(createExtremeSpawnConfigManager())
-    return
-  }
-  gameSettings.init()
-  bindNoteSliceGameDifficulty(gameSettings.difficulty)
-}
-
-syncSpawnConfigManager()
-
 onUnmounted(() => {
-  clearNoteSliceGameDifficulty()
+  clearNoteSliceGameDifficulty(spawnConfigGeneration)
+  clearNoteSliceGameNotationMode(notationModeGeneration)
 })
 
 const session = provideNoteSliceGameSession(props.mode)
@@ -93,10 +110,12 @@ watch(
     if (props.mode !== 'extreme') {
       gameSettings.init()
     }
+    // 最高分按本局谱面模式（线谱 / 简谱）分开记录；成就判定与谱面模式无关
     const { isNewPersonalBest, previousBest } = await finalizeNoteSliceGameScore(
       props.mode,
       score,
-      gameSettings.difficulty
+      gameSettings.difficulty,
+      getActiveNoteSliceNotationMode()
     )
     const newlyUnlockedAchievements = await achievementManager.evaluateAndUnlock({
       score: props.mode === 'extreme' ? 0 : session.score.value,

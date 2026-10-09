@@ -261,19 +261,24 @@ function setActiveKey(midi: number, active: boolean) {
   return true
 }
 
-function emitKey(type: 'keyUp' | 'keyDown', midi: number) {
+function emitKey(
+  type: 'keyUp' | 'keyDown',
+  midi: number,
+  options?: { /** 是否回播给其它监听者；设备 MIDI 进线时须 false，避免覆盖真实力度 */ broadcast?: boolean }
+) {
   if (!isMidiInRange(midi)) return
+  const broadcast = options?.broadcast !== false
 
   if (type === 'keyDown') {
     if (!setActiveKey(midi, true)) return
     emits('keyDown', midi)
-    midiStore.dispatchVirtualNote(midi, true)
+    if (broadcast) midiStore.dispatchVirtualNote(midi, true)
     return
   }
 
   if (!setActiveKey(midi, false)) return
   emits('keyUp', midi)
-  midiStore.dispatchVirtualNote(midi, false)
+  if (broadcast) midiStore.dispatchVirtualNote(midi, false)
 }
 
 function handlePointerDown(
@@ -661,14 +666,15 @@ function handleMidiMessage(event: MIDIMessageEvent) {
   const data = event.data
   if (!data || data.length < 2) return
 
-  const command = data[0] & 0xf0
-  const note = data[1]
-  const velocity = data.length > 2 ? data[2] : 0
+  const command = data[0]! & 0xf0
+  const note = data[1]!
+  const velocity = data.length > 2 ? data[2]! : 0
 
+  // 设备消息已由 midi store 广播；此处只更新琴键高亮 / 向父组件发 key，勿再 dispatchVirtualNote（默认力度 100 会盖掉真实 velocity）
   if (command === 0x90 && velocity > 0) {
-    emitKey('keyDown', note)
+    emitKey('keyDown', note, { broadcast: false })
   } else if (command === 0x80 || (command === 0x90 && velocity === 0)) {
-    emitKey('keyUp', note)
+    emitKey('keyUp', note, { broadcast: false })
   }
 }
 

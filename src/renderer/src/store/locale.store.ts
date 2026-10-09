@@ -5,6 +5,7 @@ import {
   DEFAULT_LOCALE,
   loadPersistedLocale,
   persistLocale,
+  toBcp47,
   type AppLocale
 } from '@renderer/i18n/locale'
 
@@ -15,7 +16,7 @@ export const useLocaleStore = defineStore('locale', () => {
     locale.value = next
     i18n.global.locale.value = next
     persistLocale(next)
-    document.documentElement.lang = next === 'zh' ? 'zh-CN' : 'en'
+    document.documentElement.lang = toBcp47(next)
   }
 
   function setLocale(next: AppLocale) {
@@ -44,6 +45,6 @@ export const useLocaleStore = defineStore('locale', () => {
 export function initAppLocale(): AppLocale {
   const initial = loadPersistedLocale()
   i18n.global.locale.value = initial
-  document.documentElement.lang = initial === 'zh' ? 'zh-CN' : 'en'
+  document.documentElement.lang = toBcp47(initial)
   return initial
 }

@@ -4,6 +4,10 @@ import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
 import {
   RHYTHM_SENSE_BEAT_OPTIONS,
+  RHYTHM_SENSE_BEAT_UNIT_OPTIONS,
+  RHYTHM_SENSE_BPM_LIMIT_MAX,
+  RHYTHM_SENSE_BPM_LIMIT_MIN,
+  RHYTHM_SENSE_BPM_STEP,
   RHYTHM_SENSE_MAX_ROUNDS,
   RHYTHM_SENSE_MIN_ROUNDS,
   type RhythmSenseBeatCount
@@ -17,6 +21,8 @@ const {
   phase,
   beats,
   totalRounds,
+  bpmRange,
+  beatUnit,
   countdownLabel,
   currentBpm,
   tapCount,
@@ -27,6 +33,8 @@ const {
   bestRound,
   setBeats,
   setTotalRounds,
+  setBpmRange,
+  setBeatUnit,
   startTest,
   handleTap,
   playAgain,
@@ -92,6 +100,38 @@ onUnmounted(() => {
           </div>
         </label>
 
+        <div class="rhythm-field">
+          <span class="rhythm-field__label">{{ t('rhythmSenseTest.setup.beatUnit') }}</span>
+          <div class="rhythm-field__options">
+            <button
+              v-for="option in RHYTHM_SENSE_BEAT_UNIT_OPTIONS"
+              :key="option"
+              type="button"
+              class="chip"
+              :class="{ 'chip--active': beatUnit === option }"
+              @click="setBeatUnit(option)"
+            >
+              {{ t(`rhythmSenseTest.setup.beatUnitOption.${option}`) }}
+            </button>
+          </div>
+        </div>
+
+        <div class="rhythm-field">
+          <span class="rhythm-field__label">
+            {{ t('rhythmSenseTest.setup.bpmRange', { min: bpmRange[0], max: bpmRange[1] }) }}
+          </span>
+          <el-slider
+            class="rhythm-field__slider"
+            :model-value="bpmRange"
+            range
+            :min="RHYTHM_SENSE_BPM_LIMIT_MIN"
+            :max="RHYTHM_SENSE_BPM_LIMIT_MAX"
+            :step="RHYTHM_SENSE_BPM_STEP"
+            @update:model-value="(v) => Array.isArray(v) && setBpmRange([v[0]!, v[1]!])"
+          />
+          <span class="rhythm-field__hint">{{ t('rhythmSenseTest.setup.bpmHint') }}</span>
+        </div>
+
         <label class="rhythm-field">
           <span class="rhythm-field__label">{{ t('rhythmSenseTest.setup.rounds') }}</span>
           <el-input-number
@@ -118,6 +158,7 @@ onUnmounted(() => {
       <section v-else-if="phase === 'listen'" class="rhythm-stage rhythm-stage--center">
         <p class="stage-kicker">{{ t('rhythmSenseTest.listen.kicker') }}</p>
         <p class="stage-bpm">BPM {{ currentBpm }}</p>
+        <p class="stage-hint">{{ t(`rhythmSenseTest.setup.beatUnitOption.${beatUnit}`) }}</p>
         <p class="stage-hint">{{ t('rhythmSenseTest.listen.hint', { count: beats }) }}</p>
       </section>
 
@@ -125,6 +166,7 @@ onUnmounted(() => {
       <section v-else-if="phase === 'tap'" class="rhythm-stage rhythm-stage--center">
         <p class="stage-kicker">{{ t('rhythmSenseTest.tap.kicker') }}</p>
         <p class="stage-bpm">BPM {{ currentBpm }}</p>
+        <p class="stage-hint">{{ t(`rhythmSenseTest.setup.beatUnitOption.${beatUnit}`) }}</p>
         <button
           type="button"
           class="tap-ring"
@@ -249,6 +291,15 @@ onUnmounted(() => {
   font-size: 13px;
   font-weight: 700;
   color: #8a5a72;
+}
+
+.rhythm-field__slider {
+  padding: 0 10px;
+}
+
+.rhythm-field__hint {
+  font-size: 12px;
+  color: var(--text-soft);
 }
 
 .rhythm-field__options {

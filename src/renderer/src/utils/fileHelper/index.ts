@@ -1,8 +1,10 @@
 export {
   deleteScoreFromDatabase,
   displayScoreName,
+  exportMidiToDisk,
   exportMusicXmlToDisk,
   exportSjToDisk,
+  importMidiFromDisk,
   importMusicXmlFromDisk,
   importSjFromDisk,
   loadScoreFromDatabase,

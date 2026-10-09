@@ -9,9 +9,12 @@ function defaultLoadingText() {
 export const useGlobalLoadingStore = defineStore('globalLoading', () => {
   const visible = ref(false)
   const text = ref(defaultLoadingText())
+  /** 跳过淡入：紧接着会阻塞主线程时，淡入动画来不及播放，遮罩几乎是透明的 */
+  const instant = ref(false)
   let depth = 0
 
-  function show(message = defaultLoadingText()) {
+  function show(message = defaultLoadingText(), options: { instant?: boolean } = {}) {
+    if (depth === 0) instant.value = options.instant === true
     depth += 1
     text.value = message
     visible.value = true
@@ -34,5 +37,5 @@ export const useGlobalLoadingStore = defineStore('globalLoading', () => {
     }
   }
 
-  return { visible, text, show, hide, run }
+  return { visible, text, instant, show, hide, run }
 })

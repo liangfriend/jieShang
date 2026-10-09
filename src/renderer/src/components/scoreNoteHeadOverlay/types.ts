@@ -7,8 +7,17 @@ export type NoteHeadShapeKind =
   | 'standard-tilted-ring'
   | 'standard-tilted-filled'
   | 'number'
+  | 'tab'
   | 'rest'
   | 'fallback'
+
+export type NoteHeadVDomTag =
+  | 'noteHead'
+  | 'noteNumber'
+  | 'rest'
+  | 'tabNoteNumber'
+  | 'arpeggio'
+  | 'strumming'
 
 export type NoteHeadGeometry = {
   noteId: string
@@ -16,7 +25,7 @@ export type NoteHeadGeometry = {
   y: number
   w: number
   h: number
-  tag: 'noteHead' | 'rest'
+  tag: NoteHeadVDomTag
   skinKey?: string
   shapeKind: NoteHeadShapeKind
 }
@@ -42,4 +51,6 @@ export type ScoreNoteHeadOverlayApi = {
   setBeginnerCurrentBatch: (noteIds: unknown[]) => void
   clearAll: () => void
   resize: () => void
+  /** 外层滚动后调用：按视口重新定位画布 */
+  onViewportChange: () => void
 }

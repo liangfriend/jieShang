@@ -18,37 +18,100 @@
     "postinstall": "electron-builder install-app-deps",
     "build:unpack": "npm run build && node scripts/ensure-steam-dll.mjs && electron-builder --dir",
     "build:win": "npm run build && node scripts/ensure-steam-dll.mjs && electron-builder --win",
-    "build:mac": "npm run build && electron-builder --mac",
+    "build:mac": "electron-vite build && electron-builder --mac",
     "build:linux": "npm run build && electron-builder --linux"
   },
   "build": {
-    "appId": "com.electron.app",
-    "productName": "jie-shang",
+    "appId": "com.jieshang.app",
+    "productName": "解熵",
     "directories": {
       "output": "dist",
-      "buildResources": "build"
+      "buildResources": "resources"
     },
     "extraResources": [
       {
         "from": "resources/collection-thumbnails",
         "to": "collection-thumbnails"
-      }
-    ],
-    "extraFiles": [
+      },
       {
-        "from": "resources/steam/steam_api64.dll",
-        "to": "steam_api64.dll"
+        "from": "src/main/resources/toneColors",
+        "to": "toneColors",
+        "filter": [
+          "*.json"
+        ]
       }
     ],
     "files": [
-      "!steam_appid.txt"
+      "!steam_appid.txt",
+      "!.dev-data/**",
+      "!src/**",
+      "!doc/**",
+      "!scripts/**",
+      "!*.tgz",
+      "!*.md",
+      "!*.tsbuildinfo",
+      "!{.cursor,steam,steamAssets,tiktok}/**",
+      "!tailwind.config.ts",
+      "!**/.vscode/*",
+      "!electron.vite.config.*",
+      "!{.eslintcache,eslint.config.mjs,.prettierignore,.prettierrc.yaml,dev-app-update.yml,CHANGELOG.md,README.md,AGENTS.md}",
+      "!{.env,.env.*,.npmrc,pnpm-lock.yaml}",
+      "!{tsconfig.json,tsconfig.node.json,tsconfig.web.json}",
+      "!node_modules/**/*.map",
+      "!node_modules/@tailwindcss/oxide-wasm32-wasi/**",
+      "!node_modules/@emnapi/**"
     ],
+    "electronDist": "node_modules/electron/dist",
+    "npmRebuild": false,
     "win": {
       "target": "nsis",
-      "executableName": "jie-shang"
+      "executableName": "jie-shang",
+      "icon": "icon.png",
+      "extraFiles": [
+        {
+          "from": "resources/steam/steam_api64.dll",
+          "to": "steam_api64.dll"
+        }
+      ],
+      "extraResources": [
+        {
+          "from": "resources/steam/vcruntime140.dll",
+          "to": "app.asar.unpacked/node_modules/steamworks.js/dist/win64/vcruntime140.dll"
+        }
+      ]
+    },
+    "mac": {
+      "target": "dmg",
+      "icon": "icon.png",
+      "category": "public.app-category.music",
+      "hardenedRuntime": true,
+      "entitlements": "resources/entitlements.mac.plist",
+      "entitlementsInherit": "resources/entitlements.mac.plist",
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "解熵需要使用麦克风进行音高识别、演唱评分与录音。"
+      }
+    },
+    "dmg": {
+      "artifactName": "${productName}-${version}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "解熵"
     }
   },
   "dependencies": {
+    "@deciphony/extensions": "^0.0.18",
+    "@deciphony/finger": "^0.0.2",
+    "@deciphony/number-notation-omr": "^0.1.7",
+    "@deciphony/pitch-detection": "^0.0.2",
+    "@deciphony/player": "^1.0.63",
+    "@deciphony/puff": "^0.0.2",
+    "@deciphony/renderer": "^0.0.55",
+    "@deciphony/tune-judge": "^0.0.5",
+    "@deciphony/work": "^0.0.15",
     "@electron-toolkit/preload": "^3.0.2",
     "@electron-toolkit/utils": "^4.0.0",
     "@element-plus/icons-vue": "^2.3.2",
@@ -56,17 +119,10 @@
     "@vue/compiler-sfc": "^3.5.24",
     "awilix": "^12.0.5",
     "axios": "^1.13.2",
-    "@deciphony/player": "^1.0.51",
-    "@deciphony/renderer": "0.0.37",
-    "@deciphony/extensions": "0.0.1",
-    "@deciphony/tune-judge": "0.0.1",
-    "@deciphony/work": "0.0.1",
-    "@deciphony/finger": "0.0.1",
     "electron-updater": "^6.3.9",
     "element-plus": "^2.11.8",
     "fast-xml-parser": "^5.8.0",
     "gsap": "^3.13.0",
-    "monaco-editor": "^0.54.0",
     "pinia": "^3.0.4",
     "sequelize": "^6.37.7",
     "sqlite3": "^5.1.7",

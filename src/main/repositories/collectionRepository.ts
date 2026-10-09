@@ -1,3 +1,4 @@
+import { literal } from 'sequelize'
 import CollectionModel from '../models/CollectionModel'
 import type { CollectionType } from '../constant/collection'
 
@@ -10,6 +11,7 @@ export type CollectionWritePayload = {
   owned?: boolean
   level?: number
   thumbnail?: string | null
+  option?: string
 }
 
 export type CollectionUpdatePayload = Partial<{
@@ -21,6 +23,7 @@ export type CollectionUpdatePayload = Partial<{
   owned: boolean
   level: number
   thumbnail: string | null
+  option: string
 }>
 
 export type CollectionQueryFilters = Partial<{
@@ -40,7 +43,8 @@ export class CollectionRepository {
       is_built_in: payload.is_built_in ?? false,
       owned: payload.owned ?? false,
       level: payload.level ?? 1,
-      thumbnail: payload.thumbnail ?? null
+      thumbnail: payload.thumbnail ?? null,
+      option: payload.option ?? '{}'
     })
     return result.toJSON()
   }
@@ -66,7 +70,17 @@ export class CollectionRepository {
     for (const [key, val] of Object.entries(filters)) {
       if (val !== undefined && val !== null) where[key] = val
     }
+    // 列表不带音色本体（单个 2~5MB、上百个），音色内容只经 findById 按需取
+    const attributes = Object.keys(CollectionModel.getAttributes()).map((name) =>
+      name === 'content'
+        ? ([literal(`CASE WHEN type = 'tone_color' THEN '' ELSE content END`), 'content'] as [
+            ReturnType<typeof literal>,
+            string
+          ])
+        : name
+    )
     const result = await CollectionModel.findAll({
+      attributes,
       where: Object.keys(where).length > 0 ? where : undefined,
       order: [['updated_at', 'DESC']]
     })

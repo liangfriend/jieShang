@@ -1,8 +1,14 @@
+import { unref } from 'vue'
 import i18n from '@renderer/i18n'
+import { resolveAppLocale } from '@renderer/i18n/locale'
+import {
+  TONE_COLOR_CATALOG,
+  findToneColorCatalogItem
+} from '@renderer/constant/toneColorCatalog'
 import type { AchievementDefinition } from '@renderer/constant/achievements'
 import type { CollectionRecord } from '@renderer/types/collection'
 import type { NoteScoreResult } from '@renderer/types/types'
-import type { GameDifficulty } from '@renderer/constant/gameSettings'
+import type { GameDifficulty, GameNotationMode } from '@renderer/constant/gameSettings'
 import type {
   WhiteboardClef,
   WhiteboardKeyCount,
@@ -16,6 +22,7 @@ import {
   AccidentalTypeEnum,
   BarlineTypeEnum,
   BeamTypeEnum,
+  BracketTypeEnum,
   ClefTypeEnum,
   KeySignatureTypeEnum,
   MeasureEndRepeatEnum,
@@ -24,6 +31,7 @@ import {
   TimeSignatureTypeEnum,
   timeSignatureTypeToLabel
 } from '@deciphony/renderer'
+import { FretboardScoreType } from '@renderer/constant/fretboardScoreType'
 
 export function t(key: string, params?: Record<string, unknown>): string {
   return i18n.global.t(key, params ?? {})
@@ -37,6 +45,12 @@ export function te(key: string, params?: Record<string, unknown>): string {
 export function resolveNotationTypeLabel(type: MusicScoreTypeEnum): string {
   if (type === MusicScoreTypeEnum.StandardStaff) return t('notation.staff')
   if (type === MusicScoreTypeEnum.NumberNotation) return t('notation.jianpu')
+  if (type === FretboardScoreType.Guitar) return t('notation.guitarTab')
+  if (type === FretboardScoreType.Ukulele) return t('notation.ukuleleTab')
+  if (type === FretboardScoreType.Bass4) return t('notation.bass4Tab')
+  if (type === FretboardScoreType.Bass5) return t('notation.bass5Tab')
+  if (type === FretboardScoreType.Bass6) return t('notation.bass6Tab')
+  if (type === MusicScoreTypeEnum.DrumNotation) return t('notation.drum')
   return t('notation.unknown')
 }
 
@@ -46,6 +60,10 @@ export function resolveGameDifficultyLabel(value: GameDifficulty): string {
 
 export function resolveGameDifficultyDesc(value: GameDifficulty): string {
   return t(`settings.gameDifficulty.${value}Desc`)
+}
+
+export function resolveGameNotationModeLabel(value: GameNotationMode): string {
+  return t(`settings.gameNotation.${value}`)
 }
 
 export function resolveNoteResultLabel(result: NoteScoreResult): string {
@@ -76,7 +94,24 @@ export function resolveCollectionField(
   const key = `collection.byId.${record.id}.${field}`
   const translated = te(key)
   if (translated) return translated
+  if (record.type === 'tone_color') return resolveCatalogToneColorField(record.id, field)
   return ''
+}
+
+/** 名单内音色：名称按当前语言取自 toneColorCatalog.json，描述 / 获取条件用通用模板 */
+function resolveCatalogToneColorField(
+  id: number,
+  field: 'name' | 'description' | 'howToGet'
+): string {
+  const item = findToneColorCatalogItem(id)
+  if (!item) return ''
+  const locale = resolveAppLocale(unref(i18n.global.locale))
+  const name = item.name[locale]
+  if (field === 'name') return name
+  if (field === 'howToGet') return t('collection.toneCatalog.howToGet')
+  const family =
+    TONE_COLOR_CATALOG.families[item.family as keyof typeof TONE_COLOR_CATALOG.families][locale]
+  return t('collection.toneCatalog.description', { name, family })
 }
 
 export function resolveBarlineLabel(value: BarlineTypeEnum): string {
@@ -139,6 +174,11 @@ export function resolveAccidentalSelectLabel(value: AccidentalTypeEnum | ''): st
 export function resolveClefSelectLabel(value: ClefTypeEnum | ''): string {
   if (value === '') return t('common.none')
   return resolveClefLabel(value)
+}
+
+export function resolveBracketTypeLabel(value: BracketTypeEnum | ''): string {
+  if (value === '') return t('common.none')
+  return t(`editor.bracket.typeOption.${value}`)
 }
 
 export function resolveAugmentationDotLabel(value: 0 | 1 | 2 | 3): string {

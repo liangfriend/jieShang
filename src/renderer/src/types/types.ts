@@ -51,6 +51,6 @@ export interface WaterfallScoreStats {
   judged: number
   /** 实时分 */
   realScore: number
-  /** 总分 */
+  /** 进度：已判定音符 / 全曲音符 × 100 */
   totalScore: number
 }

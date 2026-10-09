@@ -4,7 +4,9 @@ export default {
       settings: 'Settings',
       startPractice: 'Start practice',
       stop: 'Stop',
-      volume: 'Volume'
+      volume: 'Volume',
+      hideScore: 'Hide score',
+      showScore: 'Show score'
     },
     settings: {
       title: 'Beginner mode settings',

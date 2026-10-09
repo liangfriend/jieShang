@@ -78,9 +78,13 @@ NoteSliceExtremeView.vue                             极限模式占位（暂未
 
 | `noteSliceBlockFactory.ts` | 随机 / 指定 midi 生成块，组装 `NoteSliceActiveBlock` |
 
-| `midiBrickBuilder.ts` | 单小节 MusicScore 生成（谱号 + 调号 + 四分音符） |
+| `midiBrickBuilder.ts` | 线谱单小节 MusicScore 生成（谱号 + 调号 + 四分音符） |
 
-| `noteSliceBrickLayout.ts` | 谱面宽高、留白、staff 间距 |
+| `jianpuBrickBuilder.ts` | 简谱单小节 MusicScore 生成（`1=X` 调号 + 拍号 + 数字音符，含八度点 / 升降号） |
+
+| `noteSliceNotationMode.ts` | 本局谱面模式（线谱 / 简谱）绑定与读取，回退 `gameSettings.notationMode` |
+
+| `noteSliceBrickLayout.ts` | 谱面宽高、留白、staff 间距（线谱按调号变宽；简谱固定尺寸） |
 
 | `noteSliceBlockShellLayout.ts` | 固定外壳内 musicScore 等比缩放居中 |
 
@@ -102,7 +106,7 @@ NoteSliceExtremeView.vue                             极限模式占位（暂未
 
 | `noteSliceScoring.ts` | 计分、连击判定（`resolveNoteSliceClearComboState`）、连击倍率 |
 
-| `noteSliceMidiBlacklist.ts` | spawn 范围内排除黑名单 midi 的选取工具 |
+| `noteSliceMidiBlacklist.ts` | spawn 范围内排除黑名单 midi 的选取工具；`isNoteSliceMidiRenderable` 按谱面模式判定可生成性 |
 
 | `noteSlicePenaltyBombQueue.ts` | 乱按惩罚炸弹 midi 队列（FIFO、去重） |
 
@@ -114,7 +118,7 @@ NoteSliceExtremeView.vue                             极限模式占位（暂未
 
 | **持久化（见 `doc/成就.md`）** | |
 
-| `utils/noteSliceHighScoreHelper.ts` | 模式最高分 IPC；街机/无限结束时 upsert |
+| `utils/noteSliceHighScoreHelper.ts` | 模式最高分 IPC；结束时按 (mode, difficulty, notation) upsert，线谱 / 简谱分开记录 |
 
 | `utils/achievementHelper.ts` | 成就列表合并、unlock、藏品 `owned` 发奖 |
 | `noteSliceSessionAchievementManager.ts` | 局内 peakCombo 记录；结束时判定并 unlock + 发奖 |
@@ -263,7 +267,7 @@ NoteSliceExtremeView.vue                             极限模式占位（暂未
 
 ### 8. 游戏难度（首页设置 → localStorage `game.settings`）
 
-难度由 `useGameSettingsStore` 持久化。**进入一局游戏时** `NoteSliceGameView` 会 `init()` 并重绑 `bindNoteSliceGameDifficulty`；生成逻辑通过 `getActiveNoteSliceDifficultyConfig()` 读取本局难度。
+难度由 `useGameSettingsStore` 持久化。**进入一局游戏时** `NoteSliceGameView` 在 `onMounted` 中 `init()` 并重绑 `bindNoteSliceGameDifficulty` / `bindNoteSliceSpawnManager`（不能放 setup：再来一局 `:key` 重挂载时旧实例 `onUnmounted` 会晚于新实例 setup，误清新局绑定，极限模式会回退到默认简单难度出全部调号）；clear 时带绑定世代号。生成逻辑通过 `getActiveNoteSliceDifficultyConfig()` 读取本局难度。
 
 | 难度 | MIDI | 谱号 | 变音记号 | 生成间隔 / 冷却 / 炸弹 |
 | --- | --- | --- | --- | --- |
@@ -272,7 +276,20 @@ NoteSliceExtremeView.vue                             极限模式占位（暂未
 | 标准 | 38–83 | 高 + 低 + 中 | 全部 | 0.5s / 0.5s / 5s |
 | 困难 | 21–108 | 三种 | 全部 | 0.35s / 0.4s / 4s |
 
-各谱号可写音域仍受 `NOTE_SLICE_SPAWN_CLEF_MIDI_RANGES` 约束；随机 midi 时会跳过当前难度下无可用谱号的音高。
+各谱号可写音域仍受 `NOTE_SLICE_SPAWN_CLEF_MIDI_RANGES` 约束；随机 midi 时会跳过当前难度下无可用谱号的音高（仅线谱模式）。
+
+### 8.1 谱面模式（首页设置 switch：线谱 / 简谱）
+
+`gameSettings.notationMode`（`'staff' | 'jianpu'`，默认线谱）同样存于 localStorage `game.settings`。**对所有游戏模式（含极限）生效。**
+
+- **绑定**：`NoteSliceGameView` 进入一局时 `bindNoteSliceGameNotationMode(gameSettings.notationMode)`，卸载时清除；生成逻辑通过 `isNoteSliceJianpuMode()` 分流，避免中途改设置影响本局。
+- **生成分流**（`noteSliceBlockFactory.buildNoteSliceBlockWithMidi`）：
+  - 线谱 → `midiBrickBuilder.generateRandomMidiBrickScore`（谱号 + 调号 + 四分音符），可写性看 `resolveSpawnClefsForMidi`。
+  - 简谱 → `jianpuBrickBuilder.generateRandomJianpuBrickScore`：不看谱号，在难度允许的调号中随机选一个，`getOctaveAndSyllable(midi, 升/降优先, key)` 换算首调唱名 / 八度点 / 升降号；升号、降号写法各 50%。
+- **可生成判定**（`noteSliceMidiBlacklist.isNoteSliceMidiRenderable`）：简谱模式下 midi 需至少有一个候选调可写；难度 `allowSingleAccidentals = false` 时仅保留该 midi 为自然音级的调（无则跳过该 midi）。简谱没有重升 / 重降写法，`allowDoubleAccidentals` 对简谱无意义。
+- **布局**：简谱块尺寸固定（`NOTE_SLICE_JIANPU_BRICK_SCORE_WIDTH/HEIGHT`，130×93），与调号无关；仍由 `resolveNoteSliceScoreShellTransform` 等比缩放进 200×200 外壳。小节内含 `keySignature_f`（渲染为 `1=X`）与 `timeSignature_f`（4/4）。
+- **MIDI 范围 / 生成节奏 / 炸弹等其它参数**与线谱共用同一难度配置。
+- **最高分**：`finalizeNoteSliceGameScore(mode, score, difficulty, notation)` 按谱面模式分开记录；结算弹窗副标题显示「线谱 · 简单难度」等；成就页按线谱 / 简谱分组展示。成就判定不区分谱面模式。
 
 ### 9. 谱号音域参考
 

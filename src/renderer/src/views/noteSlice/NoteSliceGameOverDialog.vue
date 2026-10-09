@@ -8,10 +8,12 @@ import {
   resolveAchievementDescription,
   resolveAchievementName,
   resolveAchievementReward,
-  resolveGameDifficultyLabel
+  resolveGameDifficultyLabel,
+  resolveGameNotationModeLabel
 } from '@renderer/i18n/helpers'
 import { useGameSettingsStore } from '@renderer/store/gameSettings.store'
 import { formatNoteSliceExtremeHighScore } from '@renderer/utils/noteSliceHighScoreHelper'
+import { getActiveNoteSliceNotationMode } from '@renderer/views/noteSlice/noteSliceNotationMode'
 import type { NoteSliceGameEndReason, NoteSliceGameMode } from '@renderer/views/noteSlice/noteSliceGameMode'
 
 const props = defineProps<{
@@ -52,6 +54,17 @@ const modeEmoji = computed(() => {
 const difficultyLabel = computed(() => {
   if (isExtreme.value) return ''
   return resolveGameDifficultyLabel(difficulty.value)
+})
+
+/** 本局谱面模式（线谱 / 简谱），提示最高分记录所属分组 */
+const notationLabel = computed(() => resolveGameNotationModeLabel(getActiveNoteSliceNotationMode()))
+
+const subtitle = computed(() => {
+  const parts = [notationLabel.value]
+  if (difficultyLabel.value) {
+    parts.push(`${difficultyLabel.value}${t('noteSlice.difficulty.suffix')}`)
+  }
+  return parts.join(' · ')
 })
 
 const primaryLabel = computed(() =>
@@ -107,8 +120,8 @@ function hasAchievementReward(item: AchievementDefinition): boolean {
 
         <div class="note-slice-game-over__emoji" aria-hidden="true">{{ modeEmoji }}</div>
         <h2 class="note-slice-game-over__title">{{ title }}</h2>
-        <p v-if="difficultyLabel" class="note-slice-game-over__subtitle">
-          {{ difficultyLabel }}{{ t('noteSlice.difficulty.suffix') }}
+        <p class="note-slice-game-over__subtitle">
+          {{ subtitle }}
         </p>
 
         <div class="note-slice-game-over__stats">

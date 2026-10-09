@@ -11,8 +11,10 @@ import type {
 import {
   createNoteRest,
   createNoteSymbol,
-  createNotesInfo
+  createNotesInfo,
+  computeMeasureOnsetBefore
 } from '@deciphony/extensions/dr-edit/score-builder'
+import { asStaffOrNumber } from '../asStaffOrNumber'
 import {
   DEFAULT_ADD_NOTE_STATE,
   type AddNoteSlotKind,
@@ -257,7 +259,7 @@ export function collectSlotAnchors(
 ): SlotAnchor[] {
   const anchors: SlotAnchor[] = []
   for (let noteIndex = 0; noteIndex < measure.notes.length; noteIndex++) {
-    const slot = measure.notes[noteIndex]!
+    const slot = asStaffOrNumber(measure.notes[noteIndex]!)
     let id: string | undefined
     let tag: VDom['tag']
     if (isNoteSymbol(slot)) {
@@ -555,10 +557,12 @@ export function applyMeasureAddAction(
       measure.notes.splice(at, 0, rest)
       return { type: 'inserted' }
     }
+    const beamOnset = computeMeasureOnsetBefore(measure, at)
     const note = createNoteSymbol({
       region: preview.region,
       chronaxie: preview.chronaxie,
-      direction: preview.direction
+      direction: preview.direction,
+      beamOnset
     })
     measure.notes.splice(at, 0, note)
     return { type: 'inserted' }
@@ -566,8 +570,10 @@ export function applyMeasureAddAction(
 
   if (preview.slotKind === 'rest') return null
 
-  const note = measure.notes[preview.snap.noteIndex]
-  if (!note || !isNoteSymbol(note)) return null
+  const raw = measure.notes[preview.snap.noteIndex]
+  if (!raw) return null
+  const note = asStaffOrNumber(raw)
+  if (!isNoteSymbol(note)) return null
 
   const existing = note.notesInfo.find((ni) => ni.region === preview.region)
   if (existing) {
@@ -578,11 +584,13 @@ export function applyMeasureAddAction(
     }
   }
 
+  const lead = note.notesInfo[0]
   note.notesInfo.push(
     createNotesInfo({
       region: preview.region,
-      chronaxie: note.notesInfo[0]?.chronaxie ?? preview.chronaxie,
-      direction: preview.direction
+      chronaxie: lead?.chronaxie ?? preview.chronaxie,
+      direction: preview.direction,
+      beamType: lead?.beamType
     })
   )
   return { type: 'noteInfoAdded' }

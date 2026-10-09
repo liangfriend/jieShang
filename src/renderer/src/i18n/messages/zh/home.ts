@@ -25,7 +25,7 @@ export default {
       whiteboard: '教学白板',
       achievements: '成就',
       myWorks: '我的作品',
-      musicEncyclopedia: '音乐百科',
+      chordManage: '和弦管理',
       abilityTest: '能力测试',
       myAudio: '我的音频',
       myImage: '我的图片',
@@ -37,7 +37,8 @@ export default {
       connected: 'MIDI 琴已连接',
       disconnected: 'MIDI 琴未连接'
     },
-    settingsAria: '设置'
+    settingsAria: '设置',
+    community: '解熵交流QQ群 202732106'
   },
   scores: {
     title: '我的曲谱',
@@ -55,9 +56,17 @@ export default {
       desc: '选好模版后，就可以进入曲谱编辑啦',
       staff: '线谱',
       jianpu: '简谱',
+      tab: 'TAB谱',
       empty: '空',
       single: '单声部',
-      double: '双声部'
+      double: '双声部',
+      guitar: '吉他谱',
+      ukulele: '尤克里里谱',
+      bass4: '四弦贝斯谱',
+      bass5: '五弦贝斯谱',
+      bass6: '六弦贝斯谱',
+      drum: '鼓谱',
+      drumKit: '架子鼓谱'
     }
   }
 } as const

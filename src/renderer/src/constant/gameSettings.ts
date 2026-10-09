@@ -5,6 +5,17 @@ export type GameDifficulty = 'test' | 'easy' | 'standard' | 'hard'
 
 export const DEFAULT_GAME_DIFFICULTY: GameDifficulty = 'easy'
 
+/** 音符切切谱面模式：五线谱 / 简谱（影响出题与最高分记录维度） */
+export type GameNotationMode = 'staff' | 'jianpu'
+
+export const DEFAULT_GAME_NOTATION_MODE: GameNotationMode = 'staff'
+
+export const GAME_NOTATION_MODE_OPTIONS: readonly GameNotationMode[] = ['staff', 'jianpu']
+
+export function isGameNotationMode(value: unknown): value is GameNotationMode {
+  return value === 'staff' || value === 'jianpu'
+}
+
 /** 音符块出现时的发声音量（0~1） */
 export const NOTE_BLOCK_SOUND_VOLUME_MIN = 0
 export const NOTE_BLOCK_SOUND_VOLUME_MAX = 1

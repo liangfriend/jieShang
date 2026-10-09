@@ -21,8 +21,16 @@ const emit = defineEmits<{
 const { t } = useI18n()
 const settings = useGameSettingsStore()
 const localeStore = useLocaleStore()
-const { difficulty, noteBlockSoundVolume } = storeToRefs(settings)
+const { difficulty, notationMode, noteBlockSoundVolume } = storeToRefs(settings)
 const { locale } = storeToRefs(localeStore)
+
+/** switch 开启 = 简谱，关闭 = 线谱 */
+const isJianpuNotation = computed({
+  get: () => notationMode.value === 'jianpu',
+  set: (value: boolean) => {
+    settings.setNotationMode(value ? 'jianpu' : 'staff')
+  }
+})
 
 const visible = computed({
   get: () => props.modelValue,
@@ -73,6 +81,19 @@ function onLocaleChange(value: AppLocale) {
               {{ resolveGameDifficultyLabel(opt.value) }}
             </el-radio>
           </el-radio-group>
+        </div>
+      </section>
+
+      <section class="home-settings-section">
+        <div class="home-settings-difficulty-row">
+          <span class="home-settings-difficulty-row__label">{{ t('settings.gameNotation.label') }}</span>
+          <el-switch
+            v-model="isJianpuNotation"
+            class="home-settings-notation-switch"
+            inline-prompt
+            :active-text="t('settings.gameNotation.jianpu')"
+            :inactive-text="t('settings.gameNotation.staff')"
+          />
         </div>
       </section>
 
@@ -128,6 +149,11 @@ function onLocaleChange(value: AppLocale) {
   font-size: 14px;
   font-weight: 600;
   color: #5c4a6a;
+}
+
+.home-settings-notation-switch {
+  --el-switch-on-color: #c9b8ff;
+  --el-switch-off-color: #ff8fb8;
 }
 
 .home-settings-dialog__btn {

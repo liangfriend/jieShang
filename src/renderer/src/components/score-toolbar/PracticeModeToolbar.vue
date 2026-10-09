@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { Delete, Setting, VideoPause, VideoPlay } from '@element-plus/icons-vue'
+import { Delete, Hide, Headset, Setting, VideoPause, VideoPlay, View } from '@element-plus/icons-vue'
 import { computed, inject, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
 import { scorePlaybackKey } from '@renderer/utils/scorePagePlayback'
-import type { MusicScoreTypeEnum } from '@deciphony/renderer'
+import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store'
+import type { KeySignatureTypeEnum, MusicScoreTypeEnum } from '@deciphony/renderer'
+import { practiceContextKey } from '@renderer/views/practice/practiceContext'
 import ScoreNotationTypeSelector from './ScoreNotationTypeSelector.vue'
+import ScoreTransposeControl from './ScoreTransposeControl.vue'
+import ScoreSemitoneShiftButtons from './ScoreSemitoneShiftButtons.vue'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
 import ScoreToneColorAdjuster from './ScoreToneColorAdjuster.vue'
 import PracticeSettingsDialog from './PracticeSettingsDialog.vue'
@@ -13,18 +17,28 @@ import PracticeSettingsDialog from './PracticeSettingsDialog.vue'
 defineProps<{
   notationType: MusicScoreTypeEnum
   notationTypeDisabled?: boolean
+  currentKey: KeySignatureTypeEnum
+  transposeDisabled?: boolean
 }>()
 
 const emit = defineEmits<{
   'notation-type-change': [value: MusicScoreTypeEnum]
+  transpose: [payload: { toKey: KeySignatureTypeEnum }]
+  'semitone-shift': [semitones: 1 | -1]
 }>()
 
 const { t } = useI18n()
+const settings = usePracticeSettingsStore()
 
 const playback = inject(scorePlaybackKey)
 
 if (!playback) {
   throw new Error('PracticeModeToolbar requires scorePlayback from practice.vue')
+}
+
+const practice = inject(practiceContextKey)
+if (!practice) {
+  throw new Error('PracticeModeToolbar requires practiceContext from practice.vue')
 }
 
 const {
@@ -39,13 +53,20 @@ const {
   handleClearPlayData
 } = playback
 
+const { demoSession, handleToggleDemo } = practice
+
 const settingsVisible = ref(false)
 
-// 设置：仅停止状态可用；预备拍期间禁用
-const settingsDisabled = computed(() => playbackState.value !== 'stopped' || countingIn.value)
+const settingsDisabled = computed(
+  () => playbackState.value !== 'stopped' || countingIn.value || demoSession.value
+)
 const toneColorDisabled = settingsDisabled
-// 清空：预备拍期间禁用
-const clearDisabled = computed(() => countingIn.value)
+const clearDisabled = computed(() => countingIn.value || demoSession.value)
+const practicePlayDisabled = computed(() => playDisabled.value || demoSession.value)
+const practicePauseDisabled = computed(() => pauseDisabled.value || demoSession.value)
+const demoDisabled = computed(
+  () => !demoSession.value && (countingIn.value || playbackState.value !== 'stopped')
+)
 
 function openSettings() {
   if (settingsDisabled.value) return
@@ -76,7 +97,7 @@ function clearPlayData() {
       <button
         type="button"
         class="score-toolbar__btn score-toolbar__btn--accent"
-        :disabled="playDisabled"
+        :disabled="practicePlayDisabled"
         @click="handlePlay"
       >
         <el-icon><VideoPlay /></el-icon>
@@ -85,7 +106,18 @@ function clearPlayData() {
       <button
         type="button"
         class="score-toolbar__btn"
-        :disabled="pauseDisabled"
+        :disabled="demoDisabled"
+        @click="handleToggleDemo"
+      >
+        <el-icon><Headset /></el-icon>
+        <span>{{
+          demoSession ? t('practice.toolbar.stopDemo') : t('practice.toolbar.demoPlay')
+        }}</span>
+      </button>
+      <button
+        type="button"
+        class="score-toolbar__btn"
+        :disabled="practicePauseDisabled"
         @click="handlePause"
       >
         <el-icon><VideoPause /></el-icon>
@@ -95,11 +127,20 @@ function clearPlayData() {
         <span class="score-toolbar__stop-icon" aria-hidden="true" />
         <span>{{ t('practice.toolbar.stop') }}</span>
       </button>
-      <ScoreToneColorAdjuster :disabled="toneColorDisabled" />
+      <ScoreToneColorAdjuster :disabled="toneColorDisabled" score-option />
       <ScoreNotationTypeSelector
         :model-value="notationType"
         :disabled="notationTypeDisabled"
         @change="emit('notation-type-change', $event)"
+      />
+      <ScoreTransposeControl
+        :current-key="currentKey"
+        :disabled="transposeDisabled || notationTypeDisabled"
+        @transpose="emit('transpose', $event)"
+      />
+      <ScoreSemitoneShiftButtons
+        :disabled="transposeDisabled || notationTypeDisabled"
+        @shift="emit('semitone-shift', $event)"
       />
       <button
         type="button"
@@ -109,6 +150,13 @@ function clearPlayData() {
       >
         <el-icon><Delete /></el-icon>
         <span>{{ t('practice.toolbar.clearPlayData') }}</span>
+      </button>
+      <button type="button" class="score-toolbar__btn" @click="settings.hideScore = !settings.hideScore">
+        <el-icon>
+          <View v-if="settings.hideScore" />
+          <Hide v-else />
+        </el-icon>
+        <span>{{ settings.hideScore ? t('practice.toolbar.showScore') : t('practice.toolbar.hideScore') }}</span>
       </button>
     </template>
   </ScoreToolbarShell>

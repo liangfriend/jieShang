@@ -13,6 +13,8 @@ export const usePracticeSettingsStore = defineStore('practiceSettings', () => {
   const showNoteResult = ref(true)
   /** 是否遮盖瀑布流 */
   const coverWaterfall = ref(false)
+  /** 隐藏曲谱：曲谱区高度收为 0，瀑布流铺满 */
+  const hideScore = ref(false)
   /** 曲谱音量 0~1 */
   const scoreVolume = ref(PLAY_DEFAULT_VOLUME)
   /** 节拍器音量 0~1 */
@@ -48,6 +50,7 @@ export const usePracticeSettingsStore = defineStore('practiceSettings', () => {
   return {
     showNoteResult,
     coverWaterfall,
+    hideScore,
     scoreVolume,
     metronomeVolume,
     bpm,

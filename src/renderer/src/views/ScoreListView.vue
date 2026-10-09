@@ -39,6 +39,20 @@ const templateGroups = computed(() => [
       { key: 'jianpuSingle', label: t('scores.templateDialog.single') },
       { key: 'jianpuDouble', label: t('scores.templateDialog.double') }
     ]
+  },
+  {
+    title: t('scores.templateDialog.tab'),
+    items: [
+      { key: 'guitarTab', label: t('scores.templateDialog.guitar') },
+      { key: 'ukuleleTab', label: t('scores.templateDialog.ukulele') },
+      { key: 'bass4Tab', label: t('scores.templateDialog.bass4') },
+      { key: 'bass5Tab', label: t('scores.templateDialog.bass5') },
+      { key: 'bass6Tab', label: t('scores.templateDialog.bass6') }
+    ]
+  },
+  {
+    title: t('scores.templateDialog.drum'),
+    items: [{ key: 'drum', label: t('scores.templateDialog.drumKit') }]
   }
 ])
 
@@ -194,7 +208,8 @@ onMounted(() => {
   --shadow: 0 8px 32px rgba(200, 140, 180, 0.18);
 
   position: relative;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: auto;
   padding: 32px 32px 80px;
   box-sizing: border-box;
   color: var(--text);

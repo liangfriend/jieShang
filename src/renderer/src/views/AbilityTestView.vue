@@ -64,13 +64,15 @@ function openTest(routeName: (typeof tests.value)[number]['route']) {
 
 <style scoped>
 .ability-test-page {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: linear-gradient(145deg, #fff5f9 0%, #f3ebff 45%, #e8f4ff 100%);
 }
 
 .ability-test-page__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -88,6 +90,8 @@ function openTest(routeName: (typeof tests.value)[number]['route']) {
 
 .ability-test-page__main {
   flex: 1;
+  min-height: 0;
+  overflow: auto;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;

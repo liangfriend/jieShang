@@ -9,6 +9,10 @@ import {
   DEFAULT_HARMONICA_MODEL_ID,
   HARMONICA_COLLECTION_ID,
   HARMONICA_MODEL_LIST,
+  HARMONICA_SMOOTH_ATTACK_SEC,
+  HARMONICA_SMOOTH_DECAY_SEC,
+  HARMONICA_SMOOTH_PEAK_VOLUME,
+  HARMONICA_SMOOTH_RELEASE_SEC,
   getHarmonicaModel,
   loadHarmonicaPrefs,
   saveHarmonicaPrefs,
@@ -16,11 +20,13 @@ import {
   type HarmonicaModelId
 } from '@renderer/constant/harmonica'
 import { searchScoresFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper/scoreFile'
+import { DEFAULT_TONE_COLOR_COLLECTION_ID } from '@renderer/utils/collection/toneColorUsage'
 import { usePlayStore } from '@renderer/store/play.store'
-import { useScorePagePlayback } from '@renderer/utils/scorePagePlayback/useScorePagePlayback'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import emptyScore from '@renderer/template/empty'
+import type { MusicScoreHighlightExpose } from '@deciphony/extensions/dr-play-highlight'
 import HarmonicaPanel from './HarmonicaPanel.vue'
+import { useSimScorePlayback } from './useSimScorePlayback'
 
 defineOptions({ name: 'HarmonicaSimView' })
 
@@ -32,6 +38,7 @@ const prefs = loadHarmonicaPrefs()
 const guideVisible = ref(false)
 const modelId = ref<HarmonicaModelId>(prefs.modelId || DEFAULT_HARMONICA_MODEL_ID)
 const mouthHoles = ref(prefs.mouthHoles)
+const smoothEnvelope = ref(Boolean(prefs.smoothEnvelope))
 const breath = ref<HarmonicaBreath | null>(null)
 const soundingMidis = ref<number[]>([])
 const toneReady = ref(false)
@@ -39,15 +46,16 @@ const toneReady = ref(false)
 const scoreOptions = ref<Array<{ id: number; name: string }>>([])
 const selectedScoreId = ref<number | null>(null)
 const musicScore = ref<MusicScore>(JSON.parse(JSON.stringify(emptyScore)) as MusicScore)
-const musicScoreRef = ref<{
-  findElementByVDom: (node: unknown) => SVGElement | null
-} | null>(null)
+const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
 
 const model = computed(() => getHarmonicaModel(modelId.value))
 
-const scorePlayback = useScorePagePlayback(musicScore, {
-  musicScoreRef
-})
+const {
+  playback: scorePlayback,
+  scoreScrollRef,
+  scrollLocked,
+  handleRenderMusicScore
+} = useSimScorePlayback(musicScore, musicScoreRef)
 
 async function refreshScores() {
   const list = await searchScoresFromDatabase('')
@@ -67,13 +75,14 @@ async function onScoreChange(id: number | null) {
     return
   }
   musicScore.value = parseScoreJson(res.data.data)
-  await playStore.restorePlaybackDefaults(musicScore.value)
+  await playStore.restorePlaybackDefaults(musicScore.value, { resetToneColor: false })
 }
 
 function persistPrefs() {
   saveHarmonicaPrefs({
     modelId: modelId.value,
-    mouthHoles: mouthHoles.value
+    mouthHoles: mouthHoles.value,
+    smoothEnvelope: smoothEnvelope.value
   })
 }
 
@@ -85,18 +94,36 @@ watch(modelId, (id) => {
   persistPrefs()
 })
 
-watch(mouthHoles, () => {
+watch([mouthHoles, smoothEnvelope], () => {
   persistPrefs()
 })
 
 async function syncSound(midis: number[]) {
   const next = new Set(midis)
   const prev = new Set(soundingMidis.value)
+  const smooth = smoothEnvelope.value
   for (const m of prev) {
-    if (!next.has(m)) playStore.releaseNote(m)
+    if (!next.has(m)) {
+      playStore.releaseNote(
+        m,
+        smooth ? { release: HARMONICA_SMOOTH_RELEASE_SEC } : { immediate: true }
+      )
+    }
   }
   for (const m of next) {
-    if (!prev.has(m)) await playStore.triggerNote(m)
+    if (!prev.has(m)) {
+      await playStore.triggerNote(
+        m,
+        smooth
+          ? {
+              holdUntilRelease: true,
+              attack: HARMONICA_SMOOTH_ATTACK_SEC,
+              decay: HARMONICA_SMOOTH_DECAY_SEC,
+              peakVolume: HARMONICA_SMOOTH_PEAK_VOLUME
+            }
+          : undefined
+      )
+    }
   }
   soundingMidis.value = midis
 }
@@ -109,10 +136,14 @@ function onBreath(next: HarmonicaBreath | null) {
   breath.value = next
 }
 
+let disposed = false
+
 onMounted(async () => {
   // 尽早锁口琴音色，与其它初始化并行，避免抢跑 ensure 灌钢琴
   const toneTask = (async () => {
     await playStore.init()
+    // 初始化期间已离开：别在卸载还原默认音色之后再把口琴音色设回去
+    if (disposed) return
     await playStore.setCollectionToneColor(HARMONICA_COLLECTION_ID)
   })()
 
@@ -120,15 +151,17 @@ onMounted(async () => {
 
   try {
     await toneTask
-    toneReady.value = true
+    if (!disposed) toneReady.value = true
   } catch {
-    ElMessage.warning(t('instrumentSim.locked'))
+    if (!disposed) ElMessage.warning(t('instrumentSim.locked'))
   }
 })
 
 onUnmounted(() => {
+  disposed = true
   playStore.releaseAllHeldNotes()
   scorePlayback.handleStop()
+  void playStore.setCollectionToneColor(DEFAULT_TONE_COLOR_COLLECTION_ID)
 })
 </script>
 
@@ -163,8 +196,16 @@ onUnmounted(() => {
 
     <div class="harmonica-sim__bottom">
       <section class="harmonica-sim__score">
-        <div class="harmonica-sim__score-scroll">
-          <musicScoreVue ref="musicScoreRef" :data="musicScore" />
+        <div
+          ref="scoreScrollRef"
+          class="harmonica-sim__score-scroll hidden-scrollbar"
+          :class="{ 'score-scroll-locked': scrollLocked }"
+        >
+          <musicScoreVue
+            ref="musicScoreRef"
+            :data="musicScore"
+            @renderMusicScore="handleRenderMusicScore"
+          />
         </div>
       </section>
 
@@ -235,6 +276,11 @@ onUnmounted(() => {
             size="small"
             controls-position="right"
           />
+        </div>
+
+        <div class="harmonica-sim__row">
+          <span class="harmonica-sim__label">{{ t('instrumentSim.harmonica.smoothEnvelope') }}</span>
+          <el-switch v-model="smoothEnvelope" size="small" />
         </div>
 
         <p class="harmonica-sim__hint">{{ t('instrumentSim.harmonica.toneLocked') }}</p>
@@ -322,6 +368,10 @@ onUnmounted(() => {
   overflow: auto;
   padding: 8px;
   box-sizing: border-box;
+}
+
+.harmonica-sim__score-scroll > :deep(svg) {
+  margin-inline: auto;
 }
 
 .harmonica-sim__tools {

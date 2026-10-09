@@ -1,6 +1,6 @@
-import type {Chronaxie, Measure, NoteRest, SlotData} from '@deciphony/renderer'
+import type {Chronaxie, Measure, MusicScore, NoteRest, SlotData} from '@deciphony/renderer'
 import {createAugmentationDot} from '@deciphony/extensions/dr-edit/score-builder'
-import {setRelativeX} from './renderEditFrameProperties'
+import {previewRelativeX, setRelativeX} from './renderEditFrameProperties'
 
 export type RestEditSlot = SlotData & {self: NoteRest; measure: Measure}
 
@@ -20,6 +20,15 @@ export function setNoteRestAugmentationDot(rest: NoteRest, count: 0 | 1 | 2 | 3)
   }
 }
 
-export function setNoteRestRelativeX(rest: NoteRest, relativeX: number): void {
+export function setNoteRestRelativeX(
+  musicScore: MusicScore,
+  rest: NoteRest,
+  relativeX: number,
+): void {
+  previewRelativeX(musicScore, rest, relativeX)
+}
+
+/** 非滑块路径：立刻写源数据 */
+export function commitNoteRestRelativeX(rest: NoteRest, relativeX: number): void {
   setRelativeX(rest, relativeX)
 }

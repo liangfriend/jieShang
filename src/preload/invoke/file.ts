@@ -9,5 +9,8 @@ export const fileInvoke = {
     ipcRenderer.invoke('file:exportSj', content, defaultName),
   importMusicXml: () => ipcRenderer.invoke('file:importMusicXml'),
   exportMusicXml: (content: string, defaultName?: string) =>
-    ipcRenderer.invoke('file:exportMusicXml', content, defaultName)
+    ipcRenderer.invoke('file:exportMusicXml', content, defaultName),
+  importMidi: () => ipcRenderer.invoke('file:importMidi'),
+  exportMidi: (content: Uint8Array, defaultName?: string) =>
+    ipcRenderer.invoke('file:exportMidi', content, defaultName)
 }

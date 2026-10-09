@@ -6,7 +6,8 @@ import {
   resolveAchievementDescription,
   resolveAchievementName,
   resolveAchievementReward,
-  resolveGameDifficultyLabel
+  resolveGameDifficultyLabel,
+  resolveGameNotationModeLabel
 } from '@renderer/i18n/helpers'
 import {
   formatAchievementCompletedAt,
@@ -14,7 +15,7 @@ import {
   type AchievementListItem
 } from '@renderer/utils/achievementHelper'
 import {
-  buildNoteSliceHighScoreMatrix,
+  buildNoteSliceHighScoreNotationGroups,
   fetchNoteSliceHighScores,
   formatNoteSliceExtremeHighScore,
   type NoteSliceHighScoreRecord
@@ -26,17 +27,21 @@ const loading = ref(true)
 const achievements = ref<AchievementListItem[]>([])
 const highScores = ref<NoteSliceHighScoreRecord[]>([])
 
-const highScoreMatrix = computed(() => {
-  const matrix = buildNoteSliceHighScoreMatrix(highScores.value)
-  return matrix.map((row) => ({
-    ...row,
-    modeLabel: t(`noteSlice.modes.${row.mode}`),
-    scores: row.scores?.map((scoreItem) => ({
-      ...scoreItem,
-      difficultyLabel: resolveGameDifficultyLabel(scoreItem.difficulty)
+/** 历史最高分按谱面模式（线谱 / 简谱）分组；成就本身不分谱面模式 */
+const highScoreGroups = computed(() =>
+  buildNoteSliceHighScoreNotationGroups(highScores.value).map((group) => ({
+    ...group,
+    notationLabel: resolveGameNotationModeLabel(group.notation),
+    rows: group.rows.map((row) => ({
+      ...row,
+      modeLabel: t(`noteSlice.modes.${row.mode}`),
+      scores: row.scores?.map((scoreItem) => ({
+        ...scoreItem,
+        difficultyLabel: resolveGameDifficultyLabel(scoreItem.difficulty)
+      }))
     }))
   }))
-})
+)
 
 onMounted(async () => {
   loading.value = true
@@ -65,29 +70,39 @@ onMounted(async () => {
         <h2 class="achievements-page__section-title">{{ t('achievements.highScores') }}</h2>
 
         <div
-          v-for="modeRow in highScoreMatrix"
-          :key="modeRow.mode"
-          class="achievements-page__mode-block"
-          :class="{ 'achievements-page__mode-block--single': modeRow.singleScore != null }"
+          v-for="group in highScoreGroups"
+          :key="group.notation"
+          class="achievements-page__notation-group"
         >
-          <span class="achievements-page__mode-title">{{ modeRow.modeLabel }}</span>
+          <h3 class="achievements-page__notation-title">
+            <span class="achievements-page__notation-tag">{{ group.notationLabel }}</span>
+          </h3>
 
-          <div v-if="modeRow.scores" class="achievements-page__score-grid">
-            <div
-              v-for="scoreItem in modeRow.scores"
-              :key="`${modeRow.mode}-${scoreItem.difficulty}`"
-              class="achievements-page__score-card"
-            >
-              <span class="achievements-page__score-difficulty">{{
-                scoreItem.difficultyLabel
-              }}</span>
-              <span class="achievements-page__score-value">{{ scoreItem.high_score }}</span>
+          <div
+            v-for="modeRow in group.rows"
+            :key="`${group.notation}-${modeRow.mode}`"
+            class="achievements-page__mode-block"
+            :class="{ 'achievements-page__mode-block--single': modeRow.singleScore != null }"
+          >
+            <span class="achievements-page__mode-title">{{ modeRow.modeLabel }}</span>
+
+            <div v-if="modeRow.scores" class="achievements-page__score-grid">
+              <div
+                v-for="scoreItem in modeRow.scores"
+                :key="`${group.notation}-${modeRow.mode}-${scoreItem.difficulty}`"
+                class="achievements-page__score-card"
+              >
+                <span class="achievements-page__score-difficulty">{{
+                  scoreItem.difficultyLabel
+                }}</span>
+                <span class="achievements-page__score-value">{{ scoreItem.high_score }}</span>
+              </div>
             </div>
-          </div>
 
-          <span v-else class="achievements-page__single-score">{{
-            formatNoteSliceExtremeHighScore(modeRow.singleScore ?? 0)
-          }}</span>
+            <span v-else class="achievements-page__single-score">{{
+              formatNoteSliceExtremeHighScore(modeRow.singleScore ?? 0)
+            }}</span>
+          </div>
         </div>
       </section>
 
@@ -183,6 +198,27 @@ onMounted(async () => {
 
 .achievements-page__scores {
   margin-bottom: 28px;
+}
+
+.achievements-page__notation-group + .achievements-page__notation-group {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed rgba(255, 184, 208, 0.45);
+}
+
+.achievements-page__notation-title {
+  margin: 0 0 10px;
+  display: flex;
+  align-items: center;
+}
+
+.achievements-page__notation-tag {
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(90deg, #ff8fb8, #c9b8ff);
 }
 
 .achievements-page__mode-block {

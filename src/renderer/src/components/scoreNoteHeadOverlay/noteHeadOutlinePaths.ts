@@ -32,5 +32,7 @@ export function resolveStandardNoteHeadShape(skinKey?: string): StandardNoteHead
 }
 
 export function isNumberNotationSkinKey(skinKey?: string): boolean {
-  return Boolean(skinKey?.startsWith('Number_'))
+  if (!skinKey) return false
+  const key = skinKey.toLowerCase()
+  return key.startsWith('number_')
 }

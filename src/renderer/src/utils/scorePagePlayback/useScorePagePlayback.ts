@@ -9,6 +9,7 @@ import {
   type PlayHighlightProgressData
 } from '@deciphony/extensions/dr-play-highlight'
 import { usePlayStore } from '@renderer/store/play.store'
+import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
 import { toPlaySequence } from './toPlaySequence'
 import type { ScorePagePlaybackController, UseScorePagePlaybackOptions } from './types'
 
@@ -26,7 +27,8 @@ export function useScorePagePlayback(
     playDisabled: storePlayDisabled,
     pauseDisabled: storePauseDisabled,
     stopDisabled: storeStopDisabled,
-    bpm
+    bpm,
+    beatUnit
   } = storeToRefs(playStore)
 
   const countingIn = ref(false)
@@ -40,7 +42,7 @@ export function useScorePagePlayback(
     ? usePlayHighlight({
         musicScoreRef: options.musicScoreRef,
         getBpm: () => bpm.value,
-        getBeatUnit: () => 4,
+        getBeatUnit: () => beatUnit.value,
         getRate: () => 1
       })
     : null
@@ -77,28 +79,49 @@ export function useScorePagePlayback(
   }
 
   onBeforeUnmount(() => {
+    if (countingIn.value) countInAborted = true
+    playStore.stop()
+    highlight?.handlePlaybackStop()
+    waterfall()?.stop()
+    options.onPlaybackStopped?.()
     if (progressStartSubId) playStore.unsubscribeProgressStart(progressStartSubId)
     if (onEndSubId) playStore.unsubscribeOnEnd(onEndSubId)
     if (waterfallEndSubId) playStore.unsubscribeOnEnd(waterfallEndSubId)
     if (stoppedSubId) playStore.unsubscribeOnEnd(stoppedSubId)
   })
 
+  let playingRangeKey = ''
+
   async function handlePlay() {
-    const sequence = options.getPlaySequence?.() ?? toPlaySequence(musicScore.value)
+    const range = options.getPlayRange?.() ?? null
+    const rangeKey = range ? `${range.startNoteId}|${range.endNoteId}` : ''
+    if (playbackState.value === 'paused' && rangeKey !== playingRangeKey) handleStop()
+
+    const sequence = options.getPlaySequence?.() ?? toPlaySequence(musicScore.value, { range })
     if (sequence.length === 0) {
-      ElMessage.warning(i18n.global.t('play.messages.noPlayableContent'))
+      ElMessage.warning(
+        i18n.global.t(range ? 'play.messages.rangeNoPlayableContent' : 'play.messages.noPlayableContent')
+      )
       return
     }
 
     await playStore.waitReady()
 
     if (playbackState.value !== 'paused') {
+      playingRangeKey = rangeKey
+      if (playStore.hasPendingScoreToneColors(musicScore.value)) {
+        await useGlobalLoadingStore().run(i18n.global.t('play.toneColor.loading'), () =>
+          playStore.ensureScoreToneColorsLoaded(musicScore.value)
+        )
+      }
       handleClearPlayData()
       playStore.setPlaySequence(sequence)
 
       if (options.countIn) {
         countInAborted = false
         countingIn.value = true
+        // 预备拍期间启动瀑布流：序列已按预备拍时长延后，结束时正好到首音
+        waterfall()?.play()
         try {
           await options.countIn()
         } finally {
@@ -106,6 +129,7 @@ export function useScorePagePlayback(
         }
         if (countInAborted) {
           countInAborted = false
+          waterfall()?.stop()
           return
         }
       }

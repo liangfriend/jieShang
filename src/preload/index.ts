@@ -12,6 +12,8 @@ import { audioInvoke } from './invoke/audio'
 import { imageInvoke } from './invoke/image'
 import { videoInvoke } from './invoke/video'
 import { guitarChordInvoke } from './invoke/guitarChord'
+import { drumMachineInvoke } from './invoke/drumMachine'
+import { omrInvoke } from './invoke/omr'
 
 const api = {}
 
@@ -25,6 +27,8 @@ if (process.contextIsolated) {
       image: imageInvoke,
       video: videoInvoke,
       guitarChord: guitarChordInvoke,
+      drumMachine: drumMachineInvoke,
+      omr: omrInvoke,
       collection: collectionInvoke,
       achievement: achievementInvoke,
       noteSliceHighScore: noteSliceHighScoreInvoke,

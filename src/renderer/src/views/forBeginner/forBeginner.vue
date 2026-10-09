@@ -3,7 +3,7 @@ import type { MusicScore, VDom } from '@deciphony/renderer'
 import type { PlaySequence } from '@deciphony/player'
 import musicScoreVue from '@deciphony/renderer'
 import { ElMessage } from 'element-plus'
-import { MusicScoreTypeEnum } from '@deciphony/renderer'
+import { KeySignatureTypeEnum, MusicScoreTypeEnum } from '@deciphony/renderer'
 import { computed, onBeforeUnmount, onMounted, provide, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
@@ -14,10 +14,12 @@ import { mergeGrandStaff } from '@deciphony/extensions/score-util'
 import { useMetronomeStore } from '@renderer/store/metronome.store'
 import { useBeginnerSettingsStore } from '@renderer/store/beginnerSettings.store'
 import { usePlayStore } from '@renderer/store/play.store'
-import { resolvePlayBpm } from '@renderer/constant/play'
+import { resolvePlayBpm, toBeatUnitBpm } from '@renderer/constant/play'
+import { pianoHoldTriggerOptions, pianoReleaseOptions } from '@renderer/utils/pianoEnvelope'
 import { loadScoreFromRoute } from '@renderer/utils/scoreRoute'
 import { createScoreLyricsExtension } from '@renderer/utils/createScoreLyricsExtension'
 import { applySingleLineModeScoreHeight } from '@renderer/utils/singleLineModeScoreLayout'
+import { useSingleLineScoreCenter } from '@renderer/utils/singleLineScoreCenter'
 import {
   toMidiBoxSequence,
   toPlaySequence,
@@ -30,17 +32,17 @@ import {
 } from '@renderer/views/forBeginner/beginnerPlayback'
 import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
 import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
+import { applyScoreShiftWheelScroll } from '@renderer/utils/scoreShiftWheelScroll'
 import type { MidiBoxBatchPayload } from '@renderer/views/forBeginner/beginnerNoteProgressHighlight'
 import type { MusicScoreHighlightExpose } from '@deciphony/extensions/dr-play-highlight'
-import {
-  ScoreNoteHeadOverlay,
-  type ScoreNoteHeadOverlayApi
-} from '@renderer/components/scoreNoteHeadOverlay'
+import { createScoreNoteFillMarker } from '@renderer/utils/scoreNoteFillMarker'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import { useVirtualPianoSkin } from '@renderer/utils/collection/useVirtualPianoSkin'
 import { usePerformSkin } from '@renderer/components/performSkin/usePerformSkin'
 import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotationDisplay'
+import { resolveScoreKeySignature } from '@renderer/utils/scoreNotationTransfer'
 import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
+import { resolveScoreTimeSignature } from '@renderer/utils/scoreTimeSignature'
 import empty from '@renderer/template/empty'
 
 const MIDI_RANGE = { min: 21, max: 108 } as const
@@ -60,9 +62,10 @@ const displayType = ref<MusicScoreTypeEnum>(MusicScoreTypeEnum.StandardStaff)
 const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin()
 const { pianoSkin, virtualPianoSkinId, waitVirtualPianoSkin } = useVirtualPianoSkin()
 const { performSkinReady, performSkinId, waitPerformSkin } = usePerformSkin()
-const { initAfterLoad, applyDisplayType } = usePlayScoreNotationDisplay(musicScoreData, displayType)
+const { initAfterLoad, applyDisplayType, applyTranspose, applySemitoneShift } =
+  usePlayScoreNotationDisplay(musicScoreData, displayType)
 const { extensions: scoreExtensions, slotConfig: scoreSlotConfig } =
-  createScoreLyricsExtension('show')
+  createScoreLyricsExtension('show', musicScoreData, { showTitle: false })
 
 const maxStaffCount = computed(() => {
   let max = 0
@@ -73,8 +76,11 @@ const maxStaffCount = computed(() => {
 })
 
 const scoreScrollRef = ref<HTMLElement | null>(null)
+const scoreStackRef = ref<HTMLElement | null>(null)
+const scoreCenter = useSingleLineScoreCenter(
+  () => scoreStackRef.value?.querySelector<SVGSVGElement>(':scope > svg')
+)
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
-const scoreOverlayRef = ref<ScoreNoteHeadOverlayApi | null>(null)
 const pianoMidiBoxRef = ref<PianoMidiBoxExpose | null>(null)
 const playSequence = ref<PlaySequence>([])
 const midiBoxSequence = ref<MidiBoxSequence>({})
@@ -90,10 +96,13 @@ const staffDim = createPracticeStaffDim({
   findElementByVDom: findScoreElementByVDom
 })
 
+const noteMarker = createScoreNoteFillMarker({ findElementByVDom: findScoreElementByVDom })
+
 const scrollToPlayingNote = createScoreScrollToPlayingNote({
   getScrollContainer: () => scoreScrollRef.value,
   getVDomList: () => vDomList.value,
-  findElementByVDom: findScoreElementByVDom
+  findElementByVDom: findScoreElementByVDom,
+  getMusicScore: () => musicScoreData.value
 })
 
 const hasMidiBoxSequence = computed(() =>
@@ -108,7 +117,7 @@ const playback = useBeginnerPlayback({
   },
   onPlaybackStopped: () => {
     metronomeStore.stop()
-    scoreOverlayRef.value?.clearBeginner()
+    noteMarker.clearBeginner()
     scrollToPlayingNote.resetScroll()
   },
   hasSequence: () => hasMidiBoxSequence.value
@@ -119,6 +128,7 @@ provide(beginnerPlaybackKey, playback)
 const notationTypeDisabled = computed(
   () => playback.playbackState.value !== 'stopped' || playback.countingIn.value
 )
+const currentScoreKey = computed(() => resolveScoreKeySignature(musicScoreData.value))
 
 watch(
   () => settings.metronomeVolume,
@@ -127,7 +137,7 @@ watch(
 watch(
   () => settings.bpm,
   (value) => {
-    metronomeStore.setBpm(value)
+    playStore.setBpm(value)
     syncMetronome(musicScoreData.value, value)
   }
 )
@@ -142,33 +152,43 @@ watch(
 async function onPianoKeyDown(midi: number) {
   if (playStore.volume <= 0) return
   await playStore.ensureCollectionToneColorInitialized()
-  void playStore.triggerNote(midi)
+  void playStore.triggerNote(midi, pianoHoldTriggerOptions())
 }
 
 function onPianoKeyUp(midi: number) {
-  playStore.releaseNote(midi)
+  playStore.releaseNote(midi, pianoReleaseOptions())
 }
 
 function handleRenderMusicScore(list: VDom[]) {
   vDomList.value = list
-  scoreOverlayRef.value?.onRenderMusicScore(list)
+  noteMarker.onRenderMusicScore(list)
   staffDim.rebindAfterRender()
+  scoreCenter.recenter()
+}
+
+/** 停止态 Shift+滚轮：横向浏览曲谱（方便查看练习结果） */
+function onScoreWheel(event: WheelEvent) {
+  applyScoreShiftWheelScroll(
+    scoreScrollRef.value,
+    event,
+    playback.playbackState.value === 'stopped' && !playback.countingIn.value
+  )
 }
 
 function handleMidiBoxProgressReset() {
-  scoreOverlayRef.value?.clearBeginner()
+  noteMarker.clearBeginner()
 }
 
 function handleMidiBoxBatchComplete(payload: MidiBoxBatchPayload) {
-  scoreOverlayRef.value?.markBeginnerBatchDone(payload.notes.map((note) => note.info))
+  noteMarker.markBeginnerBatchDone(payload.notes.map((note) => note.info))
 }
 
 function handleMidiBoxBatchActive(payload: MidiBoxBatchPayload) {
   if (payload.batchIndex < 0 || payload.notes.length === 0) {
-    scoreOverlayRef.value?.setBeginnerCurrentBatch([])
+    noteMarker.setBeginnerCurrentBatch([])
     return
   }
-  scoreOverlayRef.value?.setBeginnerCurrentBatch(payload.notes.map((note) => note.info))
+  noteMarker.setBeginnerCurrentBatch(payload.notes.map((note) => note.info))
   const noteId = payload.notes[0]?.info
   if (noteId != null) scrollToPlayingNote.scrollToHorizontalCenter(String(noteId))
 }
@@ -178,26 +198,14 @@ function countMeasures(score: MusicScore): number {
   return Math.max(1, staff?.measures.length ?? 1)
 }
 
-function resolveTimeSignature(score: MusicScore): { timeSignature: string; beatUnit: number } {
-  let raw: string | undefined
-  for (const grandStaff of score.grandStaffs ?? []) {
-    for (const staff of grandStaff.staves ?? []) {
-      const type = staff.measures?.[0]?.timeSignature_f?.type as string | undefined
-      if (type) {
-        raw = type
-        break
-      }
-    }
-    if (raw) break
-  }
-  const normalized = (raw ?? '4_4').replace('_', '/')
-  const denominator = Number(normalized.split('/')[1]) || 4
-  return { timeSignature: normalized, beatUnit: denominator }
-}
-
-function syncMetronome(score: MusicScore, bpm: number) {
-  const { timeSignature, beatUnit } = resolveTimeSignature(score)
-  metronomeStore.syncScore({ bpm, beatUnit, timeSignature })
+/** 节拍器跟拍号分母；settings/playStore.bpm 为四分音符基准 */
+function syncMetronome(score: MusicScore, quarterBpm: number) {
+  const { timeSignature, beatUnit } = resolveScoreTimeSignature(score)
+  metronomeStore.syncScore({
+    bpm: toBeatUnitBpm(quarterBpm, beatUnit),
+    beatUnit,
+    timeSignature
+  })
 }
 
 function applyScoreLayout(score: MusicScore) {
@@ -225,10 +233,44 @@ function onNotationTypeChange(targetType: MusicScoreTypeEnum) {
   try {
     applyDisplayType(targetType)
     musicScoreData.value = prepareBeginnerScore(musicScoreData.value)
-    scoreOverlayRef.value?.clearBeginner()
+    noteMarker.clearBeginner()
     rebuildSequences(musicScoreData.value)
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t('beginner.messages.notationTypeSwitchFailed'))
+  }
+}
+
+function onTranspose(payload: { toKey: KeySignatureTypeEnum }) {
+  if (payload.toKey === currentScoreKey.value) {
+    ElMessage.info(t('editor.messages.transposeSameKey'))
+    return
+  }
+  playback.handleStop()
+  try {
+    applyTranspose(payload)
+    musicScoreData.value = prepareBeginnerScore(musicScoreData.value)
+    noteMarker.clearBeginner()
+    rebuildSequences(musicScoreData.value)
+    ElMessage.success(t('editor.messages.transposed'))
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t('editor.messages.transposeFailed'))
+  }
+}
+
+function onSemitoneShift(semitones: 1 | -1) {
+  playback.handleStop()
+  try {
+    applySemitoneShift(semitones)
+    musicScoreData.value = prepareBeginnerScore(musicScoreData.value)
+    noteMarker.clearBeginner()
+    rebuildSequences(musicScoreData.value)
+    ElMessage.success(
+      semitones > 0 ? t('editor.messages.semitoneRaised') : t('editor.messages.semitoneLowered')
+    )
+  } catch (error) {
+    ElMessage.error(
+      error instanceof Error ? error.message : t('editor.messages.semitoneShiftFailed')
+    )
   }
 }
 
@@ -266,7 +308,7 @@ onMounted(async () => {
     }
 
     await playStore.restorePlaybackDefaults(musicScoreData.value)
-    settings.bpm = resolvePlayBpm(musicScoreData.value.bpm)
+    settings.bpm = resolvePlayBpm(musicScoreData.value)
     metronomeStore.setVolume(settings.metronomeVolume)
     rebuildSequences(musicScoreData.value)
   } finally {
@@ -279,7 +321,7 @@ onBeforeUnmount(() => {
   metronomeStore.stop()
   playStore.releaseAllHeldNotes()
   staffDim.clearAll()
-  scoreOverlayRef.value?.clearAll()
+  noteMarker.clearAll()
 })
 
 function handleMidiBoxFinished() {
@@ -291,12 +333,26 @@ function handleMidiBoxFinished() {
   <div class="beginner-page">
     <section
       ref="scoreScrollRef"
-      class="beginner-page__score hidden-scrollbar"
-      :style="{ maxHeight: `${scoreCanvasHeight + 20}px` }"
+      :class="[
+        'beginner-page__score',
+        'hidden-scrollbar',
+        {
+          'beginner-page__score--hidden': settings.hideScore,
+          'score-scroll-locked':
+            playback.playbackState.value !== 'stopped' || playback.countingIn.value
+        }
+      ]"
+      :style="{ maxHeight: settings.hideScore ? '0px' : `${scoreCanvasHeight + 21}px` }"
+      @wheel="onScoreWheel"
     >
       <div
+        ref="scoreStackRef"
         class="beginner-page__score-stack"
-        :style="{ width: `${scoreCanvasWidth}px`, height: `${scoreCanvasHeight}px` }"
+        :style="{
+          width: `${scoreCanvasWidth}px`,
+          height: `${scoreCanvasHeight}px`,
+          transform: `translateY(${scoreCenter.offsetY.value}px)`
+        }"
       >
         <musicScoreVue
           v-if="scoreSkin"
@@ -309,12 +365,6 @@ function handleMidiBoxFinished() {
           :skin="scoreSkin"
           :skin-name="scoreSkinName"
           @renderMusicScore="handleRenderMusicScore"
-        />
-        <ScoreNoteHeadOverlay
-          ref="scoreOverlayRef"
-          :width="scoreCanvasWidth"
-          :height="scoreCanvasHeight"
-          :find-element-by-v-dom="findScoreElementByVDom"
         />
       </div>
     </section>
@@ -360,7 +410,11 @@ function handleMidiBoxFinished() {
     <BeginnerModeToolbar
       :notation-type="displayType"
       :notation-type-disabled="notationTypeDisabled"
+      :current-key="currentScoreKey"
+      :transpose-disabled="notationTypeDisabled"
       @notation-type-change="onNotationTypeChange"
+      @transpose="onTranspose"
+      @semitone-shift="onSemitoneShift"
     />
   </div>
 </template>
@@ -377,9 +431,15 @@ function handleMidiBoxFinished() {
 
 .beginner-page__score {
   flex-shrink: 0;
-  overflow: auto;
-  padding: 12px 16px 0px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 10px 16px;
   border-bottom: 1px solid rgba(255, 184, 208, 0.25);
+}
+
+.beginner-page__score--hidden {
+  padding: 0;
+  border-bottom: none;
 }
 
 .beginner-page__score-stack {
@@ -390,6 +450,7 @@ function handleMidiBoxFinished() {
 .beginner-page__score-svg {
   flex-shrink: 0;
   display: block;
+  overflow: visible;
 }
 
 .beginner-page__midi-box {

@@ -8,6 +8,7 @@ import {
   SCORE_TIME_OFFSET_PROP_OPTIONS,
   type ScoreTimeOffsetProp
 } from '@renderer/constant/scoreTimeOffset'
+import { resolveScoreTimeSignature } from '@renderer/utils/scoreTimeSignature'
 import {
   displayAudioName,
   listAudiosFromDatabase,
@@ -80,6 +81,17 @@ const timePropOptions = computed(() =>
   }))
 )
 
+const scoreBeatUnit = computed(() => resolveScoreTimeSignature(props.musicScore).beatUnit)
+
+/** 切换「同步属性」时，音频选择跟绑定的范唱/伴奏走，避免范唱写到伴奏轨或反过来 */
+watch(timePropName, (prop) => {
+  if (prop === SCORE_TIME_OFFSET_PROP.vocalPerformance) {
+    audioId.value = vocalPerformanceId.value
+  } else if (prop === SCORE_TIME_OFFSET_PROP.accompaniment) {
+    audioId.value = accompanimentId.value
+  }
+})
+
 async function refreshAudioList() {
   audioLoading.value = true
   try {
@@ -93,7 +105,14 @@ async function refreshAudioList() {
 }
 
 watch(visible, (open) => {
-  if (open) void refreshAudioList()
+  if (open) {
+    void refreshAudioList()
+    if (timePropName.value === SCORE_TIME_OFFSET_PROP.vocalPerformance) {
+      audioId.value = vocalPerformanceId.value
+    } else {
+      audioId.value = accompanimentId.value
+    }
+  }
 })
 </script>
 
@@ -212,6 +231,7 @@ watch(visible, (open) => {
         :px-per-second="pxPerSecond"
         :sample-rate="sampleRate"
         :time-prop-name="timePropName"
+        :beat-unit="scoreBeatUnit"
       />
     </div>
   </el-drawer>

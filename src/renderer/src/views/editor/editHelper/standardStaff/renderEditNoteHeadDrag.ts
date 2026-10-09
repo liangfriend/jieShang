@@ -1,72 +1,84 @@
 import type {Measure, NoteSymbol, NotesInfo, SlotData, VDom} from '@deciphony/renderer'
 import {
-    type MeasureBounds,
-    pointerToSvg,
-    regionFromSvgY,
-    resolveMeasureBounds,
-    setNotesInfoRegion,
+  type MeasureBounds,
+  pointerToSvg,
+  regionFromSvgY,
+  resolveMeasureBounds,
+  setNotesInfoRegion,
 } from './renderEditSymbolAddAction'
 
-/** 当前选中项是否为「音符头选中」模式（五线谱 NotesInfo） */
+/** 当前选中项是否为「音符头选中」模式（五线谱 NotesInfo；排除 Tab 的 normal/harmonic） */
 export function isNoteHeadSelected(
-    selected: SlotData | null,
-): selected is SlotData & { info: NotesInfo; note: NoteSymbol; measure: Measure } {
-    const info = selected?.info
-    return (
-        selected != null
-        && info != null
-        && selected.self === info
-        && selected.note != null
-        && selected.measure != null
-        && 'region' in info
-    )
+  selected: SlotData | null,
+): selected is SlotData & {info: NotesInfo; note: NoteSymbol; measure: Measure} {
+  const info = selected?.info as (NotesInfo & {type?: string}) | null | undefined
+  if (
+    info != null
+    && typeof info.type === 'string'
+    && (info.type === 'normal'
+      || info.type === 'harmonic'
+      || info.type === 'arpeggio'
+      || info.type === 'strumming')
+  ) {
+    return false
+  }
+  return (
+    selected != null
+    && info != null
+    && selected.self === info
+    && selected.note != null
+    && selected.measure != null
+    && 'region' in info
+    && 'direction' in info
+  )
 }
 
 export type NoteHeadDragSession = {
-    pointerId: number
-    notesInfoId: string
-    info: NotesInfo
-    note: NoteSymbol
-    measureId: string
+  pointerId: number
+  notesInfoId: string
+  info: NotesInfo
+  note: NoteSymbol
+  measureId: string
 }
 
 export function createNoteHeadDragSession(
-    event: PointerEvent,
-    slot: SlotData & { info: NotesInfo; note: NoteSymbol; measure: Measure },
+  event: PointerEvent,
+  slot: SlotData & {info: NotesInfo; note: NoteSymbol; measure: Measure},
 ): NoteHeadDragSession {
-    return {
-        pointerId: event.pointerId,
-        notesInfoId: slot.info.id,
-        info: slot.info,
-        note: slot.note,
-        measureId: slot.measure.id,
-    }
+  return {
+    pointerId: event.pointerId,
+    notesInfoId: slot.info.id,
+    info: slot.info,
+    note: slot.note,
+    measureId: slot.measure.id,
+  }
 }
 
 /** 拖拽过程中按指针 y 更新 region，返回新 region（未变化则为 null） */
 export function updateNoteHeadRegionByPointerY(
-    session: NoteHeadDragSession,
-    bounds: MeasureBounds,
-    svgY: number,
+  session: NoteHeadDragSession,
+  bounds: MeasureBounds,
+  svgY: number,
 ): number | null {
-    const region = regionFromSvgY(svgY, bounds)
-    return setNotesInfoRegion(session.note, session.info, region) ? region : null
+  const region = regionFromSvgY(svgY, bounds)
+  return setNotesInfoRegion(session.note, session.info, region) ? region : null
 }
 
 /**
  * 在顶层 svg 上跟踪指针（top-move），按小节 bounds 换算 region。
- * 不依赖音符头 g 的 dr-move，鼠标略超出音符头范围仍可拖拽。
+ * 与 deciphony-test 一致：直接改源数据 region，由 musicScore deep watch 整谱刷新（符头/符干同步）。
  */
 export function updateNoteHeadDragFromPointer(
-    session: NoteHeadDragSession,
-    svg: SVGSVGElement,
-    root: ParentNode,
-    vDomList: VDom[],
-    clientX: number,
-    clientY: number,
+  session: NoteHeadDragSession,
+  svg: SVGSVGElement,
+  root: ParentNode,
+  vDomList: VDom[],
+  clientX: number,
+  clientY: number,
 ): number | null {
-    const bounds = resolveMeasureBounds(root, session.measureId, vDomList)
-    if (!bounds) return null
-    const {y} = pointerToSvg(svg, clientX, clientY)
-    return updateNoteHeadRegionByPointerY(session, bounds, y)
+  const bounds = resolveMeasureBounds(root, session.measureId, vDomList)
+  if (!bounds) return null
+  const {y} = pointerToSvg(svg, clientX, clientY)
+  return updateNoteHeadRegionByPointerY(session, bounds, y)
 }
+

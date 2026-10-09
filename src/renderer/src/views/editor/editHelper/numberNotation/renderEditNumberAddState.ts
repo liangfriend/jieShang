@@ -13,13 +13,20 @@ export type AddNumberState = {
   kind: AddNumberSlotKind
   chronaxie: Chronaxie
   syllable: Exclude<NotesNumberInfo['syllable'], 0>
+  /** 简谱八度点预设；休止符插入时忽略 */
+  octaveDot: NotesNumberInfo['octaveDot']
 }
 
 export const DEFAULT_ADD_NUMBER_STATE: AddNumberState = {
   kind: 'note',
   chronaxie: 64,
-  syllable: 1
+  syllable: 1,
+  octaveDot: 0,
 }
+
+export const OCTAVE_DOT_PRESET_VALUES: NotesNumberInfo['octaveDot'][] = [
+  -3, -2, -1, 0, 1, 2, 3,
+]
 
 export const ADD_NUMBER_KIND_VALUES: AddNumberSlotKind[] = [
   ...STAFF_KIND_VALUES

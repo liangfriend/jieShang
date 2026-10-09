@@ -1,6 +1,7 @@
 <script lang="ts" setup>
-import { computed, ref, watch } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { toBcp47 } from '@renderer/i18n/locale'
 import type { VideoListItem } from '@renderer/utils/fileHelper/videoFile'
 import {
   displayMediaName,
@@ -29,55 +30,90 @@ const { t, locale } = useI18n()
 const loading = ref(false)
 const meta = ref<VideoFileMetadata | null>(null)
 const error = ref('')
+/** blob URL：自定义协议下 <video> 直链常播不起来，和元数据探测一致走 fetch→blob */
+const blobSrc = ref('')
 
 const visible = computed({
   get: () => props.modelValue,
   set: (v: boolean) => emit('update:modelValue', v)
 })
 
-const src = computed(() =>
-  props.item ? toPlayableMediaUrl('video', props.item.url) : ''
-)
-
 const createdText = computed(() => {
   const raw = props.item?.created_at
   if (!raw) return '—'
   const date = new Date(raw)
   if (Number.isNaN(date.getTime())) return String(raw)
-  return date.toLocaleString(locale.value === 'en' ? 'en-US' : 'zh-CN')
+  return date.toLocaleString(toBcp47(locale.value))
 })
+
+function revokeBlob() {
+  if (blobSrc.value) {
+    URL.revokeObjectURL(blobSrc.value)
+    blobSrc.value = ''
+  }
+}
+
+async function loadPlaybackSrc(item: VideoListItem) {
+  revokeBlob()
+  const playable = toPlayableMediaUrl('video', item.url)
+  if (!playable) return
+  const res = await fetch(playable)
+  if (!res.ok) throw new Error(`fetch failed: ${res.status}`)
+  const blob = await res.blob()
+  blobSrc.value = URL.createObjectURL(blob)
+}
 
 watch(
   () => [props.modelValue, props.item?.id] as const,
   async ([open]) => {
     meta.value = null
     error.value = ''
+    revokeBlob()
     if (!open || !props.item) return
     loading.value = true
     try {
-      meta.value = await probeVideoMetadata(props.item.id, props.item.url)
-      if (!meta.value) error.value = t('myVideo.detail.probeFailed')
+      const [probed] = await Promise.all([
+        probeVideoMetadata(props.item.id, props.item.url),
+        loadPlaybackSrc(props.item)
+      ])
+      meta.value = probed
+      if (!probed) error.value = t('myVideo.detail.probeFailed')
+      if (!blobSrc.value) {
+        error.value = error.value || t('myVideo.detail.playFailed')
+      }
+    } catch {
+      error.value = t('myVideo.detail.playFailed')
     } finally {
       loading.value = false
     }
   }
 )
+
+onBeforeUnmount(revokeBlob)
 </script>
 
 <template>
   <el-dialog
     v-model="visible"
     :title="t('myVideo.detail.title')"
-    width="560px"
+    width="640px"
     class="video-detail-dialog cute-dialog"
     append-to-body
     align-center
     destroy-on-close
+    @closed="revokeBlob"
   >
     <div v-loading="loading" class="video-detail">
       <template v-if="item">
         <div class="video-detail__preview">
-          <video v-if="src" :src="src" controls preload="metadata" playsinline />
+          <video
+            v-if="blobSrc"
+            :key="blobSrc"
+            :src="blobSrc"
+            controls
+            playsinline
+            preload="auto"
+          />
         </div>
         <h3 class="video-detail__name">{{ displayMediaName(item.name) }}</h3>
         <p v-if="error" class="video-detail__error">{{ error }}</p>
@@ -127,12 +163,15 @@ watch(
   border-radius: 14px;
   overflow: hidden;
   background: #1a1420;
+  /* 比 16:9 略高，画面用 contain 留黑边保比例 */
+  aspect-ratio: 16 / 10;
 }
 
 .video-detail__preview video {
   width: 100%;
-  max-height: 280px;
+  height: 100%;
   display: block;
+  object-fit: contain;
   background: #1a1420;
 }
 

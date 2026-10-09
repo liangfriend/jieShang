@@ -4,7 +4,9 @@ export default {
       settings: '设置',
       startPractice: '开始练习',
       stop: '停止',
-      volume: '音量'
+      volume: '音量',
+      hideScore: '隐藏曲谱',
+      showScore: '显示曲谱'
     },
     settings: {
       title: '新手模式设置',

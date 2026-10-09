@@ -11,7 +11,12 @@ import {
   NOTE_SLICE_HEAL_BATCH
 } from '@renderer/views/noteSlice/noteSliceGameConstants'
 import { getActiveNoteSliceDifficultyConfig } from '@renderer/views/noteSlice/noteSliceDifficultyConfig'
-import { applyNoteSliceBrickScoreLayout } from '@renderer/views/noteSlice/noteSliceBrickLayout'
+import {
+  applyNoteSliceBrickScoreLayout,
+  applyNoteSliceJianpuBrickScoreLayout
+} from '@renderer/views/noteSlice/noteSliceBrickLayout'
+import { generateRandomJianpuBrickScore } from '@renderer/views/noteSlice/jianpuBrickBuilder'
+import { isNoteSliceJianpuMode } from '@renderer/views/noteSlice/noteSliceNotationMode'
 import { randomNoteSliceSpawnMidiExcluding } from '@renderer/views/noteSlice/noteSliceMidiBlacklist'
 import {
   NOTE_SLICE_SPAWN_CLEF_MIDI_RANGES,
@@ -47,17 +52,58 @@ export type BuildRandomNoteSliceBlockOptions = {
   excludedMidis?: ReadonlySet<number>
 }
 
-/** 指定 midi 生成音符块（用于乱按惩罚炸弹等）；无法渲染时返回 null */
+type BuiltNoteSliceBlock = Omit<NoteSliceActiveBlock, 'slotIndex' | 'batch' | 'x' | 'y' | 'ageMs'>
+
+/** 简谱模式：指定 midi 生成简谱音符块；无可用调号（禁用变音且非自然音级）时返回 null */
+function buildJianpuNoteSliceBlockWithMidi(
+  id: string,
+  midi: number,
+  type: NoteSliceBlockType,
+  random: () => number
+): BuiltNoteSliceBlock | null {
+  const { allowSingleAccidentals, allowedKeySignatures } = getActiveNoteSliceDifficultyConfig()
+  let brick
+  try {
+    brick = generateRandomJianpuBrickScore(midi, {
+      random,
+      keySignatures: allowedKeySignatures,
+      allowSingleAccidentals
+    })
+  } catch {
+    return null
+  }
+  const musicScore = JSON.parse(JSON.stringify(brick.score)) as MusicScore
+  applyNoteSliceJianpuBrickScoreLayout(musicScore)
+
+  return {
+    id,
+    type,
+    midi: brick.midi,
+    noteCount: 1,
+    width: NOTE_SLICE_BLOCK_SHELL_WIDTH,
+    height: NOTE_SLICE_BLOCK_SHELL_HEIGHT,
+    musicScore
+  }
+}
+
+/**
+ * 指定 midi 生成音符块（用于乱按惩罚炸弹等）；无法渲染时返回 null。
+ * 按本局谱面模式（noteSliceNotationMode）分流：简谱走 jianpuBrickBuilder，线谱走 midiBrickBuilder。
+ */
 export function buildNoteSliceBlockWithMidi(
   id: string,
   midi: number,
   options: { type?: NoteSliceBlockType; random?: () => number } = {}
-): Omit<NoteSliceActiveBlock, 'slotIndex' | 'batch' | 'x' | 'y' | 'ageMs'> | null {
+): BuiltNoteSliceBlock | null {
   const random = options.random ?? Math.random
   const type = options.type ?? 'normal'
   const { midiMin, midiMax, allowDoubleAccidentals, allowSingleAccidentals, allowedKeySignatures } =
     getActiveNoteSliceDifficultyConfig()
   if (midi < midiMin || midi > midiMax) return null
+
+  if (isNoteSliceJianpuMode()) {
+    return buildJianpuNoteSliceBlockWithMidi(id, midi, type, random)
+  }
 
   const clefs = resolveSpawnClefsForMidi(midi)
   if (clefs.length === 0) return null
@@ -92,7 +138,7 @@ export function buildNoteSliceBlockWithMidi(
 export function buildRandomNoteSliceBlock(
   id: string,
   options: BuildRandomNoteSliceBlockOptions = {}
-): Omit<NoteSliceActiveBlock, 'slotIndex' | 'batch' | 'x' | 'y' | 'ageMs'> | null {
+): BuiltNoteSliceBlock | null {
   const random = options.random ?? Math.random
   const type = options.type ?? 'normal'
   const excludedMidis = options.excludedMidis ?? new Set<number>()

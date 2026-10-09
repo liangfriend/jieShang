@@ -12,18 +12,52 @@ const props = defineProps<{
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let overlay: ScoreNoteHeadOverlayApi | null = null
+let scrollHost: HTMLElement | null = null
+
+function findScrollHost(el: HTMLElement | null): HTMLElement | null {
+  for (let node = el?.parentElement ?? null; node; node = node.parentElement) {
+    const overflowX = getComputedStyle(node).overflowX
+    if (overflowX === 'auto' || overflowX === 'scroll' || overflowX === 'hidden') return node
+  }
+  return null
+}
+
+/** 滚动容器可视区域换算到画布父级（与曲谱同尺寸）坐标 */
+function getViewport() {
+  const parent = canvasRef.value?.parentElement
+  if (!scrollHost || !parent) return null
+  const hostRect = scrollHost.getBoundingClientRect()
+  const parentRect = parent.getBoundingClientRect()
+  return {
+    x: hostRect.left - parentRect.left,
+    y: hostRect.top - parentRect.top,
+    w: scrollHost.clientWidth,
+    h: scrollHost.clientHeight
+  }
+}
+
+function onHostScroll() {
+  overlay?.onViewportChange()
+}
 
 onMounted(() => {
+  scrollHost = findScrollHost(canvasRef.value)
+  scrollHost?.addEventListener('scroll', onHostScroll, { passive: true })
+  window.addEventListener('resize', onHostScroll)
   overlay = createScoreNoteHeadOverlay({
     getCanvas: () => canvasRef.value,
     getWidth: () => props.width,
     getHeight: () => props.height,
-    findElementByVDom: props.findElementByVDom
+    findElementByVDom: props.findElementByVDom,
+    getViewport
   })
   overlay.resize()
 })
 
 onBeforeUnmount(() => {
+  scrollHost?.removeEventListener('scroll', onHostScroll)
+  window.removeEventListener('resize', onHostScroll)
+  scrollHost = null
   overlay?.clearAll()
   overlay = null
 })
@@ -49,7 +83,8 @@ defineExpose<ScoreNoteHeadOverlayApi>({
   markBeginnerBatchDone: (noteIds) => overlay?.markBeginnerBatchDone(noteIds),
   setBeginnerCurrentBatch: (noteIds) => overlay?.setBeginnerCurrentBatch(noteIds),
   clearAll: () => overlay?.clearAll(),
-  resize: () => overlay?.resize()
+  resize: () => overlay?.resize(),
+  onViewportChange: () => overlay?.onViewportChange()
 })
 </script>
 
@@ -60,9 +95,8 @@ defineExpose<ScoreNoteHeadOverlayApi>({
 <style scoped>
 .score-note-head-overlay {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  left: 0;
+  top: 0;
   pointer-events: none;
   z-index: 2;
 }

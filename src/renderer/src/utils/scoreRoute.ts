@@ -1,17 +1,35 @@
 import type { MusicScore } from '@deciphony/renderer'
+import { MusicScoreTypeEnum } from '@deciphony/renderer'
 import type { RouteLocationNormalized, RouteLocationNormalizedLoaded } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import emptyTemplate from '@renderer/template/empty'
-import emptyJianpuTemplate from '@renderer/template/emptyJianpu'
+import buildEmptyJianpuScore from '@renderer/template/emptyJianpu'
 import singleVoiceTemplate from '@renderer/template/singleVoice'
-import singleVoiceJianpuTemplate from '@renderer/template/singleVoiceJianpu'
+import buildSingleVoiceJianpuScore from '@renderer/template/singleVoiceJianpu'
 import doubleVoiceTemplate from '@renderer/template/doubleVoice'
-import doubleVoiceJianpuTemplate from '@renderer/template/doubleVoiceJianpu'
+import buildDoubleVoiceJianpuScore from '@renderer/template/doubleVoiceJianpu'
+import singleVoiceTab6Template from '@renderer/template/singleVoiceTab6'
+import singleVoiceTab4Template from '@renderer/template/singleVoiceTab4'
+import singleVoiceBass4Template from '@renderer/template/singleVoiceBass4'
+import singleVoiceBass5Template from '@renderer/template/singleVoiceBass5'
+import singleVoiceBass6Template from '@renderer/template/singleVoiceBass6'
+import singleVoiceDrumTemplate from '@renderer/template/singleVoiceDrum'
 import { hasGrandStaffSingleStaffMismatch } from '@deciphony/extensions/score-util'
 import i18n from '@renderer/i18n'
 import { useDataStore } from '@renderer/store/data.store'
 import { loadScoreFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper'
 import { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from '@renderer/constant'
+import {
+  applyScoreStaffSpacing,
+  ensureScoreSlotHeights,
+  loadScoreLayoutDefaults
+} from '@renderer/utils/scoreSpacingDefaults'
+import { isPlayOnlyMusicScore } from '@renderer/utils/isTabNotation'
+import {
+  DEFAULT_SCORE_S_L_SLOT_W,
+  DEFAULT_SCORE_S_R_SLOT_W,
+  DEFAULT_SCORE_T_SLOT_H
+} from '@renderer/utils/scoreGdSlotHeight'
 
 /**
  * 曲谱页路由 query 规则（edit / play 模式切换与加载）
@@ -35,14 +53,51 @@ export type ScoreTemplateKey =
   | 'emptyJianpu'
   | 'singleVoiceJianpu'
   | 'doubleVoiceJianpu'
+  | 'singleVoiceTab6'
+  | 'singleVoiceTab4'
+  | 'singleVoiceBass4'
+  | 'singleVoiceBass5'
+  | 'singleVoiceBass6'
+  | 'singleVoiceDrum'
 
 const TEMPLATE_LOADERS: Record<ScoreTemplateKey, () => MusicScore> = {
-  empty: () => JSON.parse(JSON.stringify(emptyTemplate)) as MusicScore,
-  singleVoice: () => JSON.parse(JSON.stringify(singleVoiceTemplate)) as MusicScore,
-  DoubleVoice: () => JSON.parse(JSON.stringify(doubleVoiceTemplate)) as MusicScore,
-  emptyJianpu: () => JSON.parse(JSON.stringify(emptyJianpuTemplate)) as MusicScore,
-  singleVoiceJianpu: () => JSON.parse(JSON.stringify(singleVoiceJianpuTemplate)) as MusicScore,
-  doubleVoiceJianpu: () => JSON.parse(JSON.stringify(doubleVoiceJianpuTemplate)) as MusicScore
+  empty: () => cloneTemplateWithSpacingDefaults(emptyTemplate),
+  singleVoice: () => cloneTemplateWithSpacingDefaults(singleVoiceTemplate),
+  DoubleVoice: () => cloneTemplateWithSpacingDefaults(doubleVoiceTemplate),
+  emptyJianpu: () => cloneTemplateWithSpacingDefaults(buildEmptyJianpuScore()),
+  singleVoiceJianpu: () => cloneTemplateWithSpacingDefaults(buildSingleVoiceJianpuScore()),
+  doubleVoiceJianpu: () => cloneTemplateWithSpacingDefaults(buildDoubleVoiceJianpuScore()),
+  singleVoiceTab6: () => cloneTemplateWithSpacingDefaults(singleVoiceTab6Template),
+  singleVoiceTab4: () => cloneTemplateWithSpacingDefaults(singleVoiceTab4Template),
+  singleVoiceBass4: () => cloneTemplateWithSpacingDefaults(singleVoiceBass4Template),
+  singleVoiceBass5: () => cloneTemplateWithSpacingDefaults(singleVoiceBass5Template),
+  singleVoiceBass6: () => cloneTemplateWithSpacingDefaults(singleVoiceBass6Template),
+  singleVoiceDrum: () => cloneTemplateWithSpacingDefaults(singleVoiceDrumTemplate)
+}
+
+function stripNumberNotationMeasureHeaders(score: MusicScore): void {
+  if (score.type !== MusicScoreTypeEnum.NumberNotation) return
+  for (const grandStaff of score.grandStaffs ?? []) {
+    for (const staff of grandStaff.staves ?? []) {
+      for (const measure of staff.measures ?? []) {
+        delete measure.clef_f
+        delete measure.clef_b
+        delete measure.keySignature_f
+        delete measure.keySignature_b
+        delete measure.timeSignature_f
+        delete measure.timeSignature_b
+      }
+    }
+  }
+}
+
+function cloneTemplateWithSpacingDefaults(template: MusicScore): MusicScore {
+  const score = JSON.parse(JSON.stringify(template)) as MusicScore
+  const layout = loadScoreLayoutDefaults()
+  applyScoreStaffSpacing(score, layout)
+  ensureScoreSlotHeights(score, layout)
+  stripNumberNotationMeasureHeaders(score)
+  return score
 }
 
 export const HOME_TEMPLATE_TO_ROUTE: Record<string, ScoreTemplateKey> = {
@@ -51,7 +106,13 @@ export const HOME_TEMPLATE_TO_ROUTE: Record<string, ScoreTemplateKey> = {
   double: 'DoubleVoice',
   jianpuEmpty: 'emptyJianpu',
   jianpuSingle: 'singleVoiceJianpu',
-  jianpuDouble: 'doubleVoiceJianpu'
+  jianpuDouble: 'doubleVoiceJianpu',
+  guitarTab: 'singleVoiceTab6',
+  ukuleleTab: 'singleVoiceTab4',
+  bass4Tab: 'singleVoiceBass4',
+  bass5Tab: 'singleVoiceBass5',
+  bass6Tab: 'singleVoiceBass6',
+  drum: 'singleVoiceDrum'
 }
 
 export function resolveScoreId(raw: unknown): string | null {
@@ -82,7 +143,10 @@ export function initEditorScoreFromRoute(route: RouteLocationNormalizedLoaded): 
   const tempId = resolveTempId(route.query.tempId)
   if (tempId) {
     const cached = dataStore.getTempScore(tempId)
-    if (cached) return cached
+    if (cached) {
+      ensureScoreSlotHeights(cached)
+      return cached
+    }
   }
   if (hasTemplateQuery(route)) {
     const template = resolveTemplateKey(route.query.template)
@@ -90,7 +154,7 @@ export function initEditorScoreFromRoute(route: RouteLocationNormalizedLoaded): 
     dataStore.setTempScore(EDIT_NEW_SCORE_TEMP_ID, score)
     return score
   }
-  const score = JSON.parse(JSON.stringify(emptyTemplate)) as MusicScore
+  const score = cloneTemplateWithSpacingDefaults(emptyTemplate)
   dataStore.setTempScore(EDIT_NEW_SCORE_TEMP_ID, score)
   return score
 }
@@ -112,6 +176,7 @@ export function applyMusicScoreInPlace(target: MusicScore, source: MusicScore): 
     }
   }
   Object.assign(target, next)
+  ensureScoreSlotHeights(target)
 }
 
 /** 按路由 query 加载曲谱，见文件顶部路由规则表 */
@@ -123,7 +188,10 @@ export async function loadScoreFromRoute(
   const tempId = resolveTempId(route.query.tempId)
   if (tempId) {
     const cached = dataStore.getTempScore(tempId)
-    if (cached) return cached
+    if (cached) {
+      ensureScoreSlotHeights(cached)
+      return cached
+    }
   }
 
   const scoreId = resolveScoreId(route.query.scoreId)
@@ -134,6 +202,7 @@ export async function loadScoreFromRoute(
       return null
     }
     const score = parseScoreJson(record.data)
+    ensureScoreSlotHeights(score)
     dataStore.setTempScore(CUR_PLAY_SCORE_TEMP_ID, score)
     return dataStore.getTempScore(CUR_PLAY_SCORE_TEMP_ID) ?? score
   }
@@ -170,13 +239,19 @@ export function buildScoreRouteQuery(route: RouteLocationNormalizedLoaded): Reco
   return { template: resolveTemplateKey(route.query.template) }
 }
 
-/** 练习/新手模式入口：各 grandStaff 单谱表行数须一致 */
+/** 练习/新手/演唱模式入口：各 grandStaff 单谱表行数须一致；吉他/尤克里里/贝斯/鼓谱本期不可进 */
 export async function guardSingleLineModeEnter(
   to: RouteLocationNormalized,
   from: RouteLocationNormalized
 ) {
   const score = await loadScoreFromRoute(to)
   if (!score) return true
+
+  if (isPlayOnlyMusicScore(score)) {
+    ElMessage.warning(i18n.global.t('play.messages.playOnlyModeUnavailable'))
+    if (from.name === 'play') return false
+    return { name: 'play', query: buildScoreRouteQuery(to) }
+  }
 
   if (hasGrandStaffSingleStaffMismatch(score)) {
     ElMessage.warning(i18n.global.t('play.messages.grandStaffMismatch'))
@@ -188,9 +263,10 @@ export async function guardSingleLineModeEnter(
 }
 
 export const SCORE_SLOT_CONFIG = {
-  'g-r': { w: 50 },
-  'g-l': { w: 50 },
-  // g-d 高度由 dr-lyrics 扩展按歌词行数同步，勿在此写死覆盖
-  's-d': { h: 20 },
-  t: { h: 100 }
+  'g-l': { w: 0 },
+  // s-l / s-r 宽度、g-d / t 高度由 createScoreLyricsExtension 按 musicScore.data 覆盖；此处为静态回退
+  's-l': { w: DEFAULT_SCORE_S_L_SLOT_W },
+  's-r': { w: DEFAULT_SCORE_S_R_SLOT_W },
+  's-d': { h: 0 },
+  t: { h: DEFAULT_SCORE_T_SLOT_H }
 } as const

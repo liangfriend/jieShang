@@ -2,6 +2,8 @@ import {
   ACHIEVEMENT_DEFINITIONS,
   type AchievementDefinition
 } from '@renderer/constant/achievements'
+import i18n from '@renderer/i18n'
+import { toBcp47 } from '@renderer/i18n/locale'
 
 export type AchievementProgressRecord = {
   id: number
@@ -52,7 +54,7 @@ export function formatAchievementCompletedAt(iso: string | null): string {
   if (!iso) return ''
   const date = new Date(iso)
   if (Number.isNaN(date.getTime())) return ''
-  return date.toLocaleString('zh-CN', {
+  return date.toLocaleString(toBcp47(i18n.global.locale.value), {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
@@ -80,4 +82,14 @@ export async function grantAchievementCollectionReward(
   const collectionId = definition.rewardCollectionId
   if (collectionId == null) return
   await grantCollectionOwnership(collectionId)
+}
+
+/** 奖励表调整后，为已达成的成就补发当前对应的藏品（幂等；旧奖励不回收） */
+export async function syncCompletedAchievementRewards(): Promise<void> {
+  const completedRecords = await fetchCompletedAchievements()
+  const completedKeys = new Set(completedRecords.map((record) => record.key))
+  for (const definition of ACHIEVEMENT_DEFINITIONS) {
+    if (!completedKeys.has(definition.key)) continue
+    await grantAchievementCollectionReward(definition)
+  }
 }

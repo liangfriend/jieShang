@@ -2,7 +2,7 @@
 import type { MusicScore, VDom } from '@deciphony/renderer'
 import musicScoreVue from '@deciphony/renderer'
 import { ElMessage } from 'element-plus'
-import { MusicScoreTypeEnum } from '@deciphony/renderer'
+import { KeySignatureTypeEnum, MusicScoreTypeEnum } from '@deciphony/renderer'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
@@ -15,6 +15,7 @@ import {
 import {
   activeContext,
   closeTuneJudge,
+  getMidiFixedOffset,
   getPlaySequence,
   getScoreSnapshot,
   loadSequence,
@@ -23,6 +24,8 @@ import {
   playMap,
   playedMap,
   setBpm,
+  setInitialMidiFixedOffset,
+  setJudgeConfig,
   setProgressCallback,
   startTuneJudge,
   stop as stopTuneJudge,
@@ -33,19 +36,32 @@ import { SingingModeToolbar } from '@renderer/components/score-toolbar'
 import SingingWaterfall from '@renderer/components/singing/SingingWaterfall.vue'
 import SingingResultDialog from '@renderer/components/singing/SingingResultDialog.vue'
 import SingingStartCountdown from '@renderer/components/singing/SingingStartCountdown.vue'
+import { SINGING_COUNTDOWN_MS } from '@renderer/constant/singingCountdown'
+import {
+  SINGING_MIDI_FIXED_OFFSET_MAX,
+  SINGING_MIDI_FIXED_OFFSET_MIN,
+  loadSingingMidiFixedOffset,
+  saveSingingMidiFixedOffset
+} from '@renderer/constant/singing'
 import {
   ScoreNoteHeadOverlay,
   type ScoreNoteHeadOverlayApi
 } from '@renderer/components/scoreNoteHeadOverlay'
 import { PLAY_SOURCE, type PlaySource } from '@renderer/constant/playSource'
+import { resolvePlayBpm } from '@renderer/constant/play'
 import { loadScoreFromRoute } from '@renderer/utils/scoreRoute'
 import { createScoreLyricsExtension } from '@renderer/utils/createScoreLyricsExtension'
 import { applySingleLineModeScoreHeight } from '@renderer/utils/singleLineModeScoreLayout'
-import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
+import { useSingleLineScoreCenter } from '@renderer/utils/singleLineScoreCenter'
+import {
+  createScoreSmoothScroll,
+  sequenceToSmoothScrollTimeline
+} from '@renderer/utils/scoreSmoothScroll'
 import { toPlaySequence } from '@renderer/utils/scorePagePlayback'
 import { createAudioTimeHighlight } from '@renderer/utils/scorePagePlayback/createAudioTimeHighlight'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotationDisplay'
+import { resolveScoreKeySignature } from '@renderer/utils/scoreNotationTransfer'
 import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
 import { usePlayStore } from '@renderer/store/play.store'
 import { useAudioPlayerStore } from '@renderer/store/audioPlayer.store'
@@ -55,7 +71,9 @@ import {
   resolveSingingAudio
 } from '@renderer/utils/singing/resolveSingingAudio'
 import {
+  offsetTuneJudgeSequence,
   sequenceEndUnit256,
+  secondsToUnit256,
   toTuneJudgeSequence
 } from '@renderer/utils/singing/toTuneJudgeSequence'
 import {
@@ -63,9 +81,14 @@ import {
   noteIdFromTuneJudgeData
 } from '@renderer/utils/singing/mapTuneJudgeNoteState'
 import { SCORE_TIME_OFFSET_PROP } from '@renderer/constant/scoreTimeOffset'
+import { buildNoteStaveIndexMap } from '@renderer/utils/staffNotes'
+import { createPracticeStaffDim } from '@renderer/views/practice/practiceStaffDim'
 import empty from '@renderer/template/empty'
 
 defineOptions({ name: 'SingingModeView' })
+
+/** 演唱只测评第一行单谱表 */
+const SINGING_JUDGE_STAFF_INDEX = 0
 
 const PRACTICE_MEASURE_WIDTH = 200
 
@@ -78,11 +101,16 @@ const audioStore = useAudioPlayerStore()
 const musicScoreData = ref(JSON.parse(JSON.stringify(empty)) as MusicScore)
 const displayType = ref<MusicScoreTypeEnum>(MusicScoreTypeEnum.StandardStaff)
 const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin()
-const { initAfterLoad, applyDisplayType } = usePlayScoreNotationDisplay(musicScoreData, displayType)
-const lyricsBundle = createScoreLyricsExtension('show')
+const { initAfterLoad, applyDisplayType, applyTranspose, applySemitoneShift } =
+  usePlayScoreNotationDisplay(musicScoreData, displayType)
+const lyricsBundle = createScoreLyricsExtension('show', musicScoreData, { showTitle: false })
 const scoreSlotConfig = lyricsBundle.slotConfig
 
 const scoreScrollRef = ref<HTMLElement | null>(null)
+const scoreStackRef = ref<HTMLElement | null>(null)
+const scoreCenter = useSingleLineScoreCenter(
+  () => scoreStackRef.value?.querySelector<SVGSVGElement>(':scope > svg')
+)
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
 const scoreOverlayRef = ref<ScoreNoteHeadOverlayApi | null>(null)
 const vDomList = ref<VDom[]>([])
@@ -95,11 +123,14 @@ const detecting = ref(false)
 const countingDown = ref(false)
 const resultVisible = ref(false)
 const liveMidi = ref<number | null>(null)
+/** 初始音高偏移（半音），保存后下次演唱从此值起算 */
+const initialMidiFixedOffset = ref(loadSingingMidiFixedOffset())
+/** 当前生效偏移（含演唱中校准），来自进度回调 */
+const liveMidiFixedOffset = ref(initialMidiFixedOffset.value)
 const detectStartTimeMs = ref(0)
 const nowMs = ref(performance.now())
 let rafId = 0
 let ending = false
-let lastScrollNoteId = ''
 let scoreProgressSubId: string | null = null
 const appliedResultNoteIds = new Set<string>()
 
@@ -112,7 +143,7 @@ const emptyScoreSnap = (): TuneJudgeScoreSnapshot => ({
 })
 
 const scoreSnap = ref<TuneJudgeScoreSnapshot>(emptyScoreSnap())
-const playedTrackMode = ref<PlayedLayer>('fixed')
+const playedTrackMode = ref<PlayedLayer>('absorbed')
 const playMapState = ref<Map<number, number[][]>>(new Map())
 const playedMapsByLayer = ref<Record<PlayedLayer, Map<number, number[][]>>>({
   raw: new Map(),
@@ -122,7 +153,7 @@ const playedMapsByLayer = ref<Record<PlayedLayer, Map<number, number[][]>>>({
 
 const scoreCanvasWidth = computed(() => musicScoreData.value.width ?? 0)
 const scoreCanvasHeight = computed(() => musicScoreData.value.height ?? 0)
-const bpm = computed(() => musicScoreData.value.bpm ?? 120)
+const bpm = computed(() => resolvePlayBpm(musicScoreData.value))
 const seqEndUnit = computed(() => sequenceEndUnit256(judgeSeq.value))
 const isScoreSource = computed(() => playSource.value === PLAY_SOURCE.score)
 
@@ -130,15 +161,49 @@ const playHl = drPlayHighlight({
   findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null,
   getBpm: () => bpm.value
 })
-const scoreExtensions = [...lyricsBundle.extensions, playHl]
+const scoreExtensions = computed(() => [...lyricsBundle.extensions.value, playHl])
 
-const scrollToPlayingNote = createScoreScrollToPlayingNote({
+const smoothScroll = createScoreSmoothScroll({
   getScrollContainer: () => scoreScrollRef.value,
   getVDomList: () => vDomList.value,
-  findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null
+  findElementByVDom: (node) => musicScoreRef.value?.findElementByVDom(node) ?? null,
+  getMusicScore: () => musicScoreData.value,
+  getTimeline: () => sequenceToSmoothScrollTimeline(judgeSeq.value, noteIdFromTuneJudgeData),
+  getTime: () =>
+    detecting.value && detectStartTimeMs.value > 0
+      ? secondsToUnit256((performance.now() - detectStartTimeMs.value) / 1000, bpm.value)
+      : null
 })
 
 const findScoreElementByVDom = (node: VDom) => musicScoreRef.value?.findElementByVDom(node) ?? null
+
+const staffDim = createPracticeStaffDim({
+  getVDomList: () => vDomList.value,
+  findElementByVDom: findScoreElementByVDom
+})
+
+const noteStaveIndexMap = computed(() => buildNoteStaveIndexMap(musicScoreData.value))
+
+function isSingingJudgeNoteId(noteId: string | null | undefined): boolean {
+  const id = noteId?.trim()
+  if (!id) return false
+  const stave = noteStaveIndexMap.value.get(id)
+  return stave === SINGING_JUDGE_STAFF_INDEX
+}
+
+function singingDimStaffIndexes(score: MusicScore): number[] {
+  let max = 0
+  for (const gs of score.grandStaffs ?? []) {
+    max = Math.max(max, gs.staves?.length ?? 0)
+  }
+  const out: number[] = []
+  for (let i = SINGING_JUDGE_STAFF_INDEX + 1; i < max; i++) out.push(i)
+  return out
+}
+
+function syncSingingStaffDim(score: MusicScore = musicScoreData.value) {
+  staffDim.sync(score, singingDimStaffIndexes(score))
+}
 
 const audioTimeHighlight = createAudioTimeHighlight({
   getMusicScore: () => musicScoreData.value,
@@ -148,7 +213,10 @@ const audioTimeHighlight = createAudioTimeHighlight({
     return ''
   },
   highlight: {
-    addNoteHighlight: (noteId) => playHl.addNoteHighlight(noteId),
+    addNoteHighlight: (noteId) => {
+      if (!isSingingJudgeNoteId(noteId)) return
+      playHl.addNoteHighlight(noteId)
+    },
     removeNoteHighlight: (noteId) => playHl.removeNoteHighlight(noteId),
     clearHighlight: () => playHl.clearHighlight()
   }
@@ -157,6 +225,7 @@ const audioTimeHighlight = createAudioTimeHighlight({
 const notationTypeDisabled = computed(() => detecting.value || countingDown.value)
 const sourceSelectDisabled = computed(() => detecting.value || countingDown.value)
 const startDisabled = computed(() => judgeSeq.value.length === 0 || countingDown.value)
+const currentScoreKey = computed(() => resolveScoreKeySignature(musicScoreData.value))
 
 function cloneMap(src: Map<number, number[][]>): Map<number, number[][]> {
   return new Map([...src.entries()].map(([k, arr]) => [k, arr.map((s) => [s[0]!, s[1]!])]))
@@ -176,10 +245,6 @@ function mapToBars(mp: Map<number, number[][]>): TrackBar[] {
 
 const playBars = computed(() => mapToBars(playMapState.value))
 const playedBars = computed(() => mapToBars(playedMapsByLayer.value[playedTrackMode.value]))
-
-function secondsToUnit256(seconds: number, bpmVal: number): number {
-  return (seconds * 64 * bpmVal) / 60
-}
 
 const progressUnit = computed(() => {
   if (!detecting.value || detectStartTimeMs.value <= 0) return 0
@@ -214,7 +279,7 @@ function clearScoreHighlight() {
   playHl.clearHighlight()
   playHl.handlePlaybackStop()
   audioTimeHighlight.reset()
-  lastScrollNoteId = ''
+  smoothScroll.stop()
 }
 
 function stopReferencePlayback() {
@@ -234,11 +299,8 @@ function bindScoreHighlightFromPlayer() {
   }
   scoreProgressSubId = playStore.subscribeProgressStart((_progress, data) => {
     const payload = data as PlayHighlightProgressData
+    if (!isSingingJudgeNoteId(payload.note_id)) return
     playHl.handleProgressStart(payload)
-    if (payload.start && payload.note_id) {
-      lastScrollNoteId = payload.note_id
-      scrollToPlayingNote.scrollToHorizontalCenter(payload.note_id)
-    }
   })
 }
 
@@ -246,18 +308,6 @@ function bindAudioHighlightFromPlayer() {
   audioTimeHighlight.prepare()
   audioStore.setOnProgress((current) => {
     audioTimeHighlight.syncAtTime(current)
-    // 跟滚：用当前序列里落在该秒附近的音符
-    const unit = secondsToUnit256(current, bpm.value)
-    for (const item of judgeSeq.value) {
-      if (unit >= item.playTime && unit < item.playTime + item.duration) {
-        const id = noteIdFromTuneJudgeData(item.data)
-        if (id && id !== lastScrollNoteId) {
-          lastScrollNoteId = id
-          scrollToPlayingNote.scrollToHorizontalCenter(id)
-        }
-        break
-      }
-    }
   })
 }
 
@@ -289,6 +339,13 @@ async function startReferencePlayback() {
   await audioStore.waitReady()
   await audioStore.setAudio(typeof boundId === 'number' ? boundId : null, resolved.url)
   bindAudioHighlightFromPlayer()
+  if (!audioTimeHighlight.hasTimedSlots()) {
+    ElMessage.warning(
+      playSource.value === PLAY_SOURCE.vocal
+        ? t('play.messages.vocalTimeOffsetMissing')
+        : t('play.messages.accompanimentTimeOffsetMissing')
+    )
+  }
   await audioStore.play()
 }
 
@@ -314,13 +371,18 @@ function prepareSingingScore(score: MusicScore) {
 }
 
 function reloadJudgeSequence() {
-  const seq = toTuneJudgeSequence(musicScoreData.value, playSource.value, bpm.value)
+  const base = toTuneJudgeSequence(musicScoreData.value, playSource.value, bpm.value, {
+    singleStaffIndex: SINGING_JUDGE_STAFF_INDEX
+  })
+  const leadInUnit = secondsToUnit256(SINGING_COUNTDOWN_MS / 1000, bpm.value)
+  const seq = offsetTuneJudgeSequence(base, leadInUnit)
   judgeSeq.value = seq
   setBpm(bpm.value)
   loadSequence(seq)
   syncPlayMapFromJudge()
   syncPlayedMapsFromJudge()
   scoreSnap.value = getScoreSnapshot()
+  syncSingingStaffDim()
 }
 
 async function refreshSourceAvailability() {
@@ -352,6 +414,25 @@ async function refreshSourceAvailability() {
   }
 }
 
+function formatMidiOffset(value: number): string {
+  if (value > 0) return `+${value}`
+  return String(value)
+}
+
+function applyInitialMidiFixedOffset(value = initialMidiFixedOffset.value) {
+  const next = saveSingingMidiFixedOffset(value)
+  initialMidiFixedOffset.value = next
+  setInitialMidiFixedOffset(next)
+  if (!detecting.value) {
+    liveMidiFixedOffset.value = next
+  }
+}
+
+function onSaveInitialMidiFixedOffset() {
+  applyInitialMidiFixedOffset(initialMidiFixedOffset.value)
+  ElMessage.success(t('singing.messages.offsetSaved'))
+}
+
 function tick() {
   if (!detecting.value) return
   nowMs.value = performance.now()
@@ -364,10 +445,8 @@ function tick() {
 
 async function finishDetect(_auto: boolean) {
   if (ending) return
-  if (countingDown.value) {
-    countingDown.value = false
-    return
-  }
+  const abortedDuringCountdown = countingDown.value
+  countingDown.value = false
   if (!detecting.value) return
   ending = true
   liveMidi.value = null
@@ -382,7 +461,13 @@ async function finishDetect(_auto: boolean) {
   } catch {
     pause()
   }
+  // 结束时刷新当前偏移展示；初始偏移仅由用户手动改/保存
+  liveMidiFixedOffset.value = getMidiFixedOffset()
   closeTuneJudge()
+  if (abortedDuringCountdown) {
+    ending = false
+    return
+  }
   syncNoteResultsFromJudge()
   scoreSnap.value = getScoreSnapshot()
   syncPlayedMapsFromJudge()
@@ -390,20 +475,18 @@ async function finishDetect(_auto: boolean) {
   ending = false
 }
 
-async function beginDetectSession() {
+/** 加载序列并打开麦克风；时钟起点由 onStart 与倒计时同时打上 */
+async function beginJudgeClock() {
   reloadJudgeSequence()
   appliedResultNoteIds.clear()
   scoreOverlayRef.value?.clearResults()
   clearScoreHighlight()
-  scrollToPlayingNote.resetScroll()
+  smoothScroll.start()
+  setInitialMidiFixedOffset(initialMidiFixedOffset.value)
+  liveMidiFixedOffset.value = initialMidiFixedOffset.value
   startTuneJudge()
   await activeContext()
-  detectStartTimeMs.value = performance.now()
-  nowMs.value = detectStartTimeMs.value
-  detecting.value = true
-  await Promise.all([play(), startReferencePlayback()])
-  cancelAnimationFrame(rafId)
-  rafId = requestAnimationFrame(tick)
+  await play()
 }
 
 async function onStart() {
@@ -413,18 +496,40 @@ async function onStart() {
     return
   }
   countingDown.value = true
+  // 与倒计时 UI 同帧启动判定时间轴
+  detectStartTimeMs.value = performance.now()
+  nowMs.value = detectStartTimeMs.value
+  detecting.value = true
+  cancelAnimationFrame(rafId)
+  rafId = requestAnimationFrame(tick)
+  try {
+    await beginJudgeClock()
+  } catch (e) {
+    countingDown.value = false
+    detecting.value = false
+    detectStartTimeMs.value = 0
+    cancelAnimationFrame(rafId)
+    rafId = 0
+    smoothScroll.stop()
+    closeTuneJudge()
+    ElMessage.error(e instanceof Error ? e.message : String(e))
+  }
 }
 
 async function onCountdownComplete() {
   if (!countingDown.value) return
   countingDown.value = false
+  if (!detecting.value) return
   try {
-    await beginDetectSession()
+    await startReferencePlayback()
   } catch (e) {
     detecting.value = false
     stopReferencePlayback()
     clearScoreHighlight()
     closeTuneJudge()
+    cancelAnimationFrame(rafId)
+    rafId = 0
+    detectStartTimeMs.value = 0
     ElMessage.error(e instanceof Error ? e.message : String(e))
   }
 }
@@ -452,10 +557,45 @@ function onNotationTypeChange(targetType: MusicScoreTypeEnum) {
   }
 }
 
+function onTranspose(payload: { toKey: KeySignatureTypeEnum }) {
+  if (payload.toKey === currentScoreKey.value || detecting.value || countingDown.value) {
+    if (payload.toKey === currentScoreKey.value) {
+      ElMessage.info(t('editor.messages.transposeSameKey'))
+    }
+    return
+  }
+  try {
+    applyTranspose(payload)
+    musicScoreData.value = prepareSingingScore(musicScoreData.value)
+    reloadJudgeSequence()
+    ElMessage.success(t('editor.messages.transposed'))
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t('editor.messages.transposeFailed'))
+  }
+}
+
+function onSemitoneShift(semitones: 1 | -1) {
+  if (detecting.value || countingDown.value) return
+  try {
+    applySemitoneShift(semitones)
+    musicScoreData.value = prepareSingingScore(musicScoreData.value)
+    reloadJudgeSequence()
+    ElMessage.success(
+      semitones > 0 ? t('editor.messages.semitoneRaised') : t('editor.messages.semitoneLowered')
+    )
+  } catch (error) {
+    ElMessage.error(
+      error instanceof Error ? error.message : t('editor.messages.semitoneShiftFailed')
+    )
+  }
+}
+
 function handleRenderMusicScore(list: VDom[]) {
   vDomList.value = list
   playHl.on?.renderMusicScore?.(list)
   scoreOverlayRef.value?.onRenderMusicScore(list)
+  staffDim.rebindAfterRender()
+  scoreCenter.recenter()
 }
 
 onMounted(async () => {
@@ -473,6 +613,8 @@ onMounted(async () => {
     }
     await playStore.restorePlaybackDefaults(musicScoreData.value)
     await refreshSourceAvailability()
+    setJudgeConfig({ pitchScoreElasticity: 3 })
+    applyInitialMidiFixedOffset(initialMidiFixedOffset.value)
     reloadJudgeSequence()
     setProgressCallback((data) => {
       playedMapsByLayer.value = {
@@ -485,7 +627,8 @@ onMounted(async () => {
         total: { ...data.score.total }
       }
       if (detecting.value) {
-        liveMidi.value = data.realMidi > 0 ? data.realMidi : null
+        liveMidi.value = data.adsorbedMidi > 0 ? data.adsorbedMidi : null
+        liveMidiFixedOffset.value = data.midiFixedOffset
         syncNoteResultsFromJudge()
       }
     })
@@ -504,6 +647,7 @@ onBeforeUnmount(() => {
   pause()
   closeTuneJudge()
   scoreOverlayRef.value?.clearAll()
+  staffDim.clearAll()
 })
 </script>
 
@@ -512,11 +656,17 @@ onBeforeUnmount(() => {
     <section
       ref="scoreScrollRef"
       class="singing-page__score hidden-scrollbar"
-      :style="{ maxHeight: `${scoreCanvasHeight + 20}px` }"
+      :class="{ 'score-scroll-locked': detecting || countingDown }"
+      :style="{ maxHeight: `${scoreCanvasHeight + 21}px` }"
     >
       <div
+        ref="scoreStackRef"
         class="singing-page__score-stack"
-        :style="{ width: `${scoreCanvasWidth}px`, height: `${scoreCanvasHeight}px` }"
+        :style="{
+          width: `${scoreCanvasWidth}px`,
+          height: `${scoreCanvasHeight}px`,
+          transform: `translateY(${scoreCenter.offsetY.value}px)`
+        }"
       >
         <musicScoreVue
           v-if="scoreSkin"
@@ -542,6 +692,10 @@ onBeforeUnmount(() => {
     <section class="singing-page__meta">
       <span>{{ t('singing.meta.bpm') }} {{ bpm }}</span>
       <span>{{ t('singing.meta.notes') }} {{ judgeSeq.length }}</span>
+      <span class="singing-page__meta-offset">
+        {{ t('singing.meta.currentOffset') }}
+        <strong>{{ formatMidiOffset(liveMidiFixedOffset) }}</strong>
+      </span>
       <span v-if="countingDown" class="singing-page__meta-live">{{
         t('singing.meta.countdown')
       }}</span>
@@ -561,9 +715,38 @@ onBeforeUnmount(() => {
       <SingingStartCountdown v-if="countingDown" @complete="onCountdownComplete" />
     </section>
 
+    <section class="singing-page__offset-bar">
+      <label class="singing-page__offset-label" for="singing-initial-offset">
+        {{ t('singing.offset.initial') }}
+      </label>
+      <el-input-number
+        id="singing-initial-offset"
+        v-model="initialMidiFixedOffset"
+        size="small"
+        :min="SINGING_MIDI_FIXED_OFFSET_MIN"
+        :max="SINGING_MIDI_FIXED_OFFSET_MAX"
+        :step="1"
+        :disabled="detecting || countingDown"
+        controls-position="right"
+      />
+      <span class="singing-page__offset-unit">{{ t('singing.offset.semitone') }}</span>
+      <el-button
+        size="small"
+        type="primary"
+        plain
+        :disabled="detecting || countingDown"
+        @click="onSaveInitialMidiFixedOffset"
+      >
+        {{ t('common.save') }}
+      </el-button>
+      <span class="singing-page__offset-hint">{{ t('singing.offset.hint') }}</span>
+    </section>
+
     <SingingModeToolbar
       :notation-type="displayType"
       :notation-type-disabled="notationTypeDisabled"
+      :current-key="currentScoreKey"
+      :transpose-disabled="notationTypeDisabled"
       :play-source="playSource"
       :source-select-disabled="sourceSelectDisabled"
       :vocal-enabled="vocalEnabled"
@@ -571,6 +754,8 @@ onBeforeUnmount(() => {
       :detecting="detecting || countingDown"
       :start-disabled="startDisabled"
       @notation-type-change="onNotationTypeChange"
+      @transpose="onTranspose"
+      @semitone-shift="onSemitoneShift"
       @play-source-change="onPlaySourceChange"
       @start="onStart"
       @stop="onStop"
@@ -592,8 +777,9 @@ onBeforeUnmount(() => {
 
 .singing-page__score {
   flex-shrink: 0;
-  overflow: auto;
-  padding: 12px 16px 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 10px 16px;
   border-bottom: 1px solid rgba(255, 184, 208, 0.25);
 }
 
@@ -604,6 +790,7 @@ onBeforeUnmount(() => {
 
 .singing-page__score-svg {
   display: block;
+  overflow: visible;
 }
 
 .singing-page__meta {
@@ -628,6 +815,12 @@ onBeforeUnmount(() => {
   animation: singing-meta-pulse 1.4s ease-in-out infinite;
 }
 
+.singing-page__meta-offset strong {
+  margin-left: 4px;
+  font-variant-numeric: tabular-nums;
+  color: #5c4a6a;
+}
+
 @keyframes singing-meta-pulse {
   0%,
   100% {
@@ -644,5 +837,36 @@ onBeforeUnmount(() => {
   min-height: 0;
   padding: 8px 12px 10px;
   box-sizing: border-box;
+}
+
+.singing-page__offset-bar {
+  flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 10px;
+  padding: 8px 16px;
+  border-top: 1px solid rgba(255, 184, 208, 0.25);
+  background: rgba(255, 248, 251, 0.92);
+}
+
+.singing-page__offset-label {
+  font-size: 12px;
+  font-weight: 700;
+  color: #8a5a72;
+}
+
+.singing-page__offset-unit {
+  font-size: 12px;
+  color: #9a8aa8;
+}
+
+.singing-page__offset-hint {
+  font-size: 11px;
+  color: #9a8aa8;
+}
+
+.singing-page__offset-bar :deep(.el-input-number) {
+  width: 120px;
 }
 </style>

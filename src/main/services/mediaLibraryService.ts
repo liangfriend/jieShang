@@ -1,3 +1,4 @@
+import { app } from 'electron'
 import fs from 'fs'
 import path from 'path'
 import pathManager from '../utils/pathManager'
@@ -22,14 +23,50 @@ function createUniqueFileName(originalName?: string): string {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 10)}${ext}`
 }
 
-function removeMediaFileIfExists(kind: MediaKind, url: string) {
+const LOCKED_FILE_CODES = new Set(['EBUSY', 'EPERM', 'EACCES'])
+const UNLINK_RETRY_DELAYS_MS = [100, 300, 800]
+const pendingUnlinks = new Set<string>()
+let quitHookInstalled = false
+
+function flushPendingUnlinks() {
+  for (const filePath of pendingUnlinks) {
+    try {
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
+    } catch {
+      // 退出时仍被占用则留作孤儿文件
+    }
+  }
+  pendingUnlinks.clear()
+}
+
+function deferUnlinkUntilQuit(filePath: string) {
+  pendingUnlinks.add(filePath)
+  if (quitHookInstalled) return
+  quitHookInstalled = true
+  app.on('will-quit', flushPendingUnlinks)
+}
+
+/** Windows 下 <video> 流式读取会占用文件句柄，删除需重试，仍失败则推迟到退出时 */
+async function removeMediaFileIfExists(kind: MediaKind, url: string) {
   const fileName = path.basename(url)
   const filePath = pathManager.resolveResourceFileName(kind, fileName)
   if (path.resolve(url) !== filePath) {
     return
   }
-  if (fs.existsSync(filePath)) {
-    fs.unlinkSync(filePath)
+  for (let attempt = 0; ; attempt++) {
+    try {
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath)
+      return
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code ?? ''
+      if (!LOCKED_FILE_CODES.has(code)) throw error
+      const delay = UNLINK_RETRY_DELAYS_MS[attempt]
+      if (delay == null) {
+        deferUnlinkUntilQuit(filePath)
+        return
+      }
+      await new Promise((resolve) => setTimeout(resolve, delay))
+    }
   }
 }
 
@@ -75,9 +112,8 @@ export class MediaLibraryService {
       return { success: false, error: `${this.kind} not found` }
     }
 
-    removeMediaFileIfExists(this.kind, (row as { url: string }).url)
-
     const data = await this.repository.delete(id)
+    await removeMediaFileIfExists(this.kind, (row as { url: string }).url)
     return { success: true, data }
   }
 

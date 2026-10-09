@@ -57,3 +57,28 @@ export function applyNoteSliceBrickScoreLayout(
   score.height = NOTE_SLICE_BRICK_SCORE_HEIGHT
   applyNoteSliceBrickStaffSpacing(score)
 }
+
+// ---------- 简谱音符块 ----------
+
+/**
+ * 简谱单小节音符块谱宽：`1=X` 调号（≈29）+ 拍号（30）+ 数字音符（20）+ 小节线与列间距。
+ * 简谱调号宽度不随升降号数量变化，故为常量。
+ */
+export const NOTE_SLICE_JIANPU_BRICK_SCORE_WIDTH = 130
+
+/** 简谱小节高度（默认皮肤 numberNotation.measure.h = 45；八度点 / 拍号会略超出小节上下沿） */
+export const NOTE_SLICE_JIANPU_BRICK_MEASURE_HEIGHT = 45
+
+/** 简谱音符块上下留白：需容纳最多 2 个八度点与 56 高的拍号 */
+export const NOTE_SLICE_JIANPU_BRICK_SCORE_SPACE = 24
+
+export const NOTE_SLICE_JIANPU_BRICK_SCORE_HEIGHT =
+  NOTE_SLICE_JIANPU_BRICK_MEASURE_HEIGHT + NOTE_SLICE_JIANPU_BRICK_SCORE_SPACE * 2
+
+/** 简谱音符块：固定尺寸（与调号无关），间距与线谱块一致（全部置零，由 topSpaceHeight 控制留白） */
+export function applyNoteSliceJianpuBrickScoreLayout(score: MusicScore): void {
+  score.width = NOTE_SLICE_JIANPU_BRICK_SCORE_WIDTH
+  score.height = NOTE_SLICE_JIANPU_BRICK_SCORE_HEIGHT
+  applyNoteSliceBrickStaffSpacing(score)
+  score.topSpaceHeight = NOTE_SLICE_JIANPU_BRICK_SCORE_SPACE
+}

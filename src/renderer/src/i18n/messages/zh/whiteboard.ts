@@ -16,6 +16,7 @@ export default {
       chordSlider: '和弦滑块',
       intervalSlider: '音程滑块',
       addNote: '添加音符',
+      autoClear: '自动清空',
       clef: '谱号',
       targetClef: '添加到谱号',
       bpm: 'BPM',

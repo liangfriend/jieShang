@@ -30,6 +30,12 @@ export default {
   notation: {
     staff: '线谱',
     jianpu: '简谱',
+    guitarTab: '吉他谱',
+    ukuleleTab: '尤克里里谱',
+    bass4Tab: '四弦贝斯谱',
+    bass5Tab: '五弦贝斯谱',
+    bass6Tab: '六弦贝斯谱',
+    drum: '鼓谱',
     unknown: '未知'
   }
 } as const

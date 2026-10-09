@@ -68,6 +68,7 @@ const {
   chordBoxEnabled,
   intervalRulerEnabled,
   addNoteEnabled,
+  autoClearEnabled,
   targetClef,
   noteInputBpm,
   keySignature,
@@ -312,6 +313,15 @@ function formatBpm(value: number) {
         @click="whiteboardStore.toggleAddNote()"
       >
         {{ t('whiteboard.toolbar.addNote') }}
+      </button>
+
+      <button
+        type="button"
+        class="score-toolbar__btn"
+        :class="{ 'score-toolbar__btn--active': autoClearEnabled }"
+        @click="whiteboardStore.toggleAutoClear()"
+      >
+        {{ t('whiteboard.toolbar.autoClear') }}
       </button>
 
       <div class="score-toolbar__adjuster">

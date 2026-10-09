@@ -1,14 +1,11 @@
 import { appendRoundedRectPath } from '@renderer/utils/canvasGeometry'
-import type { PerformLayerBackgroundInput } from '@renderer/components/performSkin/types'
+import type {
+  PerformColumnRect,
+  PerformColumnsDraw,
+  PerformLayerBackgroundInput
+} from '@renderer/components/performSkin/types'
 
-export type LayerColumnClip = {
-  x: number
-  y: number
-  width: number
-  height: number
-  borderRadius: number
-  opacity: number
-}
+export type LayerColumnClip = PerformColumnRect
 
 type OffscreenBuffer = {
   canvas: HTMLCanvasElement
@@ -44,6 +41,7 @@ function ensureOffscreenBuffer(width: number, height: number, dpr: number): Offs
 /**
  * 每层一次：离屏绘制全层背景 → 合并所有水柱路径 clip 一次 → blit 背景。
  * 水柱移动时会从同一张变化中的背景上取不同区域。
+ * 皮肤提供 drawColumns 时改为直接把几何交给皮肤自绘（可画到水柱外，如发光线框）。
  */
 export function drawLayerWithUnifiedColumnClip(
   mainCtx: CanvasRenderingContext2D,
@@ -52,10 +50,16 @@ export function drawLayerWithUnifiedColumnClip(
   dpr: number,
   time: number,
   columns: LayerColumnClip[],
-  drawBackground: (ctx: CanvasRenderingContext2D, input: PerformLayerBackgroundInput) => void
+  drawBackground: (ctx: CanvasRenderingContext2D, input: PerformLayerBackgroundInput) => void,
+  drawColumns?: PerformColumnsDraw
 ) {
   mainCtx.clearRect(0, 0, width, height)
   if (!columns.length) return
+
+  if (drawColumns) {
+    drawColumns(mainCtx, columns, { width, height, dpr, time })
+    return
+  }
 
   const buffer = ensureOffscreenBuffer(width, height, dpr)
   buffer.ctx.clearRect(0, 0, width, height)

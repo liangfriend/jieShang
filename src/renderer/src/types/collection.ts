@@ -19,6 +19,8 @@ export type CollectionRecord = {
   owned: boolean
   level: number
   thumbnail: string | null
+  /** 可调参数 JSON 字符串，无参数时为 '{}' */
+  option?: string
   created_at?: string
   updated_at?: string
 }

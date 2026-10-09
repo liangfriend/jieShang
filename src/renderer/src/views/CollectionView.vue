@@ -4,6 +4,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
+import HollowOptionEditor from '@renderer/components/performSkin/hollow/HollowOptionEditor.vue'
 import { COLLECTION_ENUM_TO_DB } from '@renderer/constant/collection'
 import { CollectionTypeEnum, type CollectionDbType, type CollectionRecord } from '@renderer/types/collection'
 import {
@@ -76,6 +77,15 @@ const selectedSupportsUsage = computed(() =>
 const selectedInUse = computed(() =>
   selectedItem.value ? isCollectionRecordActive(selectedItem.value, activeSelection.value) : false
 )
+
+const selectedHasHollowOption = computed(
+  () => selectedItem.value?.type === 'perform_skin' && selectedItem.value.content === 'Hollow'
+)
+
+function handleOptionSaved(id: number, option: string) {
+  const item = items.value.find((row) => row.id === id)
+  if (item) item.option = option
+}
 
 function isItemInUse(item: CollectionRecord) {
   return isCollectionRecordActive(item, activeSelection.value)
@@ -255,6 +265,13 @@ onMounted(() => {
             <h3 class="collection-detail__label">{{ t('collection.howToGet') }}</h3>
             <p class="collection-detail__text">{{ selectedHowToGet }}</p>
           </section>
+
+          <HollowOptionEditor
+            v-if="selectedHasHollowOption"
+            :collection-id="selectedItem.id"
+            :option="selectedItem.option"
+            @saved="handleOptionSaved(selectedItem.id, $event)"
+          />
 
           <button
             v-if="selectedSupportsUsage"

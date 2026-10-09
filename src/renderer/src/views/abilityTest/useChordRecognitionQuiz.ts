@@ -1,5 +1,6 @@
 import { computed, onUnmounted, ref, shallowRef } from 'vue'
 import { usePlayStore } from '@renderer/store/play.store'
+import { pianoOneShotTriggerOptions } from '@renderer/utils/pianoEnvelope'
 import {
   ABSOLUTE_PITCH_DEFAULT_COUNTDOWN_SEC,
   ABSOLUTE_PITCH_DEFAULT_ROUNDS,
@@ -161,10 +162,12 @@ export function useChordRecognitionQuiz() {
       const stamp = Date.now()
       await Promise.all(
         spec.midis.map((midi, index) =>
-          playStore.triggerNote(midi, {
-            duration: CHORD_NOTE_DURATION_SEC,
-            id: `chord-${spec.id}-${midi}-${stamp}-${index}`
-          })
+          playStore.triggerNote(
+            midi,
+            pianoOneShotTriggerOptions(CHORD_NOTE_DURATION_SEC, {
+              id: `chord-${spec.id}-${midi}-${stamp}-${index}`
+            })
+          )
         )
       )
     } catch {

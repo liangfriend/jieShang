@@ -40,5 +40,15 @@ export class FileController {
       const window = BrowserWindow.fromWebContents(event.sender)
       return this.fileService.exportMusicXml(content, defaultName, window)
     })
+
+    ipcMain.handle('file:importMidi', (event) => {
+      const window = BrowserWindow.fromWebContents(event.sender)
+      return this.fileService.importMidi(window)
+    })
+
+    ipcMain.handle('file:exportMidi', (event, content: Uint8Array, defaultName?: string) => {
+      const window = BrowserWindow.fromWebContents(event.sender)
+      return this.fileService.exportMidi(content, defaultName, window)
+    })
   }
 }

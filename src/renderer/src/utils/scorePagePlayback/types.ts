@@ -3,9 +3,11 @@ import type { PlaySequence } from '@deciphony/player'
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
 import type { MusicScoreHighlightExpose } from '@deciphony/extensions/dr-play-highlight'
 import type { EndListener, PlaybackState, ProgressListener } from '@renderer/store/play.store'
+import type { ScoreScrollFollowApi } from '@renderer/utils/scoreScrollToPlayingNote'
 
 export type { ProgressListener }
 import type { WaterfallScoreStats } from '@renderer/types/types'
+import type { PlayRange, PlayRangeSelect } from './usePlayRangeSelect'
 
 export type { PlaybackState }
 
@@ -25,6 +27,8 @@ export type UseScorePagePlaybackOptions = {
   onClearPlayData?: () => void
   /** 预生成的播放序列（练习模式进入页面时构建，播放时不再重建） */
   getPlaySequence?: () => PlaySequence
+  /** 选段播放区间；返回 null 播放整首。与暂停时的区间不同则从选段开头重播 */
+  getPlayRange?: () => PlayRange | null
 }
 
 export type PianoWaterfallPlaybackExpose = {
@@ -66,3 +70,9 @@ export const scorePagePlaybackKey: InjectionKey<ScorePagePlaybackController> =
 
 /** 工具栏 inject 沿用此 key */
 export const scorePlaybackKey = scorePagePlaybackKey
+
+/** 选段（play 页提供，工具栏选段按钮使用） */
+export const scorePlayRangeKey: InjectionKey<PlayRangeSelect> = Symbol('scorePlayRange')
+
+/** 曲谱/范唱/伴奏跟滚（play 页提供，工具栏音频进度使用） */
+export const scoreScrollFollowKey: InjectionKey<ScoreScrollFollowApi> = Symbol('scoreScrollFollow')

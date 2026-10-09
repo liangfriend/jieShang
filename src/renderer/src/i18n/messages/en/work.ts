@@ -17,18 +17,97 @@ export default {
     settings: 'Settings',
     import: 'Import',
     export: 'Export',
+    volume: 'Volume',
+    annotate: {
+      start: 'Draw',
+      pen: 'Pen',
+      eraser: 'Eraser',
+      clear: 'Clear marks',
+      hint: 'Temporary presentation marks (not saved to the work). Kept across pages; clear only affects the current page.'
+    },
+    range: {
+      title: 'Range',
+      start: 'Select range',
+      end: 'Exit range',
+      clear: 'Clear range',
+      play: 'Play range',
+      pickStart: 'Click a note to set the start',
+      pickEnd: 'Click another note to set the end',
+      ready: 'Ready to play; click a note to reset the start',
+      incomplete: 'Pick the start and end notes first'
+    },
     saveSuccess: 'Saved',
     saveFailed: 'Save failed',
     exportSuccess: 'Exported',
+    exportFailed: 'Export failed',
+    exportProgress: '{text} page {done} / {total}',
+    exportFormat: {
+      sjw: 'JieShang work (.sjw)',
+      images: 'Images',
+      pdf: 'PDF'
+    },
     importSuccess: 'Imported',
     importFailed: 'Import failed',
     applyPageSizeSuccess: 'All pages updated to this size',
+    applyCurrentPageSizeSuccess: 'Current page size updated',
     settingsDialog: {
       title: 'Work settings',
-      newPageSize: 'New page size',
+      defaultPageSize: 'Default page',
+      currentPageSize: 'Current page',
+      applyDefault: 'Save',
+      applyCurrent: 'Apply',
       applyAll: 'Apply to all',
-      hint: 'These are defaults for new pages. “Apply to all” resizes every page now.',
-      confirm: 'OK'
+      defaultHint: '“Save” stores the default used for add / insert page and new works. “Apply to all” also resizes every page in this work.',
+      currentHint: '“Apply” changes only the current page. “Apply to all” uses this row’s size on every page.',
+      standardSize: 'Standard',
+      standardPlaceholder: 'Choose a size',
+      standardGroup: {
+        paper: 'Paper',
+        screen: 'Screen'
+      },
+      portrait: 'Portrait',
+      landscape: 'Landscape',
+      standardHint: 'Paper sizes are converted to pixels at 96 DPI. “Apply” changes only the current page. “Apply to all” uses the chosen size on every page.',
+      applyDefaultSuccess: 'Saved as default page size'
+    },
+    props: {
+      title: 'Properties',
+      score: 'Score',
+      image: 'Image',
+      frame: 'Position & size',
+      width: 'Width',
+      height: 'Height',
+      rotation: 'Rotation',
+      lockRatio: 'Lock ratio',
+      info: 'Info',
+      assetName: 'Name',
+      vocal: 'Vocal',
+      accompaniment: 'Accompaniment',
+      none: 'None',
+      scoreSize: 'Score size',
+      sourceSize: 'Original size',
+      sourceUnknown: 'Read on first crop',
+      crop: 'Crop',
+      cropMode: 'Drag to crop',
+      finishCropMode: 'Finish crop',
+      cropModeHint: 'Drag the corners of the orange frame to set the area to keep; drag outward to restore. Also available from the right-click menu.',
+      cropModeActiveHint: 'Drag the corners; the coordinates below update live. Press Esc / Enter or click empty space to finish.',
+      bandCropHint: 'Crop by title / grand-staff range: pick start and end (order does not matter), e.g. Title to Grand staff 2.',
+      bandFrom: 'From',
+      bandTo: 'To',
+      bandTitle: 'Title',
+      bandGrandStaff: 'Grand staff {n}',
+      keepY: 'Lock top-left',
+      keepYHint: 'On: pin the frame’s top-left and only shrink size. Off: keep the cropped area where it was on the page (frame moves down when the start band moves down). If “Keep frame size” is also on, that wins.',
+      applyBandCrop: 'Crop by grand staff',
+      cropHint: 'Or crop precisely by original-size coordinates: start and end points frame the area to keep, and changes apply automatically. Re-cropping also uses original coordinates.',
+      startX: 'Start X',
+      startY: 'Start Y',
+      endX: 'End X',
+      endY: 'End Y',
+      keepFrame: 'Keep frame size (stretch to fill)',
+      clearCrop: 'Clear crop',
+      cropFailed: 'Crop failed'
     },
     saveDialog: {
       title: 'Save work',
@@ -41,7 +120,10 @@ export default {
     pages: {
       add: 'Add page',
       insert: 'Insert',
-      remove: 'Delete'
+      remove: 'Delete',
+      copy: 'Copy',
+      paste: 'Paste',
+      delete: 'Delete'
     },
     toolbar: {
       title: 'Tools',
@@ -51,8 +133,13 @@ export default {
       endDraw: 'Exit drawing',
       pen: 'Pen',
       eraser: 'Eraser',
+      penColor: 'Pen color',
       lineWidth: 'Stroke size',
       clearDrawings: 'Clear page strokes',
+      background: 'Page background',
+      backgroundHint: 'Pick an image from My Images as this page’s background',
+      setBackground: 'Set background',
+      clearBackground: 'Clear background',
       assets: 'Media library',
       assetsHint: 'Pick from local image / audio libraries at (100,100)',
       openAssets: 'Open library',
@@ -65,6 +152,9 @@ export default {
       score: 'Add score',
       scoreSearch: 'Search scores',
       scoreScale: 'Scale',
+      scoreSkin: 'Score skin',
+      scoreSkinNone: 'None',
+      scoreSkinLoadFailed: 'Failed to load skin; added without a skin',
       addScore: 'Add',
       noScores: 'No scores yet'
     },
@@ -73,10 +163,17 @@ export default {
       image: 'Images',
       audio: 'Audio',
       video: 'Video',
-      videoUnavailable: 'Video elements are not ready yet',
       empty: 'Nothing here — upload in the media library first',
       confirm: 'Add to page',
-      selectOne: 'Select an item first'
+      selectOne: 'Select an item first',
+      loadFailed: 'Failed to load media'
+    },
+    background: {
+      pickerTitle: 'Set page background',
+      pickerHint: 'Choose an image from My Images as the current page background',
+      confirm: 'Use as background',
+      setSuccess: 'Background set',
+      clearSuccess: 'Background cleared'
     },
     menu: {
       enlarge: 'Enlarge',
@@ -90,7 +187,11 @@ export default {
       playFailed: 'Playback failed',
       audioMissing: 'Audio not available',
       scoreMissing: 'Score not found',
-      toneLoading: 'Tone is still loading'
+      toneLoading: 'Tone is still loading',
+      straighten: 'Straighten',
+      centerHorizontal: 'Center horizontally',
+      restoreScoreProportion: 'Restore proportion',
+      restoreProportionFailed: 'Cannot read media size'
     }
   }
 } as const

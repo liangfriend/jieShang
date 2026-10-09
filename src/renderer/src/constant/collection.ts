@@ -39,22 +39,67 @@ export const PerformSkinNameList = {
   },
   RainBow: {
     name: '彩虹演奏皮肤',
-    howToGet: '完成主线剧情',
-    description: '完成主线后解锁的炫彩演奏主题。'
+    howToGet: '买游戏就送',
+    description: '糖果色瀑布与渐变背景，炫彩演奏主题。'
   },
   Binary: {
     name: '二进制演奏皮肤',
-    howToGet: '完成进阶挑战',
+    howToGet: '达成成就「运气而已」',
     description: '矩阵字符瀑布，黑客终端风格。'
   },
   StarRiver: {
     name: '星河演奏皮肤',
-    howToGet: '探索星空关卡',
+    howToGet: '达成成就「掌握规律」',
     description: '深空星野与星云，白金色高亮如星屑喷发。'
+  },
+  PixelArcade: {
+    name: '像素街机演奏皮肤',
+    howToGet: '达成成就「街机中手」',
+    description: 'CRT 扫描线与像素星空，彩色像素柱，按键迸出像素碎片。'
+  },
+  MintSoda: {
+    name: '薄荷汽水演奏皮肤',
+    howToGet: '达成成就「彻底无限」',
+    description: '清凉薄荷汽水与上浮气泡，柠檬黄高亮，按键冒泡。'
+  },
+  Sakura: {
+    name: '樱花演奏皮肤',
+    howToGet: '达成成就「街机高手」',
+    description: '远山樱枝与漫天落樱，樱枝基准线，按键绽放花瓣。'
+  },
+  Firefly: {
+    name: '萤火演奏皮肤',
+    howToGet: '达成成就「人琴合一」',
+    description: '月下暮色森林与游走萤火，苔绿光柱，按键放飞萤火虫。'
+  },
+  Synthwave: {
+    name: '霓虹落日演奏皮肤',
+    howToGet: '达成成就「连击大帝」',
+    description: '条纹落日、线框山脉与透视网格，霓虹光柱，按键喷射火花。'
+  },
+  Aurora: {
+    name: '极光演奏皮肤',
+    howToGet: '达成成就「街机皇帝」',
+    description: '雪山星夜与飘动极光，冰青光柱，按键升起光柱并迸出冰晶。'
+  },
+  ImperialDragon: {
+    name: '金龙演奏皮肤',
+    howToGet: '达成成就「连击十段」',
+    description: '朱红宫灯祥云与游龙戏珠，金鳞朱漆光柱，按键绽放金色烟花。'
+  },
+  Thunder: {
+    name: '雷霆演奏皮肤',
+    howToGet: '达成成就「精准捕捉」',
+    description: '暴雨积云与分叉闪电，电弧等离子光柱，按键电弧连锁。'
+  },
+  Hollow: {
+    name: '空洞演奏皮肤',
+    howToGet: '达成成就「关了吧」',
+    description: '纯黑底上渐变流动的发光线框水柱与光晕基准线，按住琴键有细光线缓缓向上飘散，渐变色可在藏品中自定义。'
   },
   ZebraCrossing: {
     name: '斑马线演奏皮肤',
-    howToGet: '完成节奏挑战',
+    howToGet: '达成成就「视听进化」',
     description: '倾斜黑白条纹水柱，警示黄高亮。'
   }
 } satisfies Record<string, BuiltinCollectionMeta>
@@ -73,12 +118,12 @@ export const VirtualPianoSkinBuiltinMeta = {
   },
   黑白: {
     name: '黑白',
-    howToGet: '达成连击九段成就',
+    howToGet: '达成连击七段成就',
     description: '立体俯视黑白琴键，顶面与前沿层次分明。'
   },
   木板: {
     name: '木板',
-    howToGet: '达成连击八段成就',
+    howToGet: '达成连击九段成就',
     description: '木纹木板与木桩年轮黑键，温暖做旧风格。'
   }
 } satisfies Record<string, BuiltinCollectionMeta>
@@ -95,30 +140,45 @@ export const ToneColorBuiltinMeta = {
     howToGet: '买游戏就送',
     description: '更明亮、穿透力更强的钢琴音色。'
   },
-  电钢琴: {
-    name: '电钢琴',
-    howToGet: '完成新手教程',
-    description: '经典电钢琴音色，适合流行与爵士。'
-  },
   尼龙弦吉他: {
     name: '尼龙弦吉他',
-    howToGet: '探索森林关卡',
+    howToGet: '买游戏就送',
     description: '柔和的尼龙弦古典吉他音色。'
   },
   小提琴: {
     name: '小提琴',
-    howToGet: '完成主线剧情',
+    howToGet: '买游戏就送',
     description: '抒情细腻的小提琴音色。'
   },
   八音盒: {
     name: '八音盒',
-    howToGet: '完成主线剧情',
+    howToGet: '买游戏就送',
     description: '清脆梦幻的八音盒音色。'
   },
   口琴: {
     name: '口琴',
     howToGet: '买游戏就送',
     description: '清亮悠扬的口琴音色。'
+  },
+  卡林巴: {
+    name: '卡林巴',
+    howToGet: '买游戏就送',
+    description: '空灵清脆的拇指琴音色。'
+  },
+  短笛: {
+    name: '短笛',
+    howToGet: '买游戏就送',
+    description: '高亢明亮的短笛音色。'
+  },
+  排箫: {
+    name: '排箫',
+    howToGet: '买游戏就送',
+    description: '悠远带气息感的排箫音色。'
+  },
+  打击乐: {
+    name: '打击乐',
+    howToGet: '买游戏就送',
+    description: '架子鼓与打击乐器采样，用于鼓谱与电子鼓机。'
   }
 } satisfies Record<string, BuiltinCollectionMeta>
 
@@ -131,7 +191,7 @@ export const ScoreSkinBuiltinMeta = {
   },
   冰川: {
     name: '冰川',
-    howToGet: '极限模式存活120秒',
+    howToGet: '无限模式达到100分',
     description: '冰蓝清透的曲谱主题。'
   },
   墨华: {
@@ -141,17 +201,17 @@ export const ScoreSkinBuiltinMeta = {
   },
   寰宇: {
     name: '寰宇',
-    howToGet: '无限模式达到10000分',
+    howToGet: '极限模式存活60秒',
     description: '星空深蓝的宇宙曲谱主题。'
   },
   晨曦: {
     name: '晨曦',
-    howToGet: '完成主线剧情',
+    howToGet: '无限模式达到2000分',
     description: '暖色朝霞的曲谱主题。'
   },
   竹林: {
     name: '竹林',
-    howToGet: '无限模式达到2000分',
+    howToGet: '达成8连击',
     description: '竹绿自然风的曲谱主题。'
   }
 } satisfies Record<string, BuiltinCollectionMeta>

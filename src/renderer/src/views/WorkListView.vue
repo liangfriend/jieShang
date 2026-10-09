@@ -6,7 +6,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import BackButton from '@renderer/components/BackButton.vue'
 import MediaDeleteDialog from '@renderer/components/MediaDeleteDialog.vue'
-import { EDIT_NEW_WORK_TEMP_ID } from '@renderer/constant'
+import { EDIT_NEW_WORK_TEMP_ID, CUR_SHOW_WORK_TEMP_ID } from '@renderer/constant'
 import { useDataStore } from '@renderer/store/data.store'
 import {
   createEmptyWork,
@@ -49,7 +49,7 @@ function scheduleSearch() {
 function openWork(item: WorkListItem) {
   router.push({
     name: 'workShow',
-    query: { workId: String(item.id) }
+    query: { workId: String(item.id), tempId: CUR_SHOW_WORK_TEMP_ID }
   })
 }
 
@@ -150,7 +150,8 @@ onMounted(() => {
   --text-soft: #9a8aa8;
   --shadow: 0 8px 32px rgba(200, 140, 180, 0.18);
 
-  min-height: 100vh;
+  height: 100vh;
+  overflow: auto;
   padding: 32px 32px 80px;
   box-sizing: border-box;
   color: #5c4a6a;

@@ -98,20 +98,43 @@ export type WaterfallColumnShape = {
   opacity: number
 }
 
-/** canvas 渲染指令：整层背景 + 水柱几何（用于统一 clip） */
+/** 一根水柱 / 一个方块在本层中的最终几何 */
+export type PerformColumnRect = {
+  x: number
+  y: number
+  width: number
+  height: number
+  borderRadius: number
+  opacity: number
+}
+
+/**
+ * 皮肤自绘本层全部水柱 / 方块（可画到几何外，如发光线框）。
+ * 提供时不再走「整层背景 + 水柱 clip」，drawBackground 不会被调用。
+ */
+export type PerformColumnsDraw = (
+  ctx: CanvasRenderingContext2D,
+  columns: readonly PerformColumnRect[],
+  input: PerformLayerBackgroundInput
+) => void
+
+/** canvas 渲染指令：整层背景 + 水柱几何（用于统一 clip），或 drawColumns 自绘 */
 export type WaterfallColumnCanvasCommand = {
   drawBackground: (ctx: CanvasRenderingContext2D, input: PerformLayerBackgroundInput) => void
   getShape: (input: WaterfallColumnStyleInput) => WaterfallColumnShape
+  drawColumns?: PerformColumnsDraw
 }
 
 export type WaterfallActiveColumnCanvasCommand = {
   drawBackground: (ctx: CanvasRenderingContext2D, input: PerformLayerBackgroundInput) => void
   getShape: (input: WaterfallActiveColumnStyleInput) => WaterfallColumnShape
+  drawColumns?: PerformColumnsDraw
 }
 
 export type MidiBoxBlockCanvasCommand = {
   drawBackground: (ctx: CanvasRenderingContext2D, input: PerformLayerBackgroundInput) => void
   getShape: (input: MidiBoxBlockStyleInput) => WaterfallColumnShape
+  drawColumns?: PerformColumnsDraw
 }
 
 /** 四层结构第一层 canvas 背景（与各皮肤 normal / active 水柱内容独立） */

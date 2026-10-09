@@ -9,6 +9,8 @@ defineProps<{
   modelValue: number
   /** 嵌在属性区块内（如谱号、变音符号下方），与上方控件拉开间距 */
   nested?: boolean
+  /** 外层已提供标签与间距（如 PanelField） */
+  bare?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -19,8 +21,11 @@ const { t } = useI18n()
 </script>
 
 <template>
-  <section class="relative-x-offset" :class="{'relative-x-offset--nested': nested}">
-    <div class="relative-x-offset__label">{{ t('editor.note.relativeX') }}</div>
+  <section
+    class="relative-x-offset"
+    :class="{'relative-x-offset--nested': nested, 'relative-x-offset--bare': bare}"
+  >
+    <div v-if="!bare" class="relative-x-offset__label">{{ t('editor.note.relativeX') }}</div>
     <el-slider
       class="relative-x-offset__slider"
       :model-value="modelValue"
@@ -46,6 +51,10 @@ const { t } = useI18n()
 .relative-x-offset--nested {
   margin-top: 12px;
   margin-bottom: 0;
+}
+
+.relative-x-offset--bare {
+  margin: 0;
 }
 
 .relative-x-offset__label {

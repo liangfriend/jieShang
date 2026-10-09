@@ -6,7 +6,7 @@ import {
     vdomSelectionKey,
 } from '@deciphony/renderer'
 import type {Ref} from 'vue'
-import {computed, onBeforeUnmount, ref, watch} from 'vue'
+import {computed, onBeforeUnmount, ref, shallowRef, watch} from 'vue'
 import {DEFAULT_ADD_NUMBER_STATE, type AddNumberState} from './renderEditNumberAddState'
 import {EXCLUDED_INTERACTION_TAGS, HIGHLIGHT_CLASS} from '../constants'
 import {createEditHighlight} from '../renderEditHighlight'
@@ -20,26 +20,37 @@ import {
     createSlurDragSession,
     isSlurSelected,
     isSlurVDom,
-    updateSlurDragFromPointer,
+    previewSlurDrag,
     type SlurDragSession,
     type SlurHandleKind,
+    type SlurHandlePoints,
 } from '../renderEditSlurDrag'
+import {flushScoreWrites, scoreWriteGateFor, captureScoreVDomBaseline, vDomMirrorEpoch} from '../scoreWriteGate'
+import {createSlotAffiliatedDragController} from '../createSlotAffiliatedDragController'
 import {
     computeVoltaHandlePoints,
     createVoltaDragSession,
     findVoltaSymbol,
     isVoltaSelected,
     isVoltaVDom,
+    previewVoltaDrag,
     resolveVoltaMeasureIds,
-    updateVoltaDragFromPointer,
     type VoltaDragSession,
     type VoltaHandleKind,
+    type VoltaHandlePoints,
 } from '../renderEditVoltaDrag'
+import {resolveSpanAnchorHeadIds} from '../renderEditSpanAnchors'
 import {deleteSelectedItem} from '../renderEditDelete'
+import {applyMidiNoteToSelectedMeasure} from '../renderEditMidiAdd'
+import {
+    resolveNeighborMeasureSlot,
+    type MeasureNavDirection,
+} from '../renderEditMeasureNavigate'
 import {resolveInteractionTarget, resolveSvgFromEvent} from '../renderEditPointer'
 import {resolvePropertyPanelKind} from '../renderEditPropertyPanel'
 import {slotDataFromVDom} from '../renderEditSelection'
-import {findMeasureElement, findNoteHeadElement} from '../standardStaff/renderEditSymbolAddAction'
+import {findMeasureElement} from '../standardStaff/renderEditSymbolAddAction'
+import {findNoteNumberElement} from './renderEditNumberAddAction'
 import {
     applyMeasureAddAction,
     isMeasureAddMode,
@@ -58,6 +69,7 @@ export type MusicScoreComponentExpose = {
     vdomDomId: typeof vdomDomId
     vdomSelectionKey: typeof vdomSelectionKey
     findElementByVDom: (node: VDom) => SVGElement | null
+    updateVDom: (targetId: string, patch: Partial<VDom>) => boolean
 }
 
 /**
@@ -80,13 +92,25 @@ export function useNumberNotationRenderEdit(
     const ghostNotePreview = ref<GhostNumberPreview | null>(null)
     const noteHeadDragSession = ref<NumberHeadDragSession | null>(null)
     const slurDragSession = ref<SlurDragSession | null>(null)
+    const slurHandleOverride = ref<SlurHandlePoints | null>(null)
     const voltaDragSession = ref<VoltaDragSession | null>(null)
+    const voltaHandleOverride = ref<VoltaHandlePoints | null>(null)
     const relatedHighlightEls = ref<SVGElement[]>([])
-    const vDomList = ref<VDom[]>([])
+    const vDomList = shallowRef<VDom[]>([])
     /** 持续选中的添加状态：决定 ghost 与插入的音符/休止符 */
     const addNoteState = ref<AddNumberState>({...DEFAULT_ADD_NUMBER_STATE})
     const lastTopPointer = ref<{ clientX: number; clientY: number } | null>(null)
     let affiliatedDragListenersAttached = false
+
+    const getUpdateVDom = () => options?.musicScoreRef?.value?.updateVDom
+    const getVDomList = () => vDomList.value
+    scoreWriteGateFor(scoreData.value, getUpdateVDom, getVDomList)
+    watch(
+        scoreData,
+        (ms) => {
+            scoreWriteGateFor(ms, getUpdateVDom, getVDomList)
+        },
+    )
 
     const highlight = createEditHighlight({highlightedEl, selectedEl, selectedItem})
 
@@ -107,8 +131,10 @@ export function useNumberNotationRenderEdit(
     })
 
     const slurHandlePoints = computed(() => {
+        void vDomMirrorEpoch.value
+        if (slurHandleOverride.value) return slurHandleOverride.value
         const vdom = selectedSlurVdom.value
-        return vdom ? computeSlurHandlePoints(vdom) : null
+        return vdom ? computeSlurHandlePoints(vdom, scoreData.value.type) : null
     })
 
     const selectedVoltaVdom = computed(() => {
@@ -118,8 +144,16 @@ export function useNumberNotationRenderEdit(
     })
 
     const voltaHandlePoints = computed(() => {
+        if (voltaHandleOverride.value) return voltaHandleOverride.value
         const vdom = selectedVoltaVdom.value
         return vdom ? computeVoltaHandlePoints(vdom) : null
+    })
+
+    /** 选中 volta 时覆盖的小节（用于 m 插槽绿框） */
+    const relatedMeasureIds = computed(() => {
+        const slot = selectedItem.value
+        if (!isVoltaSelected(slot)) return [] as string[]
+        return resolveVoltaMeasureIds(scoreData.value, slot.self)
     })
 
     function resolveScoreSvg(): SVGSVGElement | null {
@@ -128,6 +162,36 @@ export function useNumberNotationRenderEdit(
         const svg = root.querySelector('svg')
         return svg instanceof SVGSVGElement ? svg : null
     }
+
+    function attachAffiliatedDragWindowListeners() {
+        if (affiliatedDragListenersAttached) return
+        affiliatedDragListenersAttached = true
+        window.addEventListener('pointermove', onAffiliatedDragWindowMove)
+        window.addEventListener('pointerup', onAffiliatedDragWindowUp)
+    }
+
+    function removeAffiliatedDragWindowListeners() {
+        if (
+            slurDragSession.value
+            || voltaDragSession.value
+            || slotAffiliatedDrag.hasActiveSession()
+        ) return
+        if (!affiliatedDragListenersAttached) return
+        affiliatedDragListenersAttached = false
+        window.removeEventListener('pointermove', onAffiliatedDragWindowMove)
+        window.removeEventListener('pointerup', onAffiliatedDragWindowUp)
+    }
+
+    const slotAffiliatedDrag = createSlotAffiliatedDragController({
+        scoreData,
+        selectedItem,
+        vDomList,
+        getUpdateVDom,
+        resolveScoreSvg,
+        pointerToSvg,
+        attachWindowListeners: attachAffiliatedDragWindowListeners,
+        removeWindowListenersIfIdle: removeAffiliatedDragWindowListeners,
+    })
 
     function resolveSelectionElement(vdom: VDom): SVGElement | null {
         return (
@@ -140,16 +204,24 @@ export function useNumberNotationRenderEdit(
     function resolveNoteHeadElement(notesInfoId: string): SVGElement | null {
         const root = scoreRootRef.value
         if (root) {
-            const fromDom = findNoteHeadElement(root, notesInfoId)
+            const fromDom = findNoteNumberElement(root, notesInfoId)
             if (fromDom) return fromDom
         }
         const vdom = vDomList.value.find(
-            (node) => node.tag === 'noteHead' && node.targetId === notesInfoId,
+            (node) =>
+                (node.tag === 'noteNumber' || node.tag === 'noteHead')
+                && node.targetId === notesInfoId,
         )
         return vdom ? resolveSelectionElement(vdom) : null
     }
 
     function resolveMeasureElement(measureId: string): SVGElement | null {
+        // 简谱可能无 tag=measure 背景层，相关高亮改绑 m 插槽（与选中框一致）
+        const slotVdom = findMeasureSlotVDom(vDomList.value, measureId)
+        if (slotVdom) {
+            const fromSlot = resolveSelectionElement(slotVdom)
+            if (fromSlot) return fromSlot
+        }
         const root = scoreRootRef.value
         if (root) {
             const fromDom = findMeasureElement(root, measureId)
@@ -182,13 +254,9 @@ export function useNumberNotationRenderEdit(
             }
             return
         }
-        if (isSlurSelected(slot)) {
-            const {startId, endId} = slot.self
-            const ids = startId === endId ? [startId] : [startId, endId]
-            for (const id of ids) {
-                const el = resolveNoteHeadElement(id)
-                if (el) addRelatedHighlight(el)
-            }
+        for (const id of resolveSpanAnchorHeadIds(scoreData.value, slot) ?? []) {
+            const el = resolveNoteHeadElement(id)
+            if (el) addRelatedHighlight(el)
         }
     }
 
@@ -241,20 +309,29 @@ export function useNumberNotationRenderEdit(
         }
     }
 
-    /** 重渲染后按 domId 找回 vDom / SlotData / DOM，避免旧节点引用残留高亮 */
+    /** 重渲染后按 domId 找回 vDom / SlotData / DOM；目标已不存在则清空选中 */
     function rebindSelectionAfterRender(list: VDom[]) {
         const session = noteHeadDragSession.value
         let vdom: VDom | undefined
 
         if (session) {
-            vdom = list.find((node) => node.tag === 'noteHead' && node.targetId === session.notesNumberInfoId)
-        } else {
-            const key = selectedVdomKey.value
-            if (!key) return
-            vdom = findVDomBySelectionKey(list, key)
+            vdom = list.find(
+                (node) =>
+                    (node.tag === 'noteNumber' || node.tag === 'noteHead')
+                    && node.targetId === session.notesNumberInfoId,
+            )
+            if (!vdom) return
+            bindSelectionVdom(vdom)
+            return
         }
 
-        if (!vdom) return
+        const key = selectedVdomKey.value
+        if (!key) return
+        vdom = findVDomBySelectionKey(list, key)
+        if (!vdom) {
+            clearSelection()
+            return
+        }
         bindSelectionVdom(vdom)
     }
 
@@ -267,23 +344,6 @@ export function useNumberNotationRenderEdit(
         } else {
             selectedVdomKey.value = null
             applySelectionDom(null)
-            selectedItem.value = slot
-        }
-        ghostNotePreview.value = null
-    }
-
-    function selectNoteHeadSlot(slot: SlotData, notesInfoId: string) {
-        highlight.clearHoverHighlight()
-        const vdom = vDomList.value.find(
-            (node) => node.tag === 'noteHead' && node.targetId === notesInfoId,
-        )
-        if (vdom) {
-            bindSelectionVdom(vdom, slot)
-        } else {
-            selectedVdomKey.value = null
-            const root = scoreRootRef.value
-            const el = root ? findNoteHeadElement(root, notesInfoId) : null
-            applySelectionDom(el)
             selectedItem.value = slot
         }
         ghostNotePreview.value = null
@@ -365,12 +425,23 @@ export function useNumberNotationRenderEdit(
         )
         if (!vdom) return
         const {x, y} = pointerToSvg(svg, event.clientX, event.clientY)
-        updateSlurDragFromPointer(session, scoreData.value, vdom, x, y)
+        const points = previewSlurDrag(
+            scoreData.value,
+            getUpdateVDom,
+            session,
+            vdom,
+            x,
+            y,
+            scoreData.value.type,
+        )
+        if (points) slurHandleOverride.value = points
     }
 
     function endSlurDrag(event: PointerEvent) {
         if (slurDragSession.value?.pointerId === event.pointerId) {
+            flushScoreWrites(scoreData.value)
             slurDragSession.value = null
+            slurHandleOverride.value = null
             removeAffiliatedDragWindowListeners()
         }
     }
@@ -380,13 +451,27 @@ export function useNumberNotationRenderEdit(
         if (!session || event.pointerId !== session.pointerId) return
         const svg = resolveScoreSvg()
         if (!svg) return
+        const vdom = vDomList.value.find(
+            (node) => node.targetId === session.voltaId && isVoltaVDom(node),
+        )
+        if (!vdom) return
         const {x, y} = pointerToSvg(svg, event.clientX, event.clientY)
-        updateVoltaDragFromPointer(session, scoreData.value, x, y)
+        const points = previewVoltaDrag(
+            scoreData.value,
+            getUpdateVDom,
+            session,
+            vdom,
+            x,
+            y,
+        )
+        if (points) voltaHandleOverride.value = points
     }
 
     function endVoltaDrag(event: PointerEvent) {
         if (voltaDragSession.value?.pointerId === event.pointerId) {
+            flushScoreWrites(scoreData.value)
             voltaDragSession.value = null
+            voltaHandleOverride.value = null
             removeAffiliatedDragWindowListeners()
         }
     }
@@ -394,32 +479,22 @@ export function useNumberNotationRenderEdit(
     function onAffiliatedDragWindowMove(event: PointerEvent) {
         if (slurDragSession.value) updateSlurDragFromEvent(event)
         if (voltaDragSession.value) updateVoltaDragFromEvent(event)
+        slotAffiliatedDrag.updateFromEvent(event)
     }
 
     function onAffiliatedDragWindowUp(event: PointerEvent) {
         endSlurDrag(event)
         endVoltaDrag(event)
-    }
-
-    function attachAffiliatedDragWindowListeners() {
-        if (affiliatedDragListenersAttached) return
-        affiliatedDragListenersAttached = true
-        window.addEventListener('pointermove', onAffiliatedDragWindowMove)
-        window.addEventListener('pointerup', onAffiliatedDragWindowUp)
-    }
-
-    function removeAffiliatedDragWindowListeners() {
-        if (slurDragSession.value || voltaDragSession.value) return
-        if (!affiliatedDragListenersAttached) return
-        affiliatedDragListenersAttached = false
-        window.removeEventListener('pointermove', onAffiliatedDragWindowMove)
-        window.removeEventListener('pointerup', onAffiliatedDragWindowUp)
+        slotAffiliatedDrag.endFromEvent(event)
     }
 
     function handleSlurHandleDown(handle: SlurHandleKind, event: PointerEvent) {
         const vdom = selectedSlurVdom.value
         if (!vdom?.targetId) return
-        slurDragSession.value = createSlurDragSession(event, vdom.targetId, handle, vdom)
+        const svg = resolveScoreSvg()
+        if (!svg) return
+        const {y} = pointerToSvg(svg, event.clientX, event.clientY)
+        slurDragSession.value = createSlurDragSession(event, vdom.targetId, handle, vdom, y)
         attachAffiliatedDragWindowListeners()
         const el = event.currentTarget
         if (el instanceof SVGElement) {
@@ -453,6 +528,23 @@ export function useNumberNotationRenderEdit(
         return true
     }
 
+    /** 小节选中态方向键导航；成功选中邻接小节返回 true */
+    function navigateSelectedMeasure(direction: MeasureNavDirection): boolean {
+        const next = resolveNeighborMeasureSlot(selectedItem.value, direction)
+        if (!next) return false
+        selectMeasureSlot(next)
+        return true
+    }
+
+    /** MIDI note-on：小节选中时在末尾追加音符（时值用添加面板） */
+    function addMidiNote(midi: number): boolean {
+        return applyMidiNoteToSelectedMeasure(
+            selectedItem.value,
+            midi,
+            addNoteState.value.chronaxie,
+        )
+    }
+
     function tryMeasureAddAtEvent(event: PointerEvent) {
         const measureId = selectedItem.value?.measure?.id
         if (!measureId) return
@@ -475,10 +567,6 @@ export function useNumberNotationRenderEdit(
             scoreData.value,
         )
         if (!result) return
-
-        if (result.type === 'selectNote') {
-            selectNoteHeadSlot(result.slot, result.notesNumberInfoId)
-        }
     }
 
     function resolveSlotFromVDom(vdom: VDom): SlotData | null {
@@ -489,6 +577,7 @@ export function useNumberNotationRenderEdit(
     // —— dr 事件 ——
 
     function handleDrClick(event: MouseEvent, vdom: VDom) {
+        if (event.button !== 0) return
         if (EXCLUDED_INTERACTION_TAGS.has(vdom.tag)) return
         const el = resolveInteractionTarget(event)
         if (!el) return
@@ -532,8 +621,9 @@ export function useNumberNotationRenderEdit(
     }
 
     function handleDrDown(event: PointerEvent, vdom: VDom) {
+        if (event.button !== 0) return
         if (EXCLUDED_INTERACTION_TAGS.has(vdom.tag)) return
-        if (vdom.tag !== 'noteHead') return
+        if (vdom.tag !== 'noteNumber' && vdom.tag !== 'noteHead') return
 
         const slot = slotDataFromVDom(scoreData.value, vdom)
         if (!slot?.info || !slot.note || !slot.measure) return
@@ -560,10 +650,11 @@ export function useNumberNotationRenderEdit(
         event.preventDefault()
     }
 
+    // 音符头拖拽会话留给 handleTopUp 结束：捕获后 top-up 命中为 null，需靠会话判断不改选小节
     function handleDrUp(event: PointerEvent) {
-        endNoteHeadDrag(event)
         endSlurDrag(event)
         endVoltaDrag(event)
+        slotAffiliatedDrag.endFromEvent(event)
     }
 
     // —— top 事件（小节加音 / 音符头拖拽跟指针）——
@@ -575,6 +666,10 @@ export function useNumberNotationRenderEdit(
         }
         if (voltaDragSession.value) {
             updateVoltaDragFromEvent(event)
+            return
+        }
+        if (slotAffiliatedDrag.hasActiveSession()) {
+            slotAffiliatedDrag.updateFromEvent(event)
             return
         }
         if (noteHeadDragSession.value) {
@@ -594,14 +689,17 @@ export function useNumberNotationRenderEdit(
     }
 
     function handleTopUp(event: PointerEvent, vdom: VDom | null) {
+        if (event.button !== 0) return
         const wasSlurDragging = slurDragSession.value?.pointerId === event.pointerId
         const wasVoltaDragging = voltaDragSession.value?.pointerId === event.pointerId
+        const wasSlotAffiliatedDragging = slotAffiliatedDrag.hasActiveSession()
         endSlurDrag(event)
         endVoltaDrag(event)
+        slotAffiliatedDrag.endFromEvent(event)
         const wasDragging = noteHeadDragSession.value?.pointerId === event.pointerId
         endNoteHeadDrag(event)
-        if (wasSlurDragging || wasVoltaDragging || wasDragging) return
-        if (vdom?.tag === 'noteHead') return
+        if (wasSlurDragging || wasVoltaDragging || wasSlotAffiliatedDragging || wasDragging) return
+        if (vdom?.tag === 'noteNumber' || vdom?.tag === 'noteHead') return
         if (!canProceedMeasureTopUp(vdom)) return
 
         const svg = resolveSvgFromEvent(event)
@@ -638,15 +736,20 @@ export function useNumberNotationRenderEdit(
 
     function handleRenderMusicScore(list: VDom[]) {
         vDomList.value = list
+        captureScoreVDomBaseline(scoreData.value, list)
         rebindSelectionAfterRender(list)
         refreshGhostFromLastPointer()
     }
 
     onBeforeUnmount(() => {
+        flushScoreWrites(scoreData.value)
         clearSelection()
         noteHeadDragSession.value = null
         slurDragSession.value = null
+        slurHandleOverride.value = null
         voltaDragSession.value = null
+        voltaHandleOverride.value = null
+        slotAffiliatedDrag.resetSessions()
         removeAffiliatedDragWindowListeners()
     })
 
@@ -661,6 +764,13 @@ export function useNumberNotationRenderEdit(
         selectedSlurVdom,
         slurHandlePoints,
         voltaHandlePoints,
+        arpeggioHandlePoints: slotAffiliatedDrag.arpeggioHandlePoints,
+        strummingHandlePoints: slotAffiliatedDrag.strummingHandlePoints,
+        pedalHandlePoints: slotAffiliatedDrag.pedalHandlePoints,
+        pitchHandlePoints: slotAffiliatedDrag.pitchHandlePoints,
+        lineHandlePoints: slotAffiliatedDrag.lineHandlePoints,
+        noteAffiliatedBox: slotAffiliatedDrag.noteAffiliatedBox,
+        relatedMeasureIds,
         handleDrClick,
         handleDrEnter,
         handleDrLeave,
@@ -668,10 +778,18 @@ export function useNumberNotationRenderEdit(
         handleDrUp,
         handleSlurHandleDown,
         handleVoltaHandleDown,
+        handleArpeggioHandleDown: slotAffiliatedDrag.handleArpeggioHandleDown,
+        handleStrummingHandleDown: slotAffiliatedDrag.handleStrummingHandleDown,
+        handlePedalHandleDown: slotAffiliatedDrag.handlePedalHandleDown,
+        handlePitchHandleDown: slotAffiliatedDrag.handlePitchHandleDown,
+        handleLineHandleDown: slotAffiliatedDrag.handleLineHandleDown,
+        handleNoteAffiliatedHandleDown: slotAffiliatedDrag.handleNoteAffiliatedHandleDown,
         handleTopMove,
         handleTopUp,
         handleRenderMusicScore,
         deleteSelected,
+        navigateSelectedMeasure,
+        addMidiNote,
         clearSelection,
     }
 }

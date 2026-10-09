@@ -1,4 +1,5 @@
 import {
+  GUITAR_DEFAULT_SHORTCUT_NAMES,
   GUITAR_SHORTCUT_STORAGE_KEY
 } from '@renderer/constant/guitar'
 
@@ -26,6 +27,22 @@ export function loadGuitarShortcuts(): GuitarShortcutMap {
     /* ignore */
   }
   return base
+}
+
+/** 仅在从未保存过快捷键时，按内置九和弦顺序绑定 1~9 */
+export function ensureDefaultGuitarShortcuts(
+  chords: Array<{ id: number; name: string }>
+): GuitarShortcutMap {
+  if (localStorage.getItem(GUITAR_SHORTCUT_STORAGE_KEY)) {
+    return loadGuitarShortcuts()
+  }
+  const map = emptyGuitarShortcuts()
+  GUITAR_DEFAULT_SHORTCUT_NAMES.forEach((name, i) => {
+    const row = chords.find((c) => c.name === name)
+    if (row) map[String(i + 1)] = row.id
+  })
+  saveGuitarShortcuts(map)
+  return map
 }
 
 export function saveGuitarShortcuts(map: GuitarShortcutMap): void {

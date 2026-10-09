@@ -183,12 +183,7 @@ function choiceClass(pitchClass: number) {
           </button>
         </div>
 
-        <button
-          v-if="phase === 'question'"
-          type="button"
-          class="ghost-btn"
-          @click="backToSetup"
-        >
+        <button type="button" class="ghost-btn" @click="backToSetup">
           {{ t('keyNoteNameQuiz.question.abort') }}
         </button>
       </section>

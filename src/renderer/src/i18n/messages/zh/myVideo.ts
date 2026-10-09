@@ -25,7 +25,8 @@ export default {
       size: '文件大小',
       format: '格式',
       createdAt: '添加时间',
-      probeFailed: '无法解析视频信息'
+      probeFailed: '无法解析视频信息',
+      playFailed: '视频加载失败，无法播放'
     }
   }
 } as const

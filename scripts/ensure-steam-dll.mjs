@@ -2,6 +2,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const target = path.resolve('resources/steam/steam_api64.dll')
+const vcRuntimeTarget = path.resolve('resources/steam/vcruntime140.dll')
 
 function tryCopyFromSdk() {
   const sdkRoot = process.env.STEAMWORKS_SDK
@@ -21,6 +22,25 @@ function tryCopyFromSdk() {
   }
 
   return false
+}
+
+/** steamworks.js 的 .node 依赖 VCRUNTIME140.dll，未装 VC++ 运行库的机器需随包附带 */
+function ensureVcRuntime() {
+  if (fs.existsSync(vcRuntimeTarget)) return true
+  const systemRoot = process.env.SystemRoot || 'C:\\Windows'
+  const source = path.join(systemRoot, 'System32', 'vcruntime140.dll')
+  if (!fs.existsSync(source)) {
+    console.warn('未找到 vcruntime140.dll，请安装 VC++ 2015-2022 x64 运行库后重新打包。')
+    return false
+  }
+  fs.mkdirSync(path.dirname(vcRuntimeTarget), { recursive: true })
+  fs.copyFileSync(source, vcRuntimeTarget)
+  console.log(`已复制 vcruntime140.dll ← ${source}`)
+  return true
+}
+
+if (!ensureVcRuntime()) {
+  process.exit(1)
 }
 
 if (fs.existsSync(target)) {

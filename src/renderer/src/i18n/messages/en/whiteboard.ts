@@ -16,6 +16,7 @@ export default {
       chordSlider: 'Chord slider',
       intervalSlider: 'Interval slider',
       addNote: 'Add notes',
+      autoClear: 'Auto clear',
       clef: 'Clef',
       targetClef: 'Target clef',
       bpm: 'BPM',

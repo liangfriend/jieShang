@@ -4,7 +4,11 @@ import { usePlayStore } from '@renderer/store/play.store'
 import {
   RHYTHM_SENSE_COUNTDOWN_SECONDS,
   RHYTHM_SENSE_COUNTDOWN_STEP_MS,
+  RHYTHM_SENSE_BPM_LIMIT_MAX,
+  RHYTHM_SENSE_BPM_LIMIT_MIN,
   RHYTHM_SENSE_DEFAULT_BEATS,
+  RHYTHM_SENSE_DEFAULT_BEAT_UNIT,
+  RHYTHM_SENSE_DEFAULT_BPM_RANGE,
   RHYTHM_SENSE_DEFAULT_ROUNDS,
   RHYTHM_SENSE_MAX_ROUNDS,
   RHYTHM_SENSE_MIN_ROUNDS,
@@ -12,8 +16,10 @@ import {
   averageRhythmDeviationMs,
   findBestRhythmRound,
   pickRandomRhythmBpm,
+  rhythmBeatMs,
   scoreRhythmTapIntervals,
   type RhythmSenseBeatCount,
+  type RhythmSenseBeatUnit,
   type RhythmSensePhase,
   type RhythmSenseRoundResult
 } from '@renderer/constant/rhythmSenseTest'
@@ -28,6 +34,8 @@ export function useRhythmSenseTest() {
   const phase = ref<RhythmSensePhase>('setup')
   const beats = ref<RhythmSenseBeatCount>(RHYTHM_SENSE_DEFAULT_BEATS)
   const totalRounds = ref(RHYTHM_SENSE_DEFAULT_ROUNDS)
+  const bpmRange = ref<[number, number]>([...RHYTHM_SENSE_DEFAULT_BPM_RANGE])
+  const beatUnit = ref<RhythmSenseBeatUnit>(RHYTHM_SENSE_DEFAULT_BEAT_UNIT)
   const currentRound = ref(0)
   const countdownLabel = ref('')
   const currentBpm = ref(0)
@@ -91,6 +99,18 @@ export function useRhythmSenseTest() {
     )
   }
 
+  function setBpmRange(value: [number, number]) {
+    const clamp = (v: number) =>
+      Math.min(RHYTHM_SENSE_BPM_LIMIT_MAX, Math.max(RHYTHM_SENSE_BPM_LIMIT_MIN, Math.round(v)))
+    const lo = clamp(Math.min(value[0], value[1]))
+    const hi = clamp(Math.max(value[0], value[1]))
+    bpmRange.value = [lo, hi]
+  }
+
+  function setBeatUnit(value: RhythmSenseBeatUnit) {
+    beatUnit.value = value
+  }
+
   async function playTapClick() {
     try {
       await playStore.triggerNote(TAP_CLICK_MIDI, {
@@ -133,14 +153,14 @@ export function useRhythmSenseTest() {
     tapTimesMs.length = 0
     tapCount.value = 0
     lastRoundResult.value = null
-    currentBpm.value = pickRandomRhythmBpm()
+    currentBpm.value = pickRandomRhythmBpm(bpmRange.value)
     phase.value = 'listen'
 
     try {
-      const beatMs = 60_000 / currentBpm.value
+      const beatMs = rhythmBeatMs(currentBpm.value, beatUnit.value)
       const listenBudgetMs = beatMs * beats.value + 1000
       await Promise.race([
-        metronomeStore.playBeats(beats.value, currentBpm.value),
+        metronomeStore.playBeats(beats.value, currentBpm.value, beatUnit.value),
         new Promise<void>((resolve) => {
           window.setTimeout(resolve, listenBudgetMs)
         })
@@ -170,7 +190,7 @@ export function useRhythmSenseTest() {
     const result: RhythmSenseRoundResult = {
       roundIndex: currentRound.value,
       bpm: currentBpm.value,
-      avgDeviationMs: scoreRhythmTapIntervals(tapTimesMs, currentBpm.value),
+      avgDeviationMs: scoreRhythmTapIntervals(tapTimesMs, currentBpm.value, beatUnit.value),
       tapCount: tapTimesMs.length
     }
     lastRoundResult.value = result
@@ -218,6 +238,8 @@ export function useRhythmSenseTest() {
     phase,
     beats,
     totalRounds,
+    bpmRange,
+    beatUnit,
     currentRound,
     countdownLabel,
     currentBpm,
@@ -230,6 +252,8 @@ export function useRhythmSenseTest() {
     bestRound,
     setBeats,
     setTotalRounds,
+    setBpmRange,
+    setBeatUnit,
     startTest,
     handleTap,
     playAgain,

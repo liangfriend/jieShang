@@ -7,7 +7,9 @@ export function parseScoreSkinPack(raw: string): SkinPack | null {
   try {
     const parsed = JSON.parse(raw) as SkinPack
     if (!parsed || typeof parsed !== 'object') return null
-    if (parsed.standardStaff || parsed.numberNotation) return parsed
+    if (parsed.standardStaff || parsed.numberNotation || parsed.tab6 || parsed.tab4) {
+      return parsed
+    }
     return null
   } catch {
     return null

@@ -64,8 +64,8 @@ const secondaryActions = computed(() => [
     className: 'action-whiteboard'
   },
   {
-    route: 'musicEncyclopedia' as const,
-    labelKey: 'home.actions.musicEncyclopedia' as const,
+    route: 'guitarChordManage' as const,
+    labelKey: 'home.actions.chordManage' as const,
     icon: encyclopediaIcon,
     className: 'action-encyclopedia'
   },
@@ -201,6 +201,8 @@ function goToNamedRoute(
         </button>
       </section>
     </main>
+
+    <footer class="home-footer">{{ t('home.community') }}</footer>
 
     <HomeSettingsDialog v-model="settingsVisible" />
 
@@ -562,9 +564,30 @@ function goToNamedRoute(
   line-height: 1.3;
 }
 
+.home-footer {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  padding-top: 24px;
+  font-size: 12px;
+  color: var(--text-soft);
+  user-select: text;
+}
+
 @media (max-width: 720px) {
   .action-row--more {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+/* 窗口过矮时让出 logo 与软件名的空间，保证下方入口图标完整显示 */
+@media (max-height: 760px) {
+  .home-header {
+    display: none;
+  }
+
+  .home {
+    padding-top: 24px;
   }
 }
 

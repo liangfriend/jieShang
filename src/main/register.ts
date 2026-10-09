@@ -12,7 +12,9 @@ export async function registerController() {
   container.resolve('imageController').register()
   container.resolve('videoController').register()
   container.resolve('guitarChordController').register()
+  container.resolve('drumMachineController').register()
   container.resolve('fileController').register()
+  container.resolve('omrController').register()
   container.resolve('windowController').register()
 
   await container.resolve('achievementProgressService').syncCompletedToSteam()

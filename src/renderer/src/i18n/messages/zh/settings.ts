@@ -4,7 +4,8 @@ export default {
     language: {
       label: '界面语言',
       zh: '中文',
-      en: 'English'
+      en: 'English',
+      ja: '日本語'
     },
     gameDifficulty: {
       label: '街机/无限模式难度：',
@@ -14,6 +15,11 @@ export default {
       standardDesc: 'MIDI 38–83，三种谱号，无重升重降，节奏更快',
       hard: '困难',
       hardDesc: 'MIDI 38–83，三种谱号，全部变音，块速与生成更快'
+    },
+    gameNotation: {
+      label: '游戏曲谱模式：',
+      staff: '线谱',
+      jianpu: '简谱'
     },
     noteBlockSound: {
       label: '音符块声音'

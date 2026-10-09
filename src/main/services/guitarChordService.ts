@@ -1,145 +1,67 @@
 import { randomUUID } from 'crypto'
 import { GuitarChordRepository } from '../repositories/guitarChordRepository'
+import {
+  syncBuiltinBass5Chords,
+  syncBuiltinGuitarChords,
+  syncBuiltinUkuleleChords
+} from '../database/guitarChordBuiltinSeed'
+import {
+  guitarChordStringCount,
+  guitarChordTabTypeFromStringCount,
+  isGuitarChordTabType,
+  type GuitarChordTabType
+} from '../models/GuitarChordModel'
 
-type SeedStringState = { finger: 'x' | 'o' | number; text: string }
-
-type SeedTabChord = {
-  id: string
-  width: number
-  height: number
-  stringCount: number
-  name: string
-  fretCount: number
-  baseFret: number
-  barres: Array<{
-    fret: number
-    startStringNumber: number
-    endStringNumber: number
-    text: string[]
-  }>
-  tuning: string[]
-  stringStates: SeedStringState[]
-  textSize: number
-  nameSize: number
-  relativeX: number
-  relativeY: number
-  relativeW: number
-  relativeH: number
+function isPoseArray(v: unknown, joints: number): v is number[] {
+  return (
+    Array.isArray(v) &&
+    v.length >= 2 + joints &&
+    v.every((n) => typeof n === 'number' && Number.isFinite(n))
+  )
 }
 
-function makeChord(
-  name: string,
-  stringStates: SeedStringState[],
-  barres: SeedTabChord['barres'] = []
-): SeedTabChord {
-  return {
-    id: randomUUID(),
-    width: 50,
-    height: 60,
-    stringCount: 6,
-    name,
-    fretCount: 5,
-    baseFret: 0,
-    barres,
-    tuning: ['E', 'A', 'D', 'G', 'B', 'E'],
-    stringStates,
-    textSize: 10,
-    nameSize: 32,
-    relativeX: 0,
-    relativeY: 0,
-    relativeW: 1,
-    relativeH: 1
+function isFingerPoseMap(v: unknown): boolean {
+  if (!v || typeof v !== 'object') return false
+  const o = v as Record<string, unknown>
+  return (
+    isPoseArray(o.thumbF, 2) &&
+    isPoseArray(o.indexF, 3) &&
+    isPoseArray(o.middleF, 3) &&
+    isPoseArray(o.ringF, 3) &&
+    isPoseArray(o.littleF, 3)
+  )
+}
+
+/** 校验并序列化手型；非法则 null */
+function normalizeHandPose(raw: unknown): string | null {
+  if (raw == null || raw === '') return null
+  if (typeof raw === 'string') {
+    try {
+      return normalizeHandPose(JSON.parse(raw))
+    } catch {
+      return null
+    }
   }
+  if (!isFingerPoseMap(raw)) return null
+  const o = raw as Record<string, number[]>
+  return JSON.stringify({
+    thumbF: [...o.thumbF],
+    indexF: [...o.indexF],
+    middleF: [...o.middleF],
+    ringF: [...o.ringF],
+    littleF: [...o.littleF]
+  })
 }
 
-/** 默认 tabChord 种子（stringStates 索引 0 = 1 弦） */
-export const DEFAULT_GUITAR_CHORD_SEEDS: SeedTabChord[] = [
-  makeChord('C', [
-    { finger: 'o', text: '' },
-    { finger: 0, text: '1' },
-    { finger: 'o', text: '' },
-    { finger: 1, text: '2' },
-    { finger: 2, text: '3' },
-    { finger: 'x', text: '' }
-  ]),
-  makeChord('G', [
-    { finger: 2, text: '3' },
-    { finger: 'o', text: '' },
-    { finger: 'o', text: '' },
-    { finger: 'o', text: '' },
-    { finger: 1, text: '2' },
-    { finger: 2, text: '3' }
-  ]),
-  makeChord('Am', [
-    { finger: 'o', text: '' },
-    { finger: 0, text: '1' },
-    { finger: 1, text: '2' },
-    { finger: 1, text: '3' },
-    { finger: 'o', text: '' },
-    { finger: 'x', text: '' }
-  ]),
-  makeChord('Em', [
-    { finger: 'o', text: '' },
-    { finger: 'o', text: '' },
-    { finger: 'o', text: '' },
-    { finger: 1, text: '2' },
-    { finger: 1, text: '3' },
-    { finger: 'o', text: '' }
-  ]),
-  makeChord('D', [
-    { finger: 1, text: '2' },
-    { finger: 2, text: '3' },
-    { finger: 1, text: '1' },
-    { finger: 'o', text: '' },
-    { finger: 'x', text: '' },
-    { finger: 'x', text: '' }
-  ]),
-  makeChord(
-    'F',
-    [
-      { finger: 0, text: '1' },
-      { finger: 0, text: '1' },
-      { finger: 1, text: '2' },
-      { finger: 2, text: '3' },
-      { finger: 3, text: '4' },
-      { finger: 0, text: '1' }
-    ],
-    [
-      {
-        fret: 0,
-        startStringNumber: 0,
-        endStringNumber: 5,
-        text: ['1', '1', '1', '1', '1', '1']
-      }
-    ]
-  ),
-  makeChord('E', [
-    { finger: 'o', text: '' },
-    { finger: 'o', text: '' },
-    { finger: 0, text: '1' },
-    { finger: 1, text: '2' },
-    { finger: 1, text: '3' },
-    { finger: 'o', text: '' }
-  ]),
-  makeChord('A', [
-    { finger: 'o', text: '' },
-    { finger: 1, text: '2' },
-    { finger: 1, text: '3' },
-    { finger: 1, text: '4' },
-    { finger: 'o', text: '' },
-    { finger: 'x', text: '' }
-  ]),
-  makeChord('Dm', [
-    { finger: 0, text: '1' },
-    { finger: 2, text: '3' },
-    { finger: 1, text: '2' },
-    { finger: 'o', text: '' },
-    { finger: 'x', text: '' },
-    { finger: 'x', text: '' }
-  ])
-]
+function normalizeTabType(raw: unknown, stringCount: number): GuitarChordTabType {
+  if (isGuitarChordTabType(raw)) return raw
+  return guitarChordTabTypeFromStringCount(stringCount)
+}
 
-function normalizeTabChord(raw: unknown): { name: string; data: string } | null {
+function normalizeTabChord(
+  raw: unknown,
+  tabTypeHint?: unknown
+): { name: string; data: string; tab_type: GuitarChordTabType } | null {
   if (!raw || typeof raw !== 'object') return null
   const chord = raw as Record<string, unknown>
   const name = typeof chord.name === 'string' ? chord.name.trim() : ''
@@ -147,11 +69,15 @@ function normalizeTabChord(raw: unknown): { name: string; data: string } | null 
   if (!Array.isArray(chord.stringStates)) return null
   const stringCount = Number(chord.stringCount)
   if (!Number.isFinite(stringCount) || stringCount < 4 || stringCount > 8) return null
+  const tab_type = normalizeTabType(tabTypeHint, stringCount)
+  const lockedCount = guitarChordStringCount(tab_type)
   return {
     name,
+    tab_type,
     data: JSON.stringify({
       ...chord,
       name,
+      stringCount: lockedCount,
       id: typeof chord.id === 'string' && chord.id ? chord.id : randomUUID()
     })
   }
@@ -165,20 +91,18 @@ export class GuitarChordService {
   }
 
   async ensureDefaultChords() {
-    const count = await this.guitarChordRepository.count()
-    if (count > 0) return
-    for (const seed of DEFAULT_GUITAR_CHORD_SEEDS) {
-      await this.guitarChordRepository.create({
-        name: seed.name,
-        data: JSON.stringify({ ...seed, id: randomUUID() })
-      })
-    }
+    await syncBuiltinGuitarChords()
+    await syncBuiltinUkuleleChords()
+    await syncBuiltinBass5Chords()
   }
 
-  async createChord(payload: { data: unknown }) {
-    const normalized = normalizeTabChord(payload?.data)
+  async createChord(payload: { data: unknown; hand_pose?: unknown; tab_type?: unknown }) {
+    const normalized = normalizeTabChord(payload?.data, payload?.tab_type)
     if (!normalized) return { success: false, error: 'invalid tabChord data' }
-    const data = await this.guitarChordRepository.create(normalized)
+    const data = await this.guitarChordRepository.create({
+      ...normalized,
+      hand_pose: normalizeHandPose(payload?.hand_pose)
+    })
     return { success: true, data }
   }
 
@@ -189,15 +113,35 @@ export class GuitarChordService {
     return { success: true, data }
   }
 
-  async updateChord(id: string | number, payload: { data?: unknown }) {
+  async updateChord(
+    id: string | number,
+    payload: { data?: unknown; hand_pose?: unknown; tab_type?: unknown }
+  ) {
     const row = await this.guitarChordRepository.findById(id)
     if (!row) return { success: false, error: 'chord not found' }
-    if (payload.data === undefined) {
+    const update: Partial<{
+      name: string
+      data: string
+      hand_pose: string | null
+      tab_type: GuitarChordTabType
+    }> = {}
+    if (payload.data !== undefined) {
+      // 创建后类型不可改：沿用库里已有 tab_type
+      const normalized = normalizeTabChord(payload.data, row.tab_type ?? 'tab6')
+      if (!normalized) return { success: false, error: 'invalid tabChord data' }
+      Object.assign(update, {
+        name: normalized.name,
+        data: normalized.data,
+        tab_type: row.tab_type ?? normalized.tab_type
+      })
+    }
+    if (payload.hand_pose !== undefined) {
+      update.hand_pose = normalizeHandPose(payload.hand_pose)
+    }
+    if (Object.keys(update).length === 0) {
       return { success: true, data: row }
     }
-    const normalized = normalizeTabChord(payload.data)
-    if (!normalized) return { success: false, error: 'invalid tabChord data' }
-    const data = await this.guitarChordRepository.update(id, normalized)
+    const data = await this.guitarChordRepository.update(id, update)
     return { success: true, data }
   }
 
@@ -206,15 +150,15 @@ export class GuitarChordService {
     return { success: true, data }
   }
 
-  async listChords() {
+  async listChords(filter?: { keyword?: string; tabType?: GuitarChordTabType | 'all' | null }) {
     await this.ensureDefaultChords()
-    const data = await this.guitarChordRepository.list()
+    const data = await this.guitarChordRepository.list(filter ?? {})
     return { success: true, data }
   }
 
-  async searchByName(name: string) {
+  async searchByName(name: string, tabType?: GuitarChordTabType | 'all' | null) {
     await this.ensureDefaultChords()
-    const data = await this.guitarChordRepository.searchByName(name)
+    const data = await this.guitarChordRepository.searchByName(name, tabType)
     return { success: true, data }
   }
 }

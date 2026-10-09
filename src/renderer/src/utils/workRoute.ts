@@ -11,6 +11,7 @@ import {
   loadWorkFromDatabase,
   type WorkRecord
 } from '@renderer/utils/fileHelper/workFile'
+import { loadWorkPageSize } from '@renderer/utils/workPageSizeStorage'
 
 /**
  * 作品页路由 query 规则（work-edit / work-show）
@@ -132,9 +133,10 @@ export function buildWorkRouteQuery(route: RouteLocationNormalizedLoaded): Recor
   return { tempId: EDIT_NEW_WORK_TEMP_ID }
 }
 
-/** 确保至少一页（防御坏数据） */
+/** 确保至少一页（防御坏数据）；尺寸取本地「新页默认」 */
 export function ensureWorkHasPage(work: SJW): void {
   if (!work.pages?.length) {
-    work.pages = [createEmptyPage()]
+    const pageSize = loadWorkPageSize()
+    work.pages = [createEmptyPage({ width: pageSize.width, height: pageSize.height })]
   }
 }

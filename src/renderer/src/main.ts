@@ -3,6 +3,9 @@ import { createPinia } from 'pinia'
 import App from './App.vue'
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+import '@deciphony/renderer/css'
+import '@deciphony/extensions/css'
+import '@deciphony/finger/dist/finger.css'
 import './base.css'
 import '@renderer/views/practice/practiceStaffDim.css'
 import router from './router'
@@ -15,6 +18,7 @@ import { useGameSettingsStore } from '@renderer/store/gameSettings.store'
 import { useLocaleStore } from '@renderer/store/locale.store'
 import { initCollectionActiveStorage } from '@renderer/utils/collection/collectionActiveStorage'
 import { initDefaultCollectionSelection } from '@renderer/utils/collection/initCollectionSelection'
+import { syncCompletedAchievementRewards } from '@renderer/utils/achievementHelper'
 
 const app = createApp(App)
 const pinia = createPinia()
@@ -28,6 +32,9 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 async function bootstrap() {
   initCollectionActiveStorage()
   await initDefaultCollectionSelection()
+  void syncCompletedAchievementRewards().catch((error) =>
+    console.error('syncCompletedAchievementRewards failed', error)
+  )
   void usePlayStore().init()
   void useMidiStore().init()
   void useMetronomeStore().init()

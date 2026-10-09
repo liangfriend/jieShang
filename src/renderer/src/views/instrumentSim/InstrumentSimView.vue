@@ -11,8 +11,9 @@ const { t } = useI18n()
 const router = useRouter()
 
 type InstrumentItem = {
-  key: 'guitar' | 'harmonica' | 'violin' | 'xiao'
-  route?: 'guitarSim' | 'harmonicaSim' | 'violinSim'
+  key: 'guitar' | 'harmonica' | 'panFlute' | 'piccolo' | 'kalimba' | 'drumMachine' | 'xiao'
+  route?: 'guitarSim' | 'harmonicaSim' | 'panFluteSim' | 'piccoloSim' | 'kalimbaSim' | 'drumMachineSim'
+  /** 不填表示音色随前端内置，无需藏品 */
   toneCollectionId?: number
   tint: string
   available: boolean
@@ -37,10 +38,30 @@ const items: InstrumentItem[] = [
     available: true
   },
   {
-    key: 'violin',
-    route: 'violinSim',
-    toneCollectionId: BUILTIN_COLLECTION_SEED_IDS.toneColor.小提琴,
+    key: 'panFlute',
+    route: 'panFluteSim',
+    toneCollectionId: BUILTIN_COLLECTION_SEED_IDS.toneColor.排箫,
+    tint: '#f6e3c4',
+    available: true
+  },
+  {
+    key: 'piccolo',
+    route: 'piccoloSim',
+    toneCollectionId: BUILTIN_COLLECTION_SEED_IDS.toneColor.短笛,
+    tint: '#dff2dc',
+    available: true
+  },
+  {
+    key: 'kalimba',
+    route: 'kalimbaSim',
+    toneCollectionId: BUILTIN_COLLECTION_SEED_IDS.toneColor.卡林巴,
     tint: '#ffe0e8',
+    available: true
+  },
+  {
+    key: 'drumMachine',
+    route: 'drumMachineSim',
+    tint: '#dcd6ff',
     available: true
   },
   {
@@ -51,7 +72,7 @@ const items: InstrumentItem[] = [
 ]
 
 function isOwned(item: InstrumentItem): boolean {
-  if (item.toneCollectionId == null) return false
+  if (item.toneCollectionId == null) return true
   return ownedToneIds.value.has(item.toneCollectionId)
 }
 
@@ -111,13 +132,15 @@ onMounted(async () => {
 
 <style scoped>
 .instrument-sim-page {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   background: linear-gradient(145deg, #fff5f9 0%, #f3ebff 45%, #e8f4ff 100%);
 }
 
 .instrument-sim-page__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -135,6 +158,8 @@ onMounted(async () => {
 
 .instrument-sim-page__main {
   flex: 1;
+  min-height: 0;
+  overflow: auto;
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 16px;

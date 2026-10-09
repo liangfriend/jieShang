@@ -1,5 +1,6 @@
 import type { SJW } from '@deciphony/work'
 import { createEmptyPage, parseSjw } from '@deciphony/work'
+import { loadWorkPageSize } from '@renderer/utils/workPageSizeStorage'
 
 export type WorkListItem = {
   id: number
@@ -18,10 +19,11 @@ export type WorkRecord = {
 }
 
 export function createEmptyWork(partial?: Partial<Pick<SJW, 'name' | 'author'>>): SJW {
+  const pageSize = loadWorkPageSize()
   return {
     name: partial?.name?.trim() || '未命名作品',
     author: partial?.author?.trim() || '',
-    pages: [createEmptyPage()],
+    pages: [createEmptyPage({ width: pageSize.width, height: pageSize.height })],
     assetNames: {}
   }
 }

@@ -6,14 +6,21 @@ import type { MediaListItem } from '@renderer/utils/fileHelper/mediaFile'
 import { displayMediaName, toPlayableMediaUrl } from '@renderer/utils/fileHelper/mediaFile'
 import { searchImagesFromDatabase } from '@renderer/utils/fileHelper/imageFile'
 import { searchAudiosFromDatabase } from '@renderer/utils/fileHelper/audioFile'
+import { searchVideosFromDatabase } from '@renderer/utils/fileHelper/videoFile'
 
 defineOptions({ name: 'WorkAssetPickerDialog' })
 
-export type AssetPickKind = 'image' | 'audio'
+export type AssetPickKind = 'image' | 'audio' | 'video'
+export type AssetPickerPurpose = 'element' | 'background'
 
-const props = defineProps<{
-  modelValue: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    modelValue: boolean
+    /** element：素材入库；background：仅图片设为当前页背景 */
+    purpose?: AssetPickerPurpose
+  }>(),
+  { purpose: 'element' }
+)
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
@@ -21,26 +28,53 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-const tab = ref<'image' | 'audio' | 'video'>('image')
+const tab = ref<AssetPickKind>('image')
 const loading = ref(false)
 const images = ref<MediaListItem[]>([])
 const audios = ref<MediaListItem[]>([])
+const videos = ref<MediaListItem[]>([])
 const selectedId = ref<number | null>(null)
+
+const isBackground = computed(() => props.purpose === 'background')
 
 const visible = computed({
   get: () => props.modelValue,
   set: (v: boolean) => emit('update:modelValue', v)
 })
 
-const list = computed(() => (tab.value === 'audio' ? audios.value : images.value))
+const dialogTitle = computed(() =>
+  isBackground.value ? t('work.background.pickerTitle') : t('work.assets.title')
+)
+
+const confirmLabel = computed(() =>
+  isBackground.value ? t('work.background.confirm') : t('work.assets.confirm')
+)
+
+const list = computed(() => {
+  if (tab.value === 'audio') return audios.value
+  if (tab.value === 'video') return videos.value
+  return images.value
+})
+
+const activeKind = computed<AssetPickKind>(() => {
+  if (isBackground.value) return 'image'
+  return tab.value
+})
 
 async function refresh() {
   loading.value = true
   try {
-    ;[images.value, audios.value] = await Promise.all([
-      searchImagesFromDatabase(''),
-      searchAudiosFromDatabase('')
-    ])
+    if (isBackground.value) {
+      images.value = await searchImagesFromDatabase('')
+      audios.value = []
+      videos.value = []
+    } else {
+      ;[images.value, audios.value, videos.value] = await Promise.all([
+        searchImagesFromDatabase(''),
+        searchAudiosFromDatabase(''),
+        searchVideosFromDatabase('')
+      ])
+    }
   } finally {
     loading.value = false
   }
@@ -68,42 +102,52 @@ function thumbSrc(item: MediaListItem, kind: AssetPickKind) {
   return toPlayableMediaUrl(kind, item.url)
 }
 
+/** 与 workTest.urlToFile 一致：fetch → File（文件名带扩展名） */
 async function urlToFile(url: string, filename: string): Promise<File> {
   const res = await fetch(url)
+  if (!res.ok) throw new Error(`fetch failed: ${res.status}`)
   const blob = await res.blob()
   return new File([blob], filename, { type: blob.type || undefined })
 }
 
+function defaultExt(kind: AssetPickKind): string {
+  if (kind === 'audio') return 'mp3'
+  if (kind === 'video') return 'mp4'
+  return 'png'
+}
+
 async function onConfirm() {
-  if (tab.value === 'video') {
-    ElMessage.warning(t('work.assets.videoUnavailable'))
-    return
-  }
-  const kind = tab.value
+  const kind = activeKind.value
   const item = list.value.find((row) => row.id === selectedId.value)
   if (!item) {
     ElMessage.warning(t('work.assets.selectOne'))
     return
   }
-  const playable = toPlayableMediaUrl(kind, item.url)
-  const ext = item.url.replace(/\\/g, '/').split('/').pop() || `${kind}.bin`
-  const file = await urlToFile(playable, ext)
-  emit('confirm', { kind, item, file })
-  visible.value = false
+  try {
+    const playable = toPlayableMediaUrl(kind, item.url)
+    // 磁盘文件名（含扩展名），与 workTest 传入 xiDuoChuan.jpg 一致
+    const filename =
+      item.url.replace(/\\/g, '/').split('/').pop() || `${kind}-${item.id}.${defaultExt(kind)}`
+    const file = await urlToFile(playable, filename)
+    emit('confirm', { kind, item, file })
+    visible.value = false
+  } catch (error) {
+    ElMessage.error(error instanceof Error ? error.message : t('work.assets.loadFailed'))
+  }
 }
 </script>
 
 <template>
   <el-dialog
     v-model="visible"
-    :title="t('work.assets.title')"
+    :title="dialogTitle"
     width="640px"
     class="cute-dialog"
     append-to-body
     align-center
     destroy-on-close
   >
-    <div class="asset-tabs">
+    <div v-if="!isBackground" class="asset-tabs">
       <button
         type="button"
         class="asset-tabs__btn"
@@ -130,9 +174,9 @@ async function onConfirm() {
       </button>
     </div>
 
-    <p v-if="tab === 'video'" class="asset-hint">{{ t('work.assets.videoUnavailable') }}</p>
+    <p v-if="isBackground" class="asset-hint">{{ t('work.background.pickerHint') }}</p>
 
-    <div v-else v-loading="loading" class="asset-grid">
+    <div v-loading="loading" class="asset-grid">
       <p v-if="!loading && !list.length" class="asset-empty">{{ t('work.assets.empty') }}</p>
       <button
         v-for="item in list"
@@ -143,12 +187,13 @@ async function onConfirm() {
         @click="selectedId = item.id"
       >
         <img
-          v-if="tab === 'image'"
+          v-if="isBackground || tab === 'image'"
           class="asset-card__thumb"
           :src="thumbSrc(item, 'image')"
           :alt="displayMediaName(item.name)"
         />
-        <div v-else class="asset-card__audio">♪</div>
+        <div v-else-if="tab === 'audio'" class="asset-card__audio">♪</div>
+        <div v-else class="asset-card__video">▶</div>
         <span class="asset-card__name">{{ displayMediaName(item.name) }}</span>
       </button>
     </div>
@@ -158,8 +203,8 @@ async function onConfirm() {
         <button type="button" class="ghost-btn" @click="visible = false">
           {{ t('common.cancel') }}
         </button>
-        <button type="button" class="primary-btn" :disabled="tab === 'video'" @click="onConfirm">
-          {{ t('work.assets.confirm') }}
+        <button type="button" class="primary-btn" @click="onConfirm">
+          {{ confirmLabel }}
         </button>
       </div>
     </template>
@@ -231,14 +276,23 @@ async function onConfirm() {
   display: block;
 }
 
-.asset-card__audio {
+.asset-card__audio,
+.asset-card__video {
   aspect-ratio: 1;
   display: grid;
   place-items: center;
   border-radius: 8px;
-  background: #eaf7ff;
   font-size: 28px;
+}
+
+.asset-card__audio {
+  background: #eaf7ff;
   color: #5eb8f0;
+}
+
+.asset-card__video {
+  background: #efeaff;
+  color: #8a6cf0;
 }
 
 .asset-card__name {

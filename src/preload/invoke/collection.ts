@@ -15,6 +15,7 @@ export type CollectionCreatePayload = {
   owned?: boolean
   level?: number
   thumbnail?: string | null
+  option?: string
 }
 
 export type CollectionUpdatePayload = Partial<{
@@ -26,6 +27,7 @@ export type CollectionUpdatePayload = Partial<{
   owned: boolean
   level: number
   thumbnail: string | null
+  option: string
 }>
 
 export type CollectionQueryFilters = Partial<{

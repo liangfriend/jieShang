@@ -24,6 +24,8 @@ export interface CollectionAttributes {
   level: number
   /** 藏品缩略图（列表展示用） */
   thumbnail: string | null
+  /** 可调参数 JSON 字符串；金色及以上皮肤带默认值，其余为 '{}' */
+  option: string
   created_at?: Date
   updated_at?: Date
   deleted_at?: Date | null
@@ -39,6 +41,7 @@ export interface CollectionCreationAttributes
     | 'owned'
     | 'level'
     | 'thumbnail'
+    | 'option'
     | 'created_at'
     | 'updated_at'
     | 'deleted_at'
@@ -57,6 +60,7 @@ export class CollectionModel
   declare owned: boolean
   declare level: number
   declare thumbnail: string | null
+  declare option: string
   declare created_at: Date
   declare updated_at: Date
   declare deleted_at: Date | null
@@ -105,6 +109,11 @@ CollectionModel.init(
     thumbnail: {
       type: DataTypes.TEXT,
       allowNull: true
+    },
+    option: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+      defaultValue: '{}'
     },
     created_at: {
       type: DataTypes.DATE,

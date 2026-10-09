@@ -8,7 +8,13 @@ export default {
       bpm: 'BPM',
       notes: 'Notes',
       detecting: 'Detecting',
-      countdown: 'Get ready'
+      countdown: 'Get ready',
+      currentOffset: 'Offset'
+    },
+    offset: {
+      initial: 'Initial pitch offset',
+      semitone: 'semitones',
+      hint: 'Saved value is used as the starting offset next time'
     },
     waterfall: {
       reference: 'Reference',
@@ -31,7 +37,8 @@ export default {
     messages: {
       noSequence: 'No evaluable note sequence',
       notationTypeSwitchFailed: 'Failed to switch score type',
-      audioMissing: 'No playable vocal or accompaniment audio found'
+      audioMissing: 'No playable vocal or accompaniment audio found',
+      offsetSaved: 'Pitch offset saved'
     }
   }
 } as const

@@ -51,7 +51,12 @@ export const NOTE_RESULT_LEGEND_STYLE: Record<NoteScoreResult, string> = {
   pass: NOTE_RESULT_COLOR.pass,
   early: NOTE_RESULT_COLOR.early,
   late: NOTE_RESULT_COLOR.late,
-  miss: NOTE_RESULT_COLOR.miss
+  miss: NOTE_RESULT_COLOR.miss,
+  wrong: NOTE_RESULT_COLOR.wrong,
+  'high-midi': NOTE_RESULT_COLOR['high-midi'],
+  'low-midi': NOTE_RESULT_COLOR['low-midi'],
+  'quick-end': NOTE_RESULT_COLOR['quick-end'],
+  'slow-end': NOTE_RESULT_COLOR['slow-end']
 }
 
 export const NOTE_RESULT_LABEL: Record<NoteScoreResult, string> = {

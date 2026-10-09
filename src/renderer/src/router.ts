@@ -1,44 +1,8 @@
 import { createRouter, createWebHashHistory, RouteRecordRaw } from 'vue-router'
-import i18n from '@renderer/i18n'
+import { useAudioPlayerStore } from '@renderer/store/audioPlayer.store'
+import { useMetronomeStore } from '@renderer/store/metronome.store'
+import { usePlayStore } from '@renderer/store/play.store'
 import { guardSingleLineModeEnter } from '@renderer/utils/scoreRoute'
-
-const ROUTE_TITLE_KEYS: Record<string, string> = {
-  home: 'router.home',
-  edit: 'router.edit',
-  play: 'router.play',
-  practice: 'router.practice',
-  forBeginner: 'router.forBeginner',
-  singing: 'router.singing',
-  scores: 'router.scores',
-  whiteboard: 'router.whiteboard',
-  myWorks: 'router.myWorks',
-  workEdit: 'router.workEdit',
-  workShow: 'router.workShow',
-  musicEncyclopedia: 'router.musicEncyclopedia',
-  abilityTest: 'router.abilityTest',
-  rhythmSenseTest: 'router.rhythmSenseTest',
-  absolutePitchTest: 'router.absolutePitchTest',
-  keyNoteNameQuiz: 'router.keyNoteNameQuiz',
-  chordRecognitionQuiz: 'router.chordRecognitionQuiz',
-  myAudio: 'router.myAudio',
-  myImage: 'router.myImage',
-  myVideo: 'router.myVideo',
-  instrumentSim: 'router.instrumentSim',
-  guitarSim: 'router.guitarSim',
-  guitarChordManage: 'router.guitarChordManage',
-  harmonicaSim: 'router.harmonicaSim',
-  violinSim: 'router.violinSim',
-  tools: 'router.tools',
-  micTool: 'router.micTool',
-  midiTool: 'router.midiTool',
-  achievements: 'router.achievements',
-  collection: 'router.collection',
-  noteSliceArcade: 'router.noteSliceArcade',
-  noteSliceEndless: 'router.noteSliceEndless',
-  noteSliceExtreme: 'router.noteSliceExtreme'
-}
-
-const placeholder = () => import('./views/PhasePlaceholderView.vue')
 
 const routes: RouteRecordRaw[] = [
   {
@@ -112,13 +76,7 @@ const routes: RouteRecordRaw[] = [
   },
   {
     path: '/music-encyclopedia',
-    name: 'musicEncyclopedia',
-    component: placeholder,
-    meta: {
-      title: '音乐百科',
-      titleKey: 'router.musicEncyclopedia',
-      placeholderKey: 'router.musicEncyclopediaPlaceholder'
-    }
+    redirect: { name: 'guitarChordManage' }
   },
   {
     path: '/ability-test',
@@ -184,7 +142,7 @@ const routes: RouteRecordRaw[] = [
     path: '/instrument-sim/guitar/chords',
     name: 'guitarChordManage',
     component: () => import('./views/instrumentSim/GuitarChordListView.vue'),
-    meta: { title: '和弦符号' }
+    meta: { title: '和弦管理' }
   },
   {
     path: '/instrument-sim/harmonica',
@@ -193,21 +151,52 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '模拟口琴' }
   },
   {
-    path: '/instrument-sim/violin',
-    name: 'violinSim',
-    component: placeholder,
-    meta: {
-      title: '模拟小提琴',
-      titleKey: 'router.violinSim',
-      placeholderKey: 'router.violinSimPlaceholder',
-      backFallback: '/instrument-sim'
-    }
+    path: '/instrument-sim/drum-machine',
+    name: 'drumMachineSim',
+    component: () => import('./views/instrumentSim/drumMachine/DrumMachineView.vue'),
+    meta: { title: '电子鼓机' }
+  },
+  {
+    path: '/instrument-sim/pan-flute',
+    name: 'panFluteSim',
+    component: () => import('./views/instrumentSim/PanFluteSimView.vue'),
+    meta: { title: '模拟排箫' }
+  },
+  {
+    path: '/instrument-sim/piccolo',
+    name: 'piccoloSim',
+    component: () => import('./views/instrumentSim/PiccoloSimView.vue'),
+    meta: { title: '模拟短笛' }
+  },
+  {
+    path: '/instrument-sim/kalimba',
+    name: 'kalimbaSim',
+    component: () => import('./views/instrumentSim/KalimbaSimView.vue'),
+    meta: { title: '模拟卡林巴' }
   },
   {
     path: '/tools',
     name: 'tools',
     component: () => import('./views/tools/ToolsView.vue'),
     meta: { title: '工具' }
+  },
+  {
+    path: '/tools/guitar-tune',
+    name: 'guitarTuneTool',
+    component: () => import('./views/tools/GuitarTuneToolView.vue'),
+    meta: { title: '吉他调弦' }
+  },
+  {
+    path: '/tools/metronome',
+    name: 'metronomeTool',
+    component: () => import('./views/tools/MetronomeToolView.vue'),
+    meta: { title: '节拍器' }
+  },
+  {
+    path: '/tools/pitch',
+    name: 'pitchTool',
+    component: () => import('./views/tools/PitchDetectionToolView.vue'),
+    meta: { title: '音高检测' }
   },
   {
     path: '/tools/microphone',
@@ -266,14 +255,28 @@ const router = createRouter({
   routes
 })
 
-router.afterEach((to) => {
-  const routeName = typeof to.name === 'string' ? to.name : ''
-  const titleKey = ROUTE_TITLE_KEYS[routeName]
-  if (!titleKey) return
-  const title = i18n.global.t(titleKey)
-  if (title && title !== titleKey) {
-    document.title = title
-  }
+/** 离开曲谱播放相关页时强制停掉全局播放器，避免返回后仍出声 */
+const SCORE_PLAYBACK_ROUTE_NAMES = new Set([
+  'play',
+  'practice',
+  'forBeginner',
+  'singing',
+  'guitarSim'
+])
+
+router.beforeEach((to, from) => {
+  const fromName = typeof from.name === 'string' ? from.name : ''
+  if (!fromName || !SCORE_PLAYBACK_ROUTE_NAMES.has(fromName)) return
+  const toName = typeof to.name === 'string' ? to.name : ''
+  if (toName === fromName) return
+
+  usePlayStore().stop()
+  useAudioPlayerStore().stop()
+  useMetronomeStore().stop()
+})
+
+router.afterEach(() => {
+  document.title = '解熵'
 })
 
 export default router

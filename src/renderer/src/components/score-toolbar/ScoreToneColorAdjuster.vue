@@ -3,7 +3,8 @@ import { ElMessage } from 'element-plus'
 import { storeToRefs } from 'pinia'
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { usePlayStore } from '@renderer/store/play.store'
+import { SCORE_TONE_COLOR_ID, usePlayStore } from '@renderer/store/play.store'
+import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
 import {
   fetchOwnedToneColorOptions,
   type ToneColorOption
@@ -14,16 +15,31 @@ const { t } = useI18n()
 const props = withDefaults(
   defineProps<{
     disabled?: boolean
+    /**
+     * 曲谱页：显示「曲谱设定」（按单谱表 instrumentValue 播放）；
+     * 默认音色由页面 restorePlaybackDefaults 按曲谱类型设置，挂载时不再重置为钢琴
+     */
+    scoreOption?: boolean
   }>(),
-  { disabled: false },
+  { disabled: false, scoreOption: false },
 )
 
 const playStore = usePlayStore()
+const globalLoading = useGlobalLoadingStore()
 const { collectionToneColorId, collectionToneColorLoading } = storeToRefs(playStore)
 
 const activePanel = ref(false)
-const options = ref<ToneColorOption[]>([])
+const ownedOptions = ref<ToneColorOption[]>([])
 const optionsLoading = ref(false)
+
+const options = computed(() =>
+  props.scoreOption
+    ? [
+        { id: SCORE_TONE_COLOR_ID, key: '', name: t('play.toneColor.scoreSetting') },
+        ...ownedOptions.value
+      ]
+    : ownedOptions.value
+)
 
 const toneColorLabel = computed(() => {
   const current = options.value.find((item) => item.id === collectionToneColorId.value)
@@ -56,8 +72,9 @@ onMounted(async () => {
   document.addEventListener('pointerdown', onDocumentPointerDown)
   optionsLoading.value = true
   try {
-    options.value = await fetchOwnedToneColorOptions()
-    await playStore.ensureCollectionToneColorInitialized()
+    ownedOptions.value = await fetchOwnedToneColorOptions()
+    // 每次进入带音色选择的页面都回到默认钢琴，不沿用上次选择；曲谱页由页面按曲谱类型设置
+    if (!props.scoreOption) await playStore.resetCollectionToneColorToDefault()
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t('play.toneColor.loadFailed'))
   } finally {
@@ -67,6 +84,7 @@ onMounted(async () => {
 
 onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', onDocumentPointerDown)
+  void playStore.resetCollectionToneColorToDefault()
 })
 
 async function onToneColorChange(event: Event) {
@@ -74,7 +92,8 @@ async function onToneColorChange(event: Event) {
   if (!Number.isFinite(id) || id === collectionToneColorId.value) return
 
   try {
-    await playStore.setCollectionToneColor(id)
+    // 音色加载完才恢复页面，保证点播放时音色已就绪
+    await globalLoading.run(t('play.toneColor.loading'), () => playStore.setCollectionToneColor(id))
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t('play.toneColor.switchFailed'))
   }

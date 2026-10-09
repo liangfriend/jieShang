@@ -60,9 +60,11 @@ function toCardChord(chord: tabChord): tabChord {
 
 function cardViewBox(chord: tabChord): string {
   const display = toCardChord(chord)
-  const top = display.nameSize + display.textSize * 2.2
-  const bottom = display.textSize * 2.2
-  const side = display.textSize * 1.5
+  const nameSize = display.nameSize ?? CARD_LAYOUT.nameSize
+  const textSize = display.textSize ?? CARD_LAYOUT.textSize
+  const top = nameSize + textSize * 2.2
+  const bottom = textSize * 2.2
+  const side = textSize * 1.5
   return `${-side} ${-top} ${display.width + side * 2} ${display.height + top + bottom}`
 }
 

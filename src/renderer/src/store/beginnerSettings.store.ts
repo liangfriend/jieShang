@@ -6,6 +6,8 @@ import { PLAY_DEFAULT_BPM } from '@renderer/constant/play'
 export const useBeginnerSettingsStore = defineStore('beginnerSettings', () => {
   /** 是否遮盖 midi 块区域 */
   const coverMidiBox = ref(false)
+  /** 隐藏曲谱：曲谱区高度收为 0，midi 块区域铺满 */
+  const hideScore = ref(false)
   /** 节拍器音量 0~1 */
   const metronomeVolume = ref(0.8)
   /** BPM（影响预备拍与循环节拍器） */
@@ -33,6 +35,7 @@ export const useBeginnerSettingsStore = defineStore('beginnerSettings', () => {
 
   return {
     coverMidiBox,
+    hideScore,
     metronomeVolume,
     bpm,
     metronomeDuringPlay,

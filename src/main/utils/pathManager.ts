@@ -107,6 +107,13 @@ class PathManager {
       : path.join(process.resourcesPath, 'collection-thumbnails')
   }
 
+  /** 内置音色 JSON 目录（开发读源码目录，打包后读 extraResources） */
+  getBundledToneColorsDir() {
+    return this.isDev
+      ? path.join(process.cwd(), 'src/main/resources/toneColors')
+      : path.join(process.resourcesPath, 'toneColors')
+  }
+
   /** 相对 userData/resources 的路径 → 绝对路径（防目录穿越） */
   resolveResourceRelative(rel: string) {
     const base = path.resolve(this.getResourceDir('all'))

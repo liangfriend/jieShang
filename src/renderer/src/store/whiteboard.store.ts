@@ -4,6 +4,7 @@ import { computed, ref, watch } from 'vue'
 import {
   WHITEBOARD_CLEF_OPTIONS,
   WHITEBOARD_DEFAULT_ADD_NOTE,
+  WHITEBOARD_DEFAULT_AUTO_CLEAR,
   WHITEBOARD_DEFAULT_CLEF,
   WHITEBOARD_DEFAULT_KEY_COUNT,
   WHITEBOARD_DEFAULT_KEY_SIGNATURE,
@@ -39,6 +40,7 @@ interface WhiteboardSettings {
   chordBoxEnabled: boolean
   intervalRulerEnabled: boolean
   addNoteEnabled: boolean
+  autoClearEnabled: boolean
   targetClef: WhiteboardClef
   noteInputBpm: number
   keySignature: KeySignatureTypeEnum
@@ -54,6 +56,7 @@ const DEFAULT_SETTINGS: WhiteboardSettings = {
   chordBoxEnabled: false,
   intervalRulerEnabled: false,
   addNoteEnabled: WHITEBOARD_DEFAULT_ADD_NOTE,
+  autoClearEnabled: WHITEBOARD_DEFAULT_AUTO_CLEAR,
   targetClef: WHITEBOARD_DEFAULT_CLEF,
   noteInputBpm: WHITEBOARD_NOTE_BPM_DEFAULT,
   keySignature: WHITEBOARD_DEFAULT_KEY_SIGNATURE
@@ -107,6 +110,7 @@ function loadSettings(): WhiteboardSettings {
       chordBoxEnabled: parsed.chordBoxEnabled ?? DEFAULT_SETTINGS.chordBoxEnabled,
       intervalRulerEnabled: parsed.intervalRulerEnabled ?? DEFAULT_SETTINGS.intervalRulerEnabled,
       addNoteEnabled: parsed.addNoteEnabled ?? DEFAULT_SETTINGS.addNoteEnabled,
+      autoClearEnabled: parsed.autoClearEnabled ?? DEFAULT_SETTINGS.autoClearEnabled,
       targetClef: isWhiteboardClef(parsed.targetClef)
         ? parsed.targetClef
         : DEFAULT_SETTINGS.targetClef,
@@ -140,6 +144,7 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
   const chordBoxEnabled = ref(initial.chordBoxEnabled)
   const intervalRulerEnabled = ref(initial.intervalRulerEnabled)
   const addNoteEnabled = ref(initial.addNoteEnabled)
+  const autoClearEnabled = ref(initial.autoClearEnabled)
   const targetClef = ref<WhiteboardClef>(initial.targetClef)
   const noteInputBpm = ref(initial.noteInputBpm)
   const keySignature = ref<KeySignatureTypeEnum>(initial.keySignature)
@@ -163,6 +168,7 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
       chordBoxEnabled: chordBoxEnabled.value,
       intervalRulerEnabled: intervalRulerEnabled.value,
       addNoteEnabled: addNoteEnabled.value,
+      autoClearEnabled: autoClearEnabled.value,
       targetClef: targetClef.value,
       noteInputBpm: noteInputBpm.value,
       keySignature: keySignature.value
@@ -209,6 +215,10 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     addNoteEnabled.value = !addNoteEnabled.value
   }
 
+  function toggleAutoClear() {
+    autoClearEnabled.value = !autoClearEnabled.value
+  }
+
   function setTargetClef(value: WhiteboardClef) {
     targetClef.value = value
   }
@@ -249,6 +259,7 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     chordBoxEnabled,
     intervalRulerEnabled,
     addNoteEnabled,
+    autoClearEnabled,
     targetClef,
     noteInputBpm,
     keySignature,
@@ -266,6 +277,7 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     toggleChordBox,
     toggleIntervalRuler,
     toggleAddNote,
+    toggleAutoClear,
     setTargetClef,
     setNoteInputBpm,
     setKeySignature

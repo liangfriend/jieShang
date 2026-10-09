@@ -17,9 +17,9 @@ export class GuitarChordController {
       this.guitarChordService.updateChord(id, payload)
     )
     ipcMain.handle('guitarChord:get', (_, id) => this.guitarChordService.getChord(id))
-    ipcMain.handle('guitarChord:list', () => this.guitarChordService.listChords())
-    ipcMain.handle('guitarChord:searchByName', (_, name) =>
-      this.guitarChordService.searchByName(name)
+    ipcMain.handle('guitarChord:list', (_, filter) => this.guitarChordService.listChords(filter))
+    ipcMain.handle('guitarChord:searchByName', (_, name, tabType) =>
+      this.guitarChordService.searchByName(name, tabType)
     )
   }
 }

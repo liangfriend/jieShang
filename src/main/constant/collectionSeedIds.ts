@@ -1,4 +1,10 @@
 import { app } from 'electron'
+import toneColorCatalog from '../../shared/toneColorCatalog.json'
+
+/** 全部内置音色 id（来自 src/shared/toneColorCatalog.json） */
+export const BUILTIN_TONE_COLOR_CATALOG_IDS: readonly number[] = toneColorCatalog.items.map(
+  (item) => item.id
+)
 
 /**
  * 内置藏品种子 id（与 renderer DEFAULT_COLLECTION_USAGE_IDS 约定一致）
@@ -8,11 +14,14 @@ export const BUILTIN_COLLECTION_SEED_IDS = {
   toneColor: {
     三角钢琴: 1,
     亮音钢琴: 2,
-    电钢琴: 3,
     尼龙弦吉他: 4,
     小提琴: 5,
     八音盒: 6,
-    口琴: 22
+    口琴: 22,
+    卡林巴: 23,
+    短笛: 24,
+    排箫: 25,
+    打击乐: 26
   },
   scoreSkin: {
     默认: 7,
@@ -27,7 +36,16 @@ export const BUILTIN_COLLECTION_SEED_IDS = {
     彩虹演奏皮肤: 11,
     二进制演奏皮肤: 14,
     星河演奏皮肤: 15,
-    斑马线演奏皮肤: 16
+    斑马线演奏皮肤: 16,
+    像素街机演奏皮肤: 146,
+    薄荷汽水演奏皮肤: 147,
+    樱花演奏皮肤: 148,
+    萤火演奏皮肤: 149,
+    霓虹落日演奏皮肤: 150,
+    极光演奏皮肤: 151,
+    金龙演奏皮肤: 152,
+    雷霆演奏皮肤: 153,
+    空洞演奏皮肤: 154
   },
   pianoSkin: {
     经典纯色: 12,
@@ -42,11 +60,14 @@ export const BUILTIN_COLLECTION_LEVELS = {
   toneColor: {
     三角钢琴: 1,
     亮音钢琴: 1,
-    电钢琴: 1,
     尼龙弦吉他: 1,
     小提琴: 1,
     八音盒: 1,
-    口琴: 1
+    口琴: 1,
+    卡林巴: 1,
+    短笛: 1,
+    排箫: 1,
+    打击乐: 1
   },
   scoreSkin: {
     默认: 1,
@@ -58,10 +79,19 @@ export const BUILTIN_COLLECTION_LEVELS = {
   },
   performSkin: {
     默认演奏皮肤: 1,
-    彩虹演奏皮肤: 1,
+    彩虹演奏皮肤: 2,
     二进制演奏皮肤: 2,
     星河演奏皮肤: 3,
-    斑马线演奏皮肤: 3
+    斑马线演奏皮肤: 3,
+    像素街机演奏皮肤: 3,
+    薄荷汽水演奏皮肤: 4,
+    樱花演奏皮肤: 3,
+    萤火演奏皮肤: 4,
+    霓虹落日演奏皮肤: 3,
+    极光演奏皮肤: 4,
+    金龙演奏皮肤: 3,
+    雷霆演奏皮肤: 4,
+    空洞演奏皮肤: 5
   },
   pianoSkin: {
     经典纯色: 1,
@@ -82,19 +112,23 @@ export function resolveBuiltinCollectionLevel(
 }
 
 /** 种子写入后 sqlite 自增序列续号起点 */
-export const BUILTIN_COLLECTION_MAX_SEED_ID = 22
+export const BUILTIN_COLLECTION_MAX_SEED_ID = Math.max(
+  26,
+  ...BUILTIN_TONE_COLOR_CATALOG_IDS,
+  ...Object.values(BUILTIN_COLLECTION_SEED_IDS.performSkin)
+)
 
-/** 各类型默认赠送、初始 owned=true 的藏品 id（与 renderer DEFAULT_COLLECTION_USAGE_IDS 一致） */
-export const DEFAULT_BUILTIN_COLLECTION_OWNED_IDS = [
-  BUILTIN_COLLECTION_SEED_IDS.toneColor.三角钢琴,
-  BUILTIN_COLLECTION_SEED_IDS.toneColor.口琴,
+/** 各类型默认赠送、初始 owned=true 的藏品 id：全部音色 + 各皮肤默认项 + 彩虹演奏皮肤 */
+export const DEFAULT_BUILTIN_COLLECTION_OWNED_IDS: readonly number[] = [
+  ...BUILTIN_TONE_COLOR_CATALOG_IDS,
   BUILTIN_COLLECTION_SEED_IDS.scoreSkin.默认,
   BUILTIN_COLLECTION_SEED_IDS.performSkin.默认演奏皮肤,
+  BUILTIN_COLLECTION_SEED_IDS.performSkin.彩虹演奏皮肤,
   BUILTIN_COLLECTION_SEED_IDS.pianoSkin.经典纯色
-] as const
+]
 
 export function isDefaultBuiltinCollectionOwned(id: number): boolean {
-  const owned = (DEFAULT_BUILTIN_COLLECTION_OWNED_IDS as readonly number[]).includes(id)
+  const owned = DEFAULT_BUILTIN_COLLECTION_OWNED_IDS.includes(id)
   if (!app.isPackaged) return true || owned
   return owned
 }

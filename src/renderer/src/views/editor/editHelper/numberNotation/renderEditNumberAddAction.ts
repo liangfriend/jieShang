@@ -1,5 +1,6 @@
 import type {Chronaxie, Measure, MusicScore, NoteNumber, NotesNumberInfo, SlotData, VDom} from '@deciphony/renderer'
-import {createNoteNumber, createNotesNumberInfo} from '@deciphony/extensions/dr-edit/score-builder'
+import {slotSymbol} from '@deciphony/renderer'
+import {createNoteNumber, computeMeasureOnsetBefore} from '@deciphony/extensions/dr-edit/score-builder'
 import {isNoteNumberSlot, isSlotRestLike} from '@deciphony/extensions/dr-edit/score-builder'
 import {
   DEFAULT_ADD_NUMBER_STATE,
@@ -48,33 +49,43 @@ export type GhostNumberPreview = {
   y: number
   syllable: NotesNumberInfo['syllable']
   chronaxie: Chronaxie
+  octaveDot: NotesNumberInfo['octaveDot']
   svgHtml: string
   snap: import('../standardStaff/renderEditSymbolAddAction').SnapPoint
 }
 
-export type MeasureAddActionResult =
-  | {type: 'inserted'}
-  | {type: 'noteInfoAdded'}
-  | {type: 'selectNote'; slot: SlotData; notesNumberInfoId: string}
+export type MeasureAddActionResult = {type: 'inserted'}
 
 function collectNumberSlotAnchors(vDomList: VDom[], measure: Measure, measureX: number) {
   const anchors: import('../standardStaff/renderEditSymbolAddAction').SlotAnchor[] = []
   for (let noteIndex = 0; noteIndex < measure.notes.length; noteIndex++) {
     const slot = measure.notes[noteIndex]!
     if (!isNoteNumberSlot(slot)) continue
-    const id = isSlotRestLike(slot) ? slot.id : slot.notesInfo[0]?.id
+    // MeasureNoteSlot = { id, symbol }；notesInfo 在 symbol 上
+    const body = slotSymbol(slot) as NoteNumber
+    // 简谱休止符 vdom targetId = 休止 notesInfo.id，无 notesInfo 时为 NoteNumber.id
+    const id = isSlotRestLike(slot) ? (body.notesInfo?.[0]?.id ?? body.id) : body.notesInfo?.[0]?.id
     if (!id) continue
-    const tag = isSlotRestLike(slot) ? 'rest' : 'noteHead'
+    // 简谱音符头 tag 为 noteNumber（非五线谱 noteHead）
+    const tag = isSlotRestLike(slot) ? 'rest' : 'noteNumber'
     const vdom = vDomList.find((node) => node.targetId === id && node.tag === tag)
     if (vdom) {
       anchors.push({
         centerX: vdom.x + vdom.w / 2 - measureX,
         noteIndex,
-        isNoteSymbol: !isSlotRestLike(slot),
+        // 简谱不在已有音符上叠声部，仅作 insert 锚点
+        isNoteSymbol: false,
       })
     }
   }
   return anchors
+}
+
+export function findNoteNumberElement(root: ParentNode, notesNumberInfoId: string): SVGElement | null {
+  const el =
+    root.querySelector(`[data-target-id="${notesNumberInfoId}"][data-tag="noteNumber"]`)
+    ?? root.querySelector(`[data-target-id="${notesNumberInfoId}"][data-tag="noteHead"]`)
+  return el instanceof SVGElement ? el : null
 }
 
 /** 指针 y → 唱名 1–7（上高下低） */
@@ -111,16 +122,18 @@ export function resolveGhostNumberPreview(params: ResolveGhostNumberParams): Gho
   const relativeX = svgX - measureNode.x
   const anchors = collectNumberSlotAnchors(vDomList, measure, measureNode.x)
   const snapPoints = computeSnapPoints(measureNode.w, anchors)
-  let snap = nearestSnapPoint(relativeX, snapPoints)
-  if (addNoteState.kind === 'rest') {
-    const insertPoints = snapPoints.filter((point) => point.kind === 'insert')
-    if (insertPoints.length > 0) snap = nearestSnapPoint(relativeX, insertPoints)
-  }
+  // 简谱仅允许在 slot 间隙插入（A/B/C/D），不可像五线谱在音符上叠 region
+  const insertPoints = snapPoints.filter((point) => point.kind === 'insert')
+  const snap = nearestSnapPoint(
+    relativeX,
+    insertPoints.length > 0 ? insertPoints : snapPoints,
+  )
 
   const chronaxie = addNoteState.chronaxie
   const syllable = addNoteState.kind === 'note'
     ? syllableFromSvgY(svgY, measureBounds)
     : syllableForAddState(addNoteState)
+  const octaveDot = syllable === 0 ? 0 : (addNoteState.octaveDot ?? 0)
   const y = numberPreviewY(measureBounds, measureNode.y)
   const svgHtml = syllable === 0
     ? previewNumberRestSvgHtml(chronaxie)
@@ -134,59 +147,28 @@ export function resolveGhostNumberPreview(params: ResolveGhostNumberParams): Gho
     y: y - measureNode.y,
     syllable,
     chronaxie,
+    octaveDot,
     svgHtml,
     snap,
-  }
-}
-
-function buildNumberHeadSlot(
-  musicScore: MusicScore,
-  measureSlot: SlotData & {measure: Measure},
-  note: NoteNumber,
-  info: NotesNumberInfo,
-): SlotData {
-  return {
-    musicScore,
-    grandStaff: measureSlot.grandStaff,
-    singleStaff: measureSlot.singleStaff,
-    measure: measureSlot.measure,
-    note,
-    info,
-    self: info,
   }
 }
 
 export function applyMeasureAddAction(
   slot: SlotData & {measure: Measure},
   preview: GhostNumberPreview,
-  musicScore: MusicScore,
+  _musicScore: MusicScore,
 ): MeasureAddActionResult | null {
   const measure = slot.measure
+  if (preview.snap.kind !== 'insert') return null
 
-  if (preview.snap.kind === 'insert') {
-    const at = Math.max(0, Math.min(preview.snap.insertIndex, measure.notes.length))
-    const note = createNoteNumber({
-      syllable: preview.syllable,
-      chronaxie: preview.chronaxie,
-    })
-    measure.notes.splice(at, 0, note)
-    return {type: 'inserted'}
-  }
-
-  if (preview.slotKind === 'rest') return null
-
-  const note = measure.notes[preview.snap.noteIndex]
-  if (!note || !isNoteNumberSlot(note) || isSlotRestLike(note)) return null
-
-  const existing = note.notesInfo.find((ni) => ni.syllable === preview.syllable && preview.syllable !== 'X')
-  if (existing) {
-    return {
-      type: 'selectNote',
-      slot: buildNumberHeadSlot(musicScore, slot, note, existing),
-      notesNumberInfoId: existing.id,
-    }
-  }
-
-  note.notesInfo.push(createNotesNumberInfo(preview.syllable))
-  return {type: 'noteInfoAdded'}
+  const at = Math.max(0, Math.min(preview.snap.insertIndex, measure.notes.length))
+  const beamOnset = computeMeasureOnsetBefore(measure, at)
+  const note = createNoteNumber({
+    syllable: preview.syllable,
+    chronaxie: preview.chronaxie,
+    octaveDot: preview.octaveDot,
+    beamOnset
+  })
+  measure.notes.splice(at, 0, note)
+  return {type: 'inserted'}
 }

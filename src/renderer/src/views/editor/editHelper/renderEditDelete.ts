@@ -1,5 +1,6 @@
-import {isNoteRest, isNoteSymbol} from '@deciphony/renderer'
+import {getMeasureNoteList, getMeasureSlots, isNoteRest, isNoteSymbol, slotSymbol} from '@deciphony/renderer'
 import type {
+    GrandStaff,
     Measure,
     MusicScore,
     NoteNumber,
@@ -8,19 +9,44 @@ import type {
     NotesNumberInfo,
     NoteSymbol,
     SlotData,
+    TabNote,
+    TabNoteInfo,
 } from '@deciphony/renderer'
-import {deleteMeasure} from '@deciphony/extensions/dr-edit'
-import {isNoteNumberSlot, isSlotRestLike} from '@deciphony/extensions/dr-edit/score-builder'
+import {
+    deleteSingleStaff,
+    isDrumNotesInfo,
+    isDrumRestBody,
+    removeDrumNotesInfo,
+    removeDrumRest,
+    setTabNoteInfoBend,
+} from '@deciphony/extensions/dr-edit'
+import {isSlotRestLike} from '@deciphony/extensions/dr-edit/score-builder'
+import {asStaffOrNumber, findMeasureNoteIndex, isHostNoteNumberSlot} from './asStaffOrNumber'
+import {isGraceNoteSelected, removeGraceById} from './renderEditGraceNotes'
 import {isNumberHeadSelected} from './numberNotation/renderEditNumberHeadDrag'
 import {removeVolta} from './renderEditMeasureProperties'
+import {deleteMeasureColumn} from './renderEditMeasureColumn'
 import {isMeasureAddMode} from './standardStaff/renderEditSymbolAddAction'
 import {isNoteHeadSelected} from './standardStaff/renderEditNoteHeadDrag'
 import {isSlurSelected} from './renderEditSlurDrag'
+import {isArpeggioSelected} from './renderEditArpeggioDrag'
+import {removeSlotAffiliatedSymbol} from './renderEditSlotAffiliated'
+import {isStrummingSelected} from './renderEditStrummingDrag'
+import {isPreludeBracketSelected} from './renderEditPreludeBracket'
+import {isPedalSelected} from './renderEditPedalDrag'
+import {isPitchSelected} from './renderEditPitchDrag'
+import {isLineSelected} from './renderEditLineDrag'
+import {isNoteAffiliatedSelected, locateNoteAffiliatedById} from './renderEditNoteAffiliatedDrag'
+import {removeNoteMark} from './renderEditNoteMarks'
 import {isVoltaSelected} from './renderEditVoltaDrag'
+import {isBracketSelected, removeBracket} from './renderEditBracketProperties'
+import {isBendSelected, isTabInfoSelected} from './tab/renderEditTabSelection'
+import type {DrumNote, MeasureNoteSymbol} from '@deciphony/renderer'
 
-/** 小节上可选符号（对象字段，delete 移除）；不含 barline_b */
+/** 小节上可选符号（对象字段，delete 移除） */
 const MEASURE_OPTIONAL_SYMBOL_KEYS = [
     'barline_f',
+    'barline_b',
     'clef_f',
     'clef_b',
     'keySignature_f',
@@ -35,7 +61,10 @@ export function isRestSelected(
     selected: SlotData | null,
 ): selected is SlotData & { measure: Measure; self: NoteRest } {
     const self = selected?.self
-    return selected?.measure != null && self != null && isNoteRest(self as unknown as NoteRest)
+    if (!selected?.measure || self == null) return false
+    if (isNoteRest(self as unknown as NoteRest)) return true
+    const body = asStaffOrNumber(self as never)
+    return isNoteRest(body as unknown as NoteRest)
 }
 
 export function isNumberRestSelected(
@@ -43,7 +72,10 @@ export function isNumberRestSelected(
 ): selected is SlotData & {measure: Measure; self: NoteNumber} {
     const self = selected?.self
     if (!selected?.measure || self == null || isMeasureAddMode(selected)) return false
-    return isNoteNumberSlot(self as NoteNumber) && isSlotRestLike(self as NoteNumber)
+    const body = asStaffOrNumber(self as never)
+    // 选中简谱音符时 self 为 NotesNumberInfo（无 notesInfo），isSlotRestLike 会读 notesInfo.length 抛错
+    if (!Array.isArray((body as Partial<NoteNumber>).notesInfo)) return false
+    return isHostNoteNumberSlot(body) && isSlotRestLike(body)
 }
 
 function removeScoreAffiliatedById(musicScore: MusicScore, symbolId: string): boolean {
@@ -53,32 +85,40 @@ function removeScoreAffiliatedById(musicScore: MusicScore, symbolId: string): bo
     return true
 }
 
+function collectNotesInfoIdsFromBody(body: unknown): string[] {
+    if (body == null || typeof body !== 'object') return []
+    const note = body as {
+        notesInfo?: {id: string}[]
+        graceNotes?: {id: string}[]
+        graceNotesAfter?: {id: string}[]
+    }
+    if (!Array.isArray(note.notesInfo)) return []
+    const ids = note.notesInfo.map((info) => info.id)
+    for (const info of note.graceNotes ?? []) ids.push(info.id)
+    for (const info of note.graceNotesAfter ?? []) ids.push(info.id)
+    return ids
+}
+
 function collectNotesInfoIdsInMeasure(measure: Measure): string[] {
     const ids: string[] = []
-    for (const slot of measure.notes) {
-        if (isNoteSymbol(slot)) {
-            for (const info of slot.notesInfo) ids.push(info.id)
-            for (const info of slot.graceNotes ?? []) ids.push(info.id)
-            for (const info of slot.graceNotesAfter ?? []) ids.push(info.id)
-            continue
-        }
-        if (isNoteNumberSlot(slot)) {
-            for (const info of slot.notesInfo) {
-                ids.push(info.id)
-                for (const g of info.graceNotes ?? []) ids.push(g.id)
-                for (const g of info.graceNotesAfter ?? []) ids.push(g.id)
-            }
-        }
+    for (const raw of getMeasureSlots(measure)) {
+        ids.push(...collectNotesInfoIdsFromBody(asStaffOrNumber(raw)))
     }
     return ids
 }
 
-/** 删小节前：移除引用该小节或其中音符的曲谱级附属符号 */
+function collectMeasureSlotIds(measure: Measure): string[] {
+    return getMeasureSlots(measure).map((slot) => slot.id)
+}
+
+/** 删小节前：移除引用该小节或其中音符/列的曲谱级附属符号 */
 function purgeScoreAffiliatedForMeasure(musicScore: MusicScore, measure: Measure): void {
     const noteIds = new Set(collectNotesInfoIdsInMeasure(measure))
+    const slotIds = new Set(collectMeasureSlotIds(measure))
     musicScore.affiliatedSymbols = musicScore.affiliatedSymbols.filter((sym) => {
         if (sym.startId === measure.id || sym.endId === measure.id) return false
         if (noteIds.has(sym.startId) || noteIds.has(sym.endId)) return false
+        if (slotIds.has(sym.startId) || slotIds.has(sym.endId)) return false
         return true
     })
 }
@@ -86,6 +126,12 @@ function purgeScoreAffiliatedForMeasure(musicScore: MusicScore, measure: Measure
 function purgeScoreAffiliatedForNotesInfo(musicScore: MusicScore, notesInfoId: string): void {
     musicScore.affiliatedSymbols = musicScore.affiliatedSymbols.filter(
         (sym) => sym.startId !== notesInfoId && sym.endId !== notesInfoId,
+    )
+}
+
+function purgeScoreAffiliatedForMeasureSlot(musicScore: MusicScore, slotId: string): void {
+    musicScore.affiliatedSymbols = musicScore.affiliatedSymbols.filter(
+        (sym) => sym.startId !== slotId && sym.endId !== slotId,
     )
 }
 
@@ -102,15 +148,33 @@ function collectNotesInfoIdsFromNote(note: NoteSymbol): string[] {
     return ids
 }
 
+/** 所有复谱表中第 staffIndex 个单谱表；任一复谱表只剩这 1 个单谱表时不可删 */
+export function staffRowTargets(musicScore: MusicScore, staffIndex: number) {
+    const rows = musicScore.grandStaffs
+        .filter((grandStaff) => staffIndex >= 0 && staffIndex < grandStaff.staves.length)
+        .map((grandStaff) => ({grandStaff, staff: grandStaff.staves[staffIndex]!}))
+    const deletable = rows.length > 0 && rows.every((row) => row.grandStaff.staves.length > 1)
+    return {rows, deletable}
+}
+
+/** 删除所有复谱表中第 staffIndex 个单谱表 */
+export function deleteStaffRow(musicScore: MusicScore, staffIndex: number): boolean {
+    const {rows, deletable} = staffRowTargets(musicScore, staffIndex)
+    if (!deletable) return false
+    for (const {grandStaff, staff} of rows) {
+        for (const measure of staff.measures) purgeScoreAffiliatedForMeasure(musicScore, measure)
+        deleteSingleStaff(grandStaff, staff)
+    }
+    return true
+}
+
 function deleteMeasureSlot(
     musicScore: MusicScore,
     slot: SlotData & { measure: Measure; singleStaff: NonNullable<SlotData['singleStaff']> },
 ): boolean {
-    const {singleStaff, measure} = slot
-    if (singleStaff.measures.length <= 1) return false
-    purgeScoreAffiliatedForMeasure(musicScore, measure)
-    deleteMeasure(singleStaff, measure)
-    return true
+    return deleteMeasureColumn(musicScore, slot.measure, (measure) => {
+        purgeScoreAffiliatedForMeasure(musicScore, measure)
+    })
 }
 
 function deleteNumberHeadSlot(
@@ -118,7 +182,8 @@ function deleteNumberHeadSlot(
     slot: SlotData & {info: NotesNumberInfo; note: NoteNumber; measure: Measure},
 ): boolean {
     const {info, note, measure} = slot
-    const noteIndex = measure.notes.indexOf(note)
+    const notes = getMeasureNoteList(measure)
+    const noteIndex = notes.findIndex((s) => slotSymbol(s) === note || s.id === note.id)
     if (noteIndex < 0) return false
 
     const infoIndex = note.notesInfo.findIndex((ni) => ni.id === info.id)
@@ -126,7 +191,8 @@ function deleteNumberHeadSlot(
 
     if (note.notesInfo.length <= 1) {
         purgeScoreAffiliatedForNotesInfo(musicScore, info.id)
-        measure.notes.splice(noteIndex, 1)
+        purgeScoreAffiliatedForMeasureSlot(musicScore, notes[noteIndex]!.id)
+        notes.splice(noteIndex, 1)
     } else {
         purgeScoreAffiliatedForNotesInfo(musicScore, info.id)
         note.notesInfo.splice(infoIndex, 1)
@@ -139,7 +205,8 @@ function deleteNoteHeadSlot(
     slot: SlotData & { info: NotesInfo; note: NoteSymbol; measure: Measure },
 ): boolean {
     const {info, note, measure} = slot
-    const noteIndex = measure.notes.indexOf(note)
+    const notes = getMeasureNoteList(measure)
+    const noteIndex = notes.findIndex((s) => slotSymbol(s) === note || s.id === note.id)
     if (noteIndex < 0) return false
 
     const infoIndex = note.notesInfo.findIndex((ni) => ni.id === info.id)
@@ -147,7 +214,8 @@ function deleteNoteHeadSlot(
 
     if (note.notesInfo.length <= 1) {
         purgeScoreAffiliatedForNoteSymbol(musicScore, note)
-        measure.notes.splice(noteIndex, 1)
+        purgeScoreAffiliatedForMeasureSlot(musicScore, notes[noteIndex]!.id)
+        notes.splice(noteIndex, 1)
     } else {
         purgeScoreAffiliatedForNotesInfo(musicScore, info.id)
         note.notesInfo.splice(infoIndex, 1)
@@ -155,19 +223,69 @@ function deleteNoteHeadSlot(
     return true
 }
 
-function deleteRestSlot(slot: SlotData & { measure: Measure; self: NoteRest }): boolean {
-    const {measure, self} = slot
-    const idx = measure.notes.findIndex((item) => item.id === self.id)
-    if (idx < 0) return false
-    measure.notes.splice(idx, 1)
+/** TAB：删一条 TabNoteInfo；该槽只剩这一条时整列移除 */
+function deleteTabInfoSlot(
+    musicScore: MusicScore,
+    slot: SlotData & {info: TabNoteInfo; note: TabNote; measure: Measure},
+): boolean {
+    const {info, note, measure} = slot
+    const notes = getMeasureNoteList(measure)
+    const noteIndex = notes.findIndex((s) => {
+        const body = slotSymbol(s)
+        return body === note || s.id === note.id || ('id' in body && body.id === note.id)
+    })
+    if (noteIndex < 0) return false
+
+    const infoIndex = note.notesInfo.findIndex((ni) => ni.id === info.id)
+    if (infoIndex < 0) return false
+
+    if (note.notesInfo.length <= 1) {
+        for (const ni of note.notesInfo) purgeScoreAffiliatedForNotesInfo(musicScore, ni.id)
+        for (const g of note.graceNotes ?? []) purgeScoreAffiliatedForNotesInfo(musicScore, g.id)
+        for (const g of note.graceNotesAfter ?? []) purgeScoreAffiliatedForNotesInfo(musicScore, g.id)
+        purgeScoreAffiliatedForMeasureSlot(musicScore, notes[noteIndex]!.id)
+        notes.splice(noteIndex, 1)
+    } else {
+        purgeScoreAffiliatedForNotesInfo(musicScore, info.id)
+        note.notesInfo.splice(infoIndex, 1)
+    }
     return true
 }
 
-function deleteNumberRestSlot(slot: SlotData & {measure: Measure; self: NoteNumber}): boolean {
+function deleteRestSlot(slot: SlotData & { measure: Measure; self: NoteRest | unknown }): boolean {
     const {measure, self} = slot
-    const idx = measure.notes.findIndex((item) => item.id === self.id)
+    const restId =
+        self && typeof self === 'object' && 'id' in self
+            ? String((self as {id: string}).id)
+            : null
+    if (!restId) return false
+    const notes = getMeasureNoteList(measure)
+    const idx = notes.findIndex((item) => {
+        if (item.id === restId) return true
+        const body = slotSymbol(item)
+        return isNoteRest(body) && body.id === restId
+    })
     if (idx < 0) return false
-    measure.notes.splice(idx, 1)
+    notes.splice(idx, 1)
+    return true
+}
+
+function deleteNumberRestSlot(slot: SlotData & {measure: Measure; self: NoteNumber | unknown}): boolean {
+    const {measure, self} = slot
+    const notes = getMeasureNoteList(measure)
+    const idx = notes.findIndex((item) => {
+        if (self && typeof self === 'object' && 'id' in self && item.id === (self as {id?: string}).id) {
+            return true
+        }
+        return slotSymbol(item) === self
+    })
+    if (idx < 0) {
+        const fallback = findMeasureNoteIndex(measure, self as {id?: string})
+        if (fallback < 0) return false
+        notes.splice(fallback, 1)
+        return true
+    }
+    notes.splice(idx, 1)
     return true
 }
 
@@ -180,18 +298,44 @@ function deleteMeasureOptionalSymbol(slot: SlotData): boolean {
     for (const key of MEASURE_OPTIONAL_SYMBOL_KEYS) {
         const symbol = measure[key]
         if (symbol && typeof symbol === 'object' && 'id' in symbol && symbol.id === selfId) {
-            delete measure[key]
+            if (slot.grandStaff && slot.singleStaff) {
+                const index = slot.singleStaff.measures.findIndex((m) => m.id === measure.id)
+                deleteMeasureKeyInColumn(slot.grandStaff, index, measure, key)
+            } else {
+                delete measure[key]
+            }
             return true
         }
     }
     return false
 }
 
+type MeasureOptionalSymbolKey = (typeof MEASURE_OPTIONAL_SYMBOL_KEYS)[number]
+
+/** 连谱模式下谱表间的连谱小节线按各谱表同列小节绘制，删小节线需整列一起删 */
+function deleteMeasureKeyInColumn(
+    grandStaff: GrandStaff,
+    measureIndex: number,
+    measure: Measure,
+    key: MeasureOptionalSymbolKey,
+): void {
+    const isBarline = key === 'barline_f' || key === 'barline_b'
+    if (!isBarline || !grandStaff.linkedStaff || measureIndex < 0) {
+        delete measure[key]
+        return
+    }
+    for (const staff of grandStaff.staves) {
+        const m = staff.measures[measureIndex]
+        if (m) delete m[key]
+    }
+}
+
 function deleteSingleNoteAffiliatedById(musicScore: MusicScore, symbolId: string): boolean {
     for (const grandStaff of musicScore.grandStaffs) {
         for (const singleStaff of grandStaff.staves) {
             for (const measure of singleStaff.measures) {
-                for (const slot of measure.notes) {
+                for (const raw of getMeasureSlots(measure)) {
+                    const slot = asStaffOrNumber(raw)
                     if (isNoteSymbol(slot)) {
                         for (const info of slot.notesInfo) {
                             const idx = info.affiliatedSymbols.findIndex((sym) => sym.id === symbolId)
@@ -202,9 +346,11 @@ function deleteSingleNoteAffiliatedById(musicScore: MusicScore, symbolId: string
                         }
                         continue
                     }
-                    if (isNoteNumberSlot(slot)) {
-                        const idx = slot.affiliatedSymbols.findIndex((sym) => sym.id === symbolId)
+                    if (isHostNoteNumberSlot(slot)) {
+                        const symbols = slot.affiliatedSymbols ?? []
+                        const idx = symbols.findIndex((sym) => sym.id === symbolId)
                         if (idx >= 0) {
+                            slot.affiliatedSymbols = symbols
                             slot.affiliatedSymbols.splice(idx, 1)
                             return true
                         }
@@ -260,11 +406,6 @@ function deleteNotesInfoSubSymbol(slot: SlotData, symbolId: string): boolean {
         delete info.augmentationDot
         return true
     }
-    const note = slot.note
-    if (note && isNoteNumberSlot(note) && note.augmentationDot?.id === symbolId) {
-        delete note.augmentationDot
-        return true
-    }
     return false
 }
 
@@ -276,13 +417,70 @@ function deleteNotesInfoSubSymbol(slot: SlotData, symbolId: string): boolean {
 export function deleteSelectedItem(musicScore: MusicScore, selected: SlotData | null): boolean {
     if (!selected) return false
 
+    if (isBendSelected(selected) && selected.info) {
+        setTabNoteInfoBend(selected.info as unknown as TabNoteInfo, null)
+        return true
+    }
+
     if (isVoltaSelected(selected)) {
         removeVolta(musicScore, selected.self.id)
         return true
     }
 
+    if (isBracketSelected(selected)) {
+        return removeBracket(selected.grandStaff)
+    }
+
     if (isSlurSelected(selected)) {
         return removeScoreAffiliatedById(musicScore, selected.self.id)
+    }
+
+    if (
+        isArpeggioSelected(selected)
+        || isStrummingSelected(selected)
+        || isPreludeBracketSelected(selected)
+    ) {
+        return removeSlotAffiliatedSymbol(musicScore, selected.self.id)
+    }
+
+    if (
+        isPedalSelected(selected)
+        || isPitchSelected(selected)
+        || isLineSelected(selected)
+    ) {
+        return removeScoreAffiliatedById(musicScore, selected.self.id)
+    }
+
+    // 必须早于音符头 / 休止符判断：选中单音符附属时 note / info 指向其宿主
+    if (isNoteAffiliatedSelected(selected)) {
+        const located = locateNoteAffiliatedById(musicScore, selected.self.id)
+        return located ? removeNoteMark(located.host, selected.self.id) : false
+    }
+
+    if (isGraceNoteSelected(selected) && selected.note && selected.info) {
+        purgeScoreAffiliatedForNotesInfo(musicScore, selected.info.id)
+        return removeGraceById(selected.note as never, selected.info.id)
+    }
+
+    if (selected.measure && isDrumNotesInfo(selected.info) && selected.self === selected.info) {
+        const note = selected.note as unknown as DrumNote | null
+        const ids = note && note.notesInfo.length <= 1 ? note.notesInfo.map((info) => info.id) : [selected.info.id]
+        if (!removeDrumNotesInfo(selected.measure, selected.info.id)) return false
+        for (const id of ids) purgeScoreAffiliatedForNotesInfo(musicScore, id)
+        return true
+    }
+
+    if (selected.measure && isDrumRestBody(selected.self as unknown as MeasureNoteSymbol)) {
+        return removeDrumRest(selected.measure, (selected.self as {id: string}).id)
+    }
+
+    // 五线 isNoteHeadSelected 故意排除 TAB；TAB 音符 / 琶音 / 扫弦走这里
+    if (isTabInfoSelected(selected)) {
+        return deleteTabInfoSlot(musicScore, selected as SlotData & {
+            info: TabNoteInfo
+            note: TabNote
+            measure: Measure
+        })
     }
 
     if (isNoteHeadSelected(selected)) {
@@ -344,11 +542,12 @@ export function deleteSelectedItem(musicScore: MusicScore, selected: SlotData | 
 function deleteMeasureOptionalSymbolById(musicScore: MusicScore, symbolId: string): boolean {
     for (const grandStaff of musicScore.grandStaffs) {
         for (const singleStaff of grandStaff.staves) {
-            for (const measure of singleStaff.measures) {
+            for (let mi = 0; mi < singleStaff.measures.length; mi++) {
+                const measure = singleStaff.measures[mi]!
                 for (const key of MEASURE_OPTIONAL_SYMBOL_KEYS) {
                     const symbol = measure[key]
                     if (symbol && typeof symbol === 'object' && 'id' in symbol && symbol.id === symbolId) {
-                        delete measure[key]
+                        deleteMeasureKeyInColumn(grandStaff, mi, measure, key)
                         return true
                     }
                 }

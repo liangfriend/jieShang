@@ -25,7 +25,7 @@ import {
 
 const data: MusicScore = createMusicScore({ height: 10000, width: 800 })
 // 复谱表1-单谱表1
-const grandStaff1 = createGrandStaff()
+const grandStaff1 = createGrandStaff({ linkedStaff: true })
 
 data.grandStaffs.push(grandStaff1)
 

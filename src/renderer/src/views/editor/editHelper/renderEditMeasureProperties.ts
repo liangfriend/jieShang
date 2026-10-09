@@ -13,7 +13,6 @@ import {
   TIME_SIGNATURE_TYPES_ORDERED,
   TimeSignatureTypeEnum,
 } from '@deciphony/renderer'
-import {insertMeasure} from '@deciphony/extensions/dr-edit'
 import {
   createBarline,
   createClef,
@@ -22,6 +21,7 @@ import {
   createMeasureStartRepeat,
   createTimeSignature,
 } from '@deciphony/extensions/dr-edit/score-builder'
+import {insertMeasureColumn} from './renderEditMeasureColumn'
 
 export type MeasureEditSlot = SlotData & {measure: Measure; singleStaff: SingleStaff}
 
@@ -70,6 +70,9 @@ export const CLEF_VALUES: ClefTypeEnum[] = [
   ClefTypeEnum.Tenor,
 ]
 
+/** 吉他 / 尤克里里小节前置谱号：仅 TAB */
+export const TAB_CLEF_VALUES: ClefTypeEnum[] = [ClefTypeEnum.Tab]
+
 export const KEY_SIGNATURE_VALUES: KeySignatureTypeEnum[] = [
   KeySignatureTypeEnum.C,
   KeySignatureTypeEnum.G,
@@ -107,14 +110,29 @@ export const END_REPEAT_VALUES: MeasureEndRepeatEnum[] = [
 ]
 
 export function insertMeasureBefore(slot: MeasureEditSlot): Measure {
-  return insertMeasure(slot.singleStaff, slot.measure, 'before')
+  return insertMeasureColumn(slot.musicScore, slot.singleStaff, slot.measure, 'before')
 }
 
 export function insertMeasureAfter(slot: MeasureEditSlot): Measure {
-  return insertMeasure(slot.singleStaff, slot.measure, 'after')
+  return insertMeasureColumn(slot.musicScore, slot.singleStaff, slot.measure, 'after')
 }
 
-export function setMeasureBarlineB(measure: Measure, type: BarlineTypeEnum): void {
+/** 小节线作用的小节：连谱模式下谱表间的连谱小节线按各谱表同列小节绘制，需整列一起改 */
+export function barlineTargetMeasures(slot: MeasureEditSlot): Measure[] {
+  const grandStaff = slot.grandStaff
+  if (!grandStaff?.linkedStaff) return [slot.measure]
+  const index = slot.singleStaff.measures.findIndex((m) => m.id === slot.measure.id)
+  if (index < 0) return [slot.measure]
+  return grandStaff.staves
+    .map((staff) => staff.measures[index])
+    .filter((m): m is Measure => Boolean(m))
+}
+
+export function setMeasureBarlineB(measure: Measure, type: BarlineTypeEnum | null): void {
+  if (type == null) {
+    delete measure.barline_b
+    return
+  }
   if (measure.barline_b) {
     measure.barline_b.type = type
   } else {
@@ -134,6 +152,13 @@ export function setMeasureBarlineF(measure: Measure, type: BarlineTypeEnum | nul
   }
 }
 
+export function setSlotBarlineB(slot: MeasureEditSlot, type: BarlineTypeEnum | null): void {
+  for (const m of barlineTargetMeasures(slot)) setMeasureBarlineB(m, type)
+}
+
+export function setSlotBarlineF(slot: MeasureEditSlot, type: BarlineTypeEnum | null): void {
+  for (const m of barlineTargetMeasures(slot)) setMeasureBarlineF(m, type)
+}
 export function setMeasureClefF(measure: Measure, type: ClefTypeEnum | null): void {
   if (type == null) {
     delete measure.clef_f

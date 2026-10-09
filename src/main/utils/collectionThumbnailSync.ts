@@ -5,7 +5,11 @@ import { getLogger } from './log'
 
 const logger = getLogger('CollectionThumbnail')
 
-/** 将安装包内的内置缩略图同步到 userData/resources/image/collection（仅缺失时拷贝） */
+function isSameFile(a: string, b: string): boolean {
+  return fs.readFileSync(a).equals(fs.readFileSync(b))
+}
+
+/** 将安装包内的内置缩略图同步到 userData/resources/image/collection（缺失或内容变化时拷贝） */
 export function syncBuiltinCollectionThumbnails(): void {
   const bundled = pathManager.getBundledThumbnailsDir()
   const target = pathManager.getCollectionThumbnailDir()
@@ -18,9 +22,10 @@ export function syncBuiltinCollectionThumbnails(): void {
   let copied = 0
   for (const file of fs.readdirSync(bundled)) {
     if (!/\.svg$/i.test(file)) continue
+    const src = path.join(bundled, file)
     const dest = path.join(target, file)
-    if (!fs.existsSync(dest)) {
-      fs.copyFileSync(path.join(bundled, file), dest)
+    if (!fs.existsSync(dest) || !isSameFile(src, dest)) {
+      fs.copyFileSync(src, dest)
       copied += 1
     }
   }

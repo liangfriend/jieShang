@@ -129,6 +129,7 @@ function drawOutline(ctx: CanvasRenderingContext2D, geom: NoteHeadGeometry, pain
       drawStandardPath(ctx, geom, paint, STANDARD_TILTED_FILLED_OUTLINE_PATH, STANDARD_TILTED_NOTE_LOCAL)
       break
     case 'number':
+    case 'tab':
       traceNumberRect(ctx, geom, paint)
       break
     case 'rest':

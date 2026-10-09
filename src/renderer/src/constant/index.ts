@@ -16,7 +16,17 @@ export {
   resolveScoreNotationTypeLabel,
   type ScoreNotationTypeOption
 } from './scoreNotationType'
-export { PLAY_BPM_MAX, PLAY_BPM_MIN, PLAY_DEFAULT_BPM, PLAY_DEFAULT_VOLUME, PLAY_VOLUME_MAX, PLAY_VOLUME_MIN, resolvePlayBpm } from './play'
+export {
+  PLAY_BPM_MAX,
+  PLAY_BPM_MIN,
+  PLAY_DEFAULT_BPM,
+  PLAY_DEFAULT_VOLUME,
+  PLAY_QUARTER_BEAT_UNIT,
+  PLAY_VOLUME_MAX,
+  PLAY_VOLUME_MIN,
+  resolvePlayBpm,
+  toBeatUnitBpm
+} from './play'
 export {
   WHITEBOARD_DEFAULT_KEY_COUNT,
   WHITEBOARD_DEFAULT_PITCH_NOTATION,

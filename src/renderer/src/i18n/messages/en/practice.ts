@@ -3,9 +3,13 @@ export default {
     toolbar: {
       settings: 'Settings',
       play: 'Play',
+      demoPlay: 'Demo play',
+      stopDemo: 'Stop demo',
       pause: 'Pause',
       stop: 'Stop',
-      clearPlayData: 'Clear play data'
+      clearPlayData: 'Clear play data',
+      hideScore: 'Hide score',
+      showScore: 'Show score'
     },
     settings: {
       title: 'Practice settings',
@@ -51,7 +55,7 @@ export default {
     stats: {
       totalNotes: 'Total notes',
       realScore: 'Live score',
-      totalScore: 'Total score'
+      totalScore: 'Progress'
     },
     coverText: 'Cover of champions',
     messages: {

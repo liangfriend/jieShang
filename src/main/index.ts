@@ -4,7 +4,7 @@ import { app, shell, BrowserWindow, ipcMain, protocol, net } from 'electron'
 import { join } from 'path'
 import { pathToFileURL } from 'node:url'
 import { electronApp, is } from '@electron-toolkit/utils'
-import icon from '../../resources/icon.png?asset'
+import iconPng from '../../resources/icon.png?asset'
 import { initShortcut } from './utils/shortcutManager'
 import { registerController } from './register'
 import pathManager from './utils/pathManager'
@@ -13,6 +13,15 @@ import { enableSteamOverlay, initSteam } from './steam/initSteam'
 import { pullCloudSaveIfNeeded, pushCloudSave } from './steam/steamCloudSave'
 
 enableSteamOverlay()
+
+const APP_TITLE = '解熵'
+
+/** Windows 标题栏/任务栏优先 .ico；没有则用 resources/icon.png */
+function resolveAppIcon(): string {
+  const icoPath = iconPng.replace(/icon\.png$/i, 'icon.ico')
+  if (typeof icoPath === 'string' && fs.existsSync(icoPath)) return icoPath
+  return iconPng
+}
 
 // 注册协议
 protocol.registerSchemesAsPrivileged([
@@ -50,12 +59,17 @@ function createWindow(): void {
     height: 1000,
     show: false,
     autoHideMenuBar: true,
-    ...(process.platform === 'linux' ? { icon } : {}),
+    title: APP_TITLE,
+    icon: resolveAppIcon(),
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       sandbox: false,
       webSecurity: false
     }
+  })
+  mainWindow.setTitle(APP_TITLE)
+  mainWindow.on('page-title-updated', (event) => {
+    event.preventDefault()
   })
   initShortcut(mainWindow)
   if (is.dev) {
@@ -85,7 +99,8 @@ app.whenReady().then(async () => {
   registerAppImageProtocol()
   await pullCloudSaveIfNeeded()
   await registerController()
-  electronApp.setAppUserModelId('com.electron')
+  app.setName(APP_TITLE)
+  electronApp.setAppUserModelId('com.jieshang.app')
 
   // IPC test
   ipcMain.on('ping', () => console.log('pong'))

@@ -9,7 +9,11 @@ import { useRoute, useRouter } from 'vue-router'
 import BackButton from '@renderer/components/BackButton.vue'
 import VerticalDragSlider from '@renderer/components/VerticalDragSlider.vue'
 import { hasGrandStaffSingleStaffMismatch } from '@deciphony/extensions/score-util'
-import { scorePlaybackKey } from '@renderer/utils/scorePagePlayback'
+import {
+  scorePlaybackKey,
+  scorePlayRangeKey,
+  scoreScrollFollowKey
+} from '@renderer/utils/scorePagePlayback'
 import {
   PLAY_BPM_MAX,
   PLAY_BPM_MIN,
@@ -31,8 +35,14 @@ import {
 import { createAudioTimeHighlight } from '@renderer/utils/scorePagePlayback/createAudioTimeHighlight'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
 import ScoreNotationTypeSelector from './ScoreNotationTypeSelector.vue'
+import ScoreTransposeControl from './ScoreTransposeControl.vue'
+import ScoreSemitoneShiftButtons from './ScoreSemitoneShiftButtons.vue'
 import ScoreToneColorAdjuster from './ScoreToneColorAdjuster.vue'
+import ScoreMarkSelector from './ScoreMarkSelector.vue'
 import { buildScoreRouteQuery } from '@renderer/utils/scoreRoute'
+import type { ScoreMarkValue } from '@renderer/utils/scoreMark'
+import type { KeySignatureTypeEnum } from '@deciphony/renderer'
+import { isFixedToneColorScore, isPlayOnlyMusicScore } from '@renderer/utils/isTabNotation'
 
 type ScoreCustomData = Record<string, unknown> & {
   vocalPerformanceId?: number | null
@@ -42,23 +52,32 @@ type ScoreCustomData = Record<string, unknown> & {
 const { t } = useI18n()
 const route = useRoute()
 const router = useRouter()
-const playback = inject(scorePlaybackKey)
+const playbackMaybe = inject(scorePlaybackKey)
+if (!playbackMaybe) {
+  throw new Error('PlayModeToolbar requires scorePlayback from play.vue')
+}
+const playback = playbackMaybe
+const scrollFollow = inject(scoreScrollFollowKey, null)
+const rangeSelect = inject(scorePlayRangeKey, null)
 const playStore = usePlayStore()
 const audioStore = useAudioPlayerStore()
 const { volume, bpm } = storeToRefs(playStore)
-
-if (!playback) {
-  throw new Error('PlayModeToolbar requires scorePlayback from play.vue')
-}
+let lastAudioScrollNoteId = ''
 
 const props = defineProps<{
   musicScore: MusicScore
   notationType: MusicScoreTypeEnum
   notationTypeDisabled?: boolean
+  currentKey: KeySignatureTypeEnum
+  transposeDisabled?: boolean
+  mark: ScoreMarkValue
 }>()
 
 const emit = defineEmits<{
   'notation-type-change': [value: MusicScoreTypeEnum]
+  transpose: [payload: { toKey: KeySignatureTypeEnum }]
+  'semitone-shift': [semitones: 1 | -1]
+  'update:mark': [value: ScoreMarkValue]
 }>()
 
 const playSource = ref<PlaySource>(PLAY_SOURCE.score)
@@ -70,6 +89,12 @@ const volumeLabel = computed(() => `${Math.round(volume.value * 100)}%`)
 const bpmLabel = computed(() => `${Math.round(bpm.value)}`)
 
 const isScoreSource = computed(() => playSource.value === PLAY_SOURCE.score)
+const isPlayOnlyScore = computed(() => isPlayOnlyMusicScore(props.musicScore))
+const isFixedToneColor = computed(() => isFixedToneColorScore(props.musicScore))
+const singleLineModeDisabled = computed(() => isPlayOnlyScore.value)
+const notationControlsDisabled = computed(
+  () => props.notationTypeDisabled || !isScoreSource.value || isPlayOnlyScore.value
+)
 
 function timePropForSource(source: PlaySource): string {
   if (source === PLAY_SOURCE.vocal) return SCORE_TIME_OFFSET_PROP.vocalPerformance
@@ -89,6 +114,14 @@ const audioTimeHighlight = createAudioTimeHighlight({
 
 function resetAudioHighlight() {
   audioTimeHighlight.reset()
+  lastAudioScrollNoteId = ''
+}
+
+function followAudioHighlightIds(ids: string[]) {
+  const first = ids[0]?.trim()
+  if (!first || first === lastAudioScrollNoteId) return
+  lastAudioScrollNoteId = first
+  scrollFollow?.followPlayingNote(first)
 }
 
 function readBoundAudioId(key: 'vocalPerformanceId' | 'accompanimentId'): number | null {
@@ -127,6 +160,7 @@ function stopAll() {
   playback.handleStop()
   audioStore.stop()
   resetAudioHighlight()
+  scrollFollow?.resetScroll()
 }
 
 async function loadBoundAudio(audioId: number) {
@@ -146,6 +180,7 @@ async function loadBoundAudio(audioId: number) {
 async function onPlaySourceChange(next: PlaySource) {
   stopAll()
   playSource.value = next
+  if (next !== PLAY_SOURCE.score) rangeSelect?.end()
   if (next === PLAY_SOURCE.score) return
 
   const id =
@@ -165,15 +200,32 @@ async function onPlaySourceChange(next: PlaySource) {
   }
 }
 
+function toggleRangeSelect() {
+  if (!rangeSelect) return
+  if (rangeSelect.active.value) rangeSelect.end()
+  else rangeSelect.start()
+}
+
 async function onPlay() {
   if (isScoreSource.value) {
+    if (rangeSelect?.active.value && !rangeSelect.complete.value) {
+      ElMessage.warning(t('play.range.incomplete'))
+      return
+    }
     resetAudioHighlight()
     await playback.handlePlay()
     return
   }
-  // 从停止态再播：展平行刷新 + 遍次 map 已在 stop 时置 0
+  // ?????????????+ ?? map ?? stop ?? 0
   if (audioStore.playbackState === 'stopped') {
     audioTimeHighlight.prepare()
+  }
+  if (!audioTimeHighlight.hasTimedSlots()) {
+    ElMessage.warning(
+      playSource.value === PLAY_SOURCE.vocal
+        ? t('play.messages.vocalTimeOffsetMissing')
+        : t('play.messages.accompanimentTimeOffsetMissing')
+    )
   }
   audioStore.setVolume(volume.value)
   await audioStore.play()
@@ -195,6 +247,7 @@ function onStop() {
   }
   audioStore.stop()
   resetAudioHighlight()
+  scrollFollow?.resetScroll()
 }
 
 function onVolumeChange(value: number) {
@@ -202,7 +255,7 @@ function onVolumeChange(value: number) {
   if (!isScoreSource.value) audioStore.setVolume(value)
 }
 
-/** 曲谱 data 里音源 id 消失时，回退到曲谱 */
+/** ?? data ????id ??????????*/
 watch(
   [vocalPerformanceId, accompanimentId],
   () => {
@@ -241,10 +294,11 @@ onMounted(() => {
   playSource.value = PLAY_SOURCE.score
   audioStore.setOnProgress((current) => {
     if (playSource.value === PLAY_SOURCE.score) return
-    audioTimeHighlight.syncAtTime(current)
+    followAudioHighlightIds(audioTimeHighlight.syncAtTime(current))
   })
   audioStore.setOnEnd(() => {
     resetAudioHighlight()
+    scrollFollow?.resetScroll()
   })
 })
 
@@ -252,8 +306,7 @@ onBeforeUnmount(() => {
   document.removeEventListener('pointerdown', onDocumentPointerDown)
   audioStore.setOnProgress(null)
   audioStore.setOnEnd(null)
-  audioStore.stop()
-  resetAudioHighlight()
+  stopAll()
 })
 
 function switchToEdit() {
@@ -266,6 +319,10 @@ function switchToEdit() {
 }
 
 function goSingleLineMode(name: 'practice' | 'forBeginner' | 'singing') {
+  if (isPlayOnlyMusicScore(props.musicScore)) {
+    ElMessage.warning(t('play.messages.playOnlyModeUnavailable'))
+    return
+  }
   if (hasGrandStaffSingleStaffMismatch(props.musicScore)) {
     ElMessage.warning(t('play.messages.grandStaffMismatch'))
     return
@@ -338,9 +395,25 @@ function goSinging() {
         <el-icon><VideoPause /></el-icon>
         <span>{{ t('play.toolbar.pause') }}</span>
       </button>
-      <button type="button" class="score-toolbar__btn" :disabled="stopDisabled" @click="onStop">
+      <button
+        type="button"
+        class="score-toolbar__btn"
+        :disabled="stopDisabled"
+        @click="onStop"
+      >
         <span class="score-toolbar__stop-icon" aria-hidden="true" />
         <span>{{ t('play.toolbar.stop') }}</span>
+      </button>
+      <button
+        v-if="rangeSelect"
+        type="button"
+        class="score-toolbar__btn"
+        :class="{ 'score-toolbar__btn--accent': rangeSelect.active.value }"
+        :disabled="!isScoreSource"
+        :title="t('play.range.tooltip')"
+        @click="toggleRangeSelect"
+      >
+        <span>{{ t('play.range.title') }}</span>
       </button>
       <div class="score-toolbar__adjuster">
         <button type="button" class="score-toolbar__btn" @click="togglePanel('volume')">
@@ -374,19 +447,51 @@ function goSinging() {
           />
         </div>
       </div>
-      <ScoreToneColorAdjuster v-if="isScoreSource" />
+      <ScoreToneColorAdjuster v-if="isScoreSource && !isFixedToneColor" score-option />
       <ScoreNotationTypeSelector
+        v-if="!isPlayOnlyScore"
         :model-value="notationType"
-        :disabled="notationTypeDisabled || !isScoreSource"
+        :disabled="notationControlsDisabled"
         @change="emit('notation-type-change', $event)"
       />
-      <button type="button" class="score-toolbar__btn" @click="goPractice">
+      <ScoreTransposeControl
+        v-if="!isPlayOnlyScore"
+        :current-key="currentKey"
+        :disabled="transposeDisabled || notationControlsDisabled"
+        @transpose="emit('transpose', $event)"
+      />
+      <ScoreSemitoneShiftButtons
+        v-if="!isPlayOnlyScore"
+        :disabled="transposeDisabled || notationControlsDisabled"
+        @shift="emit('semitone-shift', $event)"
+      />
+      <ScoreMarkSelector
+        v-if="!isPlayOnlyScore"
+        :model-value="mark"
+        @update:model-value="emit('update:mark', $event)"
+      />
+      <button
+        type="button"
+        class="score-toolbar__btn"
+        :disabled="singleLineModeDisabled"
+        @click="goPractice"
+      >
         <span>{{ t('play.toolbar.practiceMode') }}</span>
       </button>
-      <button type="button" class="score-toolbar__btn" @click="goForBeginner">
+      <button
+        type="button"
+        class="score-toolbar__btn"
+        :disabled="singleLineModeDisabled"
+        @click="goForBeginner"
+      >
         <span>{{ t('play.toolbar.beginnerMode') }}</span>
       </button>
-      <button type="button" class="score-toolbar__btn" @click="goSinging">
+      <button
+        type="button"
+        class="score-toolbar__btn"
+        :disabled="singleLineModeDisabled"
+        @click="goSinging"
+      >
         <span>{{ t('play.toolbar.singingMode') }}</span>
       </button>
     </template>

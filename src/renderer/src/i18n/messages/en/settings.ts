@@ -4,7 +4,8 @@ export default {
     language: {
       label: 'Language',
       zh: '中文',
-      en: 'English'
+      en: 'English',
+      ja: '日本語'
     },
     gameDifficulty: {
       label: 'Arcade / Endless difficulty:',
@@ -14,6 +15,11 @@ export default {
       standardDesc: 'MIDI 38–83, three clefs, no double sharps or flats, faster rhythm',
       hard: 'Hard',
       hardDesc: 'MIDI 38–83, three clefs, all accidentals, faster blocks and spawn rate'
+    },
+    gameNotation: {
+      label: 'Game notation:',
+      staff: 'Staff',
+      jianpu: 'Jianpu'
     },
     noteBlockSound: {
       label: 'Note block sound'

@@ -39,21 +39,27 @@ export function resolveNoteSliceDifficultyConfig(
 
 let boundGameDifficulty: GameDifficulty | null = null
 
-/** 本局游戏开始时绑定难度，并挂载对应参数管理器 */
-export function bindNoteSliceGameDifficulty(difficulty: GameDifficulty): void {
+/** 本局游戏开始时绑定难度，并挂载对应参数管理器；返回世代号供卸载时安全 clear */
+export function bindNoteSliceGameDifficulty(difficulty: GameDifficulty): number {
   boundGameDifficulty = difficulty
-  bindNoteSliceSpawnConfigManager(createPresetSpawnConfigManager(difficulty))
+  return bindNoteSliceSpawnConfigManager(createPresetSpawnConfigManager(difficulty))
 }
 
-/** 绑定自定义参数管理器（极限模式等） */
-export function bindNoteSliceSpawnManager(manager: NoteSliceSpawnConfigManager): void {
+/** 绑定自定义参数管理器（极限模式等）；返回世代号供卸载时安全 clear */
+export function bindNoteSliceSpawnManager(manager: NoteSliceSpawnConfigManager): number {
   boundGameDifficulty = null
-  bindNoteSliceSpawnConfigManager(manager)
+  return bindNoteSliceSpawnConfigManager(manager)
 }
 
-export function clearNoteSliceGameDifficulty(): void {
-  boundGameDifficulty = null
-  clearNoteSliceSpawnConfigManager()
+/**
+ * @param generation 绑定时返回的世代；传入后仅清自己那次绑定，
+ *   避免「再来一局」:key 重挂载时旧实例 onUnmounted 清掉新局的管理器。
+ */
+export function clearNoteSliceGameDifficulty(generation?: number): void {
+  const cleared = clearNoteSliceSpawnConfigManager(generation)
+  if (cleared) {
+    boundGameDifficulty = null
+  }
 }
 
 export function getActiveNoteSliceDifficulty(): GameDifficulty {

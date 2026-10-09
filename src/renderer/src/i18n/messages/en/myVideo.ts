@@ -25,7 +25,8 @@ export default {
       size: 'File size',
       format: 'Format',
       createdAt: 'Added',
-      probeFailed: 'Could not read video info'
+      probeFailed: 'Could not read video info',
+      playFailed: 'Failed to load video for playback'
     }
   }
 } as const

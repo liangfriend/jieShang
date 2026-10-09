@@ -97,14 +97,16 @@ async function toggle() {
 
 <style scoped>
 .tool-page {
-  min-height: 100vh;
+  height: 100vh;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
   color: #5c4a6a;
   background: linear-gradient(145deg, #fff5f9 0%, #f3ebff 45%, #e8f4ff 100%);
 }
 
 .tool-page__header {
+  flex-shrink: 0;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -121,6 +123,8 @@ async function toggle() {
 
 .tool-page__main {
   flex: 1;
+  min-height: 0;
+  overflow: auto;
   display: flex;
   flex-direction: column;
   gap: 16px;
