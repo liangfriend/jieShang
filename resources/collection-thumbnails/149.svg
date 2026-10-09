@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" fill="#0B2A20"/>
+  
+  <defs><radialGradient id="fly149"><stop offset="0%" stop-color="#FFFFE6"/><stop offset="30%" stop-color="#ECFF8C"/><stop offset="100%" stop-color="#A0E63C" stop-opacity="0"/></radialGradient></defs>
+  <rect width="64" height="30" fill="#0A1A2E"/>
+  <circle cx="48" cy="12" r="6" fill="#F0F6D8"/>
+  <path d="M0 40 L6 26 L12 40 L16 30 L22 40 L28 24 L34 40 L40 32 L46 40 L52 26 L58 40 L64 30 L64 64 L0 64 Z" fill="#06140F"/>
+  <rect x="12" y="10" width="7" height="30" rx="3.5" fill="#6FB84A"/>
+  <rect x="26" y="18" width="7" height="22" rx="3.5" fill="#8FCF52"/>
+  <rect x="40" y="36" width="7" height="12" rx="3.5" fill="#E4F76A"/>
+  <line x1="2" y1="48" x2="62" y2="48" stroke="#3F8A3A" stroke-width="2"/>
+  <circle cx="22" cy="44" r="5" fill="url(#fly149)"/><circle cx="8" cy="22" r="4" fill="url(#fly149)"/>
+  <circle cx="54" cy="36" r="4" fill="url(#fly149)"/><circle cx="36" cy="56" r="4.5" fill="url(#fly149)"/>
+  <circle cx="43" cy="48" r="7" fill="url(#fly149)"/>
+</svg>

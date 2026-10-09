@@ -1,0 +1,24 @@
+---
+description: @deciphony 开发走本地 alias，禁止改 node_modules
+alwaysApply: true
+---
+
+# @deciphony 包联调约定
+
+开发（`npm run dev:local` / `--mode deciphony`）时，`@deciphony/*` 经 Vite alias 指向同级仓库 `../deciphony/packages/*` 源码，**不读** `node_modules` 里的已发布实现。
+
+## 编辑 / drEdit
+
+乐谱编辑相关需求：先确认 `dr-edit` / 模型是否支持。**不确定或不支持时不要改 jieShang 业务代码**，通知维护者补库后再接。详见根目录 [AGENTS.md](../../AGENTS.md)。
+
+## 禁止
+
+- 修改 `node_modules/@deciphony/**`（补 API、修 bug、打补丁都不行）
+- 假定 `node_modules` 类型/实现与本地源码一致
+
+## 正确
+
+- 改库：编辑 `../deciphony/packages/<pkg>/src`
+- 本仓库只写业务调用；发版后在 jieShang bump 私有 npm 依赖
+
+详见根目录 [AGENTS.md](../../AGENTS.md)。

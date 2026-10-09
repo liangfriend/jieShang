@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" fill="#EAF4EC"/>
+  
+  <text text-anchor="middle" fill="#2F6E45" font-family="system-ui, 'Microsoft YaHei', sans-serif" font-size="10" font-weight="600"><tspan x="32" y="30.5">上低音</tspan><tspan x="32" y="43.5">萨克斯</tspan></text>
+</svg>

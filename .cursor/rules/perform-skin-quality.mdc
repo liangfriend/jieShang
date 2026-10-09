@@ -1,0 +1,22 @@
+---
+description: 演奏皮肤品质（级别）判定标准
+globs: src/renderer/src/components/performSkin/**,src/main/constant/collectionSeedIds.ts,src/renderer/src/constant/collectionSeedIds.ts
+alwaysApply: false
+---
+
+# 演奏皮肤品质标准
+
+新增或修改演奏皮肤时按此判定级别，逐级累加（高一级须满足低一级全部要求）：
+
+| 级别 | 颜色 | 标准 |
+| --- | --- | --- |
+| 1 | 白 | 什么动效都没有：静态背景，水柱 / 方块就是从背景图里抠出来的形状，基准线静态 |
+| 2 | 绿 | 有按键动效（overlay `createRuntime`），背景静态 |
+| 3 | 蓝 | 再加动态背景（第一层 `drawBackground` 随 `time` 变化），基准线静态 |
+| 4 | 紫 | 再加动态、炫酷的基准线（`drawBaseline` 随时间变化），整体更美观、更细致 |
+| 5 | 金 | 再让水柱 / 方块脱离背景遮罩、用 `drawColumns` 自绘（如发光线框），按住琴键期间动效持续不断；背景可为纯色。可提供可调参数：默认值写进种子的 `option`，皮肤在 `registry.ts` 的 `PERFORM_SKIN_FACTORIES` 注册工厂 |
+
+- 只有静态的 `drawKeyActiveBar` 不算按键动效；水柱层自身的流光不算动态背景。
+- 级别写入两份 `collectionSeedIds.ts` 的 `BUILTIN_COLLECTION_LEVELS.performSkin`，并同步 `doc/藏品.md`。
+
+详见 [doc/藏品.md](../../doc/藏品.md)「演奏皮肤品质标准」。

@@ -1,0 +1,65 @@
+{
+  "families": {
+    "piano": { "zh": "钢琴", "en": "Piano", "ja": "ピアノ" },
+    "chromatic": { "zh": "有音高打击乐", "en": "Chromatic percussion", "ja": "音階打楽器" },
+    "organ": { "zh": "风琴", "en": "Organ", "ja": "オルガン" },
+    "guitar": { "zh": "吉他", "en": "Guitar", "ja": "ギター" },
+    "bass": { "zh": "贝斯", "en": "Bass", "ja": "ベース" },
+    "strings": { "zh": "弦乐", "en": "Strings", "ja": "弦楽器" },
+    "brass": { "zh": "铜管", "en": "Brass", "ja": "金管楽器" },
+    "reed": { "zh": "簧管", "en": "Reed", "ja": "リード楽器" },
+    "pipe": { "zh": "吹管", "en": "Pipe", "ja": "笛類" },
+    "ethnic": { "zh": "民族乐器", "en": "Ethnic", "ja": "民族楽器" },
+    "percussive": { "zh": "打击乐", "en": "Percussive", "ja": "打楽器" }
+  },
+  "items": [
+    { "id": 1, "key": "acoustic_grand_piano", "file": "accoustic_grand_piano.json", "family": "piano", "name": { "zh": "三角钢琴", "en": "Grand piano", "ja": "グランドピアノ" }, "description": "温暖饱满的三角钢琴音色。" },
+    { "id": 2, "key": "bright_acoustic_piano", "file": "bright_acoustic_piano.json", "family": "piano", "name": { "zh": "亮音钢琴", "en": "Bright piano", "ja": "ブライトピアノ" }, "description": "更明亮、穿透力更强的钢琴音色。" },
+
+    { "id": 6, "key": "music_box", "file": "music_box.json", "family": "chromatic", "name": { "zh": "八音盒", "en": "Music box", "ja": "オルゴール" }, "description": "清脆梦幻的八音盒音色。" },
+    { "id": 35, "key": "marimba", "file": "marimba.json", "family": "chromatic", "name": { "zh": "马林巴", "en": "Marimba", "ja": "マリンバ" } },
+
+    { "id": 44, "key": "accordion", "file": "accordion.json", "family": "organ", "name": { "zh": "手风琴", "en": "Accordion", "ja": "アコーディオン" } },
+    { "id": 22, "key": "harmonica", "file": "harmonica.json", "family": "organ", "name": { "zh": "口琴", "en": "Harmonica", "ja": "ハーモニカ" }, "description": "清亮悠扬的口琴音色。" },
+
+    { "id": 4, "key": "acoustic_guitar_nylon", "file": "acoustic_guitar_nylon.json", "family": "guitar", "name": { "zh": "尼龙弦吉他", "en": "Nylon guitar", "ja": "ナイロン弦ギター" }, "description": "柔和的尼龙弦古典吉他音色。" },
+    { "id": 46, "key": "acoustic_guitar_steel", "file": "acoustic_guitar_steel.json", "family": "guitar", "name": { "zh": "钢弦吉他", "en": "Steel-string guitar", "ja": "スチール弦ギター" } },
+
+    { "id": 53, "key": "acoustic_bass", "file": "acoustic_bass.json", "family": "bass", "name": { "zh": "原声贝斯", "en": "Acoustic bass", "ja": "アコースティックベース" } },
+
+    { "id": 5, "key": "violin", "file": "violin.json", "family": "strings", "name": { "zh": "小提琴", "en": "Violin", "ja": "バイオリン" }, "description": "抒情细腻的小提琴音色。" },
+    { "id": 61, "key": "viola", "file": "viola.json", "family": "strings", "name": { "zh": "中提琴", "en": "Viola", "ja": "ヴィオラ" } },
+    { "id": 62, "key": "cello", "file": "cello.json", "family": "strings", "name": { "zh": "大提琴", "en": "Cello", "ja": "チェロ" } },
+    { "id": 66, "key": "orchestral_harp", "file": "orchestral_harp.json", "family": "strings", "name": { "zh": "竖琴", "en": "Harp", "ja": "ハープ" } },
+
+    { "id": 76, "key": "trumpet", "file": "trumpet.json", "family": "brass", "name": { "zh": "小号", "en": "Trumpet", "ja": "トランペット" } },
+    { "id": 77, "key": "trombone", "file": "trombone.json", "family": "brass", "name": { "zh": "长号", "en": "Trombone", "ja": "トロンボーン" } },
+    { "id": 78, "key": "tuba", "file": "tuba.json", "family": "brass", "name": { "zh": "大号", "en": "Tuba", "ja": "チューバ" } },
+
+    { "id": 84, "key": "soprano_sax", "file": "soprano_sax.json", "family": "reed", "name": { "zh": "高音萨克斯", "en": "Soprano sax", "ja": "ソプラノサックス" } },
+    { "id": 85, "key": "alto_sax", "file": "alto_sax.json", "family": "reed", "name": { "zh": "中音萨克斯", "en": "Alto sax", "ja": "アルトサックス" } },
+
+    { "id": 24, "key": "piccolo", "file": "piccolo.json", "family": "pipe", "name": { "zh": "短笛", "en": "Piccolo", "ja": "ピッコロ" }, "description": "高亢明亮的短笛音色。" },
+    { "id": 92, "key": "flute", "file": "flute.json", "family": "pipe", "name": { "zh": "长笛", "en": "Flute", "ja": "フルート" } },
+    { "id": 93, "key": "recorder", "file": "recorder.json", "family": "pipe", "name": { "zh": "竖笛", "en": "Recorder", "ja": "リコーダー" } },
+    { "id": 25, "key": "pan_flute", "file": "pan_flute.json", "family": "pipe", "name": { "zh": "排箫", "en": "Pan flute", "ja": "パンフルート" }, "description": "悠远带气息感的排箫音色。" },
+    { "id": 94, "key": "blown_bottle", "file": "blown_bottle.json", "family": "pipe", "name": { "zh": "吹瓶", "en": "Blown bottle", "ja": "ボトルブロー" } },
+    { "id": 95, "key": "shakuhachi", "file": "shakuhachi.json", "family": "pipe", "name": { "zh": "尺八", "en": "Shakuhachi", "ja": "尺八" } },
+    { "id": 96, "key": "whistle", "file": "whistle.json", "family": "pipe", "name": { "zh": "口哨", "en": "Whistle", "ja": "口笛" } },
+    { "id": 97, "key": "ocarina", "file": "ocarina.json", "family": "pipe", "name": { "zh": "陶笛", "en": "Ocarina", "ja": "オカリナ" } },
+
+    { "id": 123, "key": "banjo", "file": "banjo.json", "family": "ethnic", "name": { "zh": "班卓琴", "en": "Banjo", "ja": "バンジョー" } },
+    { "id": 23, "key": "kalimba", "file": "kalimba.json", "family": "ethnic", "name": { "zh": "卡林巴", "en": "Kalimba", "ja": "カリンバ" }, "description": "空灵清脆的拇指琴音色。" },
+    { "id": 128, "key": "shanai", "file": "shanai.json", "family": "ethnic", "name": { "zh": "唢呐", "en": "Shanai", "ja": "シャナイ" } },
+
+    { "id": 129, "key": "tinkle_bell", "file": "tinkle_bell.json", "family": "percussive", "name": { "zh": "叮当铃", "en": "Tinkle bell", "ja": "ティンクルベル" } },
+    { "id": 130, "key": "agogo", "file": "agogo.json", "family": "percussive", "name": { "zh": "阿哥哥铃", "en": "Agogo", "ja": "アゴゴ" } },
+    { "id": 131, "key": "steel_drums", "file": "steel_drums.json", "family": "percussive", "name": { "zh": "钢鼓", "en": "Steel drums", "ja": "スチールドラム" } },
+    { "id": 132, "key": "woodblock", "file": "woodblock.json", "family": "percussive", "name": { "zh": "木鱼", "en": "Woodblock", "ja": "ウッドブロック" } },
+    { "id": 133, "key": "taiko_drum", "file": "taiko_drum.json", "family": "percussive", "name": { "zh": "太鼓", "en": "Taiko drum", "ja": "和太鼓" } },
+    { "id": 134, "key": "melodic_tom", "file": "melodic_tom.json", "family": "percussive", "name": { "zh": "旋律通鼓", "en": "Melodic tom", "ja": "メロディックタム" } },
+    { "id": 135, "key": "synth_drum", "file": "synth_drum.json", "family": "percussive", "name": { "zh": "合成鼓", "en": "Synth drum", "ja": "シンセドラム" } },
+    { "id": 136, "key": "reverse_cymbal", "file": "reverse_cymbal.json", "family": "percussive", "name": { "zh": "反向镲", "en": "Reverse cymbal", "ja": "リバースシンバル" } },
+    { "id": 26, "key": "percussion", "file": "da-ji-yue.json", "family": "percussive", "name": { "zh": "打击乐", "en": "Percussion", "ja": "打楽器" }, "description": "架子鼓与打击乐器采样，用于鼓谱与电子鼓机。" }
+  ]
+}

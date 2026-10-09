@@ -1,0 +1,23 @@
+"AppBuild"
+{
+	"AppID" "4872790"
+	"Desc" "jie-shang windows content"
+	"Preview" "0"
+	"Local"	""
+	"SetLive" ""
+	"ContentRoot" "D:\\data\\jieShang\\dist\\win-unpacked\\"
+	"BuildOutput" "D:\\data\\jieShang\\dist\\steam-build-output\\"
+
+	"Depots"
+	{
+		"4872791"
+		{
+			"FileMapping"
+			{
+				"LocalPath" "*"
+				"DepotPath" "."
+				"recursive" "1"
+			}
+		}
+	}
+}

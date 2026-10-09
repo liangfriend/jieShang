@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 132" fill="none">
+  <g stroke="#8a7a98" stroke-width="0.8">
+    <path d="M0 8h200M0 13h200M0 18h200M0 23h200M0 28h200"/>
+    <path d="M0 52h200M0 57h200M0 62h200M0 67h200M0 72h200"/>
+    <path d="M0 96h200M0 101h200M0 106h200M0 111h200M0 116h200"/>
+  </g>
+  <g stroke="#5c4a6a" stroke-width="1.2">
+    <path d="M0.6 8v20M66 8v20M133 8v20M199.4 8v20"/>
+    <path d="M0.6 52v20M66 52v20M133 52v20M199.4 52v20"/>
+    <path d="M0.6 96v20M66 96v20M133 96v20M199.4 96v20"/>
+  </g>
+  <g fill="#5c4a6a">
+    <ellipse cx="14" cy="23" rx="3.2" ry="2.3" transform="rotate(-20 14 23)"/>
+    <ellipse cx="28" cy="18" rx="3.2" ry="2.3" transform="rotate(-20 28 18)"/>
+    <ellipse cx="42" cy="15.5" rx="3.2" ry="2.3" transform="rotate(-20 42 15.5)"/>
+    <ellipse cx="56" cy="20.5" rx="3.2" ry="2.3" transform="rotate(-20 56 20.5)"/>
+    <ellipse cx="82" cy="25.5" rx="3.2" ry="2.3" transform="rotate(-20 82 25.5)"/>
+    <ellipse cx="100" cy="20.5" rx="3.2" ry="2.3" transform="rotate(-20 100 20.5)"/>
+    <ellipse cx="118" cy="13" rx="3.2" ry="2.3" transform="rotate(-20 118 13)"/>
+    <ellipse cx="150" cy="18" rx="3.2" ry="2.3" transform="rotate(-20 150 18)"/>
+    <ellipse cx="168" cy="23" rx="3.2" ry="2.3" transform="rotate(-20 168 23)"/>
+    <ellipse cx="186" cy="20.5" rx="3.2" ry="2.3" transform="rotate(-20 186 20.5)"/>
+
+    <ellipse cx="16" cy="64.5" rx="3.2" ry="2.3" transform="rotate(-20 16 64.5)"/>
+    <ellipse cx="34" cy="59.5" rx="3.2" ry="2.3" transform="rotate(-20 34 59.5)"/>
+    <ellipse cx="52" cy="62" rx="3.2" ry="2.3" transform="rotate(-20 52 62)"/>
+    <ellipse cx="80" cy="57" rx="3.2" ry="2.3" transform="rotate(-20 80 57)"/>
+    <ellipse cx="94" cy="54.5" rx="3.2" ry="2.3" transform="rotate(-20 94 54.5)"/>
+    <ellipse cx="108" cy="59.5" rx="3.2" ry="2.3" transform="rotate(-20 108 59.5)"/>
+    <ellipse cx="122" cy="64.5" rx="3.2" ry="2.3" transform="rotate(-20 122 64.5)"/>
+    <ellipse cx="152" cy="67" rx="3.2" ry="2.3" transform="rotate(-20 152 67)"/>
+    <ellipse cx="176" cy="62" rx="3.2" ry="2.3" transform="rotate(-20 176 62)"/>
+
+    <ellipse cx="18" cy="103.5" rx="3.2" ry="2.3" transform="rotate(-20 18 103.5)"/>
+    <ellipse cx="38" cy="108.5" rx="3.2" ry="2.3" transform="rotate(-20 38 108.5)"/>
+    <ellipse cx="56" cy="101" rx="3.2" ry="2.3" transform="rotate(-20 56 101)"/>
+    <ellipse cx="84" cy="106" rx="3.2" ry="2.3" transform="rotate(-20 84 106)"/>
+    <ellipse cx="104" cy="111" rx="3.2" ry="2.3" transform="rotate(-20 104 111)"/>
+    <ellipse cx="122" cy="103.5" rx="3.2" ry="2.3" transform="rotate(-20 122 103.5)"/>
+    <ellipse cx="160" cy="98.5" rx="3.2" ry="2.3" transform="rotate(-20 160 98.5)"/>
+    <ellipse cx="184" cy="106" rx="3.2" ry="2.3" transform="rotate(-20 184 106)"/>
+  </g>
+  <g stroke="#5c4a6a" stroke-width="1">
+    <path d="M16.9 22.5V8.5M30.9 17.5V3.5M44.9 15V1M58.9 20V6"/>
+    <path d="M84.9 25V11M102.9 20V6M120.9 12.5V-1.5M152.9 17.5V3.5M170.9 22.5V8.5M188.9 20V6"/>
+    <path d="M18.9 64V50M36.9 59V45M54.9 61.5V47.5M82.9 56.5V42.5M96.9 54V40M110.9 59V45M124.9 64V50M154.9 66.5V52.5M178.9 61.5V47.5"/>
+    <path d="M20.9 103V89M40.9 108V94M58.9 100.5V86.5M86.9 105.5V91.5M106.9 110.5V96.5M124.9 103V89M162.9 98V84M186.9 105.5V91.5"/>
+  </g>
+  <g stroke="#5c4a6a" stroke-width="2">
+    <path d="M16.9 8.5H30.9M44.9 1H58.9M84.9 11H102.9M96.9 40H124.9M40.9 94H58.9"/>
+  </g>
+</svg>

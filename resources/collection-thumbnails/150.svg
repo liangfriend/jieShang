@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <rect width="64" height="64" fill="#0C0224"/>
+  
+  <defs>
+    <linearGradient id="sky150" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#0C0224"/><stop offset="70%" stop-color="#5A1470"/><stop offset="100%" stop-color="#FF3D8B"/></linearGradient>
+    <linearGradient id="sun150" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#FFF176"/><stop offset="55%" stop-color="#FFAB40"/><stop offset="100%" stop-color="#FF4F8B"/></linearGradient>
+  </defs>
+  <rect width="64" height="36" fill="url(#sky150)"/>
+  <circle cx="32" cy="30" r="14" fill="url(#sun150)"/>
+  <rect x="16" y="25" width="32" height="1.4" fill="#5A1470"/><rect x="16" y="29" width="32" height="2" fill="#5A1470"/><rect x="16" y="33" width="32" height="3" fill="#5A1470"/>
+  <path d="M0 36 L8 28 L14 33 L20 30 L24 36 Z M40 36 L46 29 L52 33 L58 27 L64 32 L64 36 Z" fill="#16052E" stroke="#FF5AE0" stroke-width="0.8"/>
+  <rect y="36" width="64" height="28" fill="#1A0433"/>
+  <g stroke="#FF3CD2" stroke-width="0.8" opacity="0.8">
+    <line x1="0" y1="40" x2="64" y2="40"/><line x1="0" y1="46" x2="64" y2="46"/><line x1="0" y1="55" x2="64" y2="55"/>
+    <line x1="32" y1="36" x2="32" y2="64"/><line x1="32" y1="36" x2="12" y2="64"/><line x1="32" y1="36" x2="52" y2="64"/>
+    <line x1="32" y1="36" x2="-8" y2="64"/><line x1="32" y1="36" x2="72" y2="64"/>
+  </g>
+  <rect x="10" y="6" width="6" height="26" rx="3" fill="#FF5AE0"/>
+  <rect x="48" y="10" width="6" height="20" rx="3" fill="#6F9DFF"/>
+  <rect x="48" y="44" width="6" height="12" rx="3" fill="#6FF6FF"/>
+  <line x1="0" y1="44" x2="64" y2="44" stroke="#FFD6F6" stroke-width="1.4"/>
+</svg>
