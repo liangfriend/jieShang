@@ -10,6 +10,8 @@ import {
   type AddTabState,
   type TabAddKind
 } from '../renderEditTabAddState'
+import ChronaxieGlyph from '../../components/ChronaxieGlyph.vue'
+import '../../addToolButtons.css'
 
 const props = defineProps<{
   stringCount: number
@@ -20,6 +22,7 @@ const model = defineModel<AddTabState>({ required: true })
 
 const showFret = computed(() => model.value.kind === 'normal' || model.value.kind === 'harmonic')
 const showRange = computed(() => model.value.kind === 'arpeggio' || model.value.kind === 'strumming')
+const glyphKind = computed(() => (model.value.kind === 'rest' ? 'rest' : 'note'))
 
 const regionStartDisplay = computed({
   get: () => model.value.regionStart + 1,
@@ -59,36 +62,42 @@ function setFret(fret: number) {
 
 <template>
   <div class="add-tab-state">
-    <div class="add-tab-state__row">
-      <span class="add-tab-state__label">{{ t('editor.addNote.add') }}</span>
-      <el-radio-group :model-value="model.kind" size="small" @change="setKind">
-        <el-radio-button
+    <div class="add-tool-row">
+      <div class="add-tool-group" :aria-label="t('editor.addNote.add')">
+        <button
           v-for="opt in TAB_ADD_KIND_OPTIONS"
           :key="opt.value"
-          :label="opt.value"
+          type="button"
+          class="add-tool-btn"
+          :class="{ 'is-active': model.kind === opt.value }"
+          @click="setKind(opt.value)"
         >
-          {{ t(`editor.addTab.kind.${opt.value}`) }}
-        </el-radio-button>
-      </el-radio-group>
-    </div>
-    <div class="add-tab-state__row">
-      <span class="add-tab-state__label">{{ t('editor.addNote.duration') }}</span>
-      <el-radio-group :model-value="model.chronaxie" size="small" @change="setChronaxie">
-        <el-radio-button v-for="value in CHRONAXIE_VALUES" :key="value" :label="value">
-          {{ resolveNoteDurationLabel(value) }}
-        </el-radio-button>
-      </el-radio-group>
-    </div>
-    <div v-if="showFret" class="add-tab-state__row">
-      <span class="add-tab-state__label">{{ t('editor.addTab.fret') }}</span>
-      <el-select :model-value="model.fret" size="small" style="width: 88px" @change="setFret">
-        <el-option
-          v-for="opt in TAB_FRET_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
-        />
-      </el-select>
+          {{ t(opt.labelKey) }}
+        </button>
+      </div>
+      <div class="add-tool-group" :aria-label="t('editor.addNote.duration')">
+        <button
+          v-for="value in CHRONAXIE_VALUES"
+          :key="value"
+          type="button"
+          class="add-tool-btn add-tool-btn--glyph"
+          :class="{ 'is-active': model.chronaxie === value }"
+          :title="resolveNoteDurationLabel(value)"
+          @click="setChronaxie(value)"
+        >
+          <ChronaxieGlyph :chronaxie="value" :kind="glyphKind" />
+        </button>
+      </div>
+      <div v-if="showFret" class="add-tool-group" :aria-label="t('editor.addTab.fret')">
+        <el-select :model-value="model.fret" size="small" style="width: 88px" @change="setFret">
+          <el-option
+            v-for="opt in TAB_FRET_OPTIONS"
+            :key="opt.value"
+            :label="opt.label"
+            :value="opt.value"
+          />
+        </el-select>
+      </div>
     </div>
     <div v-if="showRange" class="add-tab-state__range">
       <span class="add-tab-state__label">
@@ -107,27 +116,22 @@ function setFret(fret: number) {
 .add-tab-state {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px;
+  gap: 6px;
+  padding: 0;
 }
 
-.add-tab-state__row,
 .add-tab-state__range {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+  max-width: 280px;
 }
 
 .add-tab-state__label {
   flex: 0 0 auto;
   font-size: 12px;
-  color: #606266;
-}
-
-.add-tab-state__range {
-  align-items: stretch;
-  flex-direction: column;
+  color: var(--ec-text-soft, #606266);
 }
 
 .add-tab-state__range :deep(.el-slider) {

@@ -9,7 +9,7 @@ import {
   type MusicXmlExportTarget
 } from '@deciphony/extensions/dr-musicxml-transfer'
 import { midiFileToMusicScore, musicScoreToMidi } from '@deciphony/extensions/dr-midi-transfer'
-import { DEFAULT_SCORE_GD_SLOT_H, DEFAULT_SCORE_T_SLOT_H } from '@renderer/utils/scoreGdSlotHeight'
+import { DEFAULT_SCORE_T_SLOT_H, SCORE_LYRICS_RESERVE_H } from '@renderer/utils/scoreGdSlotHeight'
 import { convertScoreNotationType } from '@renderer/utils/scoreNotationTransfer'
 
 /** 与编辑器新建模板一致的谱面宽度 */
@@ -39,9 +39,13 @@ export type MusicXmlExportResult = {
   filePath?: string
 }
 
+/** music_score：renderer 打谱；cl_sheet：和弦弹唱谱 */
+export type ScoreType = 'music_score' | 'cl_sheet'
+
 export type ScoreListItem = {
   id: number
   name: string
+  type?: ScoreType
   thumbnail?: string | null
   created_at?: string
   updated_at?: string
@@ -50,6 +54,7 @@ export type ScoreListItem = {
 export type ScoreRecord = {
   id: number
   name: string
+  type?: ScoreType
   data: string
   thumbnail?: string | null
 }
@@ -59,8 +64,16 @@ export function displayScoreName(name?: string | null): string {
   return trimmed ? trimmed : '？'
 }
 
-export async function searchScoresFromDatabase(keyword = ''): Promise<ScoreListItem[]> {
-  const res = await window.api.score.searchByName(keyword)
+export function isClSheetRecord(record: { type?: ScoreType | null }): boolean {
+  return record.type === 'cl_sheet'
+}
+
+/** type 缺省查全部；用 MusicScore 的地方传 'music_score' */
+export async function searchScoresFromDatabase(
+  keyword = '',
+  type?: ScoreType
+): Promise<ScoreListItem[]> {
+  const res = await window.api.score.searchByName(keyword, type)
   if (!res.success || !Array.isArray(res.data)) return []
   return res.data as ScoreListItem[]
 }
@@ -155,9 +168,8 @@ export async function importMidiFromDisk(): Promise<{
   const fileName = result.fileName ?? 'imported.mid'
   const file = new File([result.content as BlobPart], fileName, { type: 'audio/midi' })
   const { musicScore, warnings } = await midiFileToMusicScore(file, { width: EDITOR_SCORE_WIDTH })
-  // 库只按谱表间距估算高度，不含本应用的标题区（t）和每行歌词区（g-d），不补会截掉末尾几行
-  musicScore.height +=
-    DEFAULT_SCORE_T_SLOT_H + musicScore.grandStaffs.length * DEFAULT_SCORE_GD_SLOT_H
+  // 库只按谱表间距估算高度，不含本应用的标题区（t）和末尾歌词，不补会截掉最后一行
+  musicScore.height += DEFAULT_SCORE_T_SLOT_H + SCORE_LYRICS_RESERVE_H
   return { musicScore, fileName, warnings }
 }
 
@@ -188,7 +200,7 @@ export async function saveScoreToDatabase(
     return res.data as ScoreRecord
   }
 
-  const res = await window.api.score.create(payload)
+  const res = await window.api.score.create({ ...payload, type: 'music_score' })
   if (!res.success || !res.data) {
     throw new Error('曲谱保存失败')
   }

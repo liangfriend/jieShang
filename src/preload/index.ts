@@ -13,6 +13,7 @@ import { imageInvoke } from './invoke/image'
 import { videoInvoke } from './invoke/video'
 import { guitarChordInvoke } from './invoke/guitarChord'
 import { drumMachineInvoke } from './invoke/drumMachine'
+import { customSymbolInvoke } from './invoke/customSymbol'
 import { omrInvoke } from './invoke/omr'
 
 const api = {}
@@ -28,6 +29,7 @@ if (process.contextIsolated) {
       video: videoInvoke,
       guitarChord: guitarChordInvoke,
       drumMachine: drumMachineInvoke,
+      customSymbol: customSymbolInvoke,
       omr: omrInvoke,
       collection: collectionInvoke,
       achievement: achievementInvoke,

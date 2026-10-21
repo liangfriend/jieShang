@@ -8,19 +8,22 @@ const { t } = useI18n()
 withDefaults(
   defineProps<{
     disabled?: boolean
+    /** 不传时为「结构按钮」 */
+    label?: string
   }>(),
   {
-    disabled: false
+    disabled: false,
+    label: undefined
   }
 )
 
-/** 结构编辑：小节 / 单谱表 / 复谱表增删按钮 + 歌词区；默认开启 */
+/** 编辑区显隐开关（结构按钮、歌词区等）；默认开启 */
 const enabled = defineModel<boolean>({ default: true })
 </script>
 
 <template>
   <label class="structure-edit" :class="{ 'structure-edit--disabled': disabled }">
-    <span class="structure-edit__label">{{ t('editor.toolbar.structureEdit') }}</span>
+    <span class="structure-edit__label">{{ label ?? t('editor.toolbar.structureEdit') }}</span>
     <el-switch v-model="enabled" :disabled="disabled" size="small" />
   </label>
 </template>

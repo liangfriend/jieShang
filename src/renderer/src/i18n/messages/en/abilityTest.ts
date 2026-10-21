@@ -16,6 +16,10 @@ export default {
     chordRecognition: {
       title: 'Chord recognition',
       desc: 'Hear a chord and choose its name'
+    },
+    notePractice: {
+      title: 'Practice mode',
+      desc: 'Customizable note-reading drill: one big note block at a time; play it right to move on'
     }
   }
 } as const

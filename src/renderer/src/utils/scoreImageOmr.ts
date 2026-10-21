@@ -4,7 +4,7 @@ import {
   createTimeSignature
 } from '@deciphony/extensions/dr-edit/score-builder'
 import type { OmrPageResult, OmrRecognizeResult } from '@renderer/types/omr'
-import { DEFAULT_SCORE_GD_SLOT_H, DEFAULT_SCORE_T_SLOT_H } from '@renderer/utils/scoreGdSlotHeight'
+import { DEFAULT_SCORE_T_SLOT_H, SCORE_LYRICS_RESERVE_H } from '@renderer/utils/scoreGdSlotHeight'
 
 export const SCORE_IMAGE_ACCEPT = '.png,.jpg,.jpeg,.webp,.bmp'
 
@@ -141,7 +141,7 @@ export function mergeOmrPages(pages: OmrPageResult[]): MusicScore {
     merged.height += score.height
   })
 
-  // 识别库按谱表行估算高度，不含本应用的标题区（t）和每行歌词区（g-d）
-  merged.height += DEFAULT_SCORE_T_SLOT_H + merged.grandStaffs.length * DEFAULT_SCORE_GD_SLOT_H
+  // 识别库按谱表行估算高度，不含本应用的标题区（t）和末尾歌词
+  merged.height += DEFAULT_SCORE_T_SLOT_H + SCORE_LYRICS_RESERVE_H
   return merged
 }

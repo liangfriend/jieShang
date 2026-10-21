@@ -37,6 +37,10 @@ function unusedDrumState() {
   return ref<AddDrumState>({ ...DEFAULT_ADD_DRUM_STATE })
 }
 
+function unusedTabFretKey(_fret: number) {
+  return false
+}
+
 /** 按曲谱类型分发到五线谱、简谱、吉他/尤克里里或鼓谱编辑控制器，并挂载右键菜单 */
 export function useRenderEdit(
   scoreData: Ref<MusicScore>,
@@ -49,15 +53,18 @@ export function useRenderEdit(
     : type === MusicScoreTypeEnum.DrumNotation
       ? Object.assign(useDrumRenderEdit(scoreData, options), {
           addTabState: unusedTabState(),
+          addTabFretByKey: unusedTabFretKey,
           stringCount: 0
         })
       : type === MusicScoreTypeEnum.NumberNotation
         ? Object.assign(useNumberNotationRenderEdit(scoreData, options), {
             addTabState: unusedTabState(),
+            addTabFretByKey: unusedTabFretKey,
             addDrumState: unusedDrumState()
           })
         : Object.assign(useStandardStaffRenderEdit(scoreData, options), {
             addTabState: unusedTabState(),
+            addTabFretByKey: unusedTabFretKey,
             addDrumState: unusedDrumState()
           })
 

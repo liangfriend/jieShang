@@ -24,48 +24,38 @@ export const DEFAULT_ADD_DRUM_STATE: AddDrumState = {
   dot: 0
 }
 
-export const DRUM_VOICE_OPTIONS: { value: DrumVoice; label: string }[] = [
-  { value: 'up', label: '一声部（向上）' },
-  { value: 'down', label: '二声部（向下）' }
+/** `labelKey` 为 i18n key，由组件 `t()` 翻译 */
+export const DRUM_VOICE_OPTIONS: { value: DrumVoice; labelKey: string }[] = [
+  { value: 'up', labelKey: 'editor.drum.voiceUp' },
+  { value: 'down', labelKey: 'editor.drum.voiceDown' }
 ]
 
-export const DRUM_ADD_KIND_OPTIONS: { value: DrumAddKind; label: string }[] = [
-  { value: 'note', label: '音符' },
-  { value: 'rest', label: '休止符' }
+export const DRUM_ADD_KIND_OPTIONS: { value: DrumAddKind; labelKey: string }[] = [
+  { value: 'note', labelKey: 'editor.addNote.note' },
+  { value: 'rest', labelKey: 'editor.addNote.rest' }
 ]
 
-export const DRUM_HEAD_OPTIONS: { value: DrumHeadTypeEnum; label: string }[] = [
-  { value: DrumHeadTypeEnum.Normal, label: '普通' },
-  { value: DrumHeadTypeEnum.Cross, label: '叉号' },
-  { value: DrumHeadTypeEnum.CircledCross, label: '叉号加圆' },
-  { value: DrumHeadTypeEnum.CircledSlash, label: '斜线加圆' },
-  { value: DrumHeadTypeEnum.Triangle, label: '三角形' },
-  { value: DrumHeadTypeEnum.Diamond, label: '棱形' }
+export const DRUM_HEAD_OPTIONS: { value: DrumHeadTypeEnum; labelKey: string }[] = [
+  { value: DrumHeadTypeEnum.Normal, labelKey: 'editor.drum.headType.normal' },
+  { value: DrumHeadTypeEnum.Cross, labelKey: 'editor.drum.headType.cross' },
+  { value: DrumHeadTypeEnum.CircledCross, labelKey: 'editor.drum.headType.circledCross' },
+  { value: DrumHeadTypeEnum.CircledSlash, labelKey: 'editor.drum.headType.circledSlash' },
+  { value: DrumHeadTypeEnum.Triangle, labelKey: 'editor.drum.headType.triangle' },
+  { value: DrumHeadTypeEnum.Diamond, labelKey: 'editor.drum.headType.diamond' }
 ]
 
-export const DRUM_DOT_OPTIONS: { value: 0 | 1 | 2; label: string }[] = [
-  { value: 0, label: '无' },
-  { value: 1, label: '单附点' },
-  { value: 2, label: '双附点' }
-]
-
-const CHRONAXIE_LABELS: Partial<Record<Chronaxie, string>> = {
-  256: '全音符',
-  128: '二分音符',
-  64: '四分音符',
-  32: '八分音符',
-  16: '十六分音符',
-  8: '三十二分音符',
-  4: '六十四分音符',
-  2: '一百二十八分音符'
-}
+export const DRUM_DOT_OPTIONS: { value: 0 | 1 | 2; labelKey: string }[] = ([0, 1, 2] as const).map(
+  (value) => ({ value, labelKey: `editor.note.augmentationDotCount.${value}` })
+)
 
 /** 音符 / 休止符时值：无全音符 / 二分音符（鼓谱上限为四分） */
-export const DRUM_CHRONAXIE_OPTIONS: { value: Chronaxie; label: string }[] = CHRONAXIE_VALUES.filter(
-  (value) => value <= DRUM_MAX_CHRONAXIE
-).map((value) => ({
+export const DRUM_CHRONAXIE_VALUES: Chronaxie[] = CHRONAXIE_VALUES.filter((value) => value <= DRUM_MAX_CHRONAXIE)
+
+export const DRUM_DOT_VALUES: (0 | 1 | 2)[] = [0, 1, 2]
+
+export const DRUM_CHRONAXIE_OPTIONS: { value: Chronaxie; labelKey: string }[] = DRUM_CHRONAXIE_VALUES.map((value) => ({
   value,
-  label: CHRONAXIE_LABELS[value] ?? String(value)
+  labelKey: `editor.note.durationValue.${value}`
 }))
 
 /** 超出的时值夹回四分 */

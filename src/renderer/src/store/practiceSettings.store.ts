@@ -17,6 +17,8 @@ export const usePracticeSettingsStore = defineStore('practiceSettings', () => {
   const hideScore = ref(false)
   /** 曲谱音量 0~1 */
   const scoreVolume = ref(PLAY_DEFAULT_VOLUME)
+  /** 虚拟钢琴（用户按键）音量 0~1，与曲谱音量独立 */
+  const pianoVolume = ref(PLAY_DEFAULT_VOLUME)
   /** 节拍器音量 0~1 */
   const metronomeVolume = ref(0.8)
   /** BPM */
@@ -52,6 +54,7 @@ export const usePracticeSettingsStore = defineStore('practiceSettings', () => {
     coverWaterfall,
     hideScore,
     scoreVolume,
+    pianoVolume,
     metronomeVolume,
     bpm,
     metronomeDuringPlay,

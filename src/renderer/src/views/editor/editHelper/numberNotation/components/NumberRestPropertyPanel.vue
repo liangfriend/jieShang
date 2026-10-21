@@ -14,6 +14,7 @@ import {
   setNotesNumberInfoRelativeX
 } from '../renderEditNumberHeadProperties'
 import NoteMarkPalette from '../../components/NoteMarkPalette.vue'
+import RhythmGroupEndField from '../../components/RhythmGroupEndField.vue'
 import PanelField from '../../components/panel/PanelField.vue'
 import PanelGroup from '../../components/panel/PanelGroup.vue'
 import PanelSegmented from '../../components/panel/PanelSegmented.vue'
@@ -86,6 +87,7 @@ const relativeX = computed({
         <PanelField :label="t('editor.note.beamConnection')">
           <PanelSegmented v-model="beamType" :options="options.beams(BEAM_TYPE_VALUES)" />
         </PanelField>
+        <RhythmGroupEndField :measure="editSlot.measure" :symbol="note" />
       </PanelGroup>
 
       <PanelGroup :title="t('editor.note.relativeX')">
@@ -94,7 +96,7 @@ const relativeX = computed({
     </template>
 
     <template #marks>
-      <NoteMarkPalette :host="note" :notation-type="musicScore.type" />
+      <NoteMarkPalette :host="note" :notation-type="musicScore.type" :music-score="musicScore" />
     </template>
   </PanelTabs>
 </template>

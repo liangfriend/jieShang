@@ -1,16 +1,26 @@
 import {
   DoubleNoteAffiliatedSymbolNameEnum,
-  MusicScoreTypeEnum,
   mirrorSlurData,
+  isNumberNotationSlur,
   numberNotationSlurGeom,
   slurVDomPatch,
   type DoubleNoteAffiliatedSymbol,
   type MusicScore,
+  type MusicScoreTypeEnum,
   type SlurMirror,
   type SlotData,
   type VDom
 } from '@deciphony/renderer'
 import { scoreWriteGateFor, type UpdateVDomFn } from './scoreWriteGate'
+
+/** 圆润造型（含未指定时按简谱）：用两端 + 中间上下把手；尖锐用起止方块 + controlPoint 圆点 */
+function slurUsesRoundedHandles(
+  vdom: VDom,
+  notationType?: MusicScoreTypeEnum,
+  style = vdom.special?.slur?.style
+): boolean {
+  return isNumberNotationSlur(notationType, style)
+}
 
 /** controlStart / controlEnd：简谱分裂连音线前段 / 后段各自的上下把手 */
 export type SlurHandleKind = 'start' | 'control' | 'end' | 'controlStart' | 'controlEnd'
@@ -87,19 +97,22 @@ function sameSlur(a: SlurMirror, b: SlurMirror): boolean {
     samePoint(a.relativeControlPoint, b.relativeControlPoint) &&
     a.thickness === b.thickness &&
     a.type === b.type &&
+    a.style === b.style &&
     samePoint(a.relativeTextPoint, b.relativeTextPoint)
   )
 }
 
-/** 与 slur.vue 一致：五线谱控制点在中点上方；简谱左右端控 x，control 为横线中点（上下平移） */
+/** 与 slur.vue 一致：尖锐可拖 controlPoint；圆润左右端控 x，中间上下平移 */
 export function computeSlurHandlePoints(
   vdom: VDom,
   notationType?: MusicScoreTypeEnum
 ): SlurHandlePoints | null {
   if (!isSlurVDom(vdom)) return null
-  const splitInfo = vdom.special?.slur as { split?: boolean; splitGap?: number } | undefined
-  if (notationType === MusicScoreTypeEnum.NumberNotation && splitInfo?.split === true) {
-    // 与 renderer slurGeom 的简谱分段一致：断开点 = 端点 ± splitGap，每段高度跟自己端点
+  const slur = vdom.special?.slur
+  const rounded = slurUsesRoundedHandles(vdom, notationType, slur?.style)
+  const splitInfo = slur as { split?: boolean; splitGap?: number } | undefined
+  if (rounded && splitInfo?.split === true) {
+    // 与 renderer slurGeom 的圆润分段一致：断开点 = 端点 ± splitGap，每段高度跟自己端点
     const s = vdom.startPoint
     const e = vdom.endPoint
     const gap = splitInfo.splitGap ?? 0
@@ -116,7 +129,7 @@ export function computeSlurHandlePoints(
       controlEnd: top(e, e.x - gap)
     }
   }
-  if (notationType === MusicScoreTypeEnum.NumberNotation) {
+  if (rounded) {
     const g = numberNotationSlurGeom(vdom)
     const midX = (g.x0 + g.x1) / 2
     return {
@@ -127,7 +140,7 @@ export function computeSlurHandlePoints(
   }
   const s = vdom.startPoint
   const e = vdom.endPoint
-  const relCtrl = vdom.special?.slur?.relativeControlPoint ?? { x: 0, y: 0 }
+  const relCtrl = slur?.relativeControlPoint ?? { x: 0, y: 0 }
   const defaultCx = (s.x + e.x) / 2
   const defaultCy = Math.min(s.y, e.y) - Math.max(8, Math.abs(e.x - s.x) * 0.2)
   return {
@@ -183,13 +196,13 @@ export function nextSlurGeomFromPointer(
 ): SlurMirror | null {
   const prev = vdom.special?.slur
   if (!prev) return null
-  const jianpu = notationType === MusicScoreTypeEnum.NumberNotation
+  const rounded = slurUsesRoundedHandles(vdom, notationType, prev.style)
   const next = cloneSlur(prev)
 
   if (session.handle === 'start') {
     next.relativeStartPoint = {
       x: svgX - session.baseStart.x,
-      y: jianpu ? next.relativeStartPoint.y : svgY - session.baseStart.y
+      y: rounded ? next.relativeStartPoint.y : svgY - session.baseStart.y
     }
     return next
   }
@@ -197,12 +210,12 @@ export function nextSlurGeomFromPointer(
   if (session.handle === 'end') {
     next.relativeEndPoint = {
       x: svgX - session.baseEnd.x,
-      y: jianpu ? next.relativeEndPoint.y : svgY - session.baseEnd.y
+      y: rounded ? next.relativeEndPoint.y : svgY - session.baseEnd.y
     }
     return next
   }
 
-  if (jianpu && session.handle === 'controlStart') {
+  if (rounded && session.handle === 'controlStart') {
     next.relativeStartPoint = {
       x: next.relativeStartPoint.x,
       y: session.initialRelStartY + svgY - session.originSvgY
@@ -210,7 +223,7 @@ export function nextSlurGeomFromPointer(
     return next
   }
 
-  if (jianpu && session.handle === 'controlEnd') {
+  if (rounded && session.handle === 'controlEnd') {
     next.relativeEndPoint = {
       x: next.relativeEndPoint.x,
       y: session.initialRelEndY + svgY - session.originSvgY
@@ -218,8 +231,8 @@ export function nextSlurGeomFromPointer(
     return next
   }
 
-  if (jianpu) {
-    // 简谱高度 = 两端 relative y 的均值：同步平移两者
+  if (rounded) {
+    // 圆润高度 = 两端 relative y 的均值：同步平移两者
     const dy = svgY - session.originSvgY
     next.relativeStartPoint = {
       x: next.relativeStartPoint.x,
@@ -254,7 +267,9 @@ function commitSlurGeom(musicScore: MusicScore, slurId: string, geom: SlurMirror
     relativeControlPoint: pt(geom.relativeControlPoint),
     thickness: geom.thickness,
     ...(geom.type != null ? { type: geom.type } : {}),
-    ...(geom.relativeTextPoint ? { relativeTextPoint: pt(geom.relativeTextPoint) } : {})
+    ...(geom.relativeTextPoint ? { relativeTextPoint: pt(geom.relativeTextPoint) } : {}),
+    // 拖拽只改几何，保留造型（圆润 / 尖锐）
+    ...((geom.style ?? current?.style) != null ? { style: geom.style ?? current?.style } : {})
   } as NonNullable<DoubleNoteAffiliatedSymbol['data']['slur']>
 }
 

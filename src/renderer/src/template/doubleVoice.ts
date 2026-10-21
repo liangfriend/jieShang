@@ -21,20 +21,22 @@ function createDoubleVoiceGrandStaff() {
   const bassStaff = createSingleStaff({ withDefaultMeasure: false })
 
   for (let i = 0; i < MEASURES_PER_STAFF; i++) {
-    trebleStaff.measures.push(
-      createMeasure(
-        i === 0
-          ? { clef: ClefTypeEnum.Treble, timeSignature: TimeSignatureTypeEnum['4_4'] }
-          : {}
-      )
+    const treble = createMeasure(
+      i === 0
+        ? { clef: ClefTypeEnum.Treble, timeSignature: TimeSignatureTypeEnum['4_4'] }
+        : {}
     )
-    bassStaff.measures.push(
-      createMeasure(
-        i === 0
-          ? { clef: ClefTypeEnum.Bass, timeSignature: TimeSignatureTypeEnum['4_4'] }
-          : {}
-      )
+    const bass = createMeasure(
+      i === 0
+        ? { clef: ClefTypeEnum.Bass, timeSignature: TimeSignatureTypeEnum['4_4'] }
+        : {}
     )
+    if (i === 0) {
+      delete treble.barline_f
+      delete bass.barline_f
+    }
+    trebleStaff.measures.push(treble)
+    bassStaff.measures.push(bass)
   }
 
   grandStaff.staves.push(trebleStaff, bassStaff)

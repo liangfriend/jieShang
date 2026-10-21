@@ -17,7 +17,7 @@ import singleVoiceDrumTemplate from '@renderer/template/singleVoiceDrum'
 import { hasGrandStaffSingleStaffMismatch } from '@deciphony/extensions/score-util'
 import i18n from '@renderer/i18n'
 import { useDataStore } from '@renderer/store/data.store'
-import { loadScoreFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper'
+import { isClSheetRecord, loadScoreFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper'
 import { CUR_PLAY_SCORE_TEMP_ID, EDIT_NEW_SCORE_TEMP_ID } from '@renderer/constant'
 import {
   applyScoreStaffSpacing,
@@ -91,12 +91,23 @@ function stripNumberNotationMeasureHeaders(score: MusicScore): void {
   }
 }
 
+/** 模版每行单谱表的第一小节默认不要前置小节线 */
+function stripFirstMeasureFrontBarline(score: MusicScore): void {
+  for (const grandStaff of score.grandStaffs ?? []) {
+    for (const staff of grandStaff.staves ?? []) {
+      const first = staff.measures?.[0]
+      if (first) delete first.barline_f
+    }
+  }
+}
+
 function cloneTemplateWithSpacingDefaults(template: MusicScore): MusicScore {
   const score = JSON.parse(JSON.stringify(template)) as MusicScore
   const layout = loadScoreLayoutDefaults()
   applyScoreStaffSpacing(score, layout)
   ensureScoreSlotHeights(score, layout)
   stripNumberNotationMeasureHeaders(score)
+  stripFirstMeasureFrontBarline(score)
   return score
 }
 
@@ -197,7 +208,7 @@ export async function loadScoreFromRoute(
   const scoreId = resolveScoreId(route.query.scoreId)
   if (scoreId) {
     const record = await loadScoreFromDatabase(scoreId)
-    if (!record?.data) {
+    if (!record?.data || isClSheetRecord(record)) {
       ElMessage.error(i18n.global.t('common.scoreLoadFailed'))
       return null
     }
@@ -264,9 +275,11 @@ export async function guardSingleLineModeEnter(
 
 export const SCORE_SLOT_CONFIG = {
   'g-l': { w: 0 },
-  // s-l / s-r 宽度、g-d / t 高度由 createScoreLyricsExtension 按 musicScore.data 覆盖；此处为静态回退
+  // s-l / s-r 宽度、t 高度由 createScoreLyricsExtension 按 musicScore.data 覆盖；此处为静态回退
   's-l': { w: DEFAULT_SCORE_S_L_SLOT_W },
   's-r': { w: DEFAULT_SCORE_S_R_SLOT_W },
+  // 歌词挂 s-d，高度 0 覆盖扩展默认，歌词往下画进单谱表下外边距
   's-d': { h: 0 },
+  'g-d': { h: 0 },
   t: { h: DEFAULT_SCORE_T_SLOT_H }
 } as const

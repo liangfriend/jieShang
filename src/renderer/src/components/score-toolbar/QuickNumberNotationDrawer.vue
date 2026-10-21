@@ -8,6 +8,7 @@ import {
 } from '@deciphony/extensions/dr-quick-numberNotation'
 import { ElMessage } from 'element-plus'
 import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { shortcutKey } from '@renderer/utils/shortcutKey'
 import { useI18n } from 'vue-i18n'
 import { resolveScoreKeySignature } from '@renderer/utils/scoreNotationTransfer'
 
@@ -98,7 +99,7 @@ function handleSync() {
 function onKeyDown(event: KeyboardEvent) {
   if (!visible.value) return
   if (!(event.ctrlKey || event.metaKey) || event.altKey || event.shiftKey) return
-  if (event.key.toLowerCase() !== 's') return
+  if (shortcutKey(event).toLowerCase() !== 's') return
   event.preventDefault()
   if (!event.repeat) handleUpdatePreview()
 }
@@ -163,6 +164,7 @@ onBeforeUnmount(() => {
           <textarea
             v-model="text"
             class="quick-input__textarea"
+            wrap="off"
             spellcheck="false"
             :placeholder="t('editor.quickInput.textPlaceholder')"
           />
@@ -336,6 +338,7 @@ onBeforeUnmount(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
   min-height: 0;
 }
 
@@ -358,6 +361,10 @@ onBeforeUnmount(() => {
   resize: none;
   outline: none;
   box-sizing: border-box;
+  /* 一个单谱表占一行，长行横向滚动而不是折行 */
+  white-space: pre;
+  overflow-wrap: normal;
+  overflow: auto;
 }
 
 .quick-input__textarea:focus {

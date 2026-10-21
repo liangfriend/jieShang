@@ -13,7 +13,6 @@ export default {
     },
     settings: {
       title: '練習設定',
-      desc: '練習の体験を調整します（機能は順次追加予定）',
       display: '表示',
       showNoteResult: '音符の判定をリアルタイム表示',
       showNoteResultHint: '正解・早い・遅い・弾き漏れを色分けして表示します（弾き漏れは赤）',
@@ -21,6 +20,8 @@ export default {
       coverWaterfallHint: 'かわいい背景画像でウォーターフォールを隠し、耳だけで練習します',
       volumeAndSpeed: '音量とテンポ',
       scoreVolume: '楽譜の音量',
+      pianoVolume: '仮想ピアノの音量',
+      pianoVolumeHint: '押した鍵盤（キーボード・マウス・MIDI 機器）の音です。楽譜の音量が 0 のときは鍵盤も消音されます',
       metronomeVolume: 'メトロノームの音量',
       bpm: 'BPM',
       metronomeDuringPlay: '再生中にメトロノームを鳴らす',

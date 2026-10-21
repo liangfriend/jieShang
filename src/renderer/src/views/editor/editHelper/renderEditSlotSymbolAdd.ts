@@ -1,6 +1,7 @@
 import type {Measure, MeasureNoteSlot, MusicScore, SingleStaff, SlotData} from '@deciphony/renderer'
 import {
   DoubleSlotAffiliatedSymbolNameEnum,
+  GuzhengLianTypeEnum,
   HairpinTypeEnum,
   SingleSlotAffiliatedSymbolNameEnum,
   TrillTypeEnum,
@@ -9,6 +10,7 @@ import {
 } from '@deciphony/renderer'
 import {
   createArpeggio,
+  createGuzhengLian,
   createHairpin,
   createPedal,
   createPitch,
@@ -20,7 +22,7 @@ import {
 } from '@deciphony/extensions/dr-edit/score-builder'
 
 import {ElMessage} from 'element-plus'
-import {findMeasureNoteIndex} from './asStaffOrNumber'
+import {locateMeasureNote, measureVoiceSlots, type MeasureVoiceKey} from './asStaffOrNumber'
 import {
   addSlotAffiliatedSymbol,
   listSlotAffiliatedOnSlot,
@@ -57,6 +59,8 @@ type SlotAnchor = {
   singleStaff: SingleStaff
   measure: Measure
   measureIndex: number
+  /** 鼓谱声部；跨度只在同一声部内数列 */
+  voice: MeasureVoiceKey
   noteIndex: number
   slot: MeasureNoteSlot
   /** 必须是 MeasureNoteSlot.id（附属符号锚定槽 id，不是 symbol.id） */
@@ -72,10 +76,10 @@ function resolveSlotAnchor(editSlot: SlotData): SlotAnchor | null {
   const measureIndex = singleStaff.measures.indexOf(measure)
   if (measureIndex < 0) return null
 
-  const noteIndex = findMeasureNoteIndex(measure, note)
+  const {voice, index: noteIndex} = locateMeasureNote(measure, note)
   if (noteIndex < 0) return null
 
-  const measureSlot = measure.notes[noteIndex]!
+  const measureSlot = measureVoiceSlots(measure, voice)[noteIndex]!
   const h = typeof (measure as Measure & {h?: number}).h === 'number'
     ? (measure as Measure & {h?: number}).h!
     : DEFAULT_MEASURE_HEIGHT
@@ -85,6 +89,7 @@ function resolveSlotAnchor(editSlot: SlotData): SlotAnchor | null {
     singleStaff,
     measure,
     measureIndex,
+    voice,
     noteIndex,
     slot: measureSlot,
     slotId: measureSlot.id,
@@ -98,6 +103,7 @@ export function findSlotIdAtRightOffset(
   startMeasureIndex: number,
   startNoteIndex: number,
   slotsToRight: number,
+  voice: MeasureVoiceKey = null,
 ): string | null {
   if (slotsToRight <= 0) return null
 
@@ -109,14 +115,14 @@ export function findSlotIdAtRightOffset(
     if (measureIndex > startMeasureIndex + 1) return null
     if (measureIndex >= singleStaff.measures.length) return null
 
-    const measure = singleStaff.measures[measureIndex]!
-    if (noteIndex >= measure.notes.length) {
+    const slots = measureVoiceSlots(singleStaff.measures[measureIndex]!, voice)
+    if (noteIndex >= slots.length) {
       measureIndex += 1
       noteIndex = 0
       continue
     }
 
-    const slot = measure.notes[noteIndex]!
+    const slot = slots[noteIndex]!
     noteIndex += 1
     remaining -= 1
     if (remaining === 0) return slot.id
@@ -185,7 +191,7 @@ export function listPitchesStartingAt(
       PITCH_NAMES.has(String(sym.name))
       && 'startId' in sym
       && sym.startId === startId
-      && sym.data?.pitch != null,
+      && (sym.data as DoubleSlotAffiliatedSymbol['data'] | undefined)?.pitch != null,
   )
 }
 
@@ -262,6 +268,7 @@ export function resolveDoubleSlotIds(
     anchor.measureIndex,
     anchor.noteIndex,
     span - 1,
+    anchor.voice,
   )
   if (!endId) return null
   return {startId: anchor.slotId, endId}
@@ -305,9 +312,10 @@ export function tryAddPitchFromNote(
 const LINE_NAMES = new Set<string>([
   DoubleSlotAffiliatedSymbolNameEnum.Trill_line,
   DoubleSlotAffiliatedSymbolNameEnum.Hairpin,
+  DoubleSlotAffiliatedSymbolNameEnum.Guzheng_lian,
 ])
 
-/** 颤音线 / 渐强渐弱（起点为当前列） */
+/** 颤音线 / 渐强渐弱 / 古筝连续指法（起点为当前列） */
 export function listLinesStartingAt(
   musicScore: MusicScore,
   startId: string,
@@ -348,6 +356,20 @@ export function tryAddHairpinFromNote(
   return true
 }
 
+/** 从当前列向右跨 span 列添加古筝连续指法（连托 / 连劈 / 连抹 …） */
+export function tryAddGuzhengLianFromNote(
+  editSlot: SlotData,
+  span: SlotSymbolSpan,
+  type: GuzhengLianTypeEnum,
+): boolean {
+  const ids = resolveDoubleSlotIds(editSlot, span)
+  if (!ids) return false
+  const musicScore = editSlot.musicScore as MusicScore
+  ensureAffiliatedSymbols(musicScore)
+  musicScore.affiliatedSymbols.push(createGuzhengLian({...ids, type}))
+  return true
+}
+
 export function pitchSymbolLabelKey(sym: DoubleSlotAffiliatedSymbol): 'addPitchUp' | 'addPitchDown' {
   return sym.name === DoubleSlotAffiliatedSymbolNameEnum.Pitch_down
     ? 'addPitchDown'
@@ -358,7 +380,7 @@ export function pitchSymbolLabelKey(sym: DoubleSlotAffiliatedSymbol): 'addPitchU
 export function resolveSelectedSlotId(editSlot: SlotData): string | null {
   const {measure, note} = editSlot
   if (!measure || !note) return null
-  const noteIndex = findMeasureNoteIndex(measure, note)
-  if (noteIndex < 0) return null
-  return measure.notes[noteIndex]!.id
+  const {voice, index} = locateMeasureNote(measure, note)
+  if (index < 0) return null
+  return measureVoiceSlots(measure, voice)[index]!.id
 }

@@ -1,4 +1,10 @@
-import {DoubleNoteAffiliatedSymbolNameEnum, isNoteRest, isNoteSymbol} from '@deciphony/renderer'
+import {
+  DoubleNoteAffiliatedSymbolNameEnum,
+  SlurStyleEnum,
+  getMeasureSlots,
+  isNoteRest,
+  isNoteSymbol
+} from '@deciphony/renderer'
 import type {
   DoubleNoteAffiliatedSymbol,
   MusicScore,
@@ -10,6 +16,7 @@ import type {
 import {
   locateNotesInfoById,
   locateNotesNumberInfoById,
+  locateTabNoteInfoById,
 } from '@deciphony/extensions/dr-edit/score-builder'
 import {isNoteNumberSlot, isSlotRestLike} from '@deciphony/extensions/dr-edit/score-builder'
 import {asStaffOrNumber} from './asStaffOrNumber'
@@ -18,8 +25,45 @@ export const DEFAULT_SLUR_THICKNESS = 4
 export const SLUR_THICKNESS_MIN = 2
 export const SLUR_THICKNESS_MAX = 12
 
+/** musicScore.data 上的连音线造型偏好；缺省 / 删除表示「默认」（按谱种） */
+export const SCORE_DATA_SLUR_STYLE = 'slurStyle'
+
+/** 工具栏 / 属性栏：默认 | 圆润 | 尖锐 */
+export type SlurStylePreference = SlurStyleEnum | 'default'
+
+export const SLUR_STYLE_PREFERENCE_VALUES: readonly SlurStylePreference[] = [
+  'default',
+  SlurStyleEnum.Rounded,
+  SlurStyleEnum.Sharp,
+]
+
 export type SlurSpan = 2 | 3 | 4
 export const SLUR_SPAN_OPTIONS: SlurSpan[] = [2, 3, 4]
+
+function ensureMusicScoreData(score: MusicScore): Record<string, unknown> {
+  const raw = score as MusicScore & {data?: Record<string, unknown>}
+  if (!raw.data || typeof raw.data !== 'object') raw.data = {}
+  return raw.data
+}
+
+function asSlurStylePreference(value: unknown): SlurStylePreference {
+  if (value === SlurStyleEnum.Rounded || value === 'rounded') return SlurStyleEnum.Rounded
+  if (value === SlurStyleEnum.Sharp || value === 'sharp') return SlurStyleEnum.Sharp
+  return 'default'
+}
+
+/** 读曲谱默认连音线造型；旧谱无字段 → 默认 */
+export function readScoreSlurStyle(score: MusicScore): SlurStylePreference {
+  const data = (score as MusicScore & {data?: Record<string, unknown>}).data
+  return asSlurStylePreference(data?.[SCORE_DATA_SLUR_STYLE])
+}
+
+/** 写入曲谱默认连音线造型；选「默认」时删除字段以兼容旧谱 */
+export function applyScoreSlurStyle(score: MusicScore, preference: SlurStylePreference): void {
+  const data = ensureMusicScoreData(score)
+  if (preference === 'default') delete data[SCORE_DATA_SLUR_STYLE]
+  else data[SCORE_DATA_SLUR_STYLE] = preference
+}
 
 export type SlurHandleKind = 'start' | 'control' | 'end'
 
@@ -60,6 +104,26 @@ export function setSlurThickness(sym: DoubleNoteAffiliatedSymbol, thickness: num
   ensureSlurData(sym).thickness = clamped
 }
 
+/** 单条连音线造型；无 style → 默认（按谱种） */
+export function getSlurStyle(sym: DoubleNoteAffiliatedSymbol): SlurStylePreference {
+  return asSlurStylePreference(ensureSlurData(sym).style)
+}
+
+export function setSlurStyle(sym: DoubleNoteAffiliatedSymbol, preference: SlurStylePreference): void {
+  const slur = ensureSlurData(sym)
+  if (preference === 'default') delete slur.style
+  else slur.style = preference
+}
+
+/** 新建连音线时套用曲谱 data.slurStyle；默认则不写 style */
+export function applyScoreSlurStyleToNewSlur(
+  score: MusicScore,
+  sym: DoubleNoteAffiliatedSymbol,
+): void {
+  const preference = readScoreSlurStyle(score)
+  if (preference !== 'default') setSlurStyle(sym, preference)
+}
+
 /** 控制点水平居中于起止点之间（relativeControlPoint.x = 0），y 不变 */
 export function centerSlurControlPoint(sym: DoubleNoteAffiliatedSymbol): void {
   const slur = ensureSlurData(sym)
@@ -70,7 +134,11 @@ export type SlurApplyScope = 'measure' | 'singleStaff' | 'grandStaff' | 'score'
 export const SLUR_APPLY_SCOPES: SlurApplyScope[] = ['measure', 'singleStaff', 'grandStaff', 'score']
 
 function locateSlurStart(musicScore: MusicScore, startId: string) {
-  return locateNotesInfoById(musicScore, startId) ?? locateNotesNumberInfoById(musicScore, startId)
+  return (
+    locateNotesInfoById(musicScore, startId)
+    ?? locateNotesNumberInfoById(musicScore, startId)
+    ?? locateTabNoteInfoById(musicScore, startId)
+  )
 }
 
 /** 把 source 的起点 / 终点 / 控制点相对值复制到范围内（按起点音符所在位置判断）的其它连音线；返回改动数 */
@@ -203,10 +271,10 @@ function findPreviousNoteInfoId(
       if (!prev) return null
       staff = prev.singleStaff
       mi = prev.measureIndex
-      ni = staff.measures[mi]!.notes.length - 1
+      ni = getMeasureSlots(staff.measures[mi]!).length - 1
     }
 
-    const slot = asStaffOrNumber(staff.measures[mi]!.notes[ni]!)
+    const slot = asStaffOrNumber(getMeasureSlots(staff.measures[mi]!)[ni]!)
     if (isRestSlot(slot)) return null
     const infoId = firstInfoIdOfSlot(slot)
     if (infoId) return infoId
@@ -226,9 +294,9 @@ function findNextNoteInfoId(
   let ni = noteIndex + 1
 
   for (;;) {
-    const measure = staff.measures[mi]!
+    const slots = getMeasureSlots(staff.measures[mi]!)
 
-    if (ni >= measure.notes.length) {
+    if (ni >= slots.length) {
       const next = adjacentStaffMeasure(musicScore, staff, mi, 1)
       if (!next) return null
       staff = next.singleStaff
@@ -237,7 +305,7 @@ function findNextNoteInfoId(
       continue
     }
 
-    const slot = asStaffOrNumber(measure.notes[ni]!)
+    const slot = asStaffOrNumber(slots[ni]!)
     if (isRestSlot(slot)) return null
     const infoId = firstInfoIdOfSlot(slot)
     if (infoId) return infoId

@@ -1,18 +1,21 @@
 <script lang="ts" setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import type { CropArea, SCropRect, SImageElement, SScore } from '@deciphony/work'
+import type { CropArea, SCropRect, SImageElement, SScore, STextElement } from '@deciphony/work'
 
 defineOptions({ name: 'WorkElementPropertyPanel' })
 
 export type WorkPropertyTarget =
   | { kind: 'score'; item: SScore }
   | { kind: 'image'; item: SImageElement }
+  | { kind: 'text'; item: STextElement }
 
 export type WorkFramePatch = Partial<Pick<SScore, 'x' | 'y' | 'width' | 'height' | 'rotation'>>
 
+export type WorkTextStylePatch = Partial<Pick<STextElement, 'fontSize' | 'color'>>
+
 export type WorkCropPayload = {
-  kind: WorkPropertyTarget['kind']
+  kind: 'score' | 'image'
   id: string
   area: CropArea
   keepFrame: boolean
@@ -42,6 +45,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   patch: [patch: WorkFramePatch]
+  'text-style': [patch: WorkTextStylePatch]
   crop: [payload: WorkCropPayload]
   'crop-by-grand-staff': [payload: WorkGrandStaffCropPayload]
   'clear-crop': [payload: { keepFrame: boolean }]
@@ -66,6 +70,7 @@ const item = computed(() => props.target.item)
 /** 裁剪源尺寸：图片 = 原始像素（未读取时为 null），曲谱 = musicScore.width/height */
 const sourceSize = computed<{ width: number; height: number } | null>(() => {
   const target = props.target
+  if (target.kind === 'text') return null
   if (target.kind === 'score') {
     const { width, height } = target.item.musicScore
     return { width: width || 1, height: height || 1 }
@@ -74,7 +79,21 @@ const sourceSize = computed<{ width: number; height: number } | null>(() => {
   return naturalWidth && naturalHeight ? { width: naturalWidth, height: naturalHeight } : null
 })
 
-const crop = computed<SCropRect | undefined>(() => item.value.crop)
+const crop = computed<SCropRect | undefined>(() =>
+  props.target.kind === 'text' ? undefined : props.target.item.crop
+)
+
+const TEXT_FONT_SIZE_MIN = 8
+const TEXT_FONT_SIZE_MAX = 200
+
+function onTextFontSize(value: number | undefined) {
+  if (value == null || !Number.isFinite(value)) return
+  emit('text-style', { fontSize: Math.min(TEXT_FONT_SIZE_MAX, Math.max(TEXT_FONT_SIZE_MIN, value)) })
+}
+
+function onTextColor(value: string | null) {
+  if (value) emit('text-style', { color: value })
+}
 
 /** 0=标题，1..n=复谱表；选项随当前曲谱变化 */
 const grandStaffBandOptions = computed(() => {
@@ -187,7 +206,7 @@ function onCropField(key: CropField, value: number | undefined | null) {
   }
   if (cropTimer) clearTimeout(cropTimer)
   cropTimer = null
-  if (isCurrentArea(area)) {
+  if (isCurrentArea(area) || props.target.kind === 'text') {
     pendingCrop = null
     return
   }
@@ -205,9 +224,33 @@ onBeforeUnmount(flushCrop)
     <h2 class="prop-panel__title">
       {{ t('work.props.title') }}
       <span class="prop-panel__kind">
-        {{ target.kind === 'score' ? t('work.props.score') : t('work.props.image') }}
+        {{ t(`work.props.${target.kind}`) }}
       </span>
     </h2>
+
+    <section v-if="target.kind === 'text'" class="panel">
+      <h3>{{ t('work.props.textStyle') }}</h3>
+      <label class="field">
+        <span>{{ t('work.toolbar.fontSize') }}</span>
+        <el-input-number
+          :model-value="target.item.fontSize ?? 24"
+          :min="TEXT_FONT_SIZE_MIN"
+          :max="TEXT_FONT_SIZE_MAX"
+          size="small"
+          controls-position="right"
+          @update:model-value="onTextFontSize($event)"
+        />
+      </label>
+      <label class="field field--switch">
+        <span>{{ t('work.toolbar.color') }}</span>
+        <el-color-picker
+          :model-value="target.item.color ?? '#303133'"
+          size="small"
+          @update:model-value="onTextColor($event)"
+        />
+      </label>
+      <p class="hint">{{ t('work.props.textHint') }}</p>
+    </section>
 
     <section class="panel">
       <h3>{{ t('work.props.frame') }}</h3>
@@ -267,14 +310,14 @@ onBeforeUnmount(flushCrop)
       </div>
     </section>
 
-    <section class="panel">
+    <section v-if="target.kind !== 'text'" class="panel">
       <h3>{{ t('work.props.info') }}</h3>
       <dl class="info">
         <template v-if="target.kind === 'image'">
           <dt>{{ t('work.props.assetName') }}</dt>
           <dd>{{ assetName || target.item.src }}</dd>
         </template>
-        <template v-else>
+        <template v-else-if="target.kind === 'score'">
           <dt>{{ t('work.props.vocal') }}</dt>
           <dd>{{ target.item.vocalPerformance?.name || t('work.props.none') }}</dd>
           <dt>{{ t('work.props.accompaniment') }}</dt>
@@ -287,7 +330,7 @@ onBeforeUnmount(flushCrop)
       </dl>
     </section>
 
-    <section class="panel">
+    <section v-if="target.kind !== 'text'" class="panel">
       <h3>{{ t('work.props.crop') }}</h3>
       <button
         type="button"

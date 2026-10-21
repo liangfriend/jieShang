@@ -44,6 +44,8 @@ export function useChordRecognitionQuiz() {
   const enabledQualities = ref<ChordQuality[]>([...CHORD_DEFAULT_QUALITIES])
   const soundRange = ref<AbsolutePitchSoundRange>('standard')
   const showPiano = ref(true)
+  /** 纯听感：出题时钢琴不标出和弦，出结果后再显示 */
+  const pureListening = ref(false)
   const totalRounds = ref(ABSOLUTE_PITCH_DEFAULT_ROUNDS)
   const countdownSec = ref(ABSOLUTE_PITCH_DEFAULT_COUNTDOWN_SEC)
 
@@ -142,6 +144,10 @@ export function useChordRecognitionQuiz() {
     showPiano.value = value
   }
 
+  function setPureListening(value: boolean) {
+    pureListening.value = value
+  }
+
   function setTotalRounds(value: number) {
     totalRounds.value = Math.min(
       ABSOLUTE_PITCH_MAX_ROUNDS,
@@ -220,7 +226,7 @@ export function useChordRecognitionQuiz() {
     selectedId.value = null
     lastRoundResult.value = null
     choices.value = buildChordChoices(chord, enabledQualities.value)
-    pianoKeyStates.value = buildChordQuestionKeyStates(chord.midis)
+    pianoKeyStates.value = pureListening.value ? [] : buildChordQuestionKeyStates(chord.midis)
     ringStatus.value = 'idle'
     countdownLeft.value = countdownSec.value
     roundStartedAt = performance.now()
@@ -254,7 +260,7 @@ export function useChordRecognitionQuiz() {
     const token = sessionToken
     try {
       await playStore.waitReady()
-      await playStore.ensureCollectionToneColorInitialized()
+      await playStore.resetCollectionToneColorToDefault()
     } catch {
       // 回退内置 piano
     }
@@ -281,6 +287,7 @@ export function useChordRecognitionQuiz() {
     enabledQualities,
     soundRange,
     showPiano,
+    pureListening,
     totalRounds,
     countdownSec,
     currentRound,
@@ -298,6 +305,7 @@ export function useChordRecognitionQuiz() {
     toggleQuality,
     setSoundRange,
     setShowPiano,
+    setPureListening,
     setTotalRounds,
     setCountdownSec,
     startTest,

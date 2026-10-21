@@ -1,5 +1,5 @@
 import type { MusicScore } from '@deciphony/renderer'
-import { readScoreSlotHeights } from '@renderer/utils/scoreSpacingDefaults'
+import { SCORE_LYRICS_RESERVE_H } from '@renderer/utils/scoreGdSlotHeight'
 
 /** 单行模式（练习/新手）下按单谱表行数对应的曲谱高度 */
 export function resolveSingleLineModeScoreHeight(staffCount: number): number {
@@ -17,10 +17,9 @@ export function countSingleStaffRows(score: MusicScore): number {
   return Math.max(1, max)
 }
 
-/** 单行模式曲谱高度 = 谱表区 + 该谱 data.gdSlotH 歌词区 */
+/** 单行模式曲谱高度 = 谱表区 + 最后一个单谱表下方的歌词预留 */
 export function applySingleLineModeScoreHeight(score: MusicScore): number {
-  const gdH = readScoreSlotHeights(score).gdSlotH
-  const height = resolveSingleLineModeScoreHeight(countSingleStaffRows(score)) + gdH
+  const height = resolveSingleLineModeScoreHeight(countSingleStaffRows(score)) + SCORE_LYRICS_RESERVE_H
   score.height = height
   return height
 }

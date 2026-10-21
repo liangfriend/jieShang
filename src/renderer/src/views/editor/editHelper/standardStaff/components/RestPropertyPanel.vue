@@ -12,6 +12,7 @@ import {
 } from '../renderEditRestProperties'
 import {readRelativeX} from '../renderEditFrameProperties'
 import NoteMarkPalette from '../../components/NoteMarkPalette.vue'
+import RhythmGroupEndField from '../../components/RhythmGroupEndField.vue'
 import PanelField from '../../components/panel/PanelField.vue'
 import PanelGroup from '../../components/panel/PanelGroup.vue'
 import PanelSegmented from '../../components/panel/PanelSegmented.vue'
@@ -62,6 +63,7 @@ const relativeX = computed({
         <PanelField :label="t('editor.note.augmentationDot')">
           <PanelSegmented v-model="augmentationDot" :options="options.dots(AUGMENTATION_DOT_VALUES)" />
         </PanelField>
+        <RhythmGroupEndField :measure="editSlot.measure" :symbol="rest" />
       </PanelGroup>
 
       <PanelGroup :title="t('editor.note.relativeX')">
@@ -70,7 +72,7 @@ const relativeX = computed({
     </template>
 
     <template #marks>
-      <NoteMarkPalette :host="rest" :notation-type="musicScore.type" />
+      <NoteMarkPalette :host="rest" :notation-type="musicScore.type" :music-score="musicScore" />
     </template>
   </PanelTabs>
 </template>

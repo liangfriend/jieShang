@@ -7,7 +7,12 @@ import type {
 } from '@deciphony/renderer'
 import { createSlur } from '@deciphony/extensions/dr-edit/score-builder'
 import { isSlotRestLike } from '@deciphony/extensions/dr-edit/score-builder'
-import { DEFAULT_SLUR_THICKNESS, adjacentStaffMeasure, setSlurThickness } from '../renderEditSlurProperties'
+import {
+  DEFAULT_SLUR_THICKNESS,
+  adjacentStaffMeasure,
+  applyScoreSlurStyleToNewSlur,
+  setSlurThickness,
+} from '../renderEditSlurProperties'
 import { findMeasureNoteIndex, asStaffOrNumber, isHostNoteNumberSlot } from '../asStaffOrNumber'
 
 import type { NumberHeadEditSlot } from './renderEditNumberHeadProperties'
@@ -142,6 +147,7 @@ export function tryAddSlurFromNumberHead(
     endId: endInfo.id,
   })
   setSlurThickness(slur, thickness)
+  applyScoreSlurStyleToNewSlur(musicScore, slur)
   musicScore.affiliatedSymbols.push(slur)
   return true
 }

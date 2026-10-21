@@ -16,6 +16,10 @@ export default {
     chordRecognition: {
       title: '和弦识别',
       desc: '听和弦，选择题选出和弦名称'
+    },
+    notePractice: {
+      title: '练习模式',
+      desc: '可自定义的识谱练习：一次只出一个大音符块，弹对了才进入下一个'
     }
   }
 } as const

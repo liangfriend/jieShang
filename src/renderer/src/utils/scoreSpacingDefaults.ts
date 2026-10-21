@@ -1,7 +1,7 @@
 import type { MusicScore } from '@deciphony/renderer'
 import { isFixedToneColorScore } from '@renderer/utils/isTabNotation'
 import {
-  DEFAULT_SCORE_GD_SLOT_H,
+  DEFAULT_SCORE_INSTRUMENT_NAME_FONT_FAMILY,
   DEFAULT_SCORE_LYRICS_FONT_FAMILY,
   DEFAULT_SCORE_LYRICS_FONT_SIZE,
   DEFAULT_SCORE_S_L_SLOT_W,
@@ -9,6 +9,7 @@ import {
   DEFAULT_SCORE_T_SLOT_H,
   DEFAULT_SCORE_TITLE_FONT_FAMILY,
   SCORE_DATA_GD_SLOT_H,
+  SCORE_DATA_INSTRUMENT_NAME_FONT_FAMILY,
   SCORE_DATA_LYRICS_FONT_FAMILY,
   SCORE_DATA_LYRICS_FONT_SIZE,
   SCORE_DATA_S_L_SLOT_W,
@@ -16,8 +17,6 @@ import {
   SCORE_DATA_SHOW_INSTRUMENT_NAME,
   SCORE_DATA_T_SLOT_H,
   SCORE_DATA_TITLE_FONT_FAMILY,
-  SCORE_GD_SLOT_H_MAX,
-  SCORE_GD_SLOT_H_MIN,
   SCORE_LYRICS_FONT_SIZE_MAX,
   SCORE_LYRICS_FONT_SIZE_MIN,
   SCORE_S_L_SLOT_W_MAX,
@@ -29,7 +28,7 @@ import {
 } from '@renderer/utils/scoreGdSlotHeight'
 import { normalizeScoreFontFamily } from '@renderer/utils/scoreFontOptions'
 
-/** 曲谱布局默认值（谱表边距 + 标题区 / 歌词区高度 + 左右留白）→ localStorage，仅影响新建 */
+/** 曲谱布局默认值（谱表边距 + 标题区高度 + 左右留白 + 字体字号）→ localStorage，仅影响新建 */
 export const SCORE_SPACING_STORAGE_KEY = 'jieShang.score.staffSpacingDefaults'
 
 export type ScoreStaffSpacing = {
@@ -42,8 +41,6 @@ export type ScoreStaffSpacing = {
 }
 
 export type ScoreSlotHeights = {
-  /** 歌词区 g-d 高度 */
-  gdSlotH: number
   /** 标题区 t 高度 */
   tSlotH: number
   /** 左留白 s-l 宽度 */
@@ -56,11 +53,13 @@ export type ScoreSlotHeights = {
   lyricsFontFamily: string
   /** 标题字体（CSS font-family；空 = 系统默认） */
   titleFontFamily: string
+  /** 音色名字体（CSS font-family；空 = 系统默认） */
+  instrumentNameFontFamily: string
 }
 
 export type ScoreLayoutDefaults = ScoreStaffSpacing & ScoreSlotHeights
 
-/** 内置默认：标题区 140、歌词区 140、左留白 80、右留白 50、歌词字号 13、上下内边距 20，其余 0 */
+/** 内置默认：标题区 140、左留白 80、右留白 50、歌词字号 13、上下内边距 20，其余 0 */
 export const BUILTIN_SCORE_STAFF_SPACING: ScoreStaffSpacing = {
   uSpace: 0,
   dSpace: 0,
@@ -72,13 +71,13 @@ export const BUILTIN_SCORE_STAFF_SPACING: ScoreStaffSpacing = {
 
 export const BUILTIN_SCORE_LAYOUT_DEFAULTS: ScoreLayoutDefaults = {
   ...BUILTIN_SCORE_STAFF_SPACING,
-  gdSlotH: DEFAULT_SCORE_GD_SLOT_H,
   tSlotH: DEFAULT_SCORE_T_SLOT_H,
   sLSlotW: DEFAULT_SCORE_S_L_SLOT_W,
   sRSlotW: DEFAULT_SCORE_S_R_SLOT_W,
   lyricsFontSize: DEFAULT_SCORE_LYRICS_FONT_SIZE,
   lyricsFontFamily: DEFAULT_SCORE_LYRICS_FONT_FAMILY,
-  titleFontFamily: DEFAULT_SCORE_TITLE_FONT_FAMILY
+  titleFontFamily: DEFAULT_SCORE_TITLE_FONT_FAMILY,
+  instrumentNameFontFamily: DEFAULT_SCORE_INSTRUMENT_NAME_FONT_FAMILY
 }
 
 export const SCORE_SPACING_MIN = 0
@@ -123,22 +122,16 @@ export function normalizeScoreStaffSpacing(
 export function normalizeScoreSlotHeights(
   partial: Partial<ScoreSlotHeights> | null | undefined,
   fallback: ScoreSlotHeights = {
-    gdSlotH: BUILTIN_SCORE_LAYOUT_DEFAULTS.gdSlotH,
     tSlotH: BUILTIN_SCORE_LAYOUT_DEFAULTS.tSlotH,
     sLSlotW: BUILTIN_SCORE_LAYOUT_DEFAULTS.sLSlotW,
     sRSlotW: BUILTIN_SCORE_LAYOUT_DEFAULTS.sRSlotW,
     lyricsFontSize: BUILTIN_SCORE_LAYOUT_DEFAULTS.lyricsFontSize,
     lyricsFontFamily: BUILTIN_SCORE_LAYOUT_DEFAULTS.lyricsFontFamily,
-    titleFontFamily: BUILTIN_SCORE_LAYOUT_DEFAULTS.titleFontFamily
+    titleFontFamily: BUILTIN_SCORE_LAYOUT_DEFAULTS.titleFontFamily,
+    instrumentNameFontFamily: BUILTIN_SCORE_LAYOUT_DEFAULTS.instrumentNameFontFamily
   }
 ): ScoreSlotHeights {
   return {
-    gdSlotH: normalizeSpacingValue(
-      partial?.gdSlotH,
-      fallback.gdSlotH,
-      SCORE_GD_SLOT_H_MAX,
-      SCORE_GD_SLOT_H_MIN
-    ),
     tSlotH: normalizeSpacingValue(
       partial?.tSlotH,
       fallback.tSlotH,
@@ -167,7 +160,11 @@ export function normalizeScoreSlotHeights(
       partial?.lyricsFontFamily,
       fallback.lyricsFontFamily
     ),
-    titleFontFamily: normalizeScoreFontFamily(partial?.titleFontFamily, fallback.titleFontFamily)
+    titleFontFamily: normalizeScoreFontFamily(partial?.titleFontFamily, fallback.titleFontFamily),
+    instrumentNameFontFamily: normalizeScoreFontFamily(
+      partial?.instrumentNameFontFamily,
+      fallback.instrumentNameFontFamily
+    )
   }
 }
 
@@ -193,13 +190,13 @@ export function loadScoreLayoutDefaults(): ScoreLayoutDefaults {
 
 export function loadScoreStaffSpacingDefaults(): ScoreStaffSpacing {
   const {
-    gdSlotH: _gd,
     tSlotH: _t,
     sLSlotW: _sl,
     sRSlotW: _sr,
     lyricsFontSize: _lf,
     lyricsFontFamily: _lff,
     titleFontFamily: _tff,
+    instrumentNameFontFamily: _iff,
     ...staff
   } = loadScoreLayoutDefaults()
   return staff
@@ -216,13 +213,13 @@ export function saveScoreStaffSpacingDefaults(spacing: ScoreStaffSpacing): Score
   const current = loadScoreLayoutDefaults()
   const next = saveScoreLayoutDefaults({ ...current, ...normalizeScoreStaffSpacing(spacing) })
   const {
-    gdSlotH: _gd,
     tSlotH: _t,
     sLSlotW: _sl,
     sRSlotW: _sr,
     lyricsFontSize: _lf,
     lyricsFontFamily: _lff,
     titleFontFamily: _tff,
+    instrumentNameFontFamily: _iff,
     ...staff
   } = next
   return staff
@@ -236,35 +233,35 @@ function ensureScoreData(score: MusicScore): Record<string, unknown> {
   return raw.data
 }
 
-/** 从 musicScore.data 读标题区 / 歌词区高度与左右留白；缺省回落软件默认（不写回） */
+/** 从 musicScore.data 读标题区高度、左右留白与字体字号；缺省回落软件默认（不写回） */
 export function readScoreSlotHeights(score: MusicScore): ScoreSlotHeights {
   const data = (score as MusicScore & { data?: Record<string, unknown> }).data
   const defaults = loadScoreLayoutDefaults()
   return normalizeScoreSlotHeights(
     {
-      gdSlotH: data?.[SCORE_DATA_GD_SLOT_H] as number | undefined,
       tSlotH: data?.[SCORE_DATA_T_SLOT_H] as number | undefined,
       sLSlotW: data?.[SCORE_DATA_S_L_SLOT_W] as number | undefined,
       sRSlotW: data?.[SCORE_DATA_S_R_SLOT_W] as number | undefined,
       lyricsFontSize: data?.[SCORE_DATA_LYRICS_FONT_SIZE] as number | undefined,
       lyricsFontFamily: data?.[SCORE_DATA_LYRICS_FONT_FAMILY] as string | undefined,
-      titleFontFamily: data?.[SCORE_DATA_TITLE_FONT_FAMILY] as string | undefined
+      titleFontFamily: data?.[SCORE_DATA_TITLE_FONT_FAMILY] as string | undefined,
+      instrumentNameFontFamily: data?.[SCORE_DATA_INSTRUMENT_NAME_FONT_FAMILY] as string | undefined
     },
     {
-      gdSlotH: defaults.gdSlotH,
       tSlotH: defaults.tSlotH,
       sLSlotW: defaults.sLSlotW,
       sRSlotW: defaults.sRSlotW,
       lyricsFontSize: defaults.lyricsFontSize,
       lyricsFontFamily: defaults.lyricsFontFamily,
-      titleFontFamily: defaults.titleFontFamily
+      titleFontFamily: defaults.titleFontFamily,
+      instrumentNameFontFamily: defaults.instrumentNameFontFamily
     }
   )
 }
 
 /**
- * 确保 data 上有 gdSlotH / tSlotH / sLSlotW / sRSlotW / lyricsFontSize（创建曲谱或打开旧谱时补齐）。
- * 已有合法值不覆盖。
+ * 确保 data 上有 tSlotH / sLSlotW / sRSlotW / lyricsFontSize 等（创建曲谱或打开旧谱时补齐），已有合法值不覆盖；
+ * gdSlotH 一律写 0（旧谱里存的歌词区高度不再生效）。
  */
 export function ensureScoreSlotHeights(
   score: MusicScore,
@@ -272,18 +269,8 @@ export function ensureScoreSlotHeights(
 ): ScoreSlotHeights {
   const data = ensureScoreData(score)
   const normalizedDefaults = normalizeScoreSlotHeights(defaults)
-  const gdRaw = data[SCORE_DATA_GD_SLOT_H]
+  data[SCORE_DATA_GD_SLOT_H] = 0
   const tRaw = data[SCORE_DATA_T_SLOT_H]
-  if (gdRaw == null || !Number.isFinite(Number(gdRaw))) {
-    data[SCORE_DATA_GD_SLOT_H] = normalizedDefaults.gdSlotH
-  } else {
-    data[SCORE_DATA_GD_SLOT_H] = normalizeSpacingValue(
-      gdRaw,
-      normalizedDefaults.gdSlotH,
-      SCORE_GD_SLOT_H_MAX,
-      SCORE_GD_SLOT_H_MIN
-    )
-  }
   if (tRaw == null || !Number.isFinite(Number(tRaw))) {
     data[SCORE_DATA_T_SLOT_H] = normalizedDefaults.tSlotH
   } else {
@@ -326,6 +313,14 @@ export function ensureScoreSlotHeights(
     data[SCORE_DATA_TITLE_FONT_FAMILY] = normalizeScoreFontFamily(
       data[SCORE_DATA_TITLE_FONT_FAMILY],
       normalizedDefaults.titleFontFamily
+    )
+  }
+  if (typeof data[SCORE_DATA_INSTRUMENT_NAME_FONT_FAMILY] !== 'string') {
+    data[SCORE_DATA_INSTRUMENT_NAME_FONT_FAMILY] = normalizedDefaults.instrumentNameFontFamily
+  } else {
+    data[SCORE_DATA_INSTRUMENT_NAME_FONT_FAMILY] = normalizeScoreFontFamily(
+      data[SCORE_DATA_INSTRUMENT_NAME_FONT_FAMILY],
+      normalizedDefaults.instrumentNameFontFamily
     )
   }
   return readScoreSlotHeights(score)
@@ -382,6 +377,15 @@ export function applyTitleFontFamily(score: MusicScore, value: string): void {
   )
 }
 
+/** 写入当前曲谱 data.instrumentNameFontFamily（音色名字体，随谱保存） */
+export function applyInstrumentNameFontFamily(score: MusicScore, value: string): void {
+  const data = ensureScoreData(score)
+  data[SCORE_DATA_INSTRUMENT_NAME_FONT_FAMILY] = normalizeScoreFontFamily(
+    value,
+    readScoreSlotHeights(score).instrumentNameFontFamily
+  )
+}
+
 /** 写入当前曲谱总宽度（随谱保存） */
 export function applyScoreWidth(score: MusicScore, value: number): void {
   score.width = normalizeSpacingValue(value, score.width, SCORE_WIDTH_MAX, SCORE_WIDTH_MIN)
@@ -433,32 +437,21 @@ export function applyScoreStaffSpacing(score: MusicScore, spacing: ScoreStaffSpa
   }
 }
 
-/** 把软件默认布局（谱表间距 + 标题 / 歌词区 + 左右留白 + 歌词字号）整体写入当前曲谱；不含页面宽高 */
+/** 把软件默认布局（谱表间距 + 标题区 + 左右留白 + 字体字号）整体写入当前曲谱；不含页面宽高 */
 export function applyScoreLayoutDefaults(
   score: MusicScore,
   defaults: ScoreLayoutDefaults = loadScoreLayoutDefaults()
 ): ScoreLayoutDefaults {
   const next = normalizeScoreLayoutDefaults(defaults)
   applyScoreStaffSpacing(score, next)
-  applyGdSlotHeight(score, next.gdSlotH)
   applyTSlotHeight(score, next.tSlotH)
   applySLSlotWidth(score, next.sLSlotW)
   applySRSlotWidth(score, next.sRSlotW)
   applyLyricsFontSize(score, next.lyricsFontSize)
   applyLyricsFontFamily(score, next.lyricsFontFamily)
   applyTitleFontFamily(score, next.titleFontFamily)
+  applyInstrumentNameFontFamily(score, next.instrumentNameFontFamily)
   return readScoreLayoutDraft(score)
-}
-
-/** 写入当前曲谱 data.gdSlotH（随谱保存） */
-export function applyGdSlotHeight(score: MusicScore, value: number): void {
-  const data = ensureScoreData(score)
-  data[SCORE_DATA_GD_SLOT_H] = normalizeSpacingValue(
-    value,
-    readScoreSlotHeights(score).gdSlotH,
-    SCORE_GD_SLOT_H_MAX,
-    SCORE_GD_SLOT_H_MIN
-  )
 }
 
 /** 写入当前曲谱 data.tSlotH（随谱保存） */

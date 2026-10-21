@@ -14,7 +14,7 @@ const SYLLABLE_LABEL: Record<NotesNumberInfo['syllable'], string> = {
 }
 
 function numberSvg(label: string, w = 14, h = 18): string {
-  return `<text x="${w / 2}" y="${h - 4}" text-anchor="middle" font-size="14" font-family="Arial,sans-serif" fill="#409eff">${label}</text>`
+  return `<text x="${w / 2}" y="${h - 4}" text-anchor="middle" font-size="14" font-family="Arial,sans-serif" fill="#f0709f">${label}</text>`
 }
 
 export function previewNumberSvgHtml(syllable: NotesNumberInfo['syllable']): string {

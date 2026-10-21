@@ -1,6 +1,8 @@
 import type {
   AugmentationDot,
   Chronaxie,
+  DrumNote,
+  DrumNotesInfo,
   NoteNumber,
   NotesInfo,
   NotesNumberInfo,
@@ -12,17 +14,18 @@ import type {
 import {BeamTypeEnum, isNoteSymbol} from '@deciphony/renderer'
 import {
   createAugmentationDot,
+  createDrumNotesInfo,
   createNotesInfo,
   createNotesNumberInfo,
 } from '@deciphony/extensions/dr-edit/score-builder'
-import {createTabNoteInfo, isTabHeadInfo, tabStringCount} from '@deciphony/extensions/dr-edit'
+import {createTabNoteInfo, isDrumNotesInfo, isTabHeadInfo, tabStringCount} from '@deciphony/extensions/dr-edit'
 import {asStaffOrNumber, isHostNoteNumberSlot} from './asStaffOrNumber'
 
 /** 前倚音 / 后倚音 */
 export type GracePlacement = 'before' | 'after'
 
-/** 倚音默认时值：八分 */
-export const DEFAULT_GRACE_CHRONAXIE: Chronaxie = 32
+/** 倚音默认时值：十六分 */
+export const DEFAULT_GRACE_CHRONAXIE: Chronaxie = 16
 
 function graceKey(placement: GracePlacement): 'graceNotes' | 'graceNotesAfter' {
   return placement === 'before' ? 'graceNotes' : 'graceNotesAfter'
@@ -129,6 +132,26 @@ export function tryAddTabGrace(
     chronaxie: DEFAULT_GRACE_CHRONAXIE,
     beamType: BeamTypeEnum.Combined,
     stringCount,
+  })
+  const key = graceKey(placement)
+  if (!note[key]) note[key] = []
+  note[key]!.push(grace)
+  return grace
+}
+
+/** 鼓谱：同线位、同符头追加前/后倚音 */
+export function tryAddDrumGrace(
+  editSlot: SlotData,
+  placement: GracePlacement,
+): DrumNotesInfo | null {
+  const note = editSlot.note as unknown as DrumNote | null
+  const info = editSlot.info as unknown
+  if (!note || !isDrumNotesInfo(info)) return null
+  const grace = createDrumNotesInfo({
+    region: info.region,
+    headType: info.headType,
+    chronaxie: DEFAULT_GRACE_CHRONAXIE,
+    beamType: BeamTypeEnum.Combined,
   })
   const key = graceKey(placement)
   if (!note[key]) note[key] = []

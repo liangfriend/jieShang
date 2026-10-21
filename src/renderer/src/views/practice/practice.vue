@@ -19,6 +19,7 @@ import {
   type PerformSequence,
   type PianoWaterfallPlaybackExpose
 } from '@renderer/utils/scorePagePlayback'
+import type { RenderMusicScoreHandler } from '@renderer/utils/scorePagePlayback/types'
 import type { NoteScoreResult } from '@renderer/types/types'
 import { mergeGrandStaff } from '@deciphony/extensions/score-util'
 import type {
@@ -27,6 +28,7 @@ import type {
 } from '@deciphony/extensions/dr-play-highlight'
 import { createScoreNoteFillMarker } from '@renderer/utils/scoreNoteFillMarker'
 import { usePlayStore } from '@renderer/store/play.store'
+import { pianoHoldTriggerOptions, pianoReleaseOptions } from '@renderer/utils/pianoEnvelope'
 import { useMidiStore } from '@renderer/store/midi.store'
 import { useMetronomeStore } from '@renderer/store/metronome.store'
 import { usePracticeSettingsStore } from '@renderer/store/practiceSettings.store'
@@ -227,9 +229,19 @@ function playItemForProgressData(data: unknown) {
   return item
 }
 
+function onPianoKeyDown(midi: number) {
+  if (settings.pianoVolume <= 0) return
+  void playStore.triggerNote(midi, pianoHoldTriggerOptions({ absoluteVolume: settings.pianoVolume }))
+}
+
+function onPianoKeyUp(midi: number) {
+  playStore.releaseNote(midi, pianoReleaseOptions())
+}
+
 function releaseDemoKeys() {
   for (const [midi, timer] of demoReleaseTimers) {
     clearTimeout(timer)
+    pianoWaterfallRef.value?.perfectReleaseNote?.(midi)
     midiStore.dispatchVirtualNote(midi, false)
   }
   demoReleaseTimers.clear()
@@ -238,6 +250,7 @@ function releaseDemoKeys() {
 /**
  * 松键按音符时值定时，不用播放器的 progressEnd：
  * 它在音频采样播完时才触发，采样比音符短会提前、同音连弹时释音尾巴会把后一个音一起松掉。
+ * 水柱走 perfectHitNote：按乐谱时间轴强制 perfect，不依赖瀑布流时钟与 MIDI 窗口。
  */
 function onDemoNoteStart(_progress: number, data: unknown) {
   if (!demoSession.value) return
@@ -247,14 +260,20 @@ function onDemoNoteStart(_progress: number, data: unknown) {
   const prevTimer = demoReleaseTimers.get(midi)
   if (prevTimer != null) {
     clearTimeout(prevTimer)
+    pianoWaterfallRef.value?.perfectReleaseNote?.(midi)
     midiStore.dispatchVirtualNote(midi, false)
   }
+  pianoWaterfallRef.value?.perfectHitNote?.(item.id)
   midiStore.dispatchVirtualNote(midi, true)
   const holdMs = unit256ToMs(item.duration, practiceBpm.value, playStore.beatUnit)
+  const endMs =
+    unit256ToMs(item.playTime + item.duration, practiceBpm.value, playStore.beatUnit) +
+    countInPrepareMs.value
   demoReleaseTimers.set(
     midi,
     setTimeout(() => {
       demoReleaseTimers.delete(midi)
+      pianoWaterfallRef.value?.perfectReleaseNote?.(midi, endMs)
       midiStore.dispatchVirtualNote(midi, false)
     }, holdMs)
   )
@@ -304,9 +323,9 @@ function handleNoteScore(
   noteMarker.setNoteResult(info, result)
 }
 
-function handleRenderMusicScore(list: VDom[]) {
+function handleRenderMusicScore(...[list, info]: Parameters<RenderMusicScoreHandler>) {
   vDomList.value = list
-  playback.handleRenderMusicScore?.(list)
+  playback.handleRenderMusicScore?.(list, info)
   noteMarker.onRenderMusicScore(list)
   staffDim.rebindAfterRender()
   scoreCenter.recenter()
@@ -468,6 +487,7 @@ onBeforeUnmount(() => {
   if (scrollProgressSubId) playback.unsubscribeProgressStart(scrollProgressSubId)
   if (demoProgressStartSubId) playStore.unsubscribeProgressStart(demoProgressStartSubId)
   releaseDemoKeys()
+  playStore.releaseAllHeldNotes()
   playback.handleStop()
   metronomeStore.stop()
   noteMarker.clearAll()
@@ -562,7 +582,10 @@ onBeforeUnmount(() => {
         :highlight-policy="settings.highlightPolicy"
         :show-note-result="settings.showNoteResult"
         :result-color-map="noteResultColor"
+        :demo-auto-perfect="demoSession"
         @score="handleNoteScore"
+        @key-down="onPianoKeyDown"
+        @key-up="onPianoKeyUp"
       />
 
       <div v-if="settings.coverWaterfall" class="practice-page__waterfall-cover">

@@ -14,6 +14,7 @@ import { isStrummingSelected } from './renderEditStrummingDrag'
 import { isPreludeBracketSelected } from './renderEditPreludeBracket'
 import { isLineSelected, lineKeyOfSymbol } from './renderEditLineDrag'
 import { isNoteAffiliatedSelected } from './renderEditNoteAffiliatedDrag'
+import { isMeasureAffiliatedSelected } from './renderEditMeasureAffiliatedDrag'
 import { isGraceNoteSelected } from './renderEditGraceNotes'
 import { isMeasureAddMode } from './standardStaff/renderEditSymbolAddAction'
 import { isBendSelected, isTabInfoSelected, isTabScore } from './tab/renderEditTabSelection'
@@ -31,8 +32,10 @@ export type PropertyPanelKind =
   | 'bracket'
   | 'pitch'
   | 'noteMark'
+  | 'measureMark'
   | 'trillLine'
   | 'hairpin'
+  | 'guzhengLian'
   | 'pedal'
   | 'arpeggio'
   | 'strumming'
@@ -52,8 +55,13 @@ export function resolvePropertyPanelKind(selected: SlotData | null): PropertyPan
   if (isBracketSelected(selected)) return 'bracket'
   // 单音符附属的 note / info 指向宿主，需先于音符头类判断
   if (isNoteAffiliatedSelected(selected)) return 'noteMark'
+  // 单小节附属的 measure 指向宿主小节，需先于小节类判断
+  if (isMeasureAffiliatedSelected(selected)) return 'measureMark'
   if (isLineSelected(selected)) {
-    return lineKeyOfSymbol(selected.self) === 'trill' ? 'trillLine' : 'hairpin'
+    const key = lineKeyOfSymbol(selected.self)
+    if (key === 'trill') return 'trillLine'
+    if (key === 'guzhengLian') return 'guzhengLian'
+    return 'hairpin'
   }
   if (isPedalSelected(selected)) return 'pedal'
   if (isArpeggioSelected(selected)) return 'arpeggio'

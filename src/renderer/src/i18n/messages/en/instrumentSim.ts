@@ -7,13 +7,16 @@ export default {
     score: {
       selectScore: 'Select score',
       noScore: 'No score selected',
+      selectClSheet: 'Chord & lyric sheet',
+      noClSheet: 'No chord & lyric sheet selected',
+      clSheetLoadFailed: 'Failed to load the chord & lyric sheet',
       play: 'Play',
       pause: 'Pause',
       stop: 'Stop'
     },
     guitar: {
       name: 'Guitar',
-      desc: 'Number keys for chords, pick strings on the right',
+      desc: 'Number keys for chords, numpad to pick strings',
       title: 'Guitar simulator',
       selectScore: 'Select score',
       noScore: 'No score selected',
@@ -28,9 +31,13 @@ export default {
       smoothEnvelope: 'Smooth',
       pickHint: 'Pick: numpad 1–6 or click a string (1 = thinnest). Smooth adds ADSR envelope.',
       chordHint: 'Chords: hold 1–9 to fret; release returns to open strings',
+      orientation: {
+        horizontal: 'Horizontal',
+        vertical: 'Vertical'
+      },
       guideTitle: 'Guitar guide',
       guideBody:
-        'Pick a score on the left and play it with the nylon-guitar tone. Main keys 1–9 switch shortcut chords (left-hand fretting). Numpad 1–6 (or click strings) plucks and sounds that string. Smooth adds an ADSR envelope on each pick. Bind chords in Shortcuts; edit shapes in Manage chords.'
+        'By default the guitar lies horizontally at the top with the current chord diagram to its right, and the score area is below. Switch to "Vertical" at the top to stand the guitar on the left and give the score area more room. The side panel picks and plays a score with the nylon-guitar tone, and can also show a chord & lyric sheet in the score area; scroll it when it does not fit. Hold main keys 1–9 to switch shortcut chords (left-hand fretting); release to return to open strings. Numpad 1–6 (or click the strings on the guitar) plucks and sounds that string. Smooth adds an ADSR envelope on each pick. Bind chords in Shortcuts; edit shapes in Manage chords.'
     },
     harmonica: {
       name: 'Harmonica',
@@ -173,7 +180,7 @@ export default {
       spaceHint: 'Hold Space to blow, release to stop; when a fingering has several octaves, the lowest one plays.',
       guideTitle: 'Piccolo guide',
       guideBody:
-        'The top shows a six-hole G piccolo (dizi); numbers above the holes are the traditional hole numbers (hole 6 is nearest the blow hole).\n"Head facing" follows real playing posture: facing left, the right hand grips reversed — Q W E P O I cover the six finger holes from the blow-hole end and A S D L K J half-cover; facing right, the flute is mirrored and the keys become O I U Q W E (cover) and L K J A S D (half). You can also hold left click on a hole to cover it, or right click to half-cover.\n"Breath" has two modes. Mic mode starts listening as soon as you open the page: blow into the microphone to sound, stop blowing to stop, and blow harder for louder; when a fingering has several octaves, more pressure gives the higher one — with two notes the switch is at 0.7, with three at 0.4 and 0.7. Space mode plays while you hold Space, always on the lowest octave.\nThe panel on the right shows the note for the current fingering (numbered notation and pitch name); the sounding note is highlighted in orange. Pick a score below to play it with the piccolo tone.',
+        'The top shows a six-hole G piccolo (dizi); numbers above the holes are the traditional hole numbers (hole 6 is nearest the blow hole).\n"Head facing" follows real playing posture: facing left, the right hand grips reversed — Q W E P O I cover the six finger holes from the blow-hole end and A S D L K J half-cover; facing right, the flute is mirrored and the keys become O I U Q W E (cover) and L K J A S D (half). You can also hold left click on a hole to cover it, or right click to half-cover.\n"Breath" has two modes. Mic mode starts listening as soon as you open the page: blow into the microphone to sound, stop blowing to stop, and blow harder for louder; when a fingering has several octaves, more pressure gives the higher one — with two notes the switch is at 0.7, with three at 0.4 and 0.7. Space mode plays while you hold Space, always on the lowest octave.\nThe panel on the right shows the note for the current fingering (number notation and pitch name); the sounding note is highlighted in orange. Pick a score below to play it with the piccolo tone.',
       models: {
         dizi6G: 'Six-hole, G'
       }

@@ -1,7 +1,15 @@
-import {getMeasureNoteList, getMeasureSlots, isNoteRest, isNoteSymbol, slotSymbol} from '@deciphony/renderer'
+import {
+    getMeasureNoteList,
+    getMeasureSlots,
+    isMeasureNoteVoices,
+    isNoteRest,
+    isNoteSymbol,
+    slotSymbol,
+} from '@deciphony/renderer'
 import type {
     GrandStaff,
     Measure,
+    MeasureNoteSlot,
     MusicScore,
     NoteNumber,
     NoteRest,
@@ -38,6 +46,7 @@ import {isPitchSelected} from './renderEditPitchDrag'
 import {isLineSelected} from './renderEditLineDrag'
 import {isNoteAffiliatedSelected, locateNoteAffiliatedById} from './renderEditNoteAffiliatedDrag'
 import {removeNoteMark} from './renderEditNoteMarks'
+import {isMeasureAffiliatedSelected, removeMeasureAffiliated} from './renderEditMeasureAffiliatedDrag'
 import {isVoltaSelected} from './renderEditVoltaDrag'
 import {isBracketSelected, removeBracket} from './renderEditBracketProperties'
 import {isBendSelected, isTabInfoSelected} from './tab/renderEditTabSelection'
@@ -175,6 +184,31 @@ function deleteMeasureSlot(
     return deleteMeasureColumn(musicScore, slot.measure, (measure) => {
         purgeScoreAffiliatedForMeasure(musicScore, measure)
     })
+}
+
+/**
+ * 选中小节时 Backspace：删小节（鼓谱为 preferredVoice，空则另一声部）最后一个槽位，小节本身保留。
+ * 小节已空返回 false。
+ */
+export function deleteLastSlotInMeasure(
+    musicScore: MusicScore,
+    measure: Measure,
+    preferredVoice: 'up' | 'down' = 'up',
+): boolean {
+    const notes = measure.notes
+    let slots = notes as MeasureNoteSlot[]
+    if (isMeasureNoteVoices(notes)) {
+        const other = preferredVoice === 'up' ? 'down' : 'up'
+        slots = (notes[preferredVoice]?.length ? notes[preferredVoice] : notes[other]) ?? []
+    }
+    const last = slots[slots.length - 1]
+    if (!last) return false
+    for (const id of collectNotesInfoIdsFromBody(asStaffOrNumber(last))) {
+        purgeScoreAffiliatedForNotesInfo(musicScore, id)
+    }
+    purgeScoreAffiliatedForMeasureSlot(musicScore, last.id)
+    slots.pop()
+    return true
 }
 
 function deleteNumberHeadSlot(
@@ -449,6 +483,10 @@ export function deleteSelectedItem(musicScore: MusicScore, selected: SlotData | 
         || isLineSelected(selected)
     ) {
         return removeScoreAffiliatedById(musicScore, selected.self.id)
+    }
+
+    if (isMeasureAffiliatedSelected(selected)) {
+        return removeMeasureAffiliated(selected.measure, selected.self.id)
     }
 
     // 必须早于音符头 / 休止符判断：选中单音符附属时 note / info 指向其宿主

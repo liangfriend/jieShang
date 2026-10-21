@@ -38,7 +38,7 @@ export default {
       disconnected: 'MIDI keyboard not connected'
     },
     settingsAria: 'Settings',
-    community: 'JieShang QQ group 202732106'
+    community: 'Decipher QQ group 202732106'
   },
   scores: {
     title: 'My scores',
@@ -51,6 +51,7 @@ export default {
     deleteWarning: 'This cannot be undone.',
     deleteSuccess: 'Score deleted',
     deleteAria: 'Delete score',
+    clSheetBadge: 'Chords',
     templateDialog: {
       title: 'Choose a template',
       desc: 'Pick a template to start editing your score',
@@ -66,7 +67,8 @@ export default {
       bass5: '5-string bass tab',
       bass6: '6-string bass tab',
       drum: 'Drum',
-      drumKit: 'Drum kit score'
+      drumKit: 'Drum kit score',
+      clSheet: 'Chord & lyric sheet'
     }
   }
 } as const

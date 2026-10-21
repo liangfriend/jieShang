@@ -42,6 +42,7 @@ import {
 import {resolveSpanAnchorHeadIds} from '../renderEditSpanAnchors'
 import { deleteSelectedItem } from '../renderEditDelete'
 import { resolveNeighborMeasureSlot, type MeasureNavDirection } from '../renderEditMeasureNavigate'
+import { runStandardModeAdd } from '../renderEditStandardMode'
 import { resolveInteractionTarget, resolveSvgFromEvent } from '../renderEditPointer'
 import { resolvePropertyPanelKind } from '../renderEditPropertyPanel'
 import { slotDataFromVDom } from '../renderEditSelection'
@@ -142,7 +143,7 @@ export function useDrumRenderEdit(
     void vDomMirrorEpoch.value
     if (slurHandleOverride.value) return slurHandleOverride.value
     const vdom = selectedSlurVdom.value
-    return vdom ? computeSlurHandlePoints(vdom) : null
+    return vdom ? computeSlurHandlePoints(vdom, scoreData.value.type) : null
   })
 
   const selectedVoltaVdom = computed(() => {
@@ -320,7 +321,8 @@ export function useDrumRenderEdit(
       const sessionTag = session.kind === 'rest' ? 'rest' : 'noteHead'
       const vdom = list.find((node) => node.tag === sessionTag && node.targetId === session.id)
       if (!vdom) return
-      bindSelectionVdom(vdom)
+      selectedVdomKey.value = vdomSelectionKey(vdom)
+      applySelectionDom(resolveSelectionElement(vdom))
       return
     }
     const key = selectedVdomKey.value
@@ -536,9 +538,15 @@ export function useDrumRenderEdit(
     const preview = ghostNotePreview.value
     const measureSlot = selectedItem.value
     if (!preview || !measureSlot?.measure) return
-    const result = applyDrumMeasureAddAction(
-      measureSlot as SlotData & { measure: NonNullable<SlotData['measure']> },
-      preview
+    const result = runStandardModeAdd(
+      measureSlot,
+      preview.voice,
+      () =>
+        applyDrumMeasureAddAction(
+          measureSlot as SlotData & { measure: NonNullable<SlotData['measure']> },
+          preview
+        ),
+      selectMeasureSlot
     )
     if (result?.type === 'select') {
       void nextTick(() => selectDrumInfo(result.notesInfoId))
@@ -585,6 +593,7 @@ export function useDrumRenderEdit(
   function endDrumDrag(event: PointerEvent) {
     if (drumDragSession.value?.pointerId === event.pointerId) {
       drumDragSession.value = null
+      captureScoreVDomBaseline(scoreData.value, vDomList.value)
     }
   }
 
@@ -597,15 +606,13 @@ export function useDrumRenderEdit(
     if (!frame) return
     const { y } = pointerToSvg(svg, event.clientX, event.clientY)
     const region = drumRegionFromRelativeY(y - frame.y, frame.h)
-    let changed = false
     if (session.kind === 'head') {
       const located = locateDrumNotesInfoById(scoreData.value, session.id)
-      if (located) changed = setDrumNotesInfoRegion(located.info, region, located.note)
+      if (located) setDrumNotesInfoRegion(located.info, region, located.note)
     } else {
       const located = locateDrumRestById(scoreData.value, session.id)
-      if (located) changed = setDrumRestRegion(located.rest, region)
+      if (located) setDrumRestRegion(located.rest, region)
     }
-    if (changed) rebindSelectionAfterRender(vDomList.value)
   }
 
   function handleDrDown(event: PointerEvent, vdom: VDom) {
@@ -712,7 +719,9 @@ export function useDrumRenderEdit(
 
   function handleRenderMusicScore(list: VDom[]) {
     vDomList.value = list
-    captureScoreVDomBaseline(scoreData.value, list)
+    if (!drumDragSession.value) {
+      captureScoreVDomBaseline(scoreData.value, list)
+    }
     rebindSelectionAfterRender(list)
     refreshGhostFromLastPointer()
     voiceDim.schedule()
@@ -768,6 +777,7 @@ export function useDrumRenderEdit(
     handleRenderMusicScore,
     deleteSelected,
     navigateSelectedMeasure,
+    selectMeasureSlot,
     addMidiNote,
     clearSelection
   }

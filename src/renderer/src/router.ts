@@ -51,6 +51,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '我的曲谱' }
   },
   {
+    path: '/cl-sheet',
+    name: 'clSheet',
+    component: () => import('./views/clSheet/ClSheetView.vue'),
+    meta: { title: '和弦弹唱谱' }
+  },
+  {
     path: '/whiteboard',
     name: 'whiteboard',
     component: () => import('./views/TeachingWhiteboardView.vue'),
@@ -107,6 +113,12 @@ const routes: RouteRecordRaw[] = [
     name: 'chordRecognitionQuiz',
     component: () => import('./views/abilityTest/ChordRecognitionQuizView.vue'),
     meta: { title: '和弦识别' }
+  },
+  {
+    path: '/ability-test/note-practice',
+    name: 'notePractice',
+    component: () => import('./views/abilityTest/NotePracticeView.vue'),
+    meta: { title: '练习模式' }
   },
   {
     path: '/my-audio',
@@ -239,6 +251,12 @@ const routes: RouteRecordRaw[] = [
     name: 'noteSliceExtreme',
     component: () => import('./views/noteSlice/NoteSliceExtremeView.vue'),
     meta: { title: '极限模式' }
+  },
+  {
+    path: '/manual',
+    name: 'manual',
+    component: () => import('./views/manual/ManualView.vue'),
+    meta: { title: '使用手册' }
   },
   {
     path: '/literacy-camp',

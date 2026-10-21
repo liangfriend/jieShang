@@ -1,5 +1,19 @@
 # Agent notes — jieShang
 
+## 数据库改动必须加 migration（软件已上线）
+
+软件已上线，用户本地已有数据库。**任何数据库改动都必须在 `src/main/database/migrations.ts` 追加新的 migration**，包括：
+
+- 表结构：建表、加/改/删列、索引（`Model.sync()` 不会给已有表补列，用 `sequelize.getQueryInterface()`）。
+- 内置数据内容更新：乐谱皮肤（`resources/scoreSkins`）、钢琴/演奏皮肤、音色、内置和弦等。
+
+规则：
+
+1. **只追加，不改已发布的 migration**：已执行过的 id 记录在用户库 `migration` 表里，改旧 migration 不会再跑。
+2. id 按 `NNN-描述` 递增（如 `002-update-builtin-score-skins`）。
+3. `up` 要同时兼容老库和全新安装（全新安装时内置藏品由启动时的 `syncBuiltinCollections` 插入，migration 执行时行可能还不存在）。
+4. `down` 能回滚就回滚；数据覆盖类无法还原的，写空实现并注明原因。
+
 ## 编辑 / drEdit 能力边界
 
 涉及乐谱编辑（小节属性、音符属性、增删结构等）时：
@@ -34,6 +48,7 @@
 - `@deciphony/finger` → `deciphony-finger/src`
 - `@deciphony/pitch-detection` → `deciphony-pitch-detection/src`
 - `@deciphony/puff` → `deciphony-puff/src`
+- `@deciphony/cl-sheet` → `deciphony-cl-sheet/src`（和弦弹唱谱；样式 `@deciphony/cl-sheet/dist/cl-sheet.css` 在本地模式下指向空占位，由 SFC 注入）
 - `@deciphony/extensions`（含子路径）→ `deciphony-extensions/src`
 
 ### 硬性约束（禁止）

@@ -2,6 +2,7 @@ export default {
   common: {
     back: '戻る',
     cancel: 'キャンセル',
+    close: '閉じる',
     confirm: 'OK',
     delete: '削除',
     gotIt: '了解',

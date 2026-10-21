@@ -1,5 +1,5 @@
 import type {Chronaxie, Measure, MusicScore, NoteNumber, NotesNumberInfo, SlotData, VDom} from '@deciphony/renderer'
-import {slotSymbol} from '@deciphony/renderer'
+import {getMeasureNoteList, slotSymbol} from '@deciphony/renderer'
 import {createNoteNumber, computeMeasureOnsetBefore} from '@deciphony/extensions/dr-edit/score-builder'
 import {isNoteNumberSlot, isSlotRestLike} from '@deciphony/extensions/dr-edit/score-builder'
 import {
@@ -58,8 +58,9 @@ export type MeasureAddActionResult = {type: 'inserted'}
 
 function collectNumberSlotAnchors(vDomList: VDom[], measure: Measure, measureX: number) {
   const anchors: import('../standardStaff/renderEditSymbolAddAction').SlotAnchor[] = []
-  for (let noteIndex = 0; noteIndex < measure.notes.length; noteIndex++) {
-    const slot = measure.notes[noteIndex]!
+  const notes = getMeasureNoteList(measure)
+  for (let noteIndex = 0; noteIndex < notes.length; noteIndex++) {
+    const slot = notes[noteIndex]!
     if (!isNoteNumberSlot(slot)) continue
     // MeasureNoteSlot = { id, symbol }；notesInfo 在 symbol 上
     const body = slotSymbol(slot) as NoteNumber
@@ -161,7 +162,8 @@ export function applyMeasureAddAction(
   const measure = slot.measure
   if (preview.snap.kind !== 'insert') return null
 
-  const at = Math.max(0, Math.min(preview.snap.insertIndex, measure.notes.length))
+  const notes = getMeasureNoteList(measure)
+  const at = Math.max(0, Math.min(preview.snap.insertIndex, notes.length))
   const beamOnset = computeMeasureOnsetBefore(measure, at)
   const note = createNoteNumber({
     syllable: preview.syllable,
@@ -169,6 +171,6 @@ export function applyMeasureAddAction(
     octaveDot: preview.octaveDot,
     beamOnset
   })
-  measure.notes.splice(at, 0, note)
+  notes.splice(at, 0, note)
   return {type: 'inserted'}
 }

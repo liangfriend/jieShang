@@ -14,16 +14,20 @@ export default {
     modeEdit: '编辑',
     modeShow: '展示',
     save: '保存',
+    undo: '撤销',
+    redo: '恢复',
+    undoHint: '撤销（Ctrl+Z）',
+    redoHint: '恢复（Ctrl+Y / Ctrl+Shift+Z）',
     settings: '设置',
     import: '导入',
     export: '导出',
     volume: '音量',
     annotate: {
-      start: '绘制',
+      start: '标注',
       pen: '画笔',
       eraser: '橡皮',
       clear: '清空标注',
-      hint: '展示模式临时标注，不写入作品文件；换页保留，清空仅清当前页'
+      hint: '展示模式临时标注，不写入作品文件；换页保留，清空仅清当前页。编辑模式「开始绘制」画的笔迹会存进作品，要在编辑模式里清除'
     },
     range: {
       title: '选段',
@@ -39,6 +43,7 @@ export default {
     saveSuccess: '保存成功',
     saveFailed: '保存失败',
     exportSuccess: '导出成功',
+    scoreToWorkDone: '已按复谱表分成 {n} 页，确认无误后记得保存',
     exportFailed: '导出失败',
     exportProgress: '{text} {done} / {total} 页',
     exportFormat: {
@@ -52,6 +57,10 @@ export default {
     applyCurrentPageSizeSuccess: '已更改当前页尺寸',
     settingsDialog: {
       title: '作品设置',
+      workName: '作品名称',
+      workAuthor: '作者',
+      infoHint: '「应用」后还要点顶部的「保存」才会写入作品库。',
+      applyInfoSuccess: '已更新作品信息，保存后生效',
       defaultPageSize: '默认页',
       currentPageSize: '当前页',
       applyDefault: '保存',
@@ -74,6 +83,9 @@ export default {
       title: '属性',
       score: '曲谱',
       image: '图片',
+      text: '文本',
+      textStyle: '文字样式',
+      textHint: '双击画布上的文本可修改内容，Ctrl+Enter 完成。',
       frame: '位置与尺寸',
       width: '宽',
       height: '高',

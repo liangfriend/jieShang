@@ -18,6 +18,7 @@ import {
 } from '@deciphony/extensions/dr-edit/score-builder'
 import {locateNoteAffiliatedById} from './renderEditNoteAffiliatedDrag'
 import {findSlotAffiliatedSymbol} from './renderEditSlotAffiliated'
+import {locateMeasureAffiliatedById} from './renderEditMeasureAffiliatedDrag'
 
 const MEASURE_SYMBOL_KEYS = [
     'barline_f',
@@ -157,7 +158,8 @@ export function slotDataFromVDom(musicScore: MusicScore, vdom: VDom): SlotData |
             || vdom.special?.pedal
             || vdom.special?.pitch
             || vdom.special?.trill
-            || vdom.special?.hairpin)
+            || vdom.special?.hairpin
+            || vdom.special?.guzhengLian)
     ) {
         const sym = findAffiliatedSymbolById(musicScore, id)
         if (sym) {
@@ -190,6 +192,16 @@ export function slotDataFromVDom(musicScore: MusicScore, vdom: VDom): SlotData |
         if (slotAffiliated) {
             return buildSlotData(musicScore, {
                 self: slotAffiliated as unknown as SlotData['self'],
+            })
+        }
+        // 单小节附属（自定义小节符号）：measure 指向宿主小节，self 为符号本身
+        const measureAffiliated = locateMeasureAffiliatedById(musicScore, id)
+        if (measureAffiliated) {
+            return buildSlotData(musicScore, {
+                grandStaff: measureAffiliated.grandStaff,
+                singleStaff: measureAffiliated.singleStaff,
+                measure: measureAffiliated.measure,
+                self: measureAffiliated.symbol as unknown as SlotData['self'],
             })
         }
     }

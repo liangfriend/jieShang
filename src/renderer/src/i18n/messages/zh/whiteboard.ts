@@ -17,11 +17,13 @@ export default {
       intervalSlider: '音程滑块',
       addNote: '添加音符',
       autoClear: '自动清空',
+      staffMode: '谱表',
       clef: '谱号',
       targetClef: '添加到谱号',
       bpm: 'BPM',
       noteBpm: '时值 BPM',
       keySignature: '调号',
+      circleOfFifths: '五度圈',
       clearNotes: '清空音符'
     },
     keyCount: {
@@ -39,6 +41,10 @@ export default {
       None: '无',
       Helmholtz: '赫尔姆霍兹',
       Scientific: '科学记谱法'
+    },
+    staffMode: {
+      triple: '三行',
+      double: '双行'
     },
     clef: {
       treble: '高音谱号',
@@ -63,10 +69,10 @@ export default {
       C_flat: 'C♭ (7♭)'
     },
     pianoGroup: {
-      great4: '大字四组',
       great3: '大字三组',
       great2: '大字二组',
       great1: '大字一组',
+      great: '大字组',
       small: '小字组',
       small1: '小字一组',
       small2: '小字二组',

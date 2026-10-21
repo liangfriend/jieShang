@@ -30,7 +30,6 @@ const visible = defineModel<boolean>({ default: false })
 const { t } = useI18n()
 
 const timePropName = ref<ScoreTimeOffsetProp>(SCORE_TIME_OFFSET_PROP.accompaniment)
-const pxPerSecond = ref(80)
 const sampleRate = ref(44100)
 const audioId = ref<number | null>(null)
 const audioList = ref<AudioListItem[]>([])
@@ -140,18 +139,6 @@ watch(visible, (open) => {
         </label>
 
         <label class="score-time-offset__field">
-          <span>{{ t('editor.timeOffset.pxPerSecond') }}</span>
-          <el-input-number
-            v-model="pxPerSecond"
-            :min="20"
-            :max="400"
-            :step="10"
-            controls-position="right"
-            class="score-time-offset__number"
-          />
-        </label>
-
-        <label class="score-time-offset__field">
           <span>{{ t('editor.timeOffset.sampleRate') }}</span>
           <el-input-number
             v-model="sampleRate"
@@ -163,7 +150,7 @@ watch(visible, (open) => {
           />
         </label>
 
-        <label class="score-time-offset__field score-time-offset__field--grow">
+        <label class="score-time-offset__field">
           <span>{{ t('editor.timeOffset.selectAudio') }}</span>
           <el-select
             v-model="audioId"
@@ -184,7 +171,7 @@ watch(visible, (open) => {
       </div>
 
       <div class="score-time-offset__controls">
-        <label class="score-time-offset__field score-time-offset__field--grow">
+        <label class="score-time-offset__field">
           <span>{{ t('editor.timeOffset.bindVocal') }}</span>
           <el-select
             v-model="vocalPerformanceId"
@@ -203,7 +190,7 @@ watch(visible, (open) => {
           </el-select>
         </label>
 
-        <label class="score-time-offset__field score-time-offset__field--grow">
+        <label class="score-time-offset__field">
           <span>{{ t('editor.timeOffset.bindAccompaniment') }}</span>
           <el-select
             v-model="accompanimentId"
@@ -228,7 +215,6 @@ watch(visible, (open) => {
         class="score-time-offset__editor"
         :audio-url="audioUrl"
         :music-score="props.musicScore"
-        :px-per-second="pxPerSecond"
         :sample-rate="sampleRate"
         :time-prop-name="timePropName"
         :beat-unit="scoreBeatUnit"
@@ -263,18 +249,12 @@ watch(visible, (open) => {
   color: var(--el-text-color-regular);
 }
 
-.score-time-offset__field--grow {
-  flex: 1 1 220px;
-  min-width: 180px;
-}
-
 .score-time-offset__select {
   width: 140px;
 }
 
 .score-time-offset__select--audio {
-  width: 100%;
-  min-width: 180px;
+  width: 240px;
 }
 
 .score-time-offset__number {

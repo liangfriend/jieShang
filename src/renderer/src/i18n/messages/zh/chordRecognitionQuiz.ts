@@ -17,6 +17,7 @@ export default {
         full: '全音（21–108）'
       },
       showPiano: '显示钢琴',
+      pureListening: '纯听感',
       rounds: '轮次',
       countdown: '答题倒计时（秒）',
       start: '开始测试'

@@ -18,6 +18,8 @@ import {
   appendTabNoteInfo,
   insertTabNote,
   insertTabRest,
+  isTabHeadInfo,
+  setTabNoteInfoValue,
 } from '@deciphony/extensions/dr-edit'
 import type {AddTabState, TabAddKind} from './renderEditTabAddState'
 import {DEFAULT_ADD_TAB_STATE} from './renderEditTabAddState'
@@ -346,4 +348,25 @@ export function applyTabMeasureAddAction(
     beamType: note.notesInfo[0]?.beamType,
   })
   return {type: 'select', notesInfoId: info.id}
+}
+
+/**
+ * 字母键录入品：幽灵落在已有列且该弦已有音时改品，否则同点击一样插入 / 追加。
+ * 不改选中，便于在小节内连续输入。
+ */
+export function applyTabFretKeyAction(
+  slot: SlotData & {measure: Measure},
+  preview: GhostTabPreview,
+  stringCount: number,
+  musicScore: MusicScore,
+): void {
+  if (preview.snap.kind === 'onNote') {
+    const note = asTabNote(getMeasureNoteList(slot.measure)[preview.snap.noteIndex]!)
+    const same = note?.notesInfo.find((info) => isTabHeadInfo(info) && info.region === preview.region)
+    if (same) {
+      setTabNoteInfoValue(same, preview.value)
+      return
+    }
+  }
+  applyTabMeasureAddAction(slot, preview, stringCount, musicScore)
 }

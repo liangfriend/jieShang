@@ -22,7 +22,8 @@ import {
   BRACKET_TYPE_SELECT_VALUES,
   setGrandStaffBracketType
 } from '../../renderEditBracketProperties'
-import type { BracketTypeEnum } from '@deciphony/renderer'
+import type { BracketTypeEnum, MusicScore } from '@deciphony/renderer'
+import CustomSymbolSection from '../../components/customSymbol/CustomSymbolSection.vue'
 
 const props = defineProps<{
   editSlot: SlotData
@@ -30,6 +31,7 @@ const props = defineProps<{
 
 const { t } = useI18n()
 const measure = computed(() => props.editSlot.measure as Measure)
+const musicScore = computed(() => props.editSlot.musicScore as MusicScore)
 const grandStaff = computed(() => props.editSlot.grandStaff)
 const showBracket = computed(() => Boolean(grandStaff.value))
 
@@ -123,6 +125,7 @@ const bracketType = computed({
         />
       </el-select>
     </section>
+    <CustomSymbolSection v-if="measure" kind="measure" :host="measure" :music-score="musicScore" />
   </div>
 </template>
 

@@ -10,8 +10,6 @@ import {
   watch
 } from 'vue'
 import { parseAndFormatDimension } from '../utils/commonUtil'
-import { KeyCodeEnum } from '@renderer/types/enum'
-import { defaultCodeConfig } from '../utils/constant'
 import { HighlightPolicy, NoteScoreResult } from '@renderer/types/types'
 import { useMidiStore } from '@renderer/store/midi.store'
 import { usePerformSkin } from '@renderer/components/performSkin/usePerformSkin'
@@ -41,6 +39,9 @@ const { skin } = usePerformSkin()
 const emit = defineEmits<{
   /** 单个音符评分完成：结果、实时分、进度、noteInfo id */
   (e: 'score', result: NoteScoreResult, realScore: number, totalScore: number, info: any): void
+  /** 用户按下 / 抬起琴键（键盘、鼠标、MIDI 设备；演示播放时不触发） */
+  (e: 'keyDown', midi: number): void
+  (e: 'keyUp', midi: number): void
 }>()
 
 const props = defineProps({
@@ -54,17 +55,6 @@ const props = defineProps({
   blackKeyWidthRatio: {
     type: Number,
     default: 0.7
-  },
-  config: {
-    type: Object as PropType<{
-      keyboard: {
-        code: KeyCodeEnum
-        midi: number
-      }[]
-    }>,
-    default: () => ({
-      keyboard: defaultCodeConfig
-    })
   },
   bpm: {
     type: Number,
@@ -113,6 +103,14 @@ const props = defineProps({
   highlightPolicy: {
     type: Object as PropType<Partial<HighlightPolicy>>,
     default: () => ({})
+  },
+  /**
+   * 演示播放：忽略 MIDI 判定与 miss，改由 perfectHitNote / perfectReleaseNote
+   * 按乐谱时间轴强制完美击中（避免播放器与瀑布流时钟漂移导致弹不上）。
+   */
+  demoAutoPerfect: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -347,6 +345,44 @@ const flatNotes = computed<FlatNote[]>(() => {
   return list
 })
 
+/** 同音高按 start 排序，用于裁剪相邻水柱判定窗，避免容错窗重叠抢判定 */
+const flatNotesByMidi = computed(() => {
+  const map = new Map<number, FlatNote[]>()
+  for (const n of flatNotes.value) {
+    const arr = map.get(n.midi)
+    if (arr) arr.push(n)
+    else map.set(n.midi, [n])
+  }
+  for (const arr of map.values()) {
+    arr.sort((a, b) => a.start - b.start || a.key.localeCompare(b.key))
+  }
+  return map
+})
+
+/**
+ * 单水柱判定时间窗：在难度容错基础上，用与相邻同音水柱的中点切开，
+ * 保证每个水柱互不抢判定；已判定的水柱不再进入候选（见 judgeOnPress）。
+ */
+function noteJudgeWindow(note: FlatNote): { start: number; end: number } {
+  const startTrigger = policy.value.startTriggerThreshold
+  const postTrigger = policy.value.postTriggerThreshold
+  let windowStart = note.start - startTrigger
+  let windowEnd = note.start + postTrigger
+  const siblings = flatNotesByMidi.value.get(note.midi)
+  if (siblings && siblings.length > 1) {
+    const idx = siblings.findIndex((n) => n.key === note.key)
+    if (idx > 0) {
+      const prev = siblings[idx - 1]!
+      windowStart = Math.max(windowStart, (prev.start + note.start) / 2)
+    }
+    if (idx >= 0 && idx < siblings.length - 1) {
+      const next = siblings[idx + 1]!
+      windowEnd = Math.min(windowEnd, (note.start + next.start) / 2)
+    }
+  }
+  return { start: windowStart, end: windowEnd }
+}
+
 const noteScores = ref(new Map<string, NoteScoreResult>())
 
 const stats = computed(() => {
@@ -382,16 +418,15 @@ function recordScore(note: FlatNote, result: NoteScoreResult) {
 }
 
 function judgeOnPress(midi: number, t: number) {
-  const candidates = flatNotes.value.filter(
-    (n) =>
-      n.midi === midi &&
-      !noteScores.value.has(n.key) &&
-      t >= n.start - policy.value.startTriggerThreshold &&
-      t <= n.start + policy.value.postTriggerThreshold
-  )
+  // 已判定水柱直接排除；未判定的再用切开后的单柱窗过滤，同音连打不会打到上一柱
+  const candidates = flatNotes.value.filter((n) => {
+    if (n.midi !== midi || noteScores.value.has(n.key)) return false
+    const w = noteJudgeWindow(n)
+    return t >= w.start && t <= w.end
+  })
   if (!candidates.length) return
 
-  let best = candidates[0]
+  let best = candidates[0]!
   for (const c of candidates) {
     if (Math.abs(t - c.start) < Math.abs(t - best.start)) best = c
   }
@@ -408,11 +443,45 @@ function judgeOnPress(midi: number, t: number) {
 }
 
 function evaluateMisses(t: number) {
+  if (props.demoAutoPerfect) return
   for (const n of flatNotes.value) {
     if (noteScores.value.has(n.key)) continue
-    if (t > n.start + policy.value.postTriggerThreshold) {
+    if (t > noteJudgeWindow(n).end) {
       recordScore(n, 'miss')
     }
+  }
+}
+
+/** 演示：按 noteId 强制 perfect，水柱起止对齐乐谱时间（非 currentTime） */
+function perfectHitNote(noteId: string) {
+  if (!noteId) return
+  const note = flatNotes.value.find((n) => n.key === noteId)
+  if (!note || noteScores.value.has(note.key)) return
+
+  const parts = activeParts.value.get(note.midi) ?? []
+  const last = parts[parts.length - 1]
+  if (last && last.length === 1) last.push(note.start)
+  parts.push([note.start])
+  activeParts.value.set(note.midi, parts)
+  activeKeys.value = new Set(activeKeys.value).add(note.midi)
+  recordScore(note, 'perfect')
+}
+
+function perfectReleaseNote(midi: number, endMs?: number) {
+  if (!midi || !activeKeys.value.has(midi)) return
+  const next = new Set(activeKeys.value)
+  next.delete(midi)
+  activeKeys.value = next
+  const arr = activeParts.value.get(midi)
+  if (!arr || arr.length === 0) return
+  const last = arr[arr.length - 1]
+  if (last.length === 1) {
+    const end =
+      endMs != null
+        ? endMs
+        : (flatNotes.value.find((n) => n.midi === midi && n.start === last[0])?.end ??
+          currentTime.value)
+    last.push(end)
   }
 }
 
@@ -424,15 +493,22 @@ const highlightSegments = computed(() => {
     const activeSeq = activeParts.value.get(midi) || []
     const highlightParts: [number, number][] = []
 
-    for (const [pStart, pEnd] of seq) {
-      const validStart = pStart - policy.value.startTriggerThreshold
-      const validEnd = pStart + policy.value.postTriggerThreshold
+    seq.forEach(([pStart, pEnd, info], idx) => {
+      const key = info != null ? String(info) : `${midi}:${idx}`
+      const note = flatNotesByMidi.value.get(midi)?.find((n) => n.key === key)
+      // 与评分同一套切开窗：后一击不会点亮上一柱；已判定柱仍可显示当次击中高亮
+      const w = note
+        ? noteJudgeWindow(note)
+        : {
+            start: pStart - policy.value.startTriggerThreshold,
+            end: pStart + policy.value.postTriggerThreshold
+          }
 
       for (const part of activeSeq) {
         const aStart = part[0]
         const aEnd = part[1] ?? currentTime.value
 
-        if (aStart < validStart || aStart > validEnd) continue
+        if (aStart < w.start || aStart > w.end) continue
 
         const overlapStart = Math.max(pStart, aStart)
         const overlapEnd = Math.min(pEnd, aEnd)
@@ -441,7 +517,7 @@ const highlightSegments = computed(() => {
         }
         break
       }
-    }
+    })
 
     if (highlightParts.length > 0) {
       result[midi] = highlightParts
@@ -655,8 +731,6 @@ onMounted(async () => {
   observeContainer()
   syncCanvasSize()
   startRenderLoop()
-  window.addEventListener('keydown', keyBoardKeyDown)
-  window.addEventListener('keyup', keyBoardKeyUp)
   midiStore.addMessageListener(handleMidiMessage)
 })
 
@@ -664,22 +738,9 @@ onBeforeUnmount(() => {
   resizeObserver?.disconnect()
   stopRenderLoop()
   overlayHost.runtime?.reset()
-  window.removeEventListener('keydown', keyBoardKeyDown)
-  window.removeEventListener('keyup', keyBoardKeyUp)
   midiStore.removeMessageListener(handleMidiMessage)
 })
 
-function keyBoardKeyDown(event: KeyboardEvent) {
-  if (event.repeat) return
-  const midi = props.config.keyboard?.find((item) => item.code === event.code)?.midi
-  if (midi == null) return
-  handleKeyDown(midi)
-}
-function keyBoardKeyUp(event: KeyboardEvent) {
-  const midi = props.config.keyboard?.find((item) => item.code === event.code)?.midi
-  if (midi == null) return
-  handleKeyUp(midi)
-}
 function handleMidiMessage(event: MIDIMessageEvent) {
   const data = event.data
   if (!data || data.length < 2) return
@@ -696,8 +757,11 @@ function handleMidiMessage(event: MIDIMessageEvent) {
 }
 function handleKeyDown(midi: number) {
   if (!midi) return
+  // 演示由 perfectHitNote 驱动水柱，避免虚拟触键与时钟漂移抢先判 miss/early
+  if (props.demoAutoPerfect) return
   if (activeKeys.value.has(midi)) return
   activeKeys.value = new Set(activeKeys.value).add(midi)
+  emit('keyDown', midi)
   if (state.value !== 'playing') return
   const timeStamp = currentTime.value
   if (activeParts.value.has(midi)) {
@@ -711,10 +775,12 @@ function handleKeyDown(midi: number) {
 
 function handleKeyUp(midi: number) {
   if (!midi) return
+  if (props.demoAutoPerfect) return
   if (!activeKeys.value.has(midi)) return
   const next = new Set(activeKeys.value)
   next.delete(midi)
   activeKeys.value = next
+  emit('keyUp', midi)
   if (state.value !== 'playing') return
   const timeStamp = currentTime.value
   const arr = activeParts.value.get(midi)
@@ -757,6 +823,8 @@ defineExpose({
   pause,
   stop,
   clearActiveParts,
+  perfectHitNote,
+  perfectReleaseNote,
   stats
 })
 </script>

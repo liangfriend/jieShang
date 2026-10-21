@@ -75,24 +75,37 @@ export const GUITAR_SMOOTH_PEAK_VOLUME = 1.2
 export const GUITAR_SMOOTH_RELEASE_SEC = 0.35
 export const GUITAR_NOTE_DURATION_SEC = 1.2
 
+/** 横向：琴头朝左横放在上方；竖向：琴头朝上立在左侧，给曲谱留更多空间 */
+export type GuitarOrientation = 'horizontal' | 'vertical'
+
 export type GuitarSimPrefs = {
   /** 平缓：拨弦带 ADSR 包络 */
-  smoothEnvelope?: boolean
+  smoothEnvelope: boolean
+  orientation: GuitarOrientation
 }
+
+const DEFAULT_GUITAR_PREFS: GuitarSimPrefs = { smoothEnvelope: false, orientation: 'horizontal' }
 
 export function loadGuitarPrefs(): GuitarSimPrefs {
   try {
     const raw = localStorage.getItem(GUITAR_PREF_STORAGE_KEY)
-    if (!raw) return { smoothEnvelope: false }
+    if (!raw) return { ...DEFAULT_GUITAR_PREFS }
     const parsed = JSON.parse(raw) as Partial<GuitarSimPrefs>
-    return { smoothEnvelope: Boolean(parsed.smoothEnvelope) }
+    return {
+      smoothEnvelope: Boolean(parsed.smoothEnvelope),
+      orientation: parsed.orientation === 'vertical' ? 'vertical' : 'horizontal'
+    }
   } catch {
-    return { smoothEnvelope: false }
+    return { ...DEFAULT_GUITAR_PREFS }
   }
 }
 
-export function saveGuitarPrefs(prefs: GuitarSimPrefs): void {
-  localStorage.setItem(GUITAR_PREF_STORAGE_KEY, JSON.stringify(prefs))
+/** 只改传入的字段，其余保留已存的值 */
+export function saveGuitarPrefs(patch: Partial<GuitarSimPrefs>): void {
+  localStorage.setItem(
+    GUITAR_PREF_STORAGE_KEY,
+    JSON.stringify({ ...loadGuitarPrefs(), ...patch })
+  )
 }
 
 /** 弦号 1..6 → frets 数组下标（0=6弦） */

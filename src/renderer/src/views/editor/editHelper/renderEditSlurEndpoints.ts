@@ -1,5 +1,6 @@
 import { AccidentalTypeEnum, MusicScoreTypeEnum, getMeasureSlots, slotSymbol } from '@deciphony/renderer'
 import type { MusicScore, NotesInfo, NotesNumberInfo } from '@deciphony/renderer'
+import { isFretboardScoreType } from '@renderer/constant/fretboardScoreType'
 import type { PanelSegmentedOption } from './components/panel/types'
 
 type Translate = (key: string, named: Record<string, unknown>) => string
@@ -20,6 +21,20 @@ function numberPitchText(info: NotesNumberInfo): string {
   return `${accidental}${info.syllable}${dots}`
 }
 
+type RegionInfo = { id: string; region: number }
+
+function regionColumnOptions(
+  infos: RegionInfo[],
+  bottomFirst: (a: RegionInfo, b: RegionInfo) => number,
+  t: Translate
+): PanelSegmentedOption<string>[] {
+  return [...infos].sort(bottomFirst).map((info, index) => ({
+    value: info.id,
+    label: String(index + 1),
+    title: t('editor.note.sameSlotNoteIndex', { n: index + 1 })
+  }))
+}
+
 function findColumnInfos(musicScore: MusicScore, infoId: string): (NotesInfo | NotesNumberInfo)[] {
   for (const grandStaff of musicScore.grandStaffs) {
     for (const staff of grandStaff.staves) {
@@ -37,7 +52,7 @@ function findColumnInfos(musicScore: MusicScore, infoId: string): (NotesInfo | N
 
 /**
  * 连音线端点可选的音：infoId 所在列（同一 NoteSymbol / NoteNumber）的全部音，自下而上。
- * 简谱 label 为音高，线谱 label 为序号；吉他 / 鼓谱等不支持换音，返回空。
+ * 简谱 label 为音高，其余谱种 label 为序号（TAB region 0 是最上面的 1 弦，所以倒序）。
  */
 export function slurColumnOptions(
   musicScore: MusicScore,
@@ -53,14 +68,10 @@ export function slurColumnOptions(
         title: t('editor.note.sameSlotNoteIndex', { n: index + 1 })
       }))
   }
-  if (musicScore.type === MusicScoreTypeEnum.StandardStaff) {
-    return [...(findColumnInfos(musicScore, infoId) as NotesInfo[])]
-      .sort((a, b) => a.region - b.region)
-      .map((info, index) => ({
-        value: info.id,
-        label: String(index + 1),
-        title: t('editor.note.sameSlotNoteIndex', { n: index + 1 })
-      }))
+  const infos = (findColumnInfos(musicScore, infoId) as unknown as Partial<RegionInfo>[])
+    .filter((info): info is RegionInfo => typeof info.region === 'number')
+  if (isFretboardScoreType(musicScore.type)) {
+    return regionColumnOptions(infos, (a, b) => b.region - a.region, t)
   }
-  return []
+  return regionColumnOptions(infos, (a, b) => a.region - b.region, t)
 }

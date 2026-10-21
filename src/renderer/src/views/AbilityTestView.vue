@@ -31,6 +31,12 @@ const tests = computed(() => [
     title: t('abilityTest.chordRecognition.title'),
     desc: t('abilityTest.chordRecognition.desc'),
     tint: '#e8d5ff'
+  },
+  {
+    route: 'notePractice' as const,
+    title: t('abilityTest.notePractice.title'),
+    desc: t('abilityTest.notePractice.desc'),
+    tint: '#d8f5e3'
   }
 ])
 

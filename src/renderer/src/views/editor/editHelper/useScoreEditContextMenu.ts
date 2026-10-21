@@ -55,6 +55,8 @@ export function useScoreEditContextMenu(
   const contextMenuItems = ref<EditContextMenuItem[]>([])
   /** 「设置音色」目标单谱表；非 null 时宿主打开音色选择弹窗 */
   const toneColorStaff = ref<SingleStaff | null>(null)
+  /** 「设置音量」目标单谱表；非 null 时宿主打开音量弹窗 */
+  const volumeStaff = ref<SingleStaff | null>(null)
 
   function closeContextMenu() {
     contextMenuState.value = createEmptyContextMenuState()
@@ -268,6 +270,18 @@ export function useScoreEditContextMenu(
     }
   }
 
+  function createSetVolumeContextMenuItem(): EditContextMenuItem {
+    return {
+      text: t('editor.contextMenu.setVolume'),
+      visible: (p) => resolveContextMenuMeasureSlot(p.slot, options.selectedItem.value)?.singleStaff != null,
+      callback: (p) => {
+        const target = resolveContextMenuMeasureSlot(p.slot, options.selectedItem.value)
+        if (!target?.singleStaff) return
+        volumeStaff.value = target.singleStaff
+      }
+    }
+  }
+
   /** 鼓谱：小节设为 / 取消长休止符 */
   function createLongRestContextMenuItem(enable: boolean): EditContextMenuItem {
     return {
@@ -299,7 +313,8 @@ export function useScoreEditContextMenu(
       createClearNotesContextMenuItem(),
       createInsertMeasureContextMenuItem(),
       createDeleteStaffRowContextMenuItem(),
-      createSetToneColorContextMenuItem()
+      createSetToneColorContextMenuItem(),
+      createSetVolumeContextMenuItem()
     ]
   }
 
@@ -354,6 +369,7 @@ export function useScoreEditContextMenu(
     contextMenuState,
     contextMenuItems,
     toneColorStaff,
+    volumeStaff,
     closeContextMenu,
     createDeleteContextMenuItem,
     createCopyNotesContextMenuItem,
@@ -368,6 +384,7 @@ export function useScoreEditContextMenu(
     createInsertMeasureContextMenuItem,
     createDeleteStaffRowContextMenuItem,
     createSetToneColorContextMenuItem,
+    createSetVolumeContextMenuItem,
     createLongRestContextMenuItem,
     handleDrContextMenu,
     handleTopContextMenu

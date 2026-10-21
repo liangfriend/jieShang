@@ -10,12 +10,12 @@ export default {
       note_slice_arcade_10: {
         name: 'Arcade rookie',
         description: 'Score 10 points in arcade mode on any difficulty',
-        reward: 'Piano skin — Heavy Metal'
+        reward: 'Piano skin — Heavy metal'
       },
       note_slice_arcade_50: {
         name: 'Arcade regular',
         description: 'Score 50 points in arcade mode on any difficulty',
-        reward: 'Performance skin — Pixel Arcade'
+        reward: 'Performance skin — Pixel arcade'
       },
       note_slice_arcade_300: {
         name: 'Arcade ace',
@@ -45,17 +45,17 @@ export default {
       note_slice_endless_10000: {
         name: 'Total endless',
         description: 'Score 10000 points in endless mode on any difficulty',
-        reward: 'Performance skin — Mint Soda'
+        reward: 'Performance skin — Mint soda'
       },
       note_slice_combo_7: {
         name: 'Seven-hit combo',
         description: 'Reach a 7-hit combo',
-        reward: 'Piano skin — Black & White'
+        reward: 'Piano skin — Black & white'
       },
       note_slice_combo_8: {
         name: 'Eight-hit combo',
         description: 'Reach an 8-hit combo',
-        reward: 'Score skin — Bamboo Grove'
+        reward: 'Score skin — Bamboo grove'
       },
       note_slice_combo_9: {
         name: 'Nine-hit combo',
@@ -65,12 +65,12 @@ export default {
       note_slice_combo_10: {
         name: 'Ten-hit combo',
         description: 'Reach a 10-hit combo',
-        reward: 'Performance skin — Golden Dragon'
+        reward: 'Performance skin — Golden dragon'
       },
       note_slice_combo_30: {
         name: 'Combo emperor',
         description: 'Reach a 30-hit combo',
-        reward: 'Performance skin — Neon Sunset'
+        reward: 'Performance skin — Neon sunset'
       },
       note_slice_combo_100: {
         name: 'Precision catch',
@@ -90,7 +90,7 @@ export default {
       note_slice_extreme_120s: {
         name: 'Pattern mastered',
         description: 'Survive 120 seconds in extreme mode',
-        reward: 'Performance skin — Star River'
+        reward: 'Performance skin — Star river'
       },
       note_slice_extreme_150s: {
         name: 'Sensory evolution',

@@ -17,11 +17,13 @@ export default {
       intervalSlider: 'Interval slider',
       addNote: 'Add notes',
       autoClear: 'Auto clear',
+      staffMode: 'Staves',
       clef: 'Clef',
       targetClef: 'Target clef',
       bpm: 'BPM',
       noteBpm: 'Note BPM',
       keySignature: 'Key signature',
+      circleOfFifths: 'Circle of fifths',
       clearNotes: 'Clear notes'
     },
     keyCount: {
@@ -39,6 +41,10 @@ export default {
       None: 'None',
       Helmholtz: 'Helmholtz',
       Scientific: 'Scientific'
+    },
+    staffMode: {
+      triple: '3 rows',
+      double: '2 rows'
     },
     clef: {
       treble: 'Treble clef',
@@ -63,10 +69,10 @@ export default {
       C_flat: 'C♭ (7♭)'
     },
     pianoGroup: {
-      great4: 'Great octave 4',
-      great3: 'Great octave 3',
-      great2: 'Great octave 2',
-      great1: 'Great octave 1',
+      great3: 'Sub-subcontra octave',
+      great2: 'Subcontra octave',
+      great1: 'Contra octave',
+      great: 'Great octave',
       small: 'Small octave',
       small1: 'Small octave 1',
       small2: 'Small octave 2',

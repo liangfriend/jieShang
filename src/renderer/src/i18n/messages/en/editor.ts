@@ -1,10 +1,20 @@
 export default {
   editor: {
+    menu: {
+      file: 'File',
+      edit: 'Edit',
+      view: 'View',
+      score: 'Score',
+      help: 'Help'
+    },
     toolbar: {
       playMode: 'Play mode',
       timeOffset: 'Score-audio sync',
       linkedStaffMode: 'Linked staves',
+      rhythmPatternMode: 'Rhythm patterns',
+      slurStyle: 'Slur style',
       structureEdit: 'Structure',
+      lyricsEdit: 'Lyrics',
       showInstrumentName: 'Show instrument',
       layout: 'Layout',
       notice: 'Notice',
@@ -13,12 +23,13 @@ export default {
       pianoRecord: 'Piano input',
       import: 'Import',
       export: 'Export',
-      formatSj: 'JieShang score (.sj)',
+      formatSj: 'Decipher score (.sj)',
       formatMusicXml: 'MusicXML',
       formatMusicXmlMs4: 'MusicXML(ms4)',
       formatMusicXmlMs3: 'MusicXML(ms3)',
       formatMidi: 'MIDI',
-      scoreImage: 'Image to Score (numbered)',
+      formatWork: 'Work',
+      scoreImage: 'Image to score (number notation)',
       save: 'Save',
       notationType: 'Score type',
       transpose: 'Transpose',
@@ -35,6 +46,41 @@ export default {
       play: 'Preview',
       toneLoadFailed: 'Failed to load percussion tone'
     },
+    scoreToWork: {
+      title: 'Export as work',
+      template: 'Page template',
+      custom: 'Custom',
+      pageSize: 'Page size',
+      scoreWidth: 'Score width',
+      topMargin: 'Top margin',
+      hint: 'The score is scaled to this width, centered horizontally and placed from the top margin. Grand staves that do not fit move whole to the next page, keeping the same margin at the bottom. Confirming creates a new work and opens it in the work editor; it is not added to My Works until you save.'
+    },
+    rhythmPattern: {
+      title: 'Rhythm patterns',
+      heading: 'Rhythm patterns ({mode}) · {timeSignature} · {count} notes',
+      hint: 'Most common first; press the key on a card to apply it, arrows + Enter / Space pick the highlighted card, Tab switches mode, Esc closes; hovering does not change the candidate',
+      empty: 'No rhythm pattern fits these notes in this time signature',
+      emptyBeat: 'These notes cannot fill exactly one beat',
+      modeMeasure: 'By measure',
+      modeBeat: 'By beat',
+      skipped: 'One beat only fits the last notes; the first {count} notes were left out'
+    },
+    standardMode: {
+      label: 'Standard mode',
+      hint: 'When on, a note that would overflow the measure\'s time signature moves to the next measure (which gets selected), and the rest of this measure is filled with rests',
+      durationInvalid: 'Invalid note duration',
+      noNextMeasure: 'This is the last measure; there is no next measure'
+    },
+    lyricsMatch: {
+      button: 'Match lyrics',
+      title: 'Smart lyrics matching',
+      grandStaff: 'Row {n}',
+      placeholder: 'Type this row\'s lyrics; they fill the notes automatically',
+      placeholderMulti: '{n} single staves: the first line fills staff 1, press Enter for the next',
+      overflow: 'Staff {staff}: {n} extra syllables were not placed',
+      extraLines: '{n} extra lines have no matching staff',
+      hint: 'Each box is one grand staff; each line (Enter) is the next single staff. Rests and notes under a slur are skipped. CJK characters get one note each; other text is split into words by spaces, use - to split syllables and _ to skip a note. Fills the first lyrics line.'
+    },
     noticeDialog: {
       title: 'Editing notice',
       selectionTitle: 'Selection & deletion',
@@ -47,36 +93,58 @@ export default {
       commonShortcutTitle: 'Common shortcuts (all score types)',
       commonShortcutItems: [
         { keys: ['Esc'], desc: 'Clear the current selection.' },
-        { keys: ['Delete', 'Backspace'], desc: 'Delete the selected item (note, measure, staff, spanning symbol, etc.).' },
+        { keys: ['Delete', 'Backspace'], desc: 'Delete the selected item (note, measure, staff, spanning symbol, etc.). With a measure selected, Backspace removes only its last note / rest; Delete removes the whole measure.' },
+        { keys: ['<', '>'], desc: 'With a note (or a measure — its last note, no need to click the note first) selected: > adds a slur from this note to the next, or, if this note already starts a slur, extends that slur one note right; < adds a slur from the previous note to this one, or, if this note already ends a slur, extends that slur one note left. Rests are skipped. The comma / period keys work without Shift too, including with a Chinese input method.' },
+        { keys: ['/'], desc: 'Remove every slur that starts or ends on the selected note (or the measure\'s last note).' },
+        { keys: [';', "'"], desc: 'With a note (or a measure — its last note) selected: ; adds a grace note before it, \' adds one after; default duration is a sixteenth. The semicolon / quote keys work without Shift too.' },
+        { keys: ['L'], desc: 'Clear every grace note before / after the selected note (or the measure\'s last note).' },
+        { keys: ['O'], desc: 'Cycle the main note / rest duration: 64th → 32nd → 16th → 8th → quarter → half → whole → … (e.g. quarter + O → half). With a note or rest selected, changes that item; with a measure selected, changes the last one; with a grace selected, changes its host note.' },
+        { keys: ['{', '}'], desc: 'With a measure selected: { cycles the front barline (none, start repeat, reverse); } cycles the back barline (8 types). The [ / ] keys work without Shift too.' },
         { keys: ['Ctrl+Z'], desc: 'Undo. About 20 steps are kept and cleared when you leave the editor.' },
         { keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], desc: 'Redo an undone action.' },
         { keys: ['↑', '↓', '←', '→'], desc: 'With a measure selected, move to the adjacent measure above, below, left, or right for continuous entry.' },
-        { keys: ['/'], desc: 'Insert an empty measure after the selected one on every single staff of the grand staff (select a measure first).' },
         { keys: ['*'], desc: 'Add a single staff below the current one; with nothing selected, below the last single staff.' },
-        { keys: ['-'], desc: 'Add a grand staff below the current one; with nothing selected, below the last grand staff.' }
+        { keys: ['-'], desc: 'Add a grand staff below the current one; with nothing selected, below the last grand staff.' },
+        { keys: ['Space'], desc: 'With a measure that has notes selected, open the rhythm pattern popup: pitches stay the same and the notes are re-timed to the chosen pattern. Switch mode with "Rhythm patterns" at the top of the editor (or press Tab while the popup is open): "By measure" re-times the whole measure; "By beat" only groups the trailing notes that are not grouped yet into one beat and marks the last of them, so the next Space starts after that mark. In the popup, press the digit / letter on a card (numpad keys when those run out) to apply it, or arrows + Enter / Space for the highlighted card; Esc closes. Moving the mouse over cards does not change the highlighted candidate.' },
+        { keys: ['P'], desc: 'With a measure selected, copy its notes into the next measure (replacing what is there) and select that measure; press repeatedly to keep copying forward. At the end of a line it continues on the first measure of the same single staff in the next grand staff.' },
+        { keys: ['Tab'], desc: 'In a lyric field, jump to the next note\'s lyric; when the current note starts a slur, jump to the note after the slur ends.' }
+      ],
+      standardModeTitle: 'Standard mode',
+      standardModeItems: [
+        'Toggle "Standard mode" at the top right of the editor. When on, if a note entered by keyboard, mouse or MIDI makes the measure longer than its time signature, it moves to the end of the next measure, that measure gets selected, and the remainder of this measure is filled with rests.',
+        'A note longer than a whole measure shows "Invalid note duration" and is not written.',
+        'The next measure follows the → key: at the end of a line it goes to the first measure of the same single staff in the next grand staff. If there is none, a hint is shown and nothing is written.'
       ],
       commonShortcutNote: 'Single-key shortcuts are ignored while holding Ctrl / Alt or typing in a text field.',
       shortcutTitle: 'Shortcuts by score type',
       shortcutGroups: {
         number: {
-          title: 'Numbered notation',
-          lead: 'Numbered notation uses the main-row digits (above the letters) to enter notes, so use the numpad to change the duration.',
+          title: 'Number notation',
+          lead: 'Number notation uses the main-row digits (above the letters) and three letter rows to enter notes, so use the numpad to change the duration.',
           items: [
-            { keys: ['1–7'], desc: 'Main row: append do re mi fa sol la si to the end of the selected measure, using the toolbar duration and octave dots regardless of the toolbar note / rest option.' },
-            { keys: ['0'], desc: 'Main row: append a rest to the end of the selected measure, using the toolbar duration.' },
+            { keys: ['1–7'], desc: 'Main row: append middle-octave do re mi fa sol la si to the end of the selected measure, using the toolbar duration regardless of the toolbar note / rest option.' },
+            { keys: ['Q W E R T Y U'], desc: 'Append high 1–7 (one octave dot above).' },
+            { keys: ['A S D F G H J'], desc: 'Append middle 1–7.' },
+            { keys: ['Z X C V B N M'], desc: 'Append low 1–7 (one octave dot below).' },
+            { keys: ['0', '~', 'I', 'K'], desc: 'Main row: append a rest to the end of the selected measure, using the toolbar duration. I / K are the unused keys on the middle letter row.' },
             { keys: ['Num 1–8'], desc: 'Numpad: set the toolbar duration — 1 whole, 2 half, 3 quarter, 4 eighth, 5 16th, 6 32nd, 7 64th, 8 128th.' },
             { keys: ['Num 0'], desc: 'Numpad: toggle the toolbar between note and rest (used when adding with the mouse).' },
-            { keys: ['Q', 'W', 'E', 'R', 'T', 'Y', 'U'], desc: 'Set the toolbar octave dots to -3, -2, -1, none, +1, +2, +3. Pick the octave first, then press a digit.' },
+            { keys: ['8', '9'], desc: 'Main keyboard: 8 lowers the toolbar octave dots by one, 9 raises them by one (range -3 to +3); used when adding with the mouse.' },
             { keys: ['MIDI keyboard'], desc: 'With a measure selected, press a key to append that pitch to the end of the measure, using the toolbar duration.' },
-            { keys: ['Ctrl+S'], desc: 'In the "Numbered notation quick input" drawer: refresh the preview from the text.' }
+            { keys: ['Ctrl+S'], desc: 'In the "Number notation quick input" drawer: refresh the preview from the text.' }
           ]
         },
         staff: {
           title: 'Standard staff',
-          lead: 'Pitch comes from where you click: select a measure, then click inside it to add a note. The keyboard switches duration and note / rest.',
+          lead: 'Like number notation, the staff uses the main-row digits and three letter rows to enter notes by solfège (movable do from the measure key; middle octave is C4–B4 in treble clef, one octave lower in bass clef), so use the numpad to change the duration. You can also select a measure and click inside it to add a note.',
           items: [
-            { keys: ['1–8'], desc: 'Main row or numpad: set the toolbar duration — 1 whole, 2 half, 3 quarter, 4 eighth, 5 16th, 6 32nd, 7 64th, 8 128th.' },
-            { keys: ['0'], desc: 'Toggle the toolbar between note and rest.' },
+            { keys: ['1–7'], desc: 'Main row: append middle-octave do re mi fa sol la si to the end of the selected measure, using the toolbar duration regardless of the toolbar note / rest option.' },
+            { keys: ['Q W E R T Y U'], desc: 'Append 1–7 one octave higher.' },
+            { keys: ['A S D F G H J'], desc: 'Append middle 1–7.' },
+            { keys: ['Z X C V B N M'], desc: 'Append 1–7 one octave lower.' },
+            { keys: ['0', '~', 'I', 'K'], desc: 'Main row: append a rest to the end of the selected measure, using the toolbar duration. I / K are the unused keys on the middle letter row.' },
+            { keys: ['Num 1–8'], desc: 'Numpad: set the toolbar duration — 1 whole, 2 half, 3 quarter, 4 eighth, 5 16th, 6 32nd, 7 64th, 8 128th.' },
+            { keys: ['Num 0'], desc: 'Numpad: toggle the toolbar between note and rest (used when adding with the mouse).' },
             { keys: ['MIDI keyboard'], desc: 'With a measure selected, press a key to append that pitch to the end of the measure, using the toolbar duration.' }
           ]
         },
@@ -84,7 +152,7 @@ export default {
           title: 'Drum score',
           lead: 'Drum scores are entered with letter keys: each letter is one legal note (line + notehead). See the letters on the toolbar "Legal notes" cards.',
           items: [
-            { keys: ['A–S'], desc: 'With a measure selected, append the matching legal note to the end of the current voice, using the toolbar voice, duration and dots regardless of the note / rest option. Works even when the IME is in Chinese mode.' },
+            { keys: ['A–T'], desc: 'With a measure selected, append the matching legal note to the end of the current voice (P is skipped — it copies to the next measure), using the toolbar voice, duration and dots regardless of the note / rest option. Works even when the IME is in Chinese mode.' },
             { keys: ['3–8'], desc: 'Set the toolbar duration — 3 quarter, 4 eighth, 5 16th, 6 32nd, 7 64th, 8 128th. Drum notes go up to a quarter note, so 1 and 2 do nothing.' },
             { keys: ['0'], desc: 'Toggle the toolbar between note and rest.' },
             { keys: ['MIDI keyboard'], desc: 'MIDI keyboard entry is not supported for drum scores yet.' }
@@ -92,8 +160,9 @@ export default {
         },
         tab: {
           title: 'TAB (guitar / ukulele / bass)',
-          lead: 'There is no keyboard shortcut for entering frets yet — add them with the mouse. The keyboard switches duration and normal note / rest.',
+          lead: 'Letter keys pick the fret while the mouse points at the string and position; the keyboard also switches duration and normal note / rest.',
           items: [
+            { keys: ['A–Z'], desc: 'Frets 0–24 in order (P is skipped, so Q is fret 15): sets the toolbar fret, and with a measure selected and the mouse inside it, also writes it at the string and position under the mouse.' },
             { keys: ['1–8'], desc: 'Main row or numpad: set the toolbar duration — 1 whole, 2 half, 3 quarter, 4 eighth, 5 16th, 6 32nd, 7 64th, 8 128th.' },
             { keys: ['0'], desc: 'Toggle the toolbar between normal note and rest.' },
             { keys: ['MIDI keyboard'], desc: 'MIDI keyboard entry is not supported for TAB yet.' }
@@ -130,6 +199,7 @@ export default {
       pageWidth: 'Total width',
       sLSlotW: 'Left margin',
       sLSlotWHint: 'Blank space to the left of each staff; with “Show instrument” on, the instrument name is drawn here.',
+      instrumentNameFont: 'Instrument font',
       sRSlotW: 'Right margin',
       sRSlotWHint: 'Blank space to the right of each staff; when a slur continues onto the next line, its end-of-line part is drawn here.',
       preview: 'Preview',
@@ -139,11 +209,10 @@ export default {
       titleArea: 'Title area',
       tSlotH: 'Height',
       titleFont: 'Font',
-      lyricsArea: 'Lyrics area',
-      gdSlotH: 'Height',
+      lyricsArea: 'Lyrics',
       lyricsFont: 'Font',
       lyricsFontSize: 'Font size',
-      lyricsFontSizeHint: 'Size of the lyrics text; line spacing scales with it. With larger text and several lyric lines, you may also need a taller lyrics area.',
+      lyricsFontSizeHint: 'Size of the lyrics text; line spacing scales with it. Lyrics are drawn below each single staff in its outer bottom margin, so raise that margin when there are several lyric lines or the text is large.',
       fontDefault: 'System default',
       grandStaff: 'Grand staff margins',
       singleStaff: 'Single staff margins',
@@ -159,7 +228,7 @@ export default {
       setDefaultSuccess: 'Current layout synced as default',
       applyDefault: 'Apply defaults',
       applyDefaultHint:
-        'Apply the default layout (staff spacing, title area, lyrics area, side margins, fonts, lyrics font size) to this score; page size stays the same',
+        'Apply the default layout (staff spacing, title area, side margins, fonts, lyrics font size) to this score; page size stays the same',
       applyDefaultSuccess: 'Default layout applied to this score'
     },
     endpointOffset: {
@@ -210,12 +279,14 @@ export default {
       bend: 'Bend properties',
       bracket: 'Bracket properties',
       noteMark: 'Mark properties',
+      measureMark: 'Measure symbol properties',
       trillLine: 'Trill line properties',
       pedal: 'Pedal properties',
       arpeggio: 'Arpeggio properties',
       strumming: 'Strum properties',
       preludeBracket: 'Prelude bracket properties',
       hairpin: 'Hairpin properties',
+      guzhengLian: 'Guzheng continuous fingering properties',
       placeholder:
         'Select a measure, note, rest, slur, mark, ottava, volta, or bracket on the score to edit its properties here'
     },
@@ -255,7 +326,48 @@ export default {
     },
     tabNote: {
       chord: 'Chord diagram',
-      chordNone: 'None'
+      chordNone: 'None',
+      technique: 'Technique',
+      slap: 'Slap',
+      bend: 'Bend',
+      addBend: 'Add bend',
+      removeBend: 'Remove bend',
+      bendType: 'Bend type',
+      offset: 'Offset',
+      resetPosition: 'Reset position',
+      stage: 'Stage {n}',
+      stageInterval: 'Stage {n} interval',
+      bendTypes: {
+        bend: 'Bend',
+        bendRelease: 'Bend and release',
+        prebend: 'Pre-bend',
+        prebendRelease: 'Pre-bend and release',
+        prebendBend: 'Pre-bend and bend'
+      },
+      slurType: 'Type',
+      slurTypes: {
+        H: 'Hammer-on H',
+        S: 'Slide S',
+        P: 'Pull-off P',
+        HP: 'Hammer-on/pull-off HP'
+      }
+    },
+    drum: {
+      voice: 'Voice',
+      voiceUp: 'Voice 1 (up)',
+      voiceDown: 'Voice 2 (down)',
+      head: 'Note head',
+      headType: {
+        normal: 'Normal',
+        cross: 'Cross',
+        circledCross: 'Circled cross',
+        circledSlash: 'Circled slash',
+        triangle: 'Triangle',
+        diamond: 'Diamond'
+      },
+      region: 'Staff position (0 = bottom line · 8 = top line)',
+      durationWhole: 'Duration (entire note)',
+      center: 'Center'
     },
     contextMenu: {
       delete: 'Delete',
@@ -267,6 +379,7 @@ export default {
       copyGrandStaff: 'Copy grand staff',
       pasteGrandStaff: 'Paste grand staff',
       setToneColor: 'Set tone',
+      setVolume: 'Set volume',
       longRest: 'Multi-measure rest',
       cancelLongRest: 'Remove multi-measure rest',
       copy: 'Copy',
@@ -277,15 +390,21 @@ export default {
       addMeasure: 'Add measure',
       left: 'Left',
       right: 'Right',
-      deleteStaffRow: 'Delete this staff in every system'
+      deleteStaffRow: 'Delete this staff in every grand staff'
     },
     toneColorDialog: {
       title: 'Set tone',
-      hint: 'Sets the tone of the staff this measure belongs to, together with the staff in the same row of this and every following system; earlier systems are unchanged. Choosing “Score setting” in playback uses it; with “Show instrument” on, the name is shown left of the staff.',
+      hint: 'Sets the tone of the staff this measure belongs to, together with the staff in the same row of this and every following grand staff; earlier grand staves are unchanged. Choosing “Score setting” in playback uses it; with “Show instrument” on, the name is shown left of the staff.',
       search: 'Search tones',
       empty: 'No matching tones',
       otherFamily: 'Other',
       clear: 'Clear tone',
+      confirm: 'OK'
+    },
+    staffVolumeDialog: {
+      title: 'Set volume',
+      hint: 'Sets the playback volume (percent, default 100) of the staff this measure belongs to, together with the staff in the same row of every grand staff.',
+      reset: 'Reset to 100',
       confirm: 'OK'
     },
     measure: {
@@ -413,6 +532,7 @@ export default {
       addVoiceNoteAction: 'Add at same slot',
       sameSlotNoteIndex: 'No. {n} from bottom',
       beamConnection: 'Beam connection',
+      rhythmGroupEnd: 'Group end',
       durationShort: {
         '256': '1',
         '128': '1/2',
@@ -493,6 +613,12 @@ export default {
     },
     slur: {
       thickness: 'Line width',
+      style: 'Shape',
+      styleValue: {
+        default: 'Default',
+        rounded: 'Rounded',
+        sharp: 'Sharp'
+      },
       notes: 'Start / end notes',
       startNote: 'Start note',
       endNote: 'End note',
@@ -521,8 +647,8 @@ export default {
     },
     bracket: {
       type: 'Bracket type',
-      applyToAll: 'Apply to all systems',
-      appliedToAll: 'Bracket applied to all systems',
+      applyToAll: 'Apply to all grand staves',
+      appliedToAll: 'Bracket applied to all grand staves',
       typeOption: {
         Bracket: 'Bracket',
         Brace: 'Brace',
@@ -541,6 +667,84 @@ export default {
       resetPosition: 'Reset position',
       dragHint: 'Drag the top or bottom handle to change the length; drag the middle to move it sideways'
     },
+    customSymbol: {
+      title: 'Custom symbols',
+      add: 'New custom symbol',
+      manage: 'Manage',
+      edit: 'Edit',
+      export: 'Export config',
+      exportTitle: 'Export custom symbol config',
+      exported: 'Config exported',
+      import: 'Import config',
+      importTitle: 'Import custom symbol config',
+      imported: 'Imported {count} symbols',
+      importInvalid: 'The config file is invalid or has no usable symbols',
+      empty: 'No custom symbols yet. Click + to upload an SVG.',
+      hint: 'Click a symbol to add it to the selection; click again to remove it',
+      createTitle: 'New custom symbol',
+      editTitle: 'Edit custom symbol',
+      managerTitle: 'Custom symbols',
+      managerHint:
+        'Editing or deleting a library symbol does not change other scores that already use it. Edits are applied to the same symbol in the current score. Use Export / Import config to back up the symbol library.',
+      emptyList: 'No custom symbols',
+      kind: {
+        note: 'Note symbols',
+        measure: 'Measure symbols',
+        slot: 'Slot symbols'
+      },
+      svg: 'SVG',
+      upload: 'Upload SVG',
+      reupload: 'Replace SVG',
+      svgInvalid: 'The SVG could not be read or has no size',
+      svgRequired: 'Upload an SVG first',
+      name: 'Name',
+      namePlaceholder: 'Symbol name',
+      nameRequired: 'Enter a name',
+      size: 'Size',
+      keepRatio: 'Keep ratio',
+      sizeHint: 'Width × height in pixels; a standard measure is 45 high',
+      sizeInvalid: 'Width and height must be greater than 0',
+      position: 'Position',
+      positionOptions: {
+        upper: 'Above measure',
+        lower: 'Below measure'
+      },
+      placement: 'Anchor',
+      placementOptions: {
+        start: 'Measure start',
+        center: 'Measure center',
+        end: 'Measure end'
+      },
+      align: 'Align',
+      alignOptions: {
+        left: 'Left edge',
+        center: 'Center',
+        right: 'Right edge'
+      },
+      vertical: 'Vertical offset (1 = measure height)',
+      horizontal: 'Horizontal offset (1 = measure height)',
+      offsetHint: {
+        note: 'Offset 1 = one measure height (~45 px) from the note head center; negative is above, positive below',
+        measure: 'Offset 1 = one measure height (~45 px); vertical is the distance away from the measure, positive horizontal moves right',
+        slot: 'Offset 1 = one measure height (~45 px) from the column start and measure bottom'
+      },
+      anchor: 'Numbered anchor',
+      anchorAuto: 'Auto (from vertical offset)',
+      anchorOptions: {
+        top: 'Top of number',
+        bottom: 'Bottom of number',
+        left: 'Left of number',
+        right: 'Right of number'
+      },
+      anchorHint: 'Numbered notation only: positions against the number including octave dots and underlines',
+      previewHint: 'Approximate preview; the score shows the actual position',
+      dragHint: 'Drag the move button beside the dashed box to fine-tune the position; press Delete to remove it',
+      missing: 'This symbol is not defined in the score',
+      created: 'Added to the symbol library',
+      saved: 'Saved',
+      deleted: 'Deleted',
+      deleteConfirm: 'Delete "{name}"? Scores that already use it are not affected.'
+    },
     preludeBracket: {
       hint: 'Prelude brackets sit on the left or right of the note column. Delete them from this panel.'
     },
@@ -549,7 +753,9 @@ export default {
         articulation: 'Articulations',
         technique: 'Techniques / bowing',
         ornament: 'Ornaments',
-        dynamic: 'Dynamics'
+        dynamic: 'Dynamics',
+        guzheng: 'Guzheng fingering',
+        guzhengTechnique: 'Guzheng techniques'
       },
       exclusive: 'Pick one',
       dragHint:
@@ -601,7 +807,21 @@ export default {
         sfp: 'sfp (sforzando-piano)',
         rfz: 'rfz (rinforzando)',
         rf: 'rf (rinforzando)',
-        fz: 'fz (forzando)'
+        fz: 'fz (forzando)',
+        guzheng_mo: 'Mo (index finger)',
+        guzheng_tiao: 'Tiao (index finger)',
+        guzheng_gou: 'Gou (middle finger)',
+        guzheng_ti1: 'Ti (middle finger)',
+        guzheng_pi: 'Pi (thumb)',
+        guzheng_tuo: 'Tuo (thumb)',
+        guzheng_da: 'Da (ring finger)',
+        guzheng_zhai: 'Zhai (ring finger)',
+        guzheng_ti2: 'Ti (lift)',
+        guzheng_bo: 'Bo (flick)',
+        guzheng_xiao_cuo: 'Small Cuo (pinch)',
+        guzheng_da_cuo: 'Big Cuo (pinch)',
+        guzheng_sao: 'Sao (sweep)',
+        guzheng_yao: 'Yao (tremolo)'
       }
     },
     spanSymbol: {
@@ -626,7 +846,8 @@ export default {
       pitchDown: 'Ottava 8vb',
       trill: 'Trill line',
       crescendo: 'Crescendo',
-      diminuendo: 'Diminuendo'
+      diminuendo: 'Diminuendo',
+      guzhengLian: 'Guzheng continuous fingering'
     },
     line: {
       trillType: 'Start symbol',
@@ -644,6 +865,17 @@ export default {
         diminuendo_line: 'Diminuendo (dim.)'
       },
       height: 'Opening',
+      guzhengLianType: 'Fingering',
+      guzhengLianTypeOption: {
+        tuo: 'Lian Tuo',
+        pi: 'Lian Pi',
+        mo: 'Lian Mo',
+        tiao: 'Lian Tiao',
+        gou: 'Lian Gou',
+        ti: 'Lian Ti',
+        da: 'Lian Da',
+        zhai: 'Lian Zhai'
+      },
       dragHint: 'Drag either end to change the range; drag the middle to move it up or down'
     },
     staff: {
@@ -708,7 +940,7 @@ export default {
       syncFailed: 'Failed to apply'
     },
     quickInput: {
-      title: 'Numbered notation quick input',
+      title: 'Number notation quick input',
       scoreToText: 'Score to text',
       updatePreview: 'Update preview',
       syncToScore: 'Apply preview to score',
@@ -716,7 +948,7 @@ export default {
       textTitle: 'Text',
       previewTitle: 'Preview',
       warningsTitle: 'Hints ({count})',
-      textPlaceholder: 'Type numbered notation here, then press Ctrl+S or click "Update preview". See "Rules" for the syntax.',
+      textPlaceholder: 'Type number notation here, then press Ctrl+S or click "Update preview". See "Rules" for the syntax.',
       textFromScore: 'Current score converted to text',
       scoreToTextFailed: 'Failed to convert the score to text',
       syncConfirmTitle: 'Apply preview to score',
@@ -792,14 +1024,14 @@ export default {
     },
     scoreImageDialog: {
       title: 'Image to Score',
-      noticeTitle: 'Numbered notation only',
+      noticeTitle: 'Number notation only',
       noticeItems: [
-        'Only numbered notation (jianpu) can be recognized. Staff, guitar tab and drum notation are not supported',
+        'Only number notation (jianpu) can be recognized. Staff, guitar tab and drum notation are not supported',
         'For multi-page scores, order the images by page. Rows from each page are joined in list order into one score',
         'Use clear, upright images with digits that are not too small. Titles and lyrics are not recognized',
         'The generated score replaces the current one. Press Ctrl+Z to undo'
       ],
-      dropHint: 'Click or drop numbered notation images here (multiple allowed)',
+      dropHint: 'Click or drop number notation images here (multiple allowed)',
       formats: 'PNG / JPG / WebP / BMP',
       count: '{n} image(s), joined in order',
       add: 'Add',
@@ -815,7 +1047,7 @@ export default {
       keyAssumed: '{key} (key not detected)',
       warnings: '{n} notice(s)',
       errorBadImage: 'Cannot read the image',
-      errorNoNotation: 'No numbered notation found',
+      errorNoNotation: 'No number notation found',
       errorInternal: 'Recognition error',
       unsupportedSkipped: 'Skipped {n} unsupported file(s)',
       progressRecognizing: 'Recognizing {current} / {total}: {name}',

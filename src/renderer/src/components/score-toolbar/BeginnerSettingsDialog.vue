@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { storeToRefs } from 'pinia'
 import { PLAY_BPM_MAX, PLAY_BPM_MIN } from '@renderer/constant/play'
 import { useBeginnerSettingsStore } from '@renderer/store/beginnerSettings.store'
+import { usePlayStore } from '@renderer/store/play.store'
 
 defineOptions({ name: 'BeginnerSettingsDialog' })
 
@@ -30,6 +31,13 @@ const metronomeVolumePercent = computed({
   get: () => Math.round(metronomeVolume.value * 100),
   set: (value: number) => (metronomeVolume.value = value / 100)
 })
+
+/** 新手模式不播放曲谱，总音量即按键音量（与工具栏「音量」同一个值） */
+const playStore = usePlayStore()
+const pianoVolumePercent = computed({
+  get: () => Math.round(playStore.volume * 100),
+  set: (value: number) => playStore.setVolume(value / 100)
+})
 </script>
 
 <template>
@@ -54,6 +62,14 @@ const metronomeVolumePercent = computed({
           </div>
           <el-switch v-model="coverMidiBox" />
         </div>
+      </section>
+
+      <section class="practice-settings-section">
+        <h3 class="practice-settings-section__title">{{ t('beginner.settings.sound') }}</h3>
+        <el-form-item :label="t('beginner.settings.pianoVolume')">
+          <el-slider v-model="pianoVolumePercent" :min="0" :max="100" show-input />
+          <small class="practice-settings-form__hint">{{ t('beginner.settings.pianoVolumeHint') }}</small>
+        </el-form-item>
       </section>
 
       <section class="practice-settings-section">
@@ -184,6 +200,12 @@ const metronomeVolumePercent = computed({
 
 .practice-settings-form :deep(.el-form-item) {
   margin-bottom: 12px;
+}
+
+.practice-settings-form__hint {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #9a8aa8;
 }
 
 .practice-settings-form :deep(.el-form-item__label) {

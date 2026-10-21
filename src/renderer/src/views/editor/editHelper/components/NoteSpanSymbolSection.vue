@@ -1,6 +1,10 @@
 <script lang="ts" setup>
 import type { MusicScore, SlotData } from '@deciphony/renderer'
-import { DoubleSlotAffiliatedSymbolNameEnum, HairpinTypeEnum } from '@deciphony/renderer'
+import {
+  DoubleSlotAffiliatedSymbolNameEnum,
+  GuzhengLianTypeEnum,
+  HairpinTypeEnum
+} from '@deciphony/renderer'
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
@@ -10,15 +14,18 @@ import {
   listPitchesStartingAt,
   listPreludeBracketLeftOnSlot,
   listPreludeBracketRightOnSlot,
+  listStrummingsOnSlot,
   removeScoreAffiliatedSymbol,
   resolveSelectedSlotId,
   SLOT_SYMBOL_SPAN_OPTIONS,
   tryAddArpeggioFromNote,
+  tryAddGuzhengLianFromNote,
   tryAddHairpinFromNote,
   tryAddPedalFromNote,
   tryAddPitchFromNote,
   tryAddPreludeBracketLeftFromNote,
   tryAddPreludeBracketRightFromNote,
+  tryAddStrummingFromNote,
   tryAddTrillFromNote,
   warnNotEnoughSpanNotes,
   type SlotSymbolSpan
@@ -32,6 +39,7 @@ import {
   SLUR_THICKNESS_MIN
 } from '../renderEditSlurProperties'
 import { slurColumnOptions } from '../renderEditSlurEndpoints'
+import { GUZHENG_LIAN_TYPE_OPTIONS } from '../renderEditLineProperties'
 import PanelField from './panel/PanelField.vue'
 import PanelGroup from './panel/PanelGroup.vue'
 import PanelSegmented from './panel/PanelSegmented.vue'
@@ -43,6 +51,10 @@ const props = defineProps<{
   notesInfoId: string
   /** 按跨度求默认终点 id；提供后终点列有多个音时可改选其中一个 */
   findSlurEnd?: (span: 2 | 3 | 4) => string | null
+  /** TAB：列附属多一个扫弦 */
+  showStrumming?: boolean
+  /** 简谱：古筝连续指法（连托 / 连劈 …） */
+  showGuzheng?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -88,6 +100,11 @@ const arpeggios = computed(() => {
   return slotId.value ? listArpeggiosOnSlot(musicScore.value, slotId.value) : []
 })
 
+const strummings = computed(() => {
+  void musicScore.value.affiliatedSymbols.length
+  return props.showStrumming && slotId.value ? listStrummingsOnSlot(musicScore.value, slotId.value) : []
+})
+
 const preludeBracketLeft = computed(() => {
   void musicScore.value.affiliatedSymbols.length
   return slotId.value ? listPreludeBracketLeftOnSlot(musicScore.value, slotId.value) : []
@@ -117,6 +134,9 @@ const items = computed<SpanItem[]>(() => {
   for (const sym of listLinesStartingAt(musicScore.value, id)) {
     if (sym.name === DoubleSlotAffiliatedSymbolNameEnum.Trill_line) {
       list.push({ id: sym.id, label: t('editor.spanSymbol.trill') })
+    } else if (sym.name === DoubleSlotAffiliatedSymbolNameEnum.Guzheng_lian) {
+      const type = sym.data?.guzhengLian?.type ?? GuzhengLianTypeEnum.Tuo
+      list.push({ id: sym.id, label: t(`editor.line.guzhengLianTypeOption.${type}`) })
     } else {
       const type = sym.data?.hairpin?.type ?? HairpinTypeEnum.Crescendo_hairpin
       list.push({ id: sym.id, label: t(`editor.line.hairpinType.${type}`) })
@@ -181,6 +201,16 @@ const addActions = computed<AddAction[]>(() => [
   }
 ])
 
+const guzhengLianActions = computed<AddAction[]>(() =>
+  props.showGuzheng
+    ? GUZHENG_LIAN_TYPE_OPTIONS.map((type) => ({
+        key: type,
+        label: t(`editor.line.guzhengLianTypeOption.${type}`),
+        run: () => addSpanning(tryAddGuzhengLianFromNote(props.editSlot, span.value, type))
+      }))
+    : []
+)
+
 function slurById(id: string) {
   return slurs.value.find((sym) => sym.id === id)
 }
@@ -204,6 +234,12 @@ function onRemove(id: string) {
           {{ t('common.delete') }}
         </el-button>
       </div>
+      <div v-for="item in strummings" :key="item.id" class="span-symbols__item">
+        <span class="span-symbols__name">{{ t('editor.note.strumming') }}</span>
+        <el-button size="small" type="danger" text @click="onRemove(item.id)">
+          {{ t('common.delete') }}
+        </el-button>
+      </div>
       <div v-for="item in preludeBracketLeft" :key="item.id" class="span-symbols__item">
         <span class="span-symbols__name">{{ t('editor.note.preludeBracketLeft') }}</span>
         <el-button size="small" type="danger" text @click="onRemove(item.id)">
@@ -223,6 +259,13 @@ function onRemove(id: string) {
           @click="tryAddArpeggioFromNote(editSlot)"
         >
           {{ t('editor.note.addArpeggio') }}
+        </el-button>
+        <el-button
+          v-if="showStrumming && !strummings.length"
+          size="small"
+          @click="tryAddStrummingFromNote(editSlot)"
+        >
+          {{ t('editor.note.addStrumming') }}
         </el-button>
         <el-button
           v-if="!preludeBracketLeft.length"
@@ -261,6 +304,19 @@ function onRemove(id: string) {
           {{ action.label }}
         </el-button>
       </div>
+      <template v-if="guzhengLianActions.length">
+        <div class="span-symbols__sub-title">{{ t('editor.spanSymbol.guzhengLian') }}</div>
+        <div class="span-symbols__actions span-symbols__actions--4">
+          <el-button
+            v-for="action in guzhengLianActions"
+            :key="action.key"
+            size="small"
+            @click="action.run"
+          >
+            {{ action.label }}
+          </el-button>
+        </div>
+      </template>
       <p class="span-symbols__hint">{{ t('editor.spanSymbol.spanHint') }}</p>
     </PanelGroup>
 
@@ -308,6 +364,17 @@ function onRemove(id: string) {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
+}
+
+.span-symbols__actions--4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.span-symbols__sub-title {
+  margin-top: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #606266;
 }
 
 .span-symbols__actions :deep(.el-button),

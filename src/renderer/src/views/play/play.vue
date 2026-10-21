@@ -18,6 +18,7 @@ import {
   usePlayRangeSelect,
   useScorePagePlayback
 } from '@renderer/utils/scorePagePlayback'
+import type { RenderMusicScoreHandler } from '@renderer/utils/scorePagePlayback/types'
 import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
 import { usePlayStore } from '@renderer/store/play.store'
 import { useAudioPlayerStore } from '@renderer/store/audioPlayer.store'
@@ -109,9 +110,9 @@ provide(scoreScrollFollowKey, scrollToPlayingNote)
 
 let scrollProgressSubId: string | null = null
 
-function handleRenderMusicScore(list: VDom[]) {
+function handleRenderMusicScore(...[list, info]: Parameters<RenderMusicScoreHandler>) {
   vDomList.value = list
-  playback.handleRenderMusicScore?.(list)
+  playback.handleRenderMusicScore?.(list, info)
 }
 
 function onNotationTypeChange(targetType: MusicScoreTypeEnum) {
@@ -162,7 +163,7 @@ onMounted(async () => {
     if (loaded) {
       initAfterLoad(loaded)
     }
-    await playStore.restorePlaybackDefaults(musicScoreData.value)
+    await playStore.restorePlaybackDefaults(musicScoreData.value, { preferScoreToneColor: true })
     scrollProgressSubId = playback.subscribeProgressStart((_progress, data) => {
       scrollToPlayingNote.handleProgressStart(data as PlayHighlightProgressData)
     })
@@ -175,6 +176,7 @@ onUnmounted(() => {
   if (scrollProgressSubId) playback.unsubscribeProgressStart(scrollProgressSubId)
   playback.handleStop()
   audioPlayerStore.stop()
+  void playStore.resetCollectionToneColorToDefault()
 })
 </script>
 

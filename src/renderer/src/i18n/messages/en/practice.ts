@@ -13,7 +13,6 @@ export default {
     },
     settings: {
       title: 'Practice settings',
-      desc: 'Tune your practice experience — more features coming soon',
       display: 'Display',
       showNoteResult: 'Show note results in real time',
       showNoteResultHint:
@@ -22,6 +21,8 @@ export default {
       coverWaterfallHint: 'Hide the waterfall with a cute background and practice by ear',
       volumeAndSpeed: 'Volume & tempo',
       scoreVolume: 'Score volume',
+      pianoVolume: 'Virtual piano volume',
+      pianoVolumeHint: 'Sound of the keys you press (keyboard, mouse, MIDI device). Keys are muted when score volume is 0.',
       metronomeVolume: 'Metronome volume',
       bpm: 'BPM',
       metronomeDuringPlay: 'Metronome during playback',

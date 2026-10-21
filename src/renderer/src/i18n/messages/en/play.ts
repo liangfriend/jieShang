@@ -30,16 +30,16 @@ export default {
       noPlayableContent: 'This score has no playable content',
       rangeNoPlayableContent: 'No playable notes in the selected range',
       grandStaffMismatch:
-        'All grand staves must have the same number of single staves to enter practice or beginner mode',
+        'All grand staves must have the same number of single staves to merge into one line for practice, beginner, or singing mode',
       tabModeUnavailable: 'Guitar and ukulele tabs do not support practice, beginner, or singing mode yet',
       playOnlyModeUnavailable:
         'Guitar, ukulele, bass, and drum scores do not support practice, beginner, or singing mode yet',
       boundAudioMissing: 'Bound audio not found',
       audioLoadFailed: 'Failed to load audio',
       vocalTimeOffsetMissing:
-        'No vocal sync times on this score. In Edit mode, open Score–audio sync, switch the property to Vocal, then align.',
+        'No vocal sync times on this score. In Edit mode, open Score-audio sync, switch the property to Vocal, then align.',
       accompanimentTimeOffsetMissing:
-        'No accompaniment sync times on this score. In Edit mode, open Score–audio sync, switch the property to Accompaniment, then align.'
+        'No accompaniment sync times on this score. In Edit mode, open Score-audio sync, switch the property to Accompaniment, then align.'
     },
     mark: {
       label: 'Marks',

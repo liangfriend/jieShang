@@ -1,10 +1,20 @@
 export default {
   editor: {
+    menu: {
+      file: '文件',
+      edit: '编辑',
+      view: '视图',
+      score: '谱面',
+      help: '帮助'
+    },
     toolbar: {
       playMode: '播放模式',
       timeOffset: '谱音同步',
       linkedStaffMode: '连谱模式',
       structureEdit: '结构按钮',
+      rhythmPatternMode: '音值组合',
+      slurStyle: '连音线样式',
+      lyricsEdit: '歌词',
       showInstrumentName: '显示音色',
       layout: '布局调整',
       notice: '须知',
@@ -18,6 +28,7 @@ export default {
       formatMusicXmlMs4: 'MusicXML(ms4)',
       formatMusicXmlMs3: 'MusicXML(ms3)',
       formatMidi: 'MIDI',
+      formatWork: '作品',
       scoreImage: '图片转谱(简谱)',
       save: '保存',
       notationType: '曲谱类型',
@@ -35,6 +46,41 @@ export default {
       play: '试听',
       toneLoadFailed: '打击乐音色加载失败'
     },
+    scoreToWork: {
+      title: '导出为作品',
+      template: '页面模板',
+      custom: '自定义',
+      pageSize: '页面宽高',
+      scoreWidth: '曲谱宽度',
+      topMargin: '曲谱上边距',
+      hint: '曲谱按宽度等比缩放、横向居中，从上边距开始排；一页放不下的复谱表整行移到下一页，底部留同样的边距。确认后新建作品并进入作品编辑，保存前不会写入「我的作品」。'
+    },
+    rhythmPattern: {
+      title: '音值组合',
+      heading: '音值组合（{mode}） · {timeSignature} · {count} 个音',
+      hint: '常用在前；按卡片上的键直接选，方向键 + Enter / 空格选当前卡片，Tab 切换模式，Esc 关闭；鼠标移过不会改候选',
+      empty: '该拍号下没有能放下这些音的节奏型',
+      emptyBeat: '这些音无法恰好组成一拍',
+      modeMeasure: '按小节',
+      modeBeat: '按拍',
+      skipped: '一拍最多放得下末尾这些音，前面 {count} 个音未参与组合'
+    },
+    standardMode: {
+      label: '标准模式',
+      hint: '开启后录入的音符超出小节拍号时值时，自动挪到下一小节并选中它，本小节剩余时值补休止符',
+      durationInvalid: '音符时值不正确',
+      noNextMeasure: '已经是最后一个小节，没有下一小节'
+    },
+    lyricsMatch: {
+      button: '歌词匹配',
+      title: '歌词智能匹配',
+      grandStaff: '第 {n} 行',
+      placeholder: '输入这一行的歌词，自动填到音符上',
+      placeholderMulti: '共 {n} 个单谱表：第一行填第 1 个，回车换行填下一个',
+      overflow: '第 {staff} 个单谱表多出 {n} 个字没有填入',
+      extraLines: '多出 {n} 行，没有对应的单谱表',
+      hint: '每个输入框对应一个复谱表，回车换行代表下一个单谱表。自动跳过休止符和连音线罩住的音；中日韩一字一音，其它文字按空格分词、用 - 拆音节，_ 空过一个音。填的是第一行歌词。'
+    },
     noticeDialog: {
       title: '编辑须知',
       selectionTitle: '选中与删除',
@@ -47,36 +93,58 @@ export default {
       commonShortcutTitle: '通用快捷键（所有谱种）',
       commonShortcutItems: [
         { keys: ['Esc'], desc: '退出当前选中状态。' },
-        { keys: ['Delete', 'Backspace'], desc: '删除当前选中项（音符、小节、谱表、跨音符记号等）。' },
+        { keys: ['Delete', 'Backspace'], desc: '删除当前选中项（音符、小节、谱表、跨音符记号等）。选中小节时 Backspace 只删小节最后一个音符 / 休止符，Delete 才删整个小节。' },
+        { keys: ['<', '>'], desc: '选中音符（或小节，取小节最后一个音，不必先点音符）时：> 从当前音连到下一个音，当前音已是某条连音线的起点时改为把它往右扩一个音；< 从上一个音连到当前音，当前音已是某条连音线的终点时改为把它往左扩一个音。跳过休止符。不按 Shift 直接按逗号 / 句号键也行，中文输入法下同样有效。' },
+        { keys: ['/'], desc: '删除选中音符（或小节最后一个音）上的所有连音线（以它为起点或终点的）。' },
+        { keys: [';', "'"], desc: '选中音符（或小节，取小节最后一个音）时：; 添加前倚音，\' 添加后倚音；默认十六分音符。不按 Shift 直接按分号 / 引号键也行。' },
+        { keys: ['L'], desc: '清空选中音符（或小节最后一个音）上的全部前 / 后倚音。' },
+        { keys: ['O'], desc: '循环切换主音符 / 休止符时值：六十四分 → 三十二分 → 十六分 → 八分 → 四分 → 二分 → 全音符 → …（例如四分按 O 变成二分）。选中音符或休止符则改该项；选中小节则改最后一个；选中倚音则改其宿主主音。' },
+        { keys: ['{', '}'], desc: '选中小节时：{ 循环切换前置小节线（无、反复开始、反向），} 循环切换后置小节线（8 种）。不按 Shift 直接按 [ / ] 键也行。' },
         { keys: ['Ctrl+Z'], desc: '撤销。最多保留约 20 步，离开编辑页后清空。' },
         { keys: ['Ctrl+Y', 'Ctrl+Shift+Z'], desc: '恢复被撤销的操作。' },
         { keys: ['↑', '↓', '←', '→'], desc: '选中小节时，切换到上下左右相邻的小节，方便连续录入。' },
-        { keys: ['/'], desc: '在选中小节后面插入一个空小节，复谱表里每一行单谱表会同步插入（需先选中小节）。' },
         { keys: ['*'], desc: '在当前单谱表下方添加一个单谱表；未选中时加在最后一个单谱表下方。' },
-        { keys: ['-'], desc: '在当前复谱表下方添加一个复谱表；未选中时加在最后一个复谱表下方。' }
+        { keys: ['-'], desc: '在当前复谱表下方添加一个复谱表；未选中时加在最后一个复谱表下方。' },
+        { keys: ['空格'], desc: '选中有音符的小节时，弹出音值组合浮窗：音名不变，换成所选节奏型。在编辑页顶部「音值组合」切换模式（浮窗打开时也可按 Tab）：「按小节」把整小节换掉；「按拍」只把末尾尚未组合的音组成一拍，并在最后一个音上打组合标记，下次从标记之后的新音开始。浮窗里按卡片上的数字 / 字母键（不够时用小键盘）直接选择，方向键 + Enter 或空格选当前卡片，Esc 关闭。鼠标移过卡片不会改当前候选。' },
+        { keys: ['P'], desc: '选中小节时，把本小节的音符复制到下一小节（替换下一小节原有音符）并选中下一小节，连按可一路往后复制。行末会跳到下一个复谱表同一行单谱表的第一小节。' },
+        { keys: ['Tab'], desc: '在歌词输入框里跳到下一个音的歌词；当前音是连音线的起点时，直接跳到连音线终点之后那个音。' }
+      ],
+      standardModeTitle: '标准模式',
+      standardModeItems: [
+        '编辑页右上角「标准模式」开关。开启后，键盘、鼠标、MIDI 录入的音符如果让小节总时值超过拍号，会自动挪到下一小节末尾并选中下一小节，本小节剩下的时值用休止符补满。',
+        '音符本身比整个小节还长时提示「音符时值不正确」，不会写入。',
+        '下一小节与方向键 → 一致：行末跳到下一个复谱表同一行单谱表的第一小节；没有下一小节时提示并不写入。'
       ],
       commonShortcutNote: '按住 Ctrl / Alt，或正在输入框里打字时，单键快捷键不生效。',
       shortcutTitle: '分谱种快捷键',
       shortcutGroups: {
         number: {
           title: '简谱',
-          lead: '简谱用主键盘（字母上方那排）的数字直接录音符，所以切换时值要改用右侧小键盘。',
+          lead: '简谱用主键盘（字母上方那排）的数字和三排字母直接录音符，所以切换时值要改用右侧小键盘。',
           items: [
-            { keys: ['1–7'], desc: '主键盘：在选中小节末尾添加 do re mi fa sol la si。时值与八度点取工具栏设置，不受工具栏「音符 / 休止符」选项影响。' },
-            { keys: ['0'], desc: '主键盘：在选中小节末尾添加一个休止符，时值取工具栏设置。' },
+            { keys: ['1–7'], desc: '主键盘：在选中小节末尾添加中音 do re mi fa sol la si。时值取工具栏设置，不受工具栏「音符 / 休止符」选项影响。' },
+            { keys: ['Q W E R T Y U'], desc: '依次添加高音 1–7（上加一个八度点）。' },
+            { keys: ['A S D F G H J'], desc: '依次添加中音 1–7。' },
+            { keys: ['Z X C V B N M'], desc: '依次添加低音 1–7（下加一个八度点）。' },
+            { keys: ['0', '~', 'I', 'K'], desc: '主键盘：在选中小节末尾添加一个休止符，时值取工具栏设置。I / K 是中排字母空出来的键。' },
             { keys: ['Num 1–8'], desc: '小键盘：切换工具栏时值，1 全音符、2 二分、3 四分、4 八分、5 十六分、6 三十二分、7 六十四分、8 一百二十八分。' },
             { keys: ['Num 0'], desc: '小键盘：工具栏在「音符」与「休止符」之间切换（影响鼠标点击添加）。' },
-            { keys: ['Q', 'W', 'E', 'R', 'T', 'Y', 'U'], desc: '依次把工具栏八度点切换为 -3、-2、-1、无、+1、+2、+3。先切八度点再按数字，就能录高低音。' },
+            { keys: ['8', '9'], desc: '主键盘：8 把工具栏八度点减一个，9 加一个（范围 -3 到 +3），影响鼠标点击添加。' },
             { keys: ['MIDI 键盘'], desc: '选中小节后按下琴键，在小节末尾添加对应音高的音符，时值取工具栏设置。' },
             { keys: ['Ctrl+S'], desc: '在「简谱快速录入」抽屉里：按文本刷新预览。' }
           ]
         },
         staff: {
           title: '线谱（五线谱）',
-          lead: '线谱的音高由鼠标在谱面上的位置决定：选中小节后在小节内点击即可添加。键盘负责切换时值和音符 / 休止符。',
+          lead: '线谱和简谱一样，用主键盘的数字和三排字母按唱名录音符（按小节调号首调换算，高音谱号中音为 C4–B4，低音谱号低一个八度）；切换时值改用右侧小键盘。也可以选中小节后在小节内用鼠标点击添加。',
           items: [
-            { keys: ['1–8'], desc: '主键盘或小键盘都可以：切换工具栏时值，1 全音符、2 二分、3 四分、4 八分、5 十六分、6 三十二分、7 六十四分、8 一百二十八分。' },
-            { keys: ['0'], desc: '工具栏在「音符」与「休止符」之间切换。' },
+            { keys: ['1–7'], desc: '主键盘：在选中小节末尾添加中音 do re mi fa sol la si。时值取工具栏设置，不受工具栏「音符 / 休止符」选项影响。' },
+            { keys: ['Q W E R T Y U'], desc: '依次添加高八度的 1–7。' },
+            { keys: ['A S D F G H J'], desc: '依次添加中音 1–7。' },
+            { keys: ['Z X C V B N M'], desc: '依次添加低八度的 1–7。' },
+            { keys: ['0', '~', 'I', 'K'], desc: '主键盘：在选中小节末尾添加一个休止符，时值取工具栏设置。I / K 是中排字母空出来的键。' },
+            { keys: ['Num 1–8'], desc: '小键盘：切换工具栏时值，1 全音符、2 二分、3 四分、4 八分、5 十六分、6 三十二分、7 六十四分、8 一百二十八分。' },
+            { keys: ['Num 0'], desc: '小键盘：工具栏在「音符」与「休止符」之间切换（影响鼠标点击添加）。' },
             { keys: ['MIDI 键盘'], desc: '选中小节后按下琴键，在小节末尾添加对应音高的音符，时值取工具栏设置。' }
           ]
         },
@@ -84,7 +152,7 @@ export default {
           title: '鼓谱',
           lead: '鼓谱用字母键直接录入：每个字母对应一种合法音符（线位 + 符头），对照工具栏「合法音符一览」卡片上的字母。',
           items: [
-            { keys: ['A–S'], desc: '选中小节后，在当前声部末尾添加该字母对应的合法音符。声部、时值、附点取工具栏设置，不受「音符 / 休止符」选项影响；输入法处于中文状态时也能用。' },
+            { keys: ['A–T'], desc: '选中小节后，在当前声部末尾添加该字母对应的合法音符（跳过 P，P 是复制到下一小节）。声部、时值、附点取工具栏设置，不受「音符 / 休止符」选项影响；输入法处于中文状态时也能用。' },
             { keys: ['3–8'], desc: '切换工具栏时值，3 四分、4 八分、5 十六分、6 三十二分、7 六十四分、8 一百二十八分。鼓谱最长为四分音符，所以 1、2 无效。' },
             { keys: ['0'], desc: '工具栏在「音符」与「休止符」之间切换。' },
             { keys: ['MIDI 键盘'], desc: '鼓谱暂不支持 MIDI 键盘录入。' }
@@ -92,8 +160,9 @@ export default {
         },
         tab: {
           title: 'TAB 谱（吉他 / 尤克里里 / 贝斯）',
-          lead: 'TAB 谱暂无用键盘录入品位的快捷键，请用鼠标在谱面上添加；键盘负责切换时值和标准音 / 休止符。',
+          lead: 'TAB 谱用字母键选品位，鼠标指向弦与位置；键盘也负责切换时值和标准音 / 休止符。',
           items: [
+            { keys: ['A–Z'], desc: '依次为 0–24 品（跳过 P，Q 是 15 品）：改工具栏品位，选中小节且鼠标停在小节内时，同时写入鼠标所指的弦与位置。' },
             { keys: ['1–8'], desc: '主键盘或小键盘都可以：切换工具栏时值，1 全音符、2 二分、3 四分、4 八分、5 十六分、6 三十二分、7 六十四分、8 一百二十八分。' },
             { keys: ['0'], desc: '工具栏在「标准音」与「休止符」之间切换。' },
             { keys: ['MIDI 键盘'], desc: 'TAB 谱暂不支持 MIDI 键盘录入。' }
@@ -127,6 +196,7 @@ export default {
       pageWidth: '总宽度',
       sLSlotW: '左留白',
       sLSlotWHint: '谱表左侧的空白宽度；打开「显示音色」后，音色名显示在这里。',
+      instrumentNameFont: '音色名字体',
       sRSlotW: '右留白',
       sRSlotWHint: '谱表右侧的空白宽度；连音线跨到下一行时，行尾的那一段画在这里。',
       preview: '预览',
@@ -136,11 +206,10 @@ export default {
       titleArea: '标题区',
       tSlotH: '高度',
       titleFont: '字体',
-      lyricsArea: '歌词区',
-      gdSlotH: '高度',
+      lyricsArea: '歌词',
       lyricsFont: '字体',
       lyricsFontSize: '字号',
-      lyricsFontSizeHint: '歌词文字大小，行距跟着按比例变化；字号调大后，歌词行多时可能需要同时调高歌词区。',
+      lyricsFontSizeHint: '歌词文字大小，行距跟着按比例变化。歌词画在每个单谱表下方，占用单谱表的下外边距，歌词行多或字号大时请调大下外边距。',
       fontDefault: '系统默认',
       grandStaff: '复谱表边距',
       singleStaff: '单谱表边距',
@@ -155,7 +224,7 @@ export default {
       setDefaultHint: '把当前曲谱的布局（不含页面宽高）同步为新建曲谱的默认布局',
       setDefaultSuccess: '已将当前布局同步为默认',
       applyDefault: '应用默认设置',
-      applyDefaultHint: '把默认布局（谱表间距、标题区、歌词区、左右留白、字体、歌词字号）应用到当前曲谱，页面宽高不变',
+      applyDefaultHint: '把默认布局（谱表间距、标题区、左右留白、字体、歌词字号）应用到当前曲谱，页面宽高不变',
       applyDefaultSuccess: '已将默认布局应用到当前曲谱'
     },
     endpointOffset: {
@@ -206,12 +275,14 @@ export default {
       bend: '推弦属性',
       bracket: '连谱号属性',
       noteMark: '记号属性',
+      measureMark: '小节符号属性',
       trillLine: '颤音线属性',
       pedal: '踏板属性',
       arpeggio: '琶音属性',
       strumming: '扫弦属性',
       preludeBracket: '前奏括号属性',
       hairpin: '渐强 / 渐弱属性',
+      guzhengLian: '古筝连续指法属性',
       placeholder: '选中曲谱中的小节、音符、休止符、连音线、记号、八度记号、Volta 或连谱号，这里会显示可编辑属性'
     },
     panelTab: {
@@ -250,7 +321,48 @@ export default {
     },
     tabNote: {
       chord: '和弦图',
-      chordNone: '无'
+      chordNone: '无',
+      technique: '技巧',
+      slap: '拍弦',
+      bend: '推弦',
+      addBend: '添加推弦',
+      removeBend: '移除推弦',
+      bendType: '推弦类型',
+      offset: '位置偏移',
+      resetPosition: '重置位置',
+      stage: '阶段 {n}',
+      stageInterval: '阶段 {n} 音程',
+      bendTypes: {
+        bend: '推弦',
+        bendRelease: '推弦再回来',
+        prebend: '预推弦',
+        prebendRelease: '预推弦再回来',
+        prebendBend: '预推弦再升高'
+      },
+      slurType: '类型',
+      slurTypes: {
+        H: '击弦 H',
+        S: '滑弦 S',
+        P: '勾弦 P',
+        HP: '击勾弦 HP'
+      }
+    },
+    drum: {
+      voice: '声部',
+      voiceUp: '一声部（向上）',
+      voiceDown: '二声部（向下）',
+      head: '音符头',
+      headType: {
+        normal: '普通',
+        cross: '叉号',
+        circledCross: '叉号加圆',
+        circledSlash: '斜线加圆',
+        triangle: '三角形',
+        diamond: '菱形'
+      },
+      region: '线位（0 底线 · 8 顶线）',
+      durationWhole: '时值（整个音符）',
+      center: '居中'
     },
     contextMenu: {
       delete: '删除',
@@ -262,6 +374,7 @@ export default {
       copyGrandStaff: '复制复谱表',
       pasteGrandStaff: '粘贴复谱表',
       setToneColor: '设置音色',
+      setVolume: '设置音量',
       longRest: '长休止符',
       cancelLongRest: '取消长休止符',
       copy: '复制',
@@ -281,6 +394,12 @@ export default {
       empty: '没有匹配的音色',
       otherFamily: '其他',
       clear: '清除音色',
+      confirm: '确定'
+    },
+    staffVolumeDialog: {
+      title: '设置音量',
+      hint: '设置该小节所在单谱表的播放音量（百分比，默认 100），所有复谱表中同一行的单谱表会一起设置。',
+      reset: '恢复 100',
       confirm: '确定'
     },
     measure: {
@@ -408,6 +527,7 @@ export default {
       addVoiceNoteAction: '添加到同一位置',
       sameSlotNoteIndex: '自下而上第 {n} 个',
       beamConnection: '减时线连接',
+      rhythmGroupEnd: '组合标记',
       durationShort: {
         '256': '全',
         '128': '二分',
@@ -488,6 +608,12 @@ export default {
     },
     slur: {
       thickness: '线宽',
+      style: '造型',
+      styleValue: {
+        default: '默认',
+        rounded: '圆润',
+        sharp: '尖锐'
+      },
       notes: '起止音',
       startNote: '起点音',
       endNote: '终点音',
@@ -536,6 +662,83 @@ export default {
       resetPosition: '重置位置',
       dragHint: '选中后拖动上下把手调整长度，拖动中间左右平移'
     },
+    customSymbol: {
+      title: '自定义符号',
+      add: '新建自定义符号',
+      manage: '管理',
+      edit: '编辑',
+      export: '导出配置',
+      exportTitle: '导出自定义符号配置',
+      exported: '已导出配置',
+      import: '导入配置',
+      importTitle: '导入自定义符号配置',
+      imported: '已导入 {count} 个符号',
+      importInvalid: '配置文件无效或没有可用符号',
+      empty: '还没有自定义符号，点击 + 上传 SVG 创建',
+      hint: '点击符号添加到当前选中项，再次点击移除',
+      createTitle: '新建自定义符号',
+      editTitle: '编辑自定义符号',
+      managerTitle: '自定义符号管理',
+      managerHint: '删除或修改符号库里的符号，不影响已添加到其他曲谱的符号；修改后当前曲谱里的同一符号会同步更新。可用「导出 / 导入配置」在设备间备份符号库。',
+      emptyList: '暂无自定义符号',
+      kind: {
+        note: '音符符号',
+        measure: '小节符号',
+        slot: 'Slot 符号'
+      },
+      svg: 'SVG',
+      upload: '上传 SVG',
+      reupload: '重新上传',
+      svgInvalid: 'SVG 无法解析或没有尺寸',
+      svgRequired: '请先上传 SVG',
+      name: '名称',
+      namePlaceholder: '符号名称',
+      nameRequired: '请填写名称',
+      size: '尺寸',
+      keepRatio: '锁定比例',
+      sizeHint: '宽 × 高，单位像素；标准小节高 45',
+      sizeInvalid: '宽高必须大于 0',
+      position: '位置',
+      positionOptions: {
+        upper: '小节上方',
+        lower: '小节下方'
+      },
+      placement: '横向锚点',
+      placementOptions: {
+        start: '小节左边',
+        center: '小节中点',
+        end: '小节右边'
+      },
+      align: '对齐',
+      alignOptions: {
+        left: '左边贴锚点',
+        center: '居中',
+        right: '右边贴锚点'
+      },
+      vertical: '纵向偏移（1=小节高）',
+      horizontal: '横向偏移（1=小节高）',
+      offsetHint: {
+        note: '偏移量 1 = 一个小节的高度（约 45 像素），相对音符头中心；纵向负值在上方、正值在下方',
+        measure: '偏移量 1 = 一个小节的高度（约 45 像素）；纵向为离开小节的距离，横向正值向右',
+        slot: '偏移量 1 = 一个小节的高度（约 45 像素），相对音符列起点与小节底'
+      },
+      anchor: '简谱锚点',
+      anchorAuto: '自动（按纵向偏移）',
+      anchorOptions: {
+        top: '数字上边',
+        bottom: '数字下边',
+        left: '数字左边',
+        right: '数字右边'
+      },
+      anchorHint: '只对简谱生效：相对数字及八度点 / 减时线的外框定位',
+      previewHint: '示意预览，实际位置以曲谱为准',
+      dragHint: '拖动虚线框右侧的移动按钮可微调位置，按 Delete 删除',
+      missing: '曲谱里找不到该符号的定义',
+      created: '已加入符号库',
+      saved: '已保存',
+      deleted: '已删除',
+      deleteConfirm: '删除「{name}」？已添加到曲谱里的该符号不受影响。'
+    },
     preludeBracket: {
       hint: '前奏括号挂在当前音符列两侧（左括号靠左、右括号靠右）。可在属性栏删除。'
     },
@@ -544,7 +747,9 @@ export default {
         articulation: '奏法',
         technique: '技巧 / 弓法',
         ornament: '装饰音',
-        dynamic: '力度'
+        dynamic: '力度',
+        guzheng: '古筝指法',
+        guzhengTechnique: '古筝技法'
       },
       exclusive: '单选',
       dragHint: '点击切换记号；选中曲谱上的记号后，拖动右侧的移动按钮可微调位置',
@@ -595,7 +800,21 @@ export default {
         sfp: 'sfp 突强后弱',
         rfz: 'rfz 加强',
         rf: 'rf 加强',
-        fz: 'fz 突强'
+        fz: 'fz 突强',
+        guzheng_mo: '抹',
+        guzheng_tiao: '挑',
+        guzheng_gou: '勾',
+        guzheng_ti1: '剔',
+        guzheng_pi: '劈',
+        guzheng_tuo: '托',
+        guzheng_da: '打',
+        guzheng_zhai: '摘',
+        guzheng_ti2: '提',
+        guzheng_bo: '拨',
+        guzheng_xiao_cuo: '小撮',
+        guzheng_da_cuo: '大撮',
+        guzheng_sao: '扫',
+        guzheng_yao: '摇指'
       }
     },
     spanSymbol: {
@@ -618,7 +837,8 @@ export default {
       pitchDown: '低八度 8vb',
       trill: '颤音线',
       crescendo: '渐强',
-      diminuendo: '渐弱'
+      diminuendo: '渐弱',
+      guzhengLian: '古筝连续指法'
     },
     line: {
       trillType: '起始符号',
@@ -636,6 +856,17 @@ export default {
         diminuendo_line: '渐弱（dim.）'
       },
       height: '开口高度',
+      guzhengLianType: '指法',
+      guzhengLianTypeOption: {
+        tuo: '连托',
+        pi: '连劈',
+        mo: '连抹',
+        tiao: '连挑',
+        gou: '连勾',
+        ti: '连剔',
+        da: '连打',
+        zhai: '连摘'
+      },
       dragHint: '拖动两端调整起止位置，拖动中间上下移动'
     },
     staff: {

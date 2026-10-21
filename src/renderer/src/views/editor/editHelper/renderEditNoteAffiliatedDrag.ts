@@ -1,4 +1,5 @@
 import {
+  getExtraSymbols,
   getMeasureSlots,
   SingleNoteAffiliatedSymbolNameEnum,
   type GrandStaff,
@@ -56,20 +57,18 @@ export function locateNoteAffiliatedById(musicScore: MusicScore, id: string): Lo
   return null
 }
 
-export function isNoteAffiliatedSymbol(self: unknown): self is SingleNoteAffiliatedSymbol {
-  return (
-    self != null
-    && typeof self === 'object'
-    && 'name' in self
-    && NOTE_AFFILIATED_NAMES.has(String((self as {name: unknown}).name))
-    && !('startId' in self)
-  )
+/** 内置单音符附属名，或曲谱 extraNoteSymbol 里的 skinKey */
+export function isNoteAffiliatedSymbol(self: unknown, musicScore?: MusicScore | null): self is SingleNoteAffiliatedSymbol {
+  if (self == null || typeof self !== 'object' || !('name' in self) || 'startId' in self) return false
+  const name = String((self as {name: unknown}).name)
+  if (NOTE_AFFILIATED_NAMES.has(name)) return true
+  return musicScore != null && getExtraSymbols(musicScore, 'note').some((sym) => sym.skinKey === name)
 }
 
 export function isNoteAffiliatedSelected(
   selected: SlotData | null,
 ): selected is SlotData & { self: SingleNoteAffiliatedSymbol } {
-  return isNoteAffiliatedSymbol(selected?.self)
+  return isNoteAffiliatedSymbol(selected?.self, selected?.musicScore as MusicScore | undefined)
 }
 
 export function isNoteAffiliatedVDom(vdom: VDom | null | undefined, symbolId: string): boolean {

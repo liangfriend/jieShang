@@ -29,7 +29,8 @@ const grandStaff1 = createGrandStaff({ linkedStaff: true })
 
 data.grandStaffs.push(grandStaff1)
 
-// 小节1-符号 高音谱号 F调 2/4拍
+// 第一小节默认不要前置小节线
 const measure1 = data.grandStaffs[0].staves[0].measures[0]
+delete measure1.barline_f
 
 export default data

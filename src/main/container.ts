@@ -43,6 +43,9 @@ import GuitarChordModel from './models/GuitarChordModel'
 import { DrumMachineRepository } from './repositories/drumMachineRepository'
 import { DrumMachineService } from './services/drumMachineService'
 import { DrumMachineController } from './controllers/drumMachineController'
+import { CustomSymbolRepository } from './repositories/customSymbolRepository'
+import { CustomSymbolService } from './services/customSymbolService'
+import { CustomSymbolController } from './controllers/customSymbolController'
 import { syncBuiltinCollectionThumbnails } from './utils/collectionThumbnailSync'
 import { syncBuiltinCollections } from './database/collectionBuiltinSeed'
 
@@ -125,6 +128,10 @@ export async function setupContainer() {
     drumMachineRepository: asClass(DrumMachineRepository).singleton(),
     drumMachineService: asClass(DrumMachineService).singleton(),
     drumMachineController: asClass(DrumMachineController).singleton(),
+
+    customSymbolRepository: asClass(CustomSymbolRepository).singleton(),
+    customSymbolService: asClass(CustomSymbolService).singleton(),
+    customSymbolController: asClass(CustomSymbolController).singleton(),
 
     windowController: asClass(WindowController).singleton(),
 

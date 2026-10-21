@@ -10,8 +10,6 @@ import {
   watch
 } from 'vue'
 import { parseAndFormatDimension } from '../utils/commonUtil'
-import { KeyCodeEnum } from '@renderer/types/enum'
-import { defaultCodeConfig } from '../utils/constant'
 import { useMidiStore } from '@renderer/store/midi.store'
 import { usePerformSkin } from '@renderer/components/performSkin/usePerformSkin'
 import type { MidiBoxSequence } from '@renderer/utils/scorePagePlayback/toMidiBoxSequence'
@@ -58,17 +56,6 @@ const props = defineProps({
   blackKeyWidthRatio: {
     type: Number,
     default: 0.7
-  },
-  config: {
-    type: Object as PropType<{
-      keyboard: {
-        code: KeyCodeEnum
-        midi: number
-      }[]
-    }>,
-    default: () => ({
-      keyboard: defaultCodeConfig
-    })
   },
   blockSize: {
     type: Number,
@@ -573,19 +560,6 @@ function handleKeyUp(midi: number) {
   activeKeys.value = next
 }
 
-function keyBoardKeyDown(event: KeyboardEvent) {
-  if (event.repeat) return
-  const midi = props.config.keyboard?.find((item) => item.code === event.code)?.midi
-  if (midi == null) return
-  handleKeyDown(midi)
-}
-
-function keyBoardKeyUp(event: KeyboardEvent) {
-  const midi = props.config.keyboard?.find((item) => item.code === event.code)?.midi
-  if (midi == null) return
-  handleKeyUp(midi)
-}
-
 function handleMidiMessage(event: MIDIMessageEvent) {
   const data = event.data
   if (!data || data.length < 2) return
@@ -606,8 +580,6 @@ onMounted(async () => {
   observeContainer()
   syncCanvasSize()
   startRenderLoop()
-  window.addEventListener('keydown', keyBoardKeyDown)
-  window.addEventListener('keyup', keyBoardKeyUp)
   midiStore.addMessageListener(handleMidiMessage)
 })
 
@@ -616,8 +588,6 @@ onBeforeUnmount(() => {
   if (fallAnimRaf) cancelAnimationFrame(fallAnimRaf)
   stopRenderLoop()
   overlayHost.runtime?.reset()
-  window.removeEventListener('keydown', keyBoardKeyDown)
-  window.removeEventListener('keyup', keyBoardKeyUp)
   midiStore.removeMessageListener(handleMidiMessage)
 })
 

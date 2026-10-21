@@ -61,7 +61,7 @@ onMounted(async () => {
   await Promise.all([
     midiStore.init(),
     waitVirtualPianoSkin(),
-    playStore.waitReady().then(() => playStore.ensureCollectionToneColorInitialized())
+    playStore.waitReady().then(() => playStore.resetCollectionToneColorToDefault())
   ]).catch(() => undefined)
   start()
   ready.value = true

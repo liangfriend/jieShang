@@ -22,7 +22,7 @@ export default {
     actions: {
       collection: 'コレクション',
       scores: 'マイ楽譜',
-      whiteboard: '授業ホワイトボード',
+      whiteboard: '授業用ホワイトボード',
       achievements: '実績',
       myWorks: 'マイ作品',
       chordManage: 'コード管理',
@@ -51,6 +51,7 @@ export default {
     deleteWarning: 'この操作は元に戻せません。',
     deleteSuccess: '楽譜を削除しました',
     deleteAria: '楽譜を削除',
+    clSheetBadge: '弾き語り',
     templateDialog: {
       title: 'テンプレートを選択',
       desc: 'テンプレートを選ぶと楽譜の編集を始められます',
@@ -66,7 +67,8 @@ export default {
       bass5: '5弦ベース譜',
       bass6: '6弦ベース譜',
       drum: 'ドラム譜',
-      drumKit: 'ドラムセット譜'
+      drumKit: 'ドラムセット譜',
+      clSheet: 'コード弾き語り譜'
     }
   }
 } as const

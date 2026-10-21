@@ -31,6 +31,16 @@ export class FileController {
       return this.fileService.exportSj(content, defaultName, window)
     })
 
+    ipcMain.handle('file:importClSheet', (event) => {
+      const window = BrowserWindow.fromWebContents(event.sender)
+      return this.fileService.importClSheet(window)
+    })
+
+    ipcMain.handle('file:exportClSheet', (event, content: string, defaultName?: string) => {
+      const window = BrowserWindow.fromWebContents(event.sender)
+      return this.fileService.exportClSheet(content, defaultName, window)
+    })
+
     ipcMain.handle('file:importMusicXml', (event) => {
       const window = BrowserWindow.fromWebContents(event.sender)
       return this.fileService.importMusicXml(window)
@@ -49,6 +59,19 @@ export class FileController {
     ipcMain.handle('file:exportMidi', (event, content: Uint8Array, defaultName?: string) => {
       const window = BrowserWindow.fromWebContents(event.sender)
       return this.fileService.exportMidi(content, defaultName, window)
+    })
+
+    ipcMain.handle(
+      'file:exportJson',
+      (event, content: string, defaultName?: string, title?: string) => {
+        const window = BrowserWindow.fromWebContents(event.sender)
+        return this.fileService.exportJson(content, defaultName, title, window)
+      }
+    )
+
+    ipcMain.handle('file:importJson', (event, title?: string) => {
+      const window = BrowserWindow.fromWebContents(event.sender)
+      return this.fileService.importJson(title, window)
     })
   }
 }

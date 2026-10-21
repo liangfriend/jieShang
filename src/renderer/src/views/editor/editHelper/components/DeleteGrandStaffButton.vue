@@ -39,29 +39,29 @@ function onClick() {
       :height="DELETE_GRAND_STAFF_BTN_H"
       :width="DELETE_GRAND_STAFF_BTN_W"
       fill="#FFBDBD"
-      rx="18"
-      ry="18"
+      rx="10"
+      ry="10"
       stroke="#F56C6C"
-      stroke-width="1.5"
+      stroke-width="1.2"
     />
-    <circle cx="22" cy="18" fill="#fff" opacity="0.92" r="10" />
+    <circle cx="11" cy="10" fill="#fff" opacity="0.92" r="6.5" />
     <line
       stroke="#F56C6C"
       stroke-linecap="round"
-      stroke-width="2"
-      x1="17"
-      x2="27"
-      y1="18"
-      y2="18"
+      stroke-width="1.6"
+      x1="8"
+      x2="14"
+      y1="10"
+      y2="10"
     />
     <text
       dominant-baseline="middle"
       fill="#8B3333"
-      font-size="13"
+      font-size="11"
       font-weight="500"
       text-anchor="middle"
-      x="58"
-      y="19"
+      x="44"
+      y="10.5"
       >{{ t('editor.staff.grandStaff') }}
     </text>
   </g>

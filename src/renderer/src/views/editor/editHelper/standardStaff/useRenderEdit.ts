@@ -46,6 +46,7 @@ import {
     resolveNeighborMeasureSlot,
     type MeasureNavDirection,
 } from '../renderEditMeasureNavigate'
+import {runStandardModeAdd} from '../renderEditStandardMode'
 import {resolveInteractionTarget, resolveSvgFromEvent} from '../renderEditPointer'
 import {resolvePropertyPanelKind} from '../renderEditPropertyPanel'
 import {slotDataFromVDom} from '../renderEditSelection'
@@ -171,7 +172,7 @@ export function useStandardStaffRenderEdit(
         void vDomMirrorEpoch.value
         if (slurHandleOverride.value) return slurHandleOverride.value
         const vdom = selectedSlurVdom.value
-        return vdom ? computeSlurHandlePoints(vdom) : null
+        return vdom ? computeSlurHandlePoints(vdom, scoreData.value.type) : null
     })
 
     const selectedVoltaVdom = computed(() => {
@@ -309,7 +310,9 @@ export function useStandardStaffRenderEdit(
         if (session) {
             vdom = list.find((node) => node.tag === 'noteHead' && node.targetId === session.notesInfoId)
             if (!vdom) return
-            bindSelectionVdom(vdom)
+            // 拖 region 中：只跟手高亮，不改 selectedItem / 关联高亮（属性栏读的是同一份 reactive info）
+            selectedVdomKey.value = vdomSelectionKey(vdom)
+            applySelectionDom(resolveSelectionElement(vdom))
             return
         }
 
@@ -401,7 +404,9 @@ export function useStandardStaffRenderEdit(
         const svg = resolveSvgFromEvent(event)
         const root = scoreRootRef.value
         if (!svg || !root) return
-        const changed = updateNoteHeadDragFromPointer(
+        // 只写源数据；选中高亮等整谱 renderMusicScore 后再绑。
+        // 不要在这里 rebind：旧 vDomList 上白忙，且会拖垮大谱。
+        updateNoteHeadDragFromPointer(
             session,
             svg,
             root,
@@ -409,14 +414,13 @@ export function useStandardStaffRenderEdit(
             event.clientX,
             event.clientY,
         )
-        if (changed != null) {
-            rebindSelectionAfterRender(vDomList.value)
-        }
     }
 
     function endNoteHeadDrag(event: PointerEvent) {
         if (noteHeadDragSession.value?.pointerId === event.pointerId) {
             noteHeadDragSession.value = null
+            // 拖动中跳过了 baseline 克隆，松手补一帧（供后续 updateVDom 预览）
+            captureScoreVDomBaseline(scoreData.value, vDomList.value)
         }
     }
 
@@ -540,11 +544,14 @@ export function useStandardStaffRenderEdit(
 
     /** MIDI note-on：小节选中时在末尾追加音符（时值用添加面板） */
     function addMidiNote(midi: number): boolean {
-        return applyMidiNoteToSelectedMeasure(
-            selectedItem.value,
-            midi,
-            addNoteState.value.chronaxie,
+        const selected = selectedItem.value
+        const added = runStandardModeAdd(
+            selected,
+            'up',
+            () => applyMidiNoteToSelectedMeasure(selected, midi, addNoteState.value.chronaxie),
+            selectMeasureSlot,
         )
+        return added !== false
     }
 
     function tryMeasureAddAtEvent(event: PointerEvent) {
@@ -563,10 +570,15 @@ export function useStandardStaffRenderEdit(
         const measureSlot = selectedItem.value
         if (!preview || !measureSlot?.measure) return
 
-        const result = applyMeasureAddAction(
-            measureSlot as SlotData & { measure: typeof measureSlot.measure },
-            preview,
-            scoreData.value,
+        const result = runStandardModeAdd(
+            measureSlot,
+            'up',
+            () => applyMeasureAddAction(
+                measureSlot as SlotData & { measure: typeof measureSlot.measure },
+                preview,
+                scoreData.value,
+            ),
+            selectMeasureSlot,
         )
         if (!result) return
 
@@ -742,7 +754,10 @@ export function useStandardStaffRenderEdit(
 
     function handleRenderMusicScore(list: VDom[]) {
         vDomList.value = list
-        captureScoreVDomBaseline(scoreData.value, list)
+        // renderEditTest 不做整表 baseline 深拷贝；大谱拖音符每步克隆会明显卡顿
+        if (!noteHeadDragSession.value) {
+            captureScoreVDomBaseline(scoreData.value, list)
+        }
         rebindSelectionAfterRender(list)
         refreshGhostFromLastPointer()
     }
@@ -795,6 +810,7 @@ export function useStandardStaffRenderEdit(
         handleRenderMusicScore,
         deleteSelected,
         navigateSelectedMeasure,
+        selectMeasureSlot,
         addMidiNote,
         clearSelection,
     }

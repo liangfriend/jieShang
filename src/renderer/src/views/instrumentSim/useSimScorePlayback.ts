@@ -5,6 +5,7 @@ import type {
 } from '@deciphony/extensions/dr-play-highlight'
 import { computed, onBeforeUnmount, ref, shallowRef, type Ref } from 'vue'
 import { useScorePagePlayback } from '@renderer/utils/scorePagePlayback/useScorePagePlayback'
+import type { RenderMusicScoreHandler } from '@renderer/utils/scorePagePlayback/types'
 import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
 
 /**
@@ -35,9 +36,9 @@ export function useSimScorePlayback(
   })
   onBeforeUnmount(() => playback.unsubscribeProgressStart(progressSubId))
 
-  function handleRenderMusicScore(list: VDom[]) {
+  function handleRenderMusicScore(...[list, info]: Parameters<RenderMusicScoreHandler>) {
     vDomList.value = list
-    playback.handleRenderMusicScore?.(list)
+    playback.handleRenderMusicScore?.(list, info)
   }
 
   const scrollLocked = computed(() => playback.playbackState.value !== 'stopped')

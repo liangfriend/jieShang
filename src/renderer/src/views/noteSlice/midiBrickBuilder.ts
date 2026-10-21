@@ -9,6 +9,7 @@ import {
   KeySignatureTypeEnum,
   MusicScore,
   TimeSignatureTypeEnum,
+  getMeasureNoteList,
   type Chronaxie
 } from '@deciphony/renderer'
 import {
@@ -197,7 +198,7 @@ export function buildMidiBrickScore(
     widthRatioForMeasure: layout?.measureWidthRatio ?? 24
   })
 
-  measure.notes.push(
+  getMeasureNoteList(measure).push(
     createNoteSymbol({
       notesInfo: [
         {

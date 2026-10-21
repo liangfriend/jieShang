@@ -1,4 +1,5 @@
 import type {Chronaxie} from '@deciphony/renderer'
+import {BendTypeEnum, SlurTypeEnum} from '@deciphony/renderer'
 
 /** 小节添加模式：待插入的吉他 / 尤克里里符号 */
 export type TabAddKind = 'normal' | 'harmonic' | 'arpeggio' | 'strumming' | 'rest'
@@ -22,12 +23,26 @@ export const DEFAULT_ADD_TAB_STATE: AddTabState = {
   regionEnd: 5,
 }
 
-export const TAB_ADD_KIND_OPTIONS: {value: TabAddKind; label: string}[] = [
-  {value: 'normal', label: '标准音'},
-  {value: 'harmonic', label: '泛音'},
-  {value: 'arpeggio', label: '琶音'},
-  {value: 'strumming', label: '扫弦'},
-  {value: 'rest', label: '休止符'},
+/** `labelKey` 为 i18n key，由组件 `t()` 翻译 */
+export const TAB_ADD_KIND_OPTIONS: {value: TabAddKind; labelKey: string}[] = (
+  ['normal', 'harmonic', 'arpeggio', 'strumming', 'rest'] as const
+).map((value) => ({value, labelKey: `editor.addTab.kind.${value}`}))
+
+export const BEND_TYPE_OPTIONS: {value: BendTypeEnum; labelKey: string}[] = [
+  {value: BendTypeEnum.Bend, labelKey: 'editor.tabNote.bendTypes.bend'},
+  {value: BendTypeEnum.BendRelease, labelKey: 'editor.tabNote.bendTypes.bendRelease'},
+  {value: BendTypeEnum.Prebend, labelKey: 'editor.tabNote.bendTypes.prebend'},
+  {value: BendTypeEnum.PrebendRelease, labelKey: 'editor.tabNote.bendTypes.prebendRelease'},
+  {value: BendTypeEnum.PrebendBend, labelKey: 'editor.tabNote.bendTypes.prebendBend'},
+]
+
+/** 空串表示无滑音类型 */
+export const TAB_SLUR_TYPE_OPTIONS: {value: SlurTypeEnum | ''; labelKey: string}[] = [
+  {value: '', labelKey: 'editor.tabNote.chordNone'},
+  {value: SlurTypeEnum.H, labelKey: 'editor.tabNote.slurTypes.H'},
+  {value: SlurTypeEnum.S, labelKey: 'editor.tabNote.slurTypes.S'},
+  {value: SlurTypeEnum.P, labelKey: 'editor.tabNote.slurTypes.P'},
+  {value: SlurTypeEnum.HP, labelKey: 'editor.tabNote.slurTypes.HP'},
 ]
 
 export const TAB_FRET_OPTIONS: {value: number; label: string}[] = [

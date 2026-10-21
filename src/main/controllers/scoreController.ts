@@ -14,7 +14,9 @@ export class ScoreController {
     ipcMain.handle('score:update', (_, id, payload) => this.scoreService.updateScore(id, payload))
     ipcMain.handle('score:get', (_, id) => this.scoreService.getScore(id))
     ipcMain.handle('score:query', (_, filters) => this.scoreService.queryScores(filters))
-    ipcMain.handle('score:list', () => this.scoreService.listScores())
-    ipcMain.handle('score:searchByName', (_, name) => this.scoreService.searchByName(name))
+    ipcMain.handle('score:list', (_, type) => this.scoreService.listScores(type))
+    ipcMain.handle('score:searchByName', (_, name, type) =>
+      this.scoreService.searchByName(name, type)
+    )
   }
 }

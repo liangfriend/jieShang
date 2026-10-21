@@ -1,12 +1,16 @@
 import {
   DoubleSlotAffiliatedSymbolNameEnum,
+  guzhengLianVDomPatch,
+  GuzhengLianTypeEnum,
   hairpinVDomPatch,
   HairpinTypeEnum,
+  mirrorGuzhengLianData,
   mirrorHairpinData,
   mirrorTrillData,
   trillVDomPatch,
   TrillTypeEnum,
   type DoubleSlotAffiliatedSymbol,
+  type GuzhengLianMirror,
   type HairpinMirror,
   type MusicScore,
   type SlotData,
@@ -20,8 +24,8 @@ import {
   type HorizontalHandlePoints,
 } from './renderEditHorizontalDrag'
 
-/** 颤音线 / 渐强渐弱：同为双 slot 横向线条，拖拽逻辑一致，只是 data 键不同 */
-export type LineSymbolKey = 'trill' | 'hairpin'
+/** 颤音线 / 渐强渐弱 / 古筝连续指法：同为双 slot 横向线条，拖拽逻辑一致，只是 data 键不同 */
+export type LineSymbolKey = 'trill' | 'hairpin' | 'guzhengLian'
 
 type Point = { x: number; y: number }
 type LineGeom = { relativeStartPoint: Point; relativeEndPoint: Point }
@@ -29,6 +33,7 @@ type LineGeom = { relativeStartPoint: Point; relativeEndPoint: Point }
 const KEY_BY_NAME: Partial<Record<string, LineSymbolKey>> = {
   [DoubleSlotAffiliatedSymbolNameEnum.Trill_line]: 'trill',
   [DoubleSlotAffiliatedSymbolNameEnum.Hairpin]: 'hairpin',
+  [DoubleSlotAffiliatedSymbolNameEnum.Guzheng_lian]: 'guzhengLian',
 }
 
 export type LineDragSession = {
@@ -47,6 +52,7 @@ function lineKeyOfVDom(vdom: VDom | null | undefined): LineSymbolKey | null {
   if (vdom?.tag !== 'affiliation') return null
   if (vdom.special?.trill != null) return 'trill'
   if (vdom.special?.hairpin != null) return 'hairpin'
+  if (vdom.special?.guzhengLian != null) return 'guzhengLian'
   return null
 }
 
@@ -157,6 +163,14 @@ function commitLineGeom(musicScore: MusicScore, session: LineDragSession, geom: 
     }
     return
   }
+  if (session.key === 'guzhengLian') {
+    sym.data.guzhengLian = {
+      relativeStartPoint,
+      relativeEndPoint,
+      type: sym.data.guzhengLian?.type ?? GuzhengLianTypeEnum.Tuo,
+    }
+    return
+  }
   const current = sym.data.hairpin
   sym.data.hairpin = {
     ...current,
@@ -166,9 +180,21 @@ function commitLineGeom(musicScore: MusicScore, session: LineDragSession, geom: 
   }
 }
 
+function lineVDomPatch(key: LineSymbolKey, vdom: VDom, geom: LineGeom & Record<string, unknown>) {
+  if (key === 'trill') return trillVDomPatch(vdom, geom as TrillMirror)
+  if (key === 'hairpin') return hairpinVDomPatch(vdom, geom as HairpinMirror)
+  return guzhengLianVDomPatch(vdom, geom as GuzhengLianMirror)
+}
+
+function mirrorLineData(key: LineSymbolKey, vdom: VDom, symbolId: string, geom: LineGeom & Record<string, unknown>) {
+  if (key === 'trill') return mirrorTrillData([vdom], symbolId, geom as TrillMirror)[0]
+  if (key === 'hairpin') return mirrorHairpinData([vdom], symbolId, geom as HairpinMirror)[0]
+  return mirrorGuzhengLianData([vdom], symbolId, geom as GuzhengLianMirror)[0]
+}
+
 /**
- * 拖颤音线 / 渐强渐弱：立刻 updateVDom；把手由返回值覆盖。
- * musicScore 的 data.trill / data.hairpin 防抖落盘。
+ * 拖颤音线 / 渐强渐弱 / 古筝连续指法：立刻 updateVDom；把手由返回值覆盖。
+ * musicScore 的 data.trill / data.hairpin / data.guzhengLian 防抖落盘。
  */
 export function previewLineDrag(
   musicScore: MusicScore,
@@ -180,17 +206,13 @@ export function previewLineDrag(
 ): HorizontalHandlePoints | null {
   const geom = nextLineGeom(session, vdom, svgX, svgY)
   if (!geom) return null
-  const patch = session.key === 'trill'
-    ? trillVDomPatch(vdom, geom as TrillMirror)
-    : hairpinVDomPatch(vdom, geom as HairpinMirror)
+  const patch = lineVDomPatch(session.key, vdom, geom)
   if (!patch) return null
   scoreWriteGateFor(musicScore, getUpdateVDom).patch({
     key: `${session.key}:${session.symbolId}:geom`,
     mirror: {targetId: session.symbolId, patch},
     commit: () => commitLineGeom(musicScore, session, geom),
   })
-  const previewed = session.key === 'trill'
-    ? mirrorTrillData([vdom], session.symbolId, geom as TrillMirror)[0]
-    : mirrorHairpinData([vdom], session.symbolId, geom as HairpinMirror)[0]
+  const previewed = mirrorLineData(session.key, vdom, session.symbolId, geom)
   return previewed ? computeLineHandlePoints(previewed) : null
 }

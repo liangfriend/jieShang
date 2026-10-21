@@ -13,6 +13,7 @@ import type {
   WhiteboardClef,
   WhiteboardKeyCount,
   WhiteboardPitchNotation,
+  WhiteboardStaffMode,
   WhiteboardWidthType
 } from '@renderer/constant/whiteboard'
 import type { AddNoteSlotKind } from '@renderer/views/editor/editHelper/renderEditAddNoteState'
@@ -207,6 +208,10 @@ export function resolveWhiteboardPitchNotationLabel(notation: WhiteboardPitchNot
 
 export function resolveWhiteboardClefLabel(clef: WhiteboardClef): string {
   return t(`whiteboard.clef.${clef}`)
+}
+
+export function resolveWhiteboardStaffModeLabel(mode: WhiteboardStaffMode): string {
+  return t(`whiteboard.staffMode.${mode}`)
 }
 
 export function resolveWhiteboardKeySignatureLabel(key: KeySignatureTypeEnum): string {

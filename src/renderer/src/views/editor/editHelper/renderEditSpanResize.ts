@@ -1,6 +1,7 @@
 import {
   DoubleNoteAffiliatedSymbolNameEnum,
   DoubleSlotAffiliatedSymbolNameEnum,
+  guzhengLianVDomPatch,
   hairpinVDomPatch,
   isMeasureNoteVoices,
   isNoteRest,
@@ -238,6 +239,7 @@ function geomGroupOf(sym: SpanSymbol): GeomGroup | null {
     data.pitch ??
     data.trill ??
     data.hairpin ??
+    data.guzhengLian ??
     null
   )
 }
@@ -255,6 +257,9 @@ function liveGeomOf(sym: SpanSymbol, live: VDom): GeomGroup | null {
   }
   if (sym.name === DoubleSlotAffiliatedSymbolNameEnum.Trill_line) return (special.trill as GeomGroup) ?? null
   if (sym.name === DoubleSlotAffiliatedSymbolNameEnum.Hairpin) return (special.hairpin as GeomGroup) ?? null
+  if (sym.name === DoubleSlotAffiliatedSymbolNameEnum.Guzheng_lian) {
+    return (special.guzhengLian as GeomGroup) ?? null
+  }
   return null
 }
 
@@ -351,6 +356,13 @@ function resetAlignPatch(sym: SpanSymbol, live: VDom, data: GeomGroup): Partial<
       special: { ...live.special, hairpin: { ...live.special.hairpin, ...prevEnds } },
     }
     return hairpinVDomPatch(basis, { ...live.special.hairpin, ...nextEnds })
+  }
+  if (sym.name === DoubleSlotAffiliatedSymbolNameEnum.Guzheng_lian && live.special?.guzhengLian) {
+    const basis: VDom = {
+      ...live,
+      special: { ...live.special, guzhengLian: { ...live.special.guzhengLian, ...prevEnds } },
+    }
+    return guzhengLianVDomPatch(basis, { ...live.special.guzhengLian, ...nextEnds })
   }
   return null
 }

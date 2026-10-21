@@ -10,6 +10,7 @@ import { HOME_TEMPLATE_TO_ROUTE } from '@renderer/utils/scoreRoute'
 import {
   deleteScoreFromDatabase,
   displayScoreName,
+  isClSheetRecord,
   searchScoresFromDatabase,
   type ScoreListItem
 } from '@renderer/utils/fileHelper'
@@ -22,6 +23,8 @@ const deletingId = ref<number | null>(null)
 const scores = ref<ScoreListItem[]>([])
 const templateVisible = ref(false)
 const deleteDialogRef = ref<InstanceType<typeof ScoreDeleteDialog> | null>(null)
+
+const CL_SHEET_TEMPLATE_KEY = 'clSheet'
 
 const templateGroups = computed(() => [
   {
@@ -53,6 +56,10 @@ const templateGroups = computed(() => [
   {
     title: t('scores.templateDialog.drum'),
     items: [{ key: 'drum', label: t('scores.templateDialog.drumKit') }]
+  },
+  {
+    title: t('scores.templateDialog.clSheet'),
+    items: [{ key: CL_SHEET_TEMPLATE_KEY, label: t('scores.templateDialog.empty') }]
   }
 ])
 
@@ -76,7 +83,7 @@ function scheduleSearch() {
 
 function openScore(score: ScoreListItem) {
   router.push({
-    name: 'play',
+    name: isClSheetRecord(score) ? 'clSheet' : 'play',
     query: {
       scoreId: String(score.id)
     }
@@ -85,6 +92,10 @@ function openScore(score: ScoreListItem) {
 
 function onTemplateSelect(key: string) {
   templateVisible.value = false
+  if (key === CL_SHEET_TEMPLATE_KEY) {
+    router.push({ name: 'clSheet' })
+    return
+  }
   router.push({
     name: 'edit',
     query: { template: HOME_TEMPLATE_TO_ROUTE[key] ?? 'empty' }
@@ -160,6 +171,9 @@ onMounted(() => {
           </button>
           <button type="button" class="score-card__open" @click="openScore(score)">
             <div class="score-card__cover">
+              <span v-if="isClSheetRecord(score)" class="score-card__badge">
+                {{ t('scores.clSheetBadge') }}
+              </span>
               <span class="score-card__name">{{ displayScoreName(score.name) }}</span>
             </div>
           </button>
@@ -353,6 +367,7 @@ onMounted(() => {
 }
 
 .score-card__cover {
+  position: relative;
   aspect-ratio: 1;
   border-radius: 18px;
   border: 2px solid rgba(255, 255, 255, 0.9);
@@ -370,6 +385,18 @@ onMounted(() => {
 .score-card__open:hover .score-card__cover {
   background: rgba(255, 214, 232, 0.72);
   box-shadow: 0 12px 40px rgba(200, 140, 180, 0.28);
+}
+
+.score-card__badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(90deg, #8fb8ff, #c9b8ff);
 }
 
 .score-card__name {

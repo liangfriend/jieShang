@@ -47,6 +47,7 @@ import type { BracketTypeEnum } from '@deciphony/renderer'
 import { isTabNotationType } from '@renderer/utils/isTabNotation'
 import PanelField from './panel/PanelField.vue'
 import PanelGroup from './panel/PanelGroup.vue'
+import CustomSymbolSection from './customSymbol/CustomSymbolSection.vue'
 
 const props = defineProps<{
   editSlot: SlotData
@@ -198,6 +199,7 @@ function onRemoveVolta() {
     <PanelGroup :title="t('editor.panelGroup.barline')">
       <PanelField :label="t('editor.measure.barlineFront')">
         <el-select v-model="barlineF" clearable :placeholder="t('common.none')" size="small">
+          <el-option :label="t('common.none')" value="" />
           <el-option
             v-for="value in BARLINE_F_VALUES"
             :key="value"
@@ -327,6 +329,8 @@ function onRemoveVolta() {
         </div>
       </PanelField>
     </PanelGroup>
+
+    <CustomSymbolSection kind="measure" :host="measure" :music-score="musicScore" />
   </div>
 </template>
 

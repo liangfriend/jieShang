@@ -1,7 +1,9 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRouter } from 'vue-router'
 import { storeToRefs } from 'pinia'
+import { Reading } from '@element-plus/icons-vue'
 import { GAME_DIFFICULTY_OPTIONS } from '@renderer/constant/gameSettings'
 import { LOCALE_OPTIONS, type AppLocale } from '@renderer/i18n/locale'
 import { resolveGameDifficultyLabel } from '@renderer/i18n/helpers'
@@ -19,6 +21,7 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
+const router = useRouter()
 const settings = useGameSettingsStore()
 const localeStore = useLocaleStore()
 const { difficulty, notationMode, noteBlockSoundVolume } = storeToRefs(settings)
@@ -46,6 +49,11 @@ const noteBlockSoundVolumePercent = computed({
 
 function onLocaleChange(value: AppLocale) {
   localeStore.setLocale(value)
+}
+
+function openManual() {
+  visible.value = false
+  router.push({ name: 'manual' })
 }
 </script>
 
@@ -102,6 +110,16 @@ function onLocaleChange(value: AppLocale) {
           <el-slider v-model="noteBlockSoundVolumePercent" :min="0" :max="100" show-input />
         </el-form-item>
       </section>
+
+      <section class="home-settings-section">
+        <button type="button" class="home-settings-manual" @click="openManual">
+          <el-icon class="home-settings-manual__icon"><Reading /></el-icon>
+          <span class="home-settings-manual__text">
+            <span class="home-settings-manual__title">{{ t('manual.entry') }}</span>
+            <span class="home-settings-manual__desc">{{ t('manual.entryDesc') }}</span>
+          </span>
+        </button>
+      </section>
     </el-form>
 
     <template #footer>
@@ -154,6 +172,50 @@ function onLocaleChange(value: AppLocale) {
 .home-settings-notation-switch {
   --el-switch-on-color: #c9b8ff;
   --el-switch-off-color: #ff8fb8;
+}
+
+.home-settings-manual {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 14px;
+  border: 2px solid rgba(201, 184, 255, 0.55);
+  border-radius: 16px;
+  background: linear-gradient(90deg, rgba(255, 240, 246, 0.9), rgba(243, 235, 255, 0.9));
+  color: #5c4a6a;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.home-settings-manual:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(201, 184, 255, 0.35);
+}
+
+.home-settings-manual__icon {
+  flex-shrink: 0;
+  font-size: 24px;
+  color: #a58bff;
+}
+
+.home-settings-manual__text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.home-settings-manual__title {
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.home-settings-manual__desc {
+  font-size: 12px;
+  color: #9a8aa8;
 }
 
 .home-settings-dialog__btn {

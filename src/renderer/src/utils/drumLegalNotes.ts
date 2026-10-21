@@ -198,8 +198,11 @@ function parseMapKey(key: string): { region: number; headType: DrumHeadTypeEnum 
   return { region, headType }
 }
 
+/** p 在编辑器里是「复制到下一小节」，不分给鼓 */
+const DRUM_SHORTCUT_LETTERS = 'abcdefghijklmnoqrstuvwxyz'
+
 function shortcutForIndex(index: number): string | null {
-  return index < 26 ? String.fromCharCode(97 + index) : null
+  return DRUM_SHORTCUT_LETTERS[index] ?? null
 }
 
 function listMapEntries() {
@@ -213,7 +216,7 @@ function listMapEntries() {
   return out
 }
 
-/** 合法音符快捷键：按 DEFAULT_DRUM_PLAY_MAP 顺序依次分配 a、b、c… */
+/** 合法音符快捷键：按 DEFAULT_DRUM_PLAY_MAP 顺序依次分配 a、b、c…（跳过 p） */
 export const DRUM_LEGAL_NOTE_SHORTCUTS: DrumLegalNoteShortcut[] = listMapEntries().flatMap(
   ({ key, region, headType }, index) => {
     const shortcut = shortcutForIndex(index)

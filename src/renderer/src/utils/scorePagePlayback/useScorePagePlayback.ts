@@ -10,6 +10,7 @@ import {
 } from '@deciphony/extensions/dr-play-highlight'
 import { usePlayStore } from '@renderer/store/play.store'
 import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
+import { isFixedToneColorScore } from '@renderer/utils/isTabNotation'
 import { toPlaySequence } from './toPlaySequence'
 import type { ScorePagePlaybackController, UseScorePagePlaybackOptions } from './types'
 
@@ -89,6 +90,16 @@ export function useScorePagePlayback(
     if (waterfallEndSubId) playStore.unsubscribeOnEnd(waterfallEndSubId)
     if (stoppedSubId) playStore.unsubscribeOnEnd(stoppedSubId)
   })
+
+  // 序列在开始播放时按当时音色生成，暂停后恢复会沿用旧序列：音色一变就停止，下次播放重建
+  watch(
+    () => playStore.collectionToneColorId,
+    () => {
+      if (playbackState.value === 'stopped' && !countingIn.value) return
+      if (isFixedToneColorScore(musicScore.value)) return
+      handleStop()
+    }
+  )
 
   let playingRangeKey = ''
 
@@ -173,8 +184,8 @@ export function useScorePagePlayback(
     handleStop,
     handleClearPlayData: hasClearPlayData ? handleClearPlayData : undefined,
     handleRenderMusicScore: highlight
-      ? (list) => {
-          highlight.on?.renderMusicScore?.(list)
+      ? (list, info) => {
+          highlight.on?.renderMusicScore?.(list, info)
         }
       : undefined,
     setHighlightBpm: highlight?.setBpm,

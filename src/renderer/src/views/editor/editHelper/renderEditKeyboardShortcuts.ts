@@ -10,12 +10,15 @@ import type {
   SingleStaff,
   SlotData
 } from '@deciphony/renderer'
-import { getMeasureNoteList } from '@deciphony/renderer'
+import { ClefTypeEnum, getMeasureNoteList } from '@deciphony/renderer'
 import { DRUM_MAX_CHRONAXIE, getDrumVoiceSlots, insertDrumNote } from '@deciphony/extensions/dr-edit'
 import {
   computeMeasureOnsetBefore,
-  createNoteNumber
+  createNoteNumber,
+  createNoteRest
 } from '@deciphony/extensions/dr-edit/score-builder'
+import { getNoteNumberMidi } from '@deciphony/extensions/score-util'
+import { applyMidiNoteToSelectedMeasure, resolveClefAndKeyAtMeasure } from './renderEditMidiAdd'
 import { CHRONAXIE_VALUES, type AddNoteState } from './renderEditAddNoteState'
 import type { AddNumberState } from './numberNotation/renderEditNumberAddState'
 import type { AddTabState } from './tab/renderEditTabAddState'
@@ -121,14 +124,32 @@ export function addGrandStaffFromSelected(
   return true
 }
 
+/** 简谱字母键：q–u 高音、a–j 中音、z–m 低音，依次对应 1–7 */
+const NUMBER_LETTER_ROWS: { codes: string[]; octaveDot: NotesNumberInfo['octaveDot'] }[] = [
+  { codes: ['KeyQ', 'KeyW', 'KeyE', 'KeyR', 'KeyT', 'KeyY', 'KeyU'], octaveDot: 1 },
+  { codes: ['KeyA', 'KeyS', 'KeyD', 'KeyF', 'KeyG', 'KeyH', 'KeyJ'], octaveDot: 0 },
+  { codes: ['KeyZ', 'KeyX', 'KeyC', 'KeyV', 'KeyB', 'KeyN', 'KeyM'], octaveDot: -1 }
+]
+
+export function numberNoteForLetterCode(
+  code: string
+): { syllable: 1 | 2 | 3 | 4 | 5 | 6 | 7; octaveDot: NotesNumberInfo['octaveDot'] } | null {
+  for (const row of NUMBER_LETTER_ROWS) {
+    const index = row.codes.indexOf(code)
+    if (index >= 0) return { syllable: (index + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7, octaveDot: row.octaveDot }
+  }
+  return null
+}
+
 /**
- * 简谱主键盘 1–7 / 0：在选中小节末尾追加音符 / 休止符，
- * 时值与八度点取添加面板，不看面板当前是音符还是休止符。
+ * 简谱键盘录入：在选中小节末尾追加音符 / 休止符，
+ * 时值取添加面板，八度点由按键决定，不看面板当前是音符还是休止符。
  */
 export function appendNumberNoteToSelectedMeasure(
   selected: SlotData | null,
   syllable: Exclude<NotesNumberInfo['syllable'], 'X'>,
-  state: AddNumberState
+  state: AddNumberState,
+  octaveDot: NotesNumberInfo['octaveDot'] = 0
 ): boolean {
   if (!isMeasureAddMode(selected)) return false
   const notes = getMeasureNoteList(selected.measure)
@@ -136,11 +157,42 @@ export function appendNumberNoteToSelectedMeasure(
     createNoteNumber({
       syllable,
       chronaxie: state.chronaxie,
-      octaveDot: syllable === 0 ? 0 : state.octaveDot,
+      octaveDot: syllable === 0 ? 0 : octaveDot,
       beamOnset: computeMeasureOnsetBefore(selected.measure, notes.length)
     })
   )
   return true
+}
+
+/** 中音（octaveDot 0）所在八度：高音谱号等 1 在 4 组，低音谱号低一个八度 */
+function staffOctaveBase(clef: ClefTypeEnum): number {
+  return clef === ClefTypeEnum.Bass ? -1 : 0
+}
+
+/**
+ * 线谱键盘录入（与简谱同一套键位）：按选中小节的调号把唱名换算成音高（首调，1 = 主音），
+ * 在小节末尾追加音符 / 休止符，时值取添加面板。
+ */
+export function appendStaffNoteToSelectedMeasure(
+  selected: SlotData | null,
+  syllable: 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7,
+  state: AddNoteState,
+  octaveDot: NotesNumberInfo['octaveDot'] = 0
+): boolean {
+  if (!isMeasureAddMode(selected)) return false
+  if (syllable === 0) {
+    getMeasureNoteList(selected.measure).push(createNoteRest({ chronaxie: state.chronaxie }))
+    return true
+  }
+  const { clef, key } = resolveClefAndKeyAtMeasure(selected.musicScore, selected.singleStaff, selected.measure)
+  const midi = getNoteNumberMidi(
+    {
+      syllable,
+      octaveDot: (octaveDot + staffOctaveBase(clef)) as NotesNumberInfo['octaveDot']
+    } as NotesNumberInfo,
+    key
+  )
+  return applyMidiNoteToSelectedMeasure(selected, midi, state.chronaxie)
 }
 
 /**

@@ -1,0 +1,96 @@
+/*
+ * Element Plus 全局主题：默认蓝换成应用的粉 / 薰衣草配色。
+ * 必须在 element-plus/dist/index.css 之后引入，同优先级靠顺序覆盖 :root 变量。
+ * light-N = 主色与白混合 N0%，dark-2 = 与黑混合 20%（与 Element 自身算法一致）。
+ */
+:root {
+  --el-color-primary: #ff8fb8;
+  --el-color-primary-light-3: #ffb1cd;
+  --el-color-primary-light-5: #ffc7dc;
+  --el-color-primary-light-7: #ffddea;
+  --el-color-primary-light-8: #ffe9f1;
+  --el-color-primary-light-9: #fff4f8;
+  --el-color-primary-dark-2: #cc7293;
+
+  --el-text-color-primary: #5c4a6a;
+  --el-text-color-regular: #6c5b7a;
+  --el-text-color-secondary: #9a8aa8;
+  --el-text-color-placeholder: #b9aec4;
+
+  --el-border-color: #e6d9e6;
+  --el-border-color-light: #eee3ee;
+  --el-border-color-lighter: #f3ebf3;
+  --el-border-color-extra-light: #f8f2f7;
+  --el-border-color-hover: #ffc7dc;
+
+  --el-fill-color: #f6eef5;
+  --el-fill-color-light: #faf4f9;
+  --el-fill-color-lighter: #fcf8fb;
+  --el-fill-color-extra-light: #fefbfd;
+
+  --el-border-radius-base: 8px;
+  --el-border-radius-small: 6px;
+
+  --el-box-shadow-light: 0 6px 18px rgba(160, 100, 150, 0.12);
+  --el-box-shadow: 0 12px 32px rgba(160, 100, 150, 0.16);
+  --el-box-shadow-dark: 0 16px 48px rgba(160, 100, 150, 0.22);
+}
+
+/* 主色按钮：Element 默认 hover 变浅，粉色上白字会糊，改为加深 */
+.el-button--primary {
+  --el-button-hover-bg-color: #ff7aab;
+  --el-button-hover-border-color: #ff7aab;
+  --el-button-active-bg-color: #f06a9a;
+  --el-button-active-border-color: #f06a9a;
+}
+
+.el-button {
+  font-weight: 600;
+}
+
+/* 弹窗 / 消息框 / 抽屉 */
+.el-dialog {
+  --el-dialog-border-radius: 18px;
+  border: 1px solid rgba(255, 184, 208, 0.5);
+}
+
+.el-message-box {
+  border-radius: 18px;
+  border: 1px solid rgba(255, 184, 208, 0.5);
+}
+
+.el-dialog__title,
+.el-message-box__title,
+.el-drawer__title {
+  font-weight: 800;
+  color: var(--el-text-color-primary);
+}
+
+.el-dialog__headerbtn:hover .el-dialog__close,
+.el-message-box__headerbtn:hover .el-message-box__close,
+.el-drawer__close-btn:hover {
+  color: var(--el-color-primary);
+}
+
+/* 下拉弹层 */
+.el-popper.is-light {
+  border-color: rgba(255, 184, 208, 0.5);
+}
+
+.el-select-dropdown__item.is-selected {
+  font-weight: 700;
+}
+
+/* 单选按钮组选中态：粉 → 薰衣草渐变，与应用其它按钮一致 */
+.el-radio-button__original-radio:checked + .el-radio-button__inner {
+  background: linear-gradient(90deg, #ff8fb8, #c9b8ff);
+  border-color: transparent;
+  box-shadow: -1px 0 0 0 transparent;
+}
+
+/* 表格表头 */
+.el-table {
+  --el-table-header-text-color: var(--el-text-color-primary);
+  --el-table-header-bg-color: var(--el-fill-color-light);
+  --el-table-row-hover-bg-color: var(--el-color-primary-light-9);
+}

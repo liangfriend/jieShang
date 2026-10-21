@@ -3,16 +3,20 @@ import absolutePitchTest from './absolutePitchTest'
 import achievements from './achievements'
 import beginner from './beginner'
 import chordRecognitionQuiz from './chordRecognitionQuiz'
+import clSheet from './clSheet'
 import collection from './collection'
 import common from './common'
 import editor from './editor'
 import home from './home'
 import instrumentSim from './instrumentSim'
 import keyNoteNameQuiz from './keyNoteNameQuiz'
+import manual from './manual'
 import myAudio from './myAudio'
 import myImage from './myImage'
 import myVideo from './myVideo'
+import notePractice from './notePractice'
 import noteSlice from './noteSlice'
+import pcKeyboard from './pcKeyboard'
 import play from './play'
 import practice from './practice'
 import singing from './singing'
@@ -39,12 +43,16 @@ export default {
   ...rhythmSenseTest,
   ...absolutePitchTest,
   ...keyNoteNameQuiz,
+  ...manual,
   ...chordRecognitionQuiz,
+  ...clSheet,
   ...myAudio,
   ...myImage,
   ...myVideo,
   ...work,
+  ...notePractice,
   ...noteSlice,
+  ...pcKeyboard,
   ...tools,
   ...whiteboard,
   ...router

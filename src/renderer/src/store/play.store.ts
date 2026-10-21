@@ -5,6 +5,7 @@ import { NPlayer, activeContext, startJPlayer } from '@deciphony/player'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import i18n from '@renderer/i18n'
+import { startAudioKeepAlive } from '@renderer/utils/audioKeepAlive'
 import piano from '@renderer/toneColor/accoustic_grand_piano.json'
 import { DEFAULT_TONE_COLOR_ID, TONE_COLOR_MAP } from '@renderer/constant/toneColor'
 import { WHITEBOARD_NOTE_HOLD_DURATION_SEC } from '@renderer/constant/whiteboard'
@@ -16,7 +17,8 @@ import {
   toneColorIdByKey,
   toneColorKey
 } from '@renderer/utils/collection/toneColorUsage'
-import { readStaffInstrumentValue } from '@deciphony/extensions/dr-play'
+import { readStaffInstrumentValue, type DR_playLyric } from '@deciphony/extensions/dr-play'
+import { clearPlayLyrics, showPlayLyric } from '@renderer/utils/scorePagePlayback/playLyricsHighlight'
 import { readShowInstrumentName } from '@renderer/utils/scoreSpacingDefaults'
 import { isFixedToneColorScore } from '@renderer/utils/isTabNotation'
 import {
@@ -43,6 +45,11 @@ export type EndListener = () => void
 
 export type TriggerNoteOptions = {
   volume?: number
+  /**
+   * 不随总音量变化的音量 0~1：按当前总音量反算单音音量，优先于 volume。
+   * 总音量为 0 时仍然无声。
+   */
+  absoluteVolume?: number
   duration?: number
   id?: string
   /** 指定音色名；不传则用当前激活藏品音色 */
@@ -183,6 +190,8 @@ export const usePlayStore = defineStore('play', () => {
 
   function bindPlayerCallbacks(player: NPlayer) {
     player.onProgressStart = (progress, data) => {
+      const item = data as { lyric?: DR_playLyric; playTime?: number } | null
+      if (item?.lyric && typeof item.playTime === 'number') showPlayLyric(item.lyric, item.playTime)
       emitProgressStart(progress, data)
     }
     player.onProgressEnd = (progress, data) => {
@@ -190,6 +199,7 @@ export const usePlayStore = defineStore('play', () => {
     }
     player.onEnd = () => {
       playbackState.value = 'stopped'
+      clearPlayLyrics()
       emitEnd()
     }
   }
@@ -230,6 +240,7 @@ export const usePlayStore = defineStore('play', () => {
 
     initPromise = (async () => {
       startJPlayer()
+      startAudioKeepAlive()
       nplayer = new NPlayer({ checkTime: 50, checkDuration: 500 })
       bindPlayerCallbacks(nplayer)
       await nplayer.addToneColor(PIANO_TONE_COLOR_NAME, piano as ToneColor)
@@ -423,7 +434,12 @@ export const usePlayStore = defineStore('play', () => {
 
     await activeContext()
     const id = options?.id ?? `preview-${midi}`
-    const noteVolume = clampVolume(options?.volume ?? volume.value)
+    const noteVolume =
+      options?.absoluteVolume != null
+        ? volume.value > 0
+          ? clampVolume(options.absoluteVolume) / volume.value
+          : 0
+        : clampVolume(options?.volume ?? volume.value)
     nplayer.trigger({
       id,
       midi,
@@ -461,7 +477,11 @@ export const usePlayStore = defineStore('play', () => {
 
   async function restorePlaybackDefaults(
     musicScore: MusicScore,
-    options?: { resetToneColor?: boolean }
+    options?: {
+      resetToneColor?: boolean
+      /** 无论曲谱类型 / 显示音色，初始音色都选「曲谱设定」 */
+      preferScoreToneColor?: boolean
+    }
   ) {
     await waitReady()
     setVolume(PLAY_DEFAULT_VOLUME)
@@ -471,9 +491,11 @@ export const usePlayStore = defineStore('play', () => {
       scoreToneContext = musicScore
       const fallbackId = defaultToneColorIdForScore(musicScore)
       scoreFallbackToneColorId.value = fallbackId
-      // 乐器谱音色已写在单谱表上：强制「曲谱设定」；其余开启「显示音色」时用曲谱设定，否则用类型默认音色
+      // 播放模式 / 乐器谱（音色已写在单谱表上）用「曲谱设定」；其余开启「显示音色」时用曲谱设定，否则用类型默认音色
       const initialId =
-        isFixedToneColorScore(musicScore) || readShowInstrumentName(musicScore)
+        options?.preferScoreToneColor ||
+        isFixedToneColorScore(musicScore) ||
+        readShowInstrumentName(musicScore)
           ? SCORE_TONE_COLOR_ID
           : fallbackId
       // 默认音色与各单谱表 instrumentValue / 泛音键一起加载，全部就绪后页面才结束加载中
@@ -505,6 +527,7 @@ export const usePlayStore = defineStore('play', () => {
     setPlaySequence(sequence)
     if (playbackState.value !== 'stopped') {
       nplayer?.stop()
+      clearPlayLyrics()
     }
   }
 
@@ -525,6 +548,7 @@ export const usePlayStore = defineStore('play', () => {
 
   function stop() {
     heldNoteIds.clear()
+    clearPlayLyrics()
     if (!nplayer) {
       playbackState.value = 'stopped'
       return

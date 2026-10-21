@@ -1,30 +1,25 @@
-import { isMeasureNoteVoices, isNoteSymbol, slotSymbol } from '@deciphony/renderer'
+import { isNoteSymbol, slotSymbol } from '@deciphony/renderer'
 import type {
   Measure,
-  MeasureNoteSlot,
   MusicScore,
   NotesInfo,
   NoteSymbol,
   SingleStaff
 } from '@deciphony/renderer'
 import { createSlur } from '@deciphony/extensions/dr-edit/score-builder'
-import { DEFAULT_SLUR_THICKNESS, adjacentStaffMeasure, setSlurThickness } from '../renderEditSlurProperties'
-import { findMeasureNoteIndex } from '../asStaffOrNumber'
+import {
+  DEFAULT_SLUR_THICKNESS,
+  adjacentStaffMeasure,
+  applyScoreSlurStyleToNewSlur,
+  setSlurThickness,
+} from '../renderEditSlurProperties'
+import { locateMeasureNote, measureVoiceSlots as voiceSlots, type MeasureVoiceKey as VoiceKey } from '../asStaffOrNumber'
 import type { NoteHeadEditSlot } from './renderEditNoteHeadProperties'
 
 /** 连音线跨越的连续音符位数（含当前音符） */
 export type SlurSpan = 2 | 3 | 4
 
 export const SLUR_SPAN_OPTIONS: SlurSpan[] = [2, 3, 4]
-
-/** 鼓谱上下声部：连音线只在音符所在声部内找终点 */
-type VoiceKey = 'up' | 'down' | null
-
-function voiceSlots(measure: Measure, voice: VoiceKey): MeasureNoteSlot[] {
-  const notes = measure.notes
-  if (!isMeasureNoteVoices(notes)) return notes
-  return (voice ? notes[voice] : notes.up) ?? []
-}
 
 function pickNotesInfoForSlurEnd(note: NoteSymbol, voiceIndex: number): NotesInfo | null {
   if (note.notesInfo.length === 0) return null
@@ -84,16 +79,6 @@ function findNoteSymbolAtRightOffset(
   return null
 }
 
-function findNoteInVoices(measure: Measure, note: { id?: string }): { voice: VoiceKey; index: number } {
-  const notes = measure.notes
-  if (!isMeasureNoteVoices(notes)) return { voice: null, index: findMeasureNoteIndex(measure, note) }
-  for (const voice of ['up', 'down'] as const) {
-    const index = findMeasureNoteIndex({ ...measure, notes: notes[voice] ?? [] }, note)
-    if (index >= 0) return { voice, index }
-  }
-  return { voice: null, index: -1 }
-}
-
 function resolveNoteHeadAnchor(editSlot: NoteHeadEditSlot): {
   singleStaff: SingleStaff
   measureIndex: number
@@ -108,7 +93,7 @@ function resolveNoteHeadAnchor(editSlot: NoteHeadEditSlot): {
   const measureIndex = singleStaff.measures.findIndex((m) => m.id === measure.id)
   if (measureIndex < 0) return null
 
-  const { voice, index: noteIndex } = findNoteInVoices(measure as Measure, note)
+  const { voice, index: noteIndex } = locateMeasureNote(measure as Measure, note)
   if (noteIndex < 0) return null
 
   const voiceIndex = note.notesInfo.findIndex((ni) => ni.id === info.id)
@@ -166,6 +151,7 @@ export function tryAddSlurFromNoteHead(
     endId: endInfo.id,
   })
   setSlurThickness(slur, thickness)
+  applyScoreSlurStyleToNewSlur(musicScore, slur)
   musicScore.affiliatedSymbols.push(slur)
   return true
 }

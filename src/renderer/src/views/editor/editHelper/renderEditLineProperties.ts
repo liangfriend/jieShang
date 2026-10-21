@@ -1,6 +1,17 @@
 import type {DoubleSlotAffiliatedSymbol, MusicScore, SlotData} from '@deciphony/renderer'
-import {HairpinTypeEnum, TrillTypeEnum} from '@deciphony/renderer'
+import {GuzhengLianTypeEnum, HairpinTypeEnum, TrillTypeEnum} from '@deciphony/renderer'
 import {findLineSymbol, isLineSelected} from './renderEditLineDrag'
+
+export const GUZHENG_LIAN_TYPE_OPTIONS: GuzhengLianTypeEnum[] = [
+  GuzhengLianTypeEnum.Tuo,
+  GuzhengLianTypeEnum.Pi,
+  GuzhengLianTypeEnum.Mo,
+  GuzhengLianTypeEnum.Tiao,
+  GuzhengLianTypeEnum.Gou,
+  GuzhengLianTypeEnum.Ti,
+  GuzhengLianTypeEnum.Da,
+  GuzhengLianTypeEnum.Zhai,
+]
 
 export const TRILL_TYPE_OPTIONS: TrillTypeEnum[] = [
   TrillTypeEnum.Trill,
@@ -66,4 +77,17 @@ export function getHairpinHeight(sym: DoubleSlotAffiliatedSymbol): number {
 export function setHairpinHeight(sym: DoubleSlotAffiliatedSymbol, height: number): void {
   if (!sym.data?.hairpin) return
   sym.data.hairpin.height = height
+}
+
+export function getGuzhengLianType(sym: DoubleSlotAffiliatedSymbol): GuzhengLianTypeEnum {
+  return sym.data?.guzhengLian?.type ?? GuzhengLianTypeEnum.Tuo
+}
+
+export function setGuzhengLianType(sym: DoubleSlotAffiliatedSymbol, type: GuzhengLianTypeEnum): void {
+  if (!sym.data) sym.data = {}
+  if (!sym.data.guzhengLian) {
+    sym.data.guzhengLian = {relativeStartPoint: ZERO(), relativeEndPoint: ZERO(), type}
+    return
+  }
+  sym.data.guzhengLian.type = type
 }

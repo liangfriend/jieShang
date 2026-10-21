@@ -13,6 +13,7 @@ const props = defineProps<{
   sLSlotW: number
   sRSlotW: number
   instrumentName?: string
+  instrumentNameFontFamily?: string
 }>()
 
 const { t } = useI18n()
@@ -48,7 +49,11 @@ const titleH = computed(() => Math.max(14, props.tSlotH * scale.value))
         </div>
         <div class="score-layout-preview__body">
           <div class="score-layout-preview__side" :style="{ width: `${leftW}px` }">
-            <span v-if="instrumentName" class="score-layout-preview__instrument">
+            <span
+              v-if="instrumentName"
+              class="score-layout-preview__instrument"
+              :style="instrumentNameFontFamily ? { fontFamily: instrumentNameFontFamily } : undefined"
+            >
               {{ instrumentName }}
             </span>
           </div>

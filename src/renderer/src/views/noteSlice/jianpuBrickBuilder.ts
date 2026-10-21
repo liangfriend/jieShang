@@ -9,7 +9,9 @@ import {
   KeySignatureTypeEnum,
   MusicScoreTypeEnum,
   TimeSignatureTypeEnum,
-  type MusicScore
+  getMeasureNoteList,
+  type MusicScore,
+  type NotesNumberInfo
 } from '@deciphony/renderer'
 import {
   createGrandStaff,
@@ -64,8 +66,11 @@ function clampMidi(midi: number): number {
   return Math.min(MIDI_BRICK_MIDI_MAX, Math.max(MIDI_BRICK_MIDI_MIN, Math.round(midi)))
 }
 
-function clampOctaveDot(octave: number): number {
-  return Math.min(JIANPU_OCTAVE_DOT_MAX, Math.max(JIANPU_OCTAVE_DOT_MIN, Math.round(octave)))
+function clampOctaveDot(octave: number): NotesNumberInfo['octaveDot'] {
+  return Math.min(
+    JIANPU_OCTAVE_DOT_MAX,
+    Math.max(JIANPU_OCTAVE_DOT_MIN, Math.round(octave))
+  ) as NotesNumberInfo['octaveDot']
 }
 
 function pickRandom<T>(items: readonly T[], random: () => number): T {
@@ -120,7 +125,7 @@ export function buildJianpuBrickScore(
     keySignature,
     timeSignature: TimeSignatureTypeEnum['4_4']
   })
-  measure.notes.push(
+  getMeasureNoteList(measure).push(
     createNoteNumber({
       syllable: syllable as JianpuSyllable,
       chronaxie: MIDI_BRICK_CHRONAXIE,

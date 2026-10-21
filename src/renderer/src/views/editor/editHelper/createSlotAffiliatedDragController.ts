@@ -61,6 +61,13 @@ import {
   previewMeasureRepeatDrag,
   type MeasureRepeatDragSession,
 } from './renderEditMeasureRepeatDrag'
+import {
+  createMeasureAffiliatedDragSession,
+  isMeasureAffiliatedSelected,
+  isMeasureAffiliatedVDom,
+  previewMeasureAffiliatedDrag,
+  type MeasureAffiliatedDragSession,
+} from './renderEditMeasureAffiliatedDrag'
 import {flushScoreWrites, vDomMirrorEpoch, type UpdateVDomFn} from './scoreWriteGate'
 
 type PointerToSvg = (
@@ -107,6 +114,7 @@ export function createSlotAffiliatedDragController(options: {
   const lineHandleOverride = ref<HorizontalHandlePoints | null>(null)
   const noteAffiliatedDragSession = ref<NoteAffiliatedDragSession | null>(null)
   const measureRepeatDragSession = ref<MeasureRepeatDragSession | null>(null)
+  const measureAffiliatedDragSession = ref<MeasureAffiliatedDragSession | null>(null)
   const noteAffiliatedBoxOverride = ref<FrameBox | null>(null)
 
   const selectedArpeggioVdom = computed(() => {
@@ -186,10 +194,18 @@ export function createSlotAffiliatedDragController(options: {
     return vDomList.value.find((node) => isMeasureRepeatVDom(node, id)) ?? null
   })
 
+  const selectedMeasureAffiliatedVdom = computed(() => {
+    if (!isMeasureAffiliatedSelected(selectedItem.value)) return null
+    const id = selectedItem.value.self.id
+    return vDomList.value.find((node) => isMeasureAffiliatedVDom(node, id)) ?? null
+  })
+
   const noteAffiliatedBox = computed(() => {
     void vDomMirrorEpoch.value
     if (noteAffiliatedBoxOverride.value) return noteAffiliatedBoxOverride.value
-    const vdom = selectedNoteAffiliatedVdom.value ?? selectedMeasureRepeatVdom.value
+    const vdom = selectedNoteAffiliatedVdom.value
+      ?? selectedMeasureRepeatVdom.value
+      ?? selectedMeasureAffiliatedVdom.value
     return vdom ? computeNoteAffiliatedBox(vdom) : null
   })
 
@@ -201,7 +217,8 @@ export function createSlotAffiliatedDragController(options: {
       || pitchDragSession.value
       || lineDragSession.value
       || noteAffiliatedDragSession.value
-      || measureRepeatDragSession.value,
+      || measureRepeatDragSession.value
+      || measureAffiliatedDragSession.value,
     )
   }
 
@@ -396,8 +413,33 @@ export function createSlotAffiliatedDragController(options: {
     }
   }
 
+  function updateMeasureAffiliatedDragFromEvent(event: PointerEvent) {
+    const session = measureAffiliatedDragSession.value
+    if (!session || event.pointerId !== session.pointerId) return
+    const svg = resolveScoreSvg()
+    if (!svg) return
+    const {x, y} = pointerToSvg(svg, event.clientX, event.clientY)
+    noteAffiliatedBoxOverride.value = previewMeasureAffiliatedDrag(
+      scoreData.value,
+      getUpdateVDom,
+      session,
+      x,
+      y,
+    )
+  }
+
+  function endMeasureAffiliatedDrag(event: PointerEvent) {
+    if (measureAffiliatedDragSession.value?.pointerId === event.pointerId) {
+      flushScoreWrites(scoreData.value)
+      measureAffiliatedDragSession.value = null
+      noteAffiliatedBoxOverride.value = null
+      removeWindowListenersIfIdle()
+    }
+  }
+
   function updateFromEvent(event: PointerEvent) {
     if (measureRepeatDragSession.value) updateMeasureRepeatDragFromEvent(event)
+    if (measureAffiliatedDragSession.value) updateMeasureAffiliatedDragFromEvent(event)
     if (arpeggioDragSession.value) updateArpeggioDragFromEvent(event)
     if (strummingDragSession.value) updateStrummingDragFromEvent(event)
     if (pedalDragSession.value) updatePedalDragFromEvent(event)
@@ -414,6 +456,7 @@ export function createSlotAffiliatedDragController(options: {
     endLineDrag(event)
     endNoteAffiliatedDrag(event)
     endMeasureRepeatDrag(event)
+    endMeasureAffiliatedDrag(event)
   }
 
   function captureHandle(event: PointerEvent) {
@@ -489,6 +532,14 @@ export function createSlotAffiliatedDragController(options: {
       captureHandle(event)
       return
     }
+    const measureVdom = selectedMeasureAffiliatedVdom.value
+    if (measureVdom) {
+      const measureSession = createMeasureAffiliatedDragSession(event, scoreData.value, measureVdom, x, y)
+      if (!measureSession) return
+      measureAffiliatedDragSession.value = measureSession
+      captureHandle(event)
+      return
+    }
     const vdom = selectedNoteAffiliatedVdom.value
     if (!vdom) return
     const session = createNoteAffiliatedDragSession(event, scoreData.value, vdom, x, y)
@@ -510,6 +561,7 @@ export function createSlotAffiliatedDragController(options: {
     lineHandleOverride.value = null
     noteAffiliatedDragSession.value = null
     measureRepeatDragSession.value = null
+    measureAffiliatedDragSession.value = null
     noteAffiliatedBoxOverride.value = null
   }
 

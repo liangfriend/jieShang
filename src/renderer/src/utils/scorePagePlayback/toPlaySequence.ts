@@ -16,6 +16,7 @@ export type ToPlaySequenceOptions = {
 }
 
 type DrPlaySequenceOptions = NonNullable<Parameters<typeof getDrPlaySequence>[1]>
+type DrPlayItem = ReturnType<typeof getDrPlaySequence>[number]
 
 /** 鼓谱触发后最短鸣响（与 deciphony-test drumTest 一致，单位与 DR duration 同） */
 const DRUM_MIN_RING = 256
@@ -40,18 +41,21 @@ export function toPlaySequence(
     ...(options.range ? { range: options.range } : {})
   } as DrPlaySequenceOptions)
   const passSet = new Set(options.passSingleStaffIndex ?? [])
+  /** 关闭的声部不发声，但歌词照样要随播放高亮 */
+  const mutedLyricItems: DrPlayItem[] = []
   if (passSet.size > 0) {
     const staveMap = buildNoteStaveIndexMap(musicScoreData)
     drSeq = drSeq.filter((it) => {
       const baseId = it.note_id.includes(':') ? it.note_id.slice(0, it.note_id.indexOf(':')) : it.note_id
       const st = staveMap.get(baseId) ?? staveMap.get(it.note_id)
-      if (st == null) return true
-      return !passSet.has(st)
+      if (st == null || !passSet.has(st)) return true
+      if (it.lyric) mutedLyricItems.push(it)
+      return false
     })
   }
 
   let curPlayTime = -Infinity
-  const playSeq = drSeq.map((it) => {
+  const playSeq: PlaySequence = drSeq.map((it) => {
     let start = false
     if (curPlayTime !== it.playTime) {
       start = true
@@ -66,17 +70,38 @@ export function toPlaySequence(
       duration,
       playTime: it.playTime,
       toneColor: useStaffToneColor ? (it.toneColor ?? defaultToneColor) : defaultToneColor,
-      ...(isDrum && it.volume != null ? { velocity: it.volume } : {}),
+      // 鼓谱映射 / ghost / 重音 × 单谱表 data.volume / 100，各谱种都要带上
+      ...(it.volume != null ? { velocity: it.volume } : {}),
       data: {
         note_id: it.note_id,
         duration: it.duration,
         realDuration: it.real_duration,
         playTime: it.playTime,
-        start
+        start,
+        ...(it.lyric ? { lyric: it.lyric } : {})
       },
       end: false
     }
   })
+  if (mutedLyricItems.length > 0) {
+    // 无 note_id、midi 为 0：只触发歌词高亮；排在同一时刻的真实音之后（sort 稳定）
+    const placeholders = new Map<string, PlaySequence[number]>()
+    for (const it of mutedLyricItems) {
+      const lyric = it.lyric!
+      const id = `lyric:${lyric.slotId}:${lyric.verse}:${it.playTime}`
+      placeholders.set(id, {
+        id,
+        midi: 0,
+        duration: it.duration,
+        playTime: it.playTime,
+        toneColor: defaultToneColor,
+        data: { lyric, playTime: it.playTime, start: false },
+        end: false
+      })
+    }
+    playSeq.push(...placeholders.values())
+    playSeq.sort((a, b) => a.playTime - b.playTime)
+  }
   if (playSeq.length > 0) {
     playSeq[playSeq.length - 1]!.end = true
   }

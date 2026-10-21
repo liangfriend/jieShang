@@ -4,6 +4,7 @@ import {
   resolveWhiteboardKeyCountLabel as resolveWhiteboardKeyCountLabelI18n,
   resolveWhiteboardKeySignatureLabel as resolveWhiteboardKeySignatureLabelI18n,
   resolveWhiteboardPitchNotationLabel as resolveWhiteboardPitchNotationLabelI18n,
+  resolveWhiteboardStaffModeLabel as resolveWhiteboardStaffModeLabelI18n,
   resolveWhiteboardWidthTypeLabel as resolveWhiteboardWidthTypeLabelI18n
 } from '@renderer/i18n/helpers'
 
@@ -16,6 +17,9 @@ export type WhiteboardPitchNotation = 'None' | 'Helmholtz' | 'Scientific'
 
 /** 添加音符时可选的目标谱号（对应模板里三个单谱表） */
 export type WhiteboardClef = ClefTypeEnum.Treble | ClefTypeEnum.Alto | ClefTypeEnum.Bass
+
+/** triple：高/中/低音三行，手动选谱号；double：高/低音两行（大谱表），按音高自动分配 */
+export type WhiteboardStaffMode = 'triple' | 'double'
 
 export interface WhiteboardMidiRange {
   min: number
@@ -59,9 +63,12 @@ export const WHITEBOARD_WHITE_KEY_WIDTH_MIN = 20
 export const WHITEBOARD_WHITE_KEY_WIDTH_MAX = 72
 export const WHITEBOARD_WHITE_KEY_WIDTH_DEFAULT = 36
 
-/** 钢琴区固定高度（最大键高 + 上下 padding），不随音程滑块等开关变化 */
+/** 琴键上方给音程滑块、和弦滑块留的空间（滑块最高 58px） */
+export const WHITEBOARD_PIANO_SLIDER_GAP = 60
+
+/** 钢琴区固定高度（最大键高 + 滑块空间 + 上下 padding），不随音程滑块等开关变化 */
 export const WHITEBOARD_PIANO_SECTION_HEIGHT =
-  WHITEBOARD_KEY_HEIGHT_MAX + 16
+  WHITEBOARD_KEY_HEIGHT_MAX + WHITEBOARD_PIANO_SLIDER_GAP + 16
 
 /** 教学白板按住琴键时 trigger 的持续秒数（keyup 前由 release 结束） */
 export const WHITEBOARD_NOTE_HOLD_DURATION_SEC = 3600
@@ -79,11 +86,18 @@ export const WHITEBOARD_CLEF_OPTIONS: { value: WhiteboardClef; label: string }[]
 
 export const WHITEBOARD_DEFAULT_CLEF: WhiteboardClef = ClefTypeEnum.Treble
 
+export const WHITEBOARD_STAFF_MODE_OPTIONS: WhiteboardStaffMode[] = ['triple', 'double']
+export const WHITEBOARD_DEFAULT_STAFF_MODE: WhiteboardStaffMode = 'triple'
+/** 双行模式：不低于中央 C 的音写高音谱表，其余写低音谱表 */
+export const WHITEBOARD_DOUBLE_TREBLE_MIN_MIDI = 60
+
 /** 添加音符默认开启 */
 export const WHITEBOARD_DEFAULT_ADD_NOTE = true
 /** 自动清空：和弦连击共用同一清空窗口（ms） */
 export const WHITEBOARD_AUTO_CLEAR_THROTTLE_MS = 60
 export const WHITEBOARD_DEFAULT_AUTO_CLEAR = false
+/** 与同组首键按下间隔不超过该值（ms）的琴键视为和弦，写入同一 slot */
+export const WHITEBOARD_CHORD_WINDOW_MS = 20
 
 /** 按键时值推断使用的 BPM（不作用于 NPlayer） */
 export const WHITEBOARD_NOTE_BPM_MIN = 30
@@ -133,6 +147,10 @@ export function resolveWhiteboardPitchNotationLabel(notation: WhiteboardPitchNot
 
 export function resolveWhiteboardClefLabel(clef: WhiteboardClef): string {
   return resolveWhiteboardClefLabelI18n(clef)
+}
+
+export function resolveWhiteboardStaffModeLabel(mode: WhiteboardStaffMode): string {
+  return resolveWhiteboardStaffModeLabelI18n(mode)
 }
 
 export function resolveWhiteboardKeySignatureLabel(key: KeySignatureTypeEnum): string {

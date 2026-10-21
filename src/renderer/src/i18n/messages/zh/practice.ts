@@ -13,7 +13,6 @@ export default {
     },
     settings: {
       title: '练习设置',
-      desc: '调整练习体验，功能稍后接入',
       display: '显示',
       showNoteResult: '实时显示音符结果',
       showNoteResultHint: '弹对、弹早、弹晚、漏弹以不同颜色标注（漏弹为红色）',
@@ -21,6 +20,8 @@ export default {
       coverWaterfallHint: '用可爱背景图挡住瀑布流，凭听觉练习',
       volumeAndSpeed: '音量与速度',
       scoreVolume: '曲谱音量',
+      pianoVolume: '虚拟钢琴音量',
+      pianoVolumeHint: '你按键（键盘、鼠标、MIDI 设备）发出的声音；曲谱音量为 0 时按键也会静音',
       metronomeVolume: '节拍器音量',
       bpm: 'BPM',
       metronomeDuringPlay: '播放过程开启节拍器',

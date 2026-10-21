@@ -1,9 +1,8 @@
 import type { MusicScore, VDom } from '@deciphony/renderer'
-import { getMeasureSlots, isNoteSymbol } from '@deciphony/renderer'
+import { getMeasureSlots } from '@deciphony/renderer'
 import { NOTE_PART_TAGS } from '@deciphony/extensions/dr-play-highlight'
 import type { PlayHighlightProgressData } from '@deciphony/extensions/dr-play-highlight'
 import {
-  isNoteNumberSlot,
   locateNotesInfoById,
   locateNotesNumberInfoById,
   locateTabNoteInfoById
@@ -105,39 +104,19 @@ export function resolvePlayingGrandStaffId(
       for (const measure of staff.measures ?? []) {
         for (const slot of measure.notes ? getMeasureSlots(measure) : []) {
           if (slot.id === id) return gs.id
-          if ('isSlap' in slot && Array.isArray((slot as { notesInfo?: unknown }).notesInfo)) {
-            const tab = slot as {
-              notesInfo: Array<{ id: string }>
-              graceNotes?: Array<{ id: string }>
-              graceNotesAfter?: Array<{ id: string }>
-            }
-            for (const ni of tab.notesInfo) if (ni.id === id) return gs.id
-            for (const g of tab.graceNotes ?? []) if (g.id === id) return gs.id
-            for (const g of tab.graceNotesAfter ?? []) if (g.id === id) return gs.id
-            continue
+          const symbol = slot.symbol as unknown as {
+            id?: string
+            notesInfo?: Array<{ id: string }>
+            graceNotes?: Array<{ id: string }>
+            graceNotesAfter?: Array<{ id: string }>
           }
-          if (isNoteSymbol(slot as never)) {
-            for (const ni of (slot as { notesInfo: Array<{ id: string }> }).notesInfo) {
-              if (ni.id === id) return gs.id
-            }
-            for (const g of (slot as { graceNotes?: Array<{ id: string }> }).graceNotes ?? []) {
-              if (g.id === id) return gs.id
-            }
-            for (const g of (slot as { graceNotesAfter?: Array<{ id: string }> }).graceNotesAfter ??
-              []) {
-              if (g.id === id) return gs.id
-            }
-          }
-          if (isNoteNumberSlot(slot as never)) {
-            const num = slot as {
-              notesInfo: Array<{ id: string }>
-              graceNotes?: Array<{ id: string }>
-              graceNotesAfter?: Array<{ id: string }>
-            }
-            for (const ni of num.notesInfo) if (ni.id === id) return gs.id
-            for (const g of num.graceNotes ?? []) if (g.id === id) return gs.id
-            for (const g of num.graceNotesAfter ?? []) if (g.id === id) return gs.id
-          }
+          if (symbol.id === id) return gs.id
+          const parts = [
+            ...(symbol.notesInfo ?? []),
+            ...(symbol.graceNotes ?? []),
+            ...(symbol.graceNotesAfter ?? [])
+          ]
+          if (parts.some((part) => part.id === id)) return gs.id
         }
       }
     }

@@ -14,6 +14,7 @@ const workSrc = path.resolve(deciphonyRoot, 'deciphony-work/src')
 const fingerSrc = path.resolve(deciphonyRoot, 'deciphony-finger/src')
 const pitchDetectionSrc = path.resolve(deciphonyRoot, 'deciphony-pitch-detection/src')
 const puffSrc = path.resolve(deciphonyRoot, 'deciphony-puff/src')
+const clSheetSrc = path.resolve(deciphonyRoot, 'deciphony-cl-sheet/src')
 
 /** 包名 → 本地入口（无 dist 时也能跑，避免走 package.json exports → dist） */
 const LOCAL_PACKAGE_ENTRY: Record<string, string> = {
@@ -23,7 +24,8 @@ const LOCAL_PACKAGE_ENTRY: Record<string, string> = {
   '@deciphony/work': path.resolve(workSrc, 'index.ts'),
   '@deciphony/finger': path.resolve(fingerSrc, 'index.ts'),
   '@deciphony/pitch-detection': path.resolve(pitchDetectionSrc, 'index.ts'),
-  '@deciphony/puff': path.resolve(puffSrc, 'index.ts')
+  '@deciphony/puff': path.resolve(puffSrc, 'index.ts'),
+  '@deciphony/cl-sheet': path.resolve(clSheetSrc, 'index.ts')
 }
 
 /**
@@ -36,6 +38,11 @@ const extensionsLocalCssPlaceholder = path.resolve(
   __dirname,
   'src/renderer/src/styles/deciphonyExtensionsLocal.css'
 )
+const CL_SHEET_CSS_ID = '@deciphony/cl-sheet/dist/cl-sheet.css'
+const clSheetLocalCssPlaceholder = path.resolve(
+  __dirname,
+  'src/renderer/src/styles/deciphonyClSheetLocal.css'
+)
 
 function localDeciphonyResolvePlugin(): Plugin {
   const extensionsPrefix = '@deciphony/extensions'
@@ -47,6 +54,7 @@ function localDeciphonyResolvePlugin(): Plugin {
       if (entry) return entry
 
       if (id === EXTENSIONS_CSS_ID) return extensionsLocalCssPlaceholder
+      if (id === CL_SHEET_CSS_ID) return clSheetLocalCssPlaceholder
 
       // @deciphony/extensions 与子路径（如 /dr-edit/...）都指到本地源码
       if (id === extensionsPrefix || id.startsWith(`${extensionsPrefix}/`)) {
@@ -89,6 +97,7 @@ function buildRendererResolve(useLocalDeciphony: boolean) {
     alias.push(
       // 打包版样式在 dist/extensions.css；源码模式由 SFC 注入，须排在通配规则之前
       { find: /^@deciphony\/extensions\/css$/, replacement: extensionsLocalCssPlaceholder },
+      { find: /^@deciphony\/cl-sheet\/dist\/cl-sheet\.css$/, replacement: clSheetLocalCssPlaceholder },
       {
         find: /^@deciphony\/extensions(\/.*)?$/,
         replacement: `${extensionsSrc.replace(/\\/g, '/')}$1`
@@ -127,7 +136,8 @@ export default defineConfig(({ mode }) => {
                 '@deciphony/work',
                 '@deciphony/finger',
                 '@deciphony/pitch-detection',
-                '@deciphony/puff'
+                '@deciphony/puff',
+                '@deciphony/cl-sheet'
               ]
             }
           }

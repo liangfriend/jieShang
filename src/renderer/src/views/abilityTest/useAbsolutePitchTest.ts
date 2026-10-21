@@ -230,7 +230,7 @@ export function useAbsolutePitchTest() {
     const token = sessionToken
     try {
       await playStore.waitReady()
-      await playStore.ensureCollectionToneColorInitialized()
+      await playStore.resetCollectionToneColorToDefault()
     } catch {
       // 音色初始化失败时仍尝试用内置 piano 开测
     }

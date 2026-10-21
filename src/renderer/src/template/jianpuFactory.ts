@@ -27,7 +27,7 @@ export function createJianpuMusicScore(
   })
 }
 
-/** 简谱空小节：无谱号/调号/拍号（由曲谱顶层兜底） */
+/** 简谱空小节：无谱号/调号/拍号（由曲谱顶层兜底）；不要前置小节线 */
 export function createJianpuMeasure(): Measure {
   const measure = createMeasure()
   delete measure.clef_f
@@ -36,6 +36,7 @@ export function createJianpuMeasure(): Measure {
   delete measure.keySignature_b
   delete measure.timeSignature_f
   delete measure.timeSignature_b
+  delete measure.barline_f
   return measure
 }
 

@@ -24,6 +24,16 @@ declare global {
           content: string,
           defaultName?: string
         ): Promise<{ canceled: boolean; filePath?: string }>
+        importClSheet(): Promise<{
+          canceled: boolean
+          filePath?: string
+          fileName?: string
+          content?: string
+        }>
+        exportClSheet(
+          content: string,
+          defaultName?: string
+        ): Promise<{ canceled: boolean; filePath?: string }>
         importMusicXml(): Promise<{
           canceled: boolean
           filePath?: string
@@ -63,13 +73,19 @@ declare global {
         list(): Promise<any>
       }
       score: {
-        create(payload: { name: string; data?: string }): Promise<any>
+        create(payload: {
+          name: string
+          data?: string
+          type?: 'music_score' | 'cl_sheet'
+        }): Promise<any>
         delete(id: number | string): Promise<any>
         update(id: number | string, payload: Partial<{ name: string; data: string }>): Promise<any>
         get(id: number | string): Promise<any>
-        query(filters: Partial<{ id: number | string; name: string }>): Promise<any>
-        list(): Promise<any>
-        searchByName(name: string): Promise<any>
+        query(
+          filters: Partial<{ id: number | string; name: string; type: 'music_score' | 'cl_sheet' }>
+        ): Promise<any>
+        list(type?: 'music_score' | 'cl_sheet'): Promise<any>
+        searchByName(name: string, type?: 'music_score' | 'cl_sheet'): Promise<any>
       }
       work: {
         create(payload: {

@@ -1,3 +1,4 @@
+import type { ScoreType } from '../models/ScoreModel'
 import { ScoreRepository } from '../repositories/scoreRepository'
 
 export class ScoreService {
@@ -7,7 +8,7 @@ export class ScoreService {
     this.scoreRepository = scoreRepository
   }
 
-  async createScore(payload: { name: string; data?: string }) {
+  async createScore(payload: { name: string; data?: string; type?: ScoreType }) {
     const data = await this.scoreRepository.create(payload)
     return { success: true, data }
   }
@@ -27,18 +28,18 @@ export class ScoreService {
     return { success: true, data }
   }
 
-  async queryScores(filters: Partial<{ id: string | number; name: string }>) {
+  async queryScores(filters: Partial<{ id: string | number; name: string; type: ScoreType }>) {
     const data = await this.scoreRepository.query(filters)
     return { success: true, data }
   }
 
-  async listScores() {
-    const data = await this.scoreRepository.listSummaries()
+  async listScores(type?: ScoreType) {
+    const data = await this.scoreRepository.listSummaries(type)
     return { success: true, data }
   }
 
-  async searchByName(name: string) {
-    const data = await this.scoreRepository.searchByName(name)
+  async searchByName(name: string, type?: ScoreType) {
+    const data = await this.scoreRepository.searchByName(name, type)
     return { success: true, data }
   }
 }

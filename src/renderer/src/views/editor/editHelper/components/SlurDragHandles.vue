@@ -123,7 +123,7 @@ function onHorizontalHandleDown(handle: HorizontalHandleKind, event: PointerEven
 <style scoped>
 .slur-drag-handles__square {
   fill: #fff;
-  stroke: #409eff;
+  stroke: var(--ec-pink-strong, #f0709f);
   stroke-width: 1.5;
   cursor: move;
 }
@@ -137,7 +137,7 @@ function onHorizontalHandleDown(handle: HorizontalHandleKind, event: PointerEven
 
 .slur-drag-handles__end {
   fill: #fff;
-  stroke: #409eff;
+  stroke: var(--ec-pink-strong, #f0709f);
   stroke-width: 1.5;
   cursor: ew-resize;
 }

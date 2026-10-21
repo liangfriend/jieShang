@@ -26,6 +26,7 @@ const {
   showNoteResult,
   coverWaterfall,
   scoreVolume,
+  pianoVolume,
   metronomeVolume,
   bpm,
   metronomeDuringPlay,
@@ -42,6 +43,10 @@ const visible = computed({
 const scoreVolumePercent = computed({
   get: () => Math.round(scoreVolume.value * 100),
   set: (value: number) => (scoreVolume.value = value / 100)
+})
+const pianoVolumePercent = computed({
+  get: () => Math.round(pianoVolume.value * 100),
+  set: (value: number) => (pianoVolume.value = value / 100)
 })
 const metronomeVolumePercent = computed({
   get: () => Math.round(metronomeVolume.value * 100),
@@ -79,8 +84,6 @@ const appendixOpen = ref(false)
     align-center
     destroy-on-close
   >
-    <p class="practice-settings-dialog__desc">{{ t('practice.settings.desc') }}</p>
-
     <el-form label-position="top" class="practice-settings-form">
       <section class="practice-settings-section">
         <h3 class="practice-settings-section__title">{{ t('practice.settings.display') }}</h3>
@@ -104,6 +107,10 @@ const appendixOpen = ref(false)
         <h3 class="practice-settings-section__title">{{ t('practice.settings.volumeAndSpeed') }}</h3>
         <el-form-item :label="t('practice.settings.scoreVolume')">
           <el-slider v-model="scoreVolumePercent" :min="0" :max="100" show-input />
+        </el-form-item>
+        <el-form-item :label="t('practice.settings.pianoVolume')">
+          <el-slider v-model="pianoVolumePercent" :min="0" :max="100" show-input />
+          <small class="practice-settings-form__hint">{{ t('practice.settings.pianoVolumeHint') }}</small>
         </el-form-item>
         <el-form-item :label="t('practice.settings.metronomeVolume')">
           <el-slider v-model="metronomeVolumePercent" :min="0" :max="100" show-input />
@@ -185,12 +192,6 @@ const appendixOpen = ref(false)
 </template>
 
 <style scoped>
-.practice-settings-dialog__desc {
-  margin: 0 0 12px;
-  font-size: 13px;
-  color: #9a8aa8;
-}
-
 .practice-settings-form {
   max-height: min(62vh, 520px);
   overflow-y: auto;
@@ -368,6 +369,12 @@ const appendixOpen = ref(false)
 
 .practice-settings-form :deep(.el-form-item) {
   margin-bottom: 12px;
+}
+
+.practice-settings-form__hint {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #9a8aa8;
 }
 
 .practice-settings-form :deep(.el-form-item__label) {

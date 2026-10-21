@@ -15,7 +15,7 @@ export default {
       livesAria: '残りライフ',
       combo: '{n} コンボ',
       slowDown: 'スロー',
-      doubleScore: '×2'
+      doubleScore: 'ダブル'
     },
     countdown: {
       start: 'スタート!'

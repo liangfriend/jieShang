@@ -4,13 +4,21 @@ import {
 } from '@deciphony/renderer'
 import {newId, ZERO_FRAME} from '@deciphony/extensions/dr-edit/score-builder'
 
-/** 单音符附属（奏法 / 技巧 / 装饰音 / 力度）分组；SFF 无字形不列出 */
-export type NoteMarkCategory = 'articulation' | 'technique' | 'ornament' | 'dynamic'
+/** 单音符附属（奏法 / 技巧 / 装饰音 / 力度 / 古筝指法）分组；SFF 无字形不列出 */
+export type NoteMarkCategory =
+  | 'articulation'
+  | 'technique'
+  | 'ornament'
+  | 'dynamic'
+  | 'guzheng'
+  | 'guzhengTechnique'
 
 export type NoteMarkGroup = {
   category: NoteMarkCategory
   /** 同组互斥：添加时替换组内已有符号 */
   exclusive: boolean
+  /** 古筝指法只在简谱音符上提供 */
+  guzheng?: boolean
   names: N[]
 }
 
@@ -43,7 +51,26 @@ export const NOTE_MARK_GROUPS: NoteMarkGroup[] = [
       N.FP, N.PF, N.SF, N.SFZ, N.SFFZ, N.SFP, N.RFZ, N.RF, N.FZ,
     ],
   },
+  {
+    category: 'guzheng',
+    exclusive: true,
+    guzheng: true,
+    names: [
+      N.Guzheng_tuo, N.Guzheng_pi, N.Guzheng_mo, N.Guzheng_tiao, N.Guzheng_gou, N.Guzheng_ti1,
+      N.Guzheng_da, N.Guzheng_zhai, N.Guzheng_ti2, N.Guzheng_bo, N.Guzheng_xiao_cuo, N.Guzheng_da_cuo,
+    ],
+  },
+  {
+    category: 'guzhengTechnique',
+    exclusive: false,
+    guzheng: true,
+    names: [N.Guzheng_sao, N.Guzheng_yao],
+  },
 ]
+
+export function noteMarkGroupsFor(showGuzheng = false): NoteMarkGroup[] {
+  return showGuzheng ? NOTE_MARK_GROUPS : NOTE_MARK_GROUPS.filter((group) => !group.guzheng)
+}
 
 const GROUP_BY_NAME = new Map<string, NoteMarkGroup>(
   NOTE_MARK_GROUPS.flatMap((group) => group.names.map((name) => [name, group] as const)),
@@ -88,7 +115,7 @@ export function toggleNoteMark(host: NoteMarkHost, name: N): void {
   const group = noteMarkGroup(name)
   if (group?.exclusive) {
     for (let i = marks.length - 1; i >= 0; i--) {
-      if (group.names.includes(marks[i]!.name)) marks.splice(i, 1)
+      if ((group.names as readonly string[]).includes(marks[i]!.name)) marks.splice(i, 1)
     }
   }
   marks.push(createNoteMark(name))

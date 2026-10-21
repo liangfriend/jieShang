@@ -17,11 +17,13 @@ export default {
       intervalSlider: '音程スライダー',
       addNote: '音符を追加',
       autoClear: '自動クリア',
+      staffMode: '譜表',
       clef: '音部記号',
       targetClef: '追加先の音部記号',
       bpm: 'BPM',
       noteBpm: '音価 BPM',
       keySignature: '調号',
+      circleOfFifths: '五度圏',
       clearNotes: '音符をクリア'
     },
     keyCount: {
@@ -39,6 +41,10 @@ export default {
       None: 'なし',
       Helmholtz: 'ヘルムホルツ式',
       Scientific: '科学的表記'
+    },
+    staffMode: {
+      triple: '3 段',
+      double: '2 段'
     },
     clef: {
       treble: 'ト音記号',
@@ -63,10 +69,10 @@ export default {
       C_flat: 'C♭ (7♭)'
     },
     pianoGroup: {
-      great4: '下四点',
       great3: '下三点',
       great2: '下二点',
       great1: '下一点',
+      great: '大字',
       small: '小字',
       small1: '一点',
       small2: '二点',

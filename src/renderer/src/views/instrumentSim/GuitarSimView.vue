@@ -3,8 +3,8 @@ import { ElMessage } from 'element-plus'
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
-import musicScoreVue, { Chord } from '@deciphony/renderer'
-import type { MusicScore, tabChord } from '@deciphony/renderer'
+import { Chord } from '@deciphony/renderer'
+import type { tabChord } from '@deciphony/renderer'
 import BackButton from '@renderer/components/BackButton.vue'
 import {
   GUITAR_NOTE_DURATION_SEC,
@@ -17,18 +17,15 @@ import {
   midiForStringFret,
   saveGuitarPrefs,
   stringNumberToFretIndex,
-  tabChordToFrets
+  tabChordToFrets,
+  type GuitarOrientation
 } from '@renderer/constant/guitar'
 import { listGuitarChords, type GuitarChordRecord } from '@renderer/utils/fileHelper/guitarChordFile'
-import { searchScoresFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper/scoreFile'
 import { ensureDefaultGuitarShortcuts, loadGuitarShortcuts } from '@renderer/utils/guitarShortcuts'
 import { DEFAULT_TONE_COLOR_COLLECTION_ID } from '@renderer/utils/collection/toneColorUsage'
 import { usePlayStore } from '@renderer/store/play.store'
-import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
-import emptyScore from '@renderer/template/empty'
-import type { MusicScoreHighlightExpose } from '@deciphony/extensions/dr-play-highlight'
 import GuitarPanel from './GuitarPanel.vue'
-import { useSimScorePlayback } from './useSimScorePlayback'
+import InstrumentScorePanel from './InstrumentScorePanel.vue'
 import GuitarShortcutDialog from './GuitarShortcutDialog.vue'
 
 defineOptions({ name: 'GuitarSimView' })
@@ -44,16 +41,11 @@ const ACTIVE_CHORD_LAYOUT = {
 const { t } = useI18n()
 const router = useRouter()
 const playStore = usePlayStore()
-const { waitScoreSkin } = useScoreSkin()
 
 const guideVisible = ref(false)
 const shortcutVisible = ref(false)
 const chords = ref<GuitarChordRecord[]>([])
 const shortcuts = ref(loadGuitarShortcuts())
-const scoreOptions = ref<Array<{ id: number; name: string }>>([])
-const selectedScoreId = ref<number | null>(null)
-const musicScore = ref<MusicScore>(JSON.parse(JSON.stringify(emptyScore)) as MusicScore)
-const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
 
 const activeChord = ref<GuitarChordRecord | null>(null)
 const activeString = ref<number | null>(null)
@@ -61,7 +53,14 @@ const activeString = ref<number | null>(null)
 const heldStrings = new Set<number>()
 /** 主键盘按住未松开的和弦快捷键 */
 const heldChordKeys = new Set<string>()
-const smoothEnvelope = ref(Boolean(loadGuitarPrefs().smoothEnvelope))
+const initialPrefs = loadGuitarPrefs()
+const smoothEnvelope = ref(initialPrefs.smoothEnvelope)
+const orientation = ref<GuitarOrientation>(initialPrefs.orientation)
+const isVertical = computed(() => orientation.value === 'vertical')
+const orientationOptions = computed(() => [
+  { label: t('instrumentSim.guitar.orientation.horizontal'), value: 'horizontal' },
+  { label: t('instrumentSim.guitar.orientation.vertical'), value: 'vertical' }
+])
 
 const frets = computed(() =>
   activeChord.value ? tabChordToFrets(activeChord.value.chord) : [0, 0, 0, 0, 0, 0]
@@ -91,37 +90,13 @@ watch(smoothEnvelope, (value) => {
   saveGuitarPrefs({ smoothEnvelope: value })
 })
 
-const {
-  playback: scorePlayback,
-  scoreScrollRef,
-  scrollLocked,
-  handleRenderMusicScore
-} = useSimScorePlayback(musicScore, musicScoreRef)
+watch(orientation, (value) => {
+  saveGuitarPrefs({ orientation: value })
+})
 
 async function refreshChords() {
   chords.value = await listGuitarChords('', 'tab6')
   shortcuts.value = ensureDefaultGuitarShortcuts(chords.value)
-}
-
-async function refreshScores() {
-  const list = await searchScoresFromDatabase('')
-  scoreOptions.value = list.map((s) => ({ id: s.id, name: s.name }))
-}
-
-async function onScoreChange(id: number | null) {
-  selectedScoreId.value = id
-  scorePlayback.handleStop()
-  if (id == null) {
-    musicScore.value = JSON.parse(JSON.stringify(emptyScore)) as MusicScore
-    return
-  }
-  const res = await window.api.score.get(id)
-  if (!res.success || !res.data?.data) {
-    ElMessage.error(t('editor.messages.scoreLoadFailed'))
-    return
-  }
-  musicScore.value = parseScoreJson(res.data.data)
-  await playStore.restorePlaybackDefaults(musicScore.value, { resetToneColor: false })
 }
 
 function applyChordByShortcut(digit: string, options?: { hold?: boolean }) {
@@ -253,7 +228,7 @@ onMounted(async () => {
     await playStore.setCollectionToneColor(NYLON_GUITAR_COLLECTION_ID)
   })()
   try {
-    await Promise.all([waitScoreSkin(), refreshChords(), refreshScores(), toneTask])
+    await Promise.all([refreshChords(), toneTask])
   } catch {
     ElMessage.warning(t('instrumentSim.locked'))
   }
@@ -264,7 +239,6 @@ onUnmounted(() => {
   window.removeEventListener('keyup', onKeyUp)
   heldStrings.clear()
   heldChordKeys.clear()
-  scorePlayback.handleStop()
   playStore.releaseAllHeldNotes()
   void playStore.setCollectionToneColor(DEFAULT_TONE_COLOR_COLLECTION_ID)
 })
@@ -275,98 +249,26 @@ watch(shortcutVisible, (open) => {
 </script>
 
 <template>
-  <div class="guitar-sim">
+  <div class="guitar-sim" :class="{ 'guitar-sim--vertical': isVertical }">
     <header class="guitar-sim__header">
       <BackButton fallback="/instrument-sim" />
       <h1 class="guitar-sim__title">{{ t('instrumentSim.guitar.title') }}</h1>
+      <el-segmented v-model="orientation" :options="orientationOptions" size="small" />
       <el-button size="small" @click="guideVisible = true">{{ t('instrumentSim.guide') }}</el-button>
     </header>
 
     <div class="guitar-sim__body">
-      <aside class="guitar-sim__left">
-        <section class="guitar-sim__panel guitar-sim__panel--tools">
-          <div class="guitar-sim__row">
-            <span class="guitar-sim__label">{{ t('instrumentSim.guitar.selectScore') }}</span>
-            <el-select
-              :model-value="selectedScoreId"
-              clearable
-              filterable
-              class="guitar-sim__score-select"
-              :placeholder="t('instrumentSim.guitar.noScore')"
-              @update:model-value="onScoreChange"
-            >
-              <el-option
-                v-for="item in scoreOptions"
-                :key="item.id"
-                :label="item.name"
-                :value="item.id"
-              />
-            </el-select>
-          </div>
-
-          <div class="guitar-sim__row guitar-sim__row--btns">
-            <el-button
-              type="primary"
-              size="small"
-              :disabled="scorePlayback.playDisabled.value || !selectedScoreId"
-              @click="scorePlayback.handlePlay()"
-            >
-              {{ t('instrumentSim.guitar.play') }}
-            </el-button>
-            <el-button
-              size="small"
-              :disabled="scorePlayback.pauseDisabled.value"
-              @click="scorePlayback.handlePause()"
-            >
-              {{ t('instrumentSim.guitar.pause') }}
-            </el-button>
-            <el-button
-              size="small"
-              :disabled="scorePlayback.stopDisabled.value"
-              @click="scorePlayback.handleStop()"
-            >
-              {{ t('instrumentSim.guitar.stop') }}
-            </el-button>
-          </div>
-
-          <div class="guitar-sim__row guitar-sim__row--btns">
-            <el-button size="small" @click="shortcutVisible = true">
-              {{ t('instrumentSim.guitar.shortcutSettings') }}
-            </el-button>
-            <el-button size="small" @click="openChordManage">
-              {{ t('instrumentSim.guitar.manageChords') }}
-            </el-button>
-          </div>
-
-          <p class="guitar-sim__meta">
-            {{ t('instrumentSim.guitar.currentChord') }}：
-            {{ activeChord?.name || t('instrumentSim.guitar.none') }}
-          </p>
-          <div class="guitar-sim__row">
-            <span class="guitar-sim__label">{{ t('instrumentSim.guitar.smoothEnvelope') }}</span>
-            <el-switch v-model="smoothEnvelope" size="small" />
-          </div>
-          <p class="guitar-sim__hint">{{ t('instrumentSim.guitar.toneLocked') }}</p>
-          <p class="guitar-sim__hint">{{ t('instrumentSim.guitar.chordHint') }}</p>
-          <p class="guitar-sim__hint">{{ t('instrumentSim.guitar.pickHint') }}</p>
-        </section>
-
-        <section class="guitar-sim__panel guitar-sim__panel--score">
-          <div
-            ref="scoreScrollRef"
-            class="guitar-sim__score-scroll hidden-scrollbar"
-            :class="{ 'score-scroll-locked': scrollLocked }"
-          >
-            <musicScoreVue
-              ref="musicScoreRef"
-              :data="musicScore"
-              @renderMusicScore="handleRenderMusicScore"
-            />
-          </div>
-        </section>
-      </aside>
-
-      <section class="guitar-sim__right">
+      <section class="guitar-sim__top">
+        <div class="guitar-sim__guitar">
+          <GuitarPanel
+            :chord="activeChord?.chord ?? null"
+            :hand-pose="activeChord?.handPose ?? null"
+            :active-string="activeString"
+            :vertical="isVertical"
+            @pick="(n) => pickString(n, { hold: true })"
+            @release="releaseString"
+          />
+        </div>
         <div class="guitar-sim__chord-preview">
           <svg
             v-if="activeChord"
@@ -380,16 +282,30 @@ watch(shortcutVisible, (open) => {
             {{ t('instrumentSim.guitar.none') }}
           </span>
         </div>
-        <div class="guitar-sim__guitar">
-          <GuitarPanel
-            :chord="activeChord?.chord ?? null"
-            :hand-pose="activeChord?.handPose ?? null"
-            :active-string="activeString"
-            @pick="(n) => pickString(n, { hold: true })"
-            @release="releaseString"
-          />
-        </div>
       </section>
+
+      <InstrumentScorePanel single-line cl-sheet>
+        <div class="guitar-sim__row guitar-sim__row--btns">
+          <el-button size="small" @click="shortcutVisible = true">
+            {{ t('instrumentSim.guitar.shortcutSettings') }}
+          </el-button>
+          <el-button size="small" @click="openChordManage">
+            {{ t('instrumentSim.guitar.manageChords') }}
+          </el-button>
+        </div>
+
+        <p class="guitar-sim__meta">
+          {{ t('instrumentSim.guitar.currentChord') }}：
+          {{ activeChord?.name || t('instrumentSim.guitar.none') }}
+        </p>
+        <div class="guitar-sim__row">
+          <span class="guitar-sim__label">{{ t('instrumentSim.guitar.smoothEnvelope') }}</span>
+          <el-switch v-model="smoothEnvelope" size="small" />
+        </div>
+        <p class="guitar-sim__hint">{{ t('instrumentSim.guitar.toneLocked') }}</p>
+        <p class="guitar-sim__hint">{{ t('instrumentSim.guitar.chordHint') }}</p>
+        <p class="guitar-sim__hint">{{ t('instrumentSim.guitar.pickHint') }}</p>
+      </InstrumentScorePanel>
     </div>
 
     <el-dialog v-model="guideVisible" :title="t('instrumentSim.guitar.guideTitle')" width="480px">
@@ -434,51 +350,46 @@ watch(shortcutVisible, (open) => {
 .guitar-sim__body {
   flex: 1;
   min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(160px, 220px);
-  gap: 12px;
-  padding: 12px;
-  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
-.guitar-sim__left {
+.guitar-sim__body > .sim-score-panel {
   min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
 }
 
-.guitar-sim__panel {
-  border-radius: 16px;
-  border: 1px solid rgba(255, 184, 208, 0.4);
-  background: rgba(255, 255, 255, 0.82);
-  box-shadow: 0 8px 24px rgba(180, 140, 170, 0.12);
-}
-
-.guitar-sim__panel--tools {
+.guitar-sim__top {
   flex-shrink: 0;
-  padding: 12px;
+  height: 56vh;
+  min-height: 260px;
+  padding: 12px 12px 4px;
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.guitar-sim__panel--score {
-  flex: 1;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.guitar-sim__score-scroll {
-  height: 100%;
-  overflow: auto;
-  padding: 8px;
+  gap: 12px;
   box-sizing: border-box;
 }
 
-.guitar-sim__score-scroll > :deep(svg) {
-  margin-inline: auto;
+/* 竖向：吉他立在左侧一列（宽 ≈ 可用高度 × 0.4），右侧整块留给曲谱 / 弹唱谱 */
+.guitar-sim--vertical .guitar-sim__body {
+  flex-direction: row;
+}
+
+.guitar-sim--vertical .guitar-sim__top {
+  flex: 0 0 clamp(200px, calc((100vh - 240px) * 0.4 + 18px), 420px);
+  height: auto;
+  min-height: 0;
+  flex-direction: column;
+  padding: 12px 0 12px 12px;
+}
+
+.guitar-sim--vertical .guitar-sim__guitar {
+  min-height: 0;
+}
+
+.guitar-sim--vertical .guitar-sim__chord-preview {
+  order: -1;
+  flex: 0 0 auto;
+  align-self: center;
+  width: 132px;
 }
 
 .guitar-sim__row {
@@ -497,11 +408,6 @@ watch(shortcutVisible, (open) => {
   color: #7a6a88;
 }
 
-.guitar-sim__score-select {
-  flex: 0 1 240px;
-  min-width: 0;
-}
-
 .guitar-sim__meta {
   margin: 0;
   font-size: 13px;
@@ -516,17 +422,9 @@ watch(shortcutVisible, (open) => {
   line-height: 1.4;
 }
 
-.guitar-sim__right {
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  box-sizing: border-box;
-}
-
 .guitar-sim__chord-preview {
-  flex: 0 0 auto;
+  flex: 0 0 132px;
+  align-self: flex-start;
   height: 132px;
   display: flex;
   align-items: center;
@@ -553,6 +451,7 @@ watch(shortcutVisible, (open) => {
 
 .guitar-sim__guitar {
   flex: 1;
+  min-width: 0;
   min-height: 0;
   border-radius: 16px;
   border: 1px solid rgba(255, 184, 208, 0.35);

@@ -64,3 +64,8 @@
   border-color: rgba(123, 201, 150, 0.55);
   background: linear-gradient(90deg, rgba(200, 240, 208, 0.55), rgba(167, 224, 186, 0.45));
 }
+
+.score-toolbar__btn--active {
+  border-color: rgba(123, 201, 150, 0.75);
+  background: linear-gradient(90deg, rgba(200, 240, 208, 0.65), rgba(167, 224, 186, 0.55));
+}

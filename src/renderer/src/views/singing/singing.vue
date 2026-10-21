@@ -58,6 +58,7 @@ import {
   sequenceToSmoothScrollTimeline
 } from '@renderer/utils/scoreSmoothScroll'
 import { toPlaySequence } from '@renderer/utils/scorePagePlayback'
+import type { RenderMusicScoreHandler } from '@renderer/utils/scorePagePlayback/types'
 import { createAudioTimeHighlight } from '@renderer/utils/scorePagePlayback/createAudioTimeHighlight'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import { usePlayScoreNotationDisplay } from '@renderer/utils/usePlayScoreNotationDisplay'
@@ -121,6 +122,7 @@ const accompanimentEnabled = ref(false)
 const judgeSeq = ref<Sequence>([])
 const detecting = ref(false)
 const countingDown = ref(false)
+const preparingStart = ref(false)
 const resultVisible = ref(false)
 const liveMidi = ref<number | null>(null)
 /** 初始音高偏移（半音），保存后下次演唱从此值起算 */
@@ -224,7 +226,9 @@ const audioTimeHighlight = createAudioTimeHighlight({
 
 const notationTypeDisabled = computed(() => detecting.value || countingDown.value)
 const sourceSelectDisabled = computed(() => detecting.value || countingDown.value)
-const startDisabled = computed(() => judgeSeq.value.length === 0 || countingDown.value)
+const startDisabled = computed(
+  () => judgeSeq.value.length === 0 || countingDown.value || preparingStart.value
+)
 const currentScoreKey = computed(() => resolveScoreKeySignature(musicScoreData.value))
 
 function cloneMap(src: Map<number, number[][]>): Map<number, number[][]> {
@@ -475,35 +479,44 @@ async function finishDetect(_auto: boolean) {
   ending = false
 }
 
-/** 加载序列并打开麦克风；时钟起点由 onStart 与倒计时同时打上 */
-async function beginJudgeClock() {
+async function prepareJudge() {
   reloadJudgeSequence()
   appliedResultNoteIds.clear()
   scoreOverlayRef.value?.clearResults()
   clearScoreHighlight()
-  smoothScroll.start()
   setInitialMidiFixedOffset(initialMidiFixedOffset.value)
   liveMidiFixedOffset.value = initialMidiFixedOffset.value
   startTuneJudge()
   await activeContext()
-  await play()
 }
 
 async function onStart() {
-  if (detecting.value || countingDown.value) return
+  if (detecting.value || countingDown.value || preparingStart.value) return
   if (!judgeSeq.value.length) {
     ElMessage.warning(t('singing.messages.noSequence'))
     return
   }
+  preparingStart.value = true
+  try {
+    await prepareJudge()
+  } catch (e) {
+    closeTuneJudge()
+    ElMessage.error(e instanceof Error ? e.message : String(e))
+    return
+  } finally {
+    preparingStart.value = false
+  }
+  // play() 在首个 await 前同步记下判定起点，画面时钟、倒计时须与之同一时刻起步
   countingDown.value = true
-  // 与倒计时 UI 同帧启动判定时间轴
   detectStartTimeMs.value = performance.now()
   nowMs.value = detectStartTimeMs.value
   detecting.value = true
+  const judgeStarted = play()
+  smoothScroll.start()
   cancelAnimationFrame(rafId)
   rafId = requestAnimationFrame(tick)
   try {
-    await beginJudgeClock()
+    await judgeStarted
   } catch (e) {
     countingDown.value = false
     detecting.value = false
@@ -590,9 +603,9 @@ function onSemitoneShift(semitones: 1 | -1) {
   }
 }
 
-function handleRenderMusicScore(list: VDom[]) {
+function handleRenderMusicScore(...[list, info]: Parameters<RenderMusicScoreHandler>) {
   vDomList.value = list
-  playHl.on?.renderMusicScore?.(list)
+  playHl.on?.renderMusicScore?.(list, info)
   scoreOverlayRef.value?.onRenderMusicScore(list)
   staffDim.rebindAfterRender()
   scoreCenter.recenter()
@@ -648,6 +661,7 @@ onBeforeUnmount(() => {
   closeTuneJudge()
   scoreOverlayRef.value?.clearAll()
   staffDim.clearAll()
+  void playStore.resetCollectionToneColorToDefault()
 })
 </script>
 

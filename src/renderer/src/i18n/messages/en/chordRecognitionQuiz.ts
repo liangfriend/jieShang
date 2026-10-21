@@ -17,6 +17,7 @@ export default {
         full: 'Full (MIDI 21–108)'
       },
       showPiano: 'Show piano',
+      pureListening: 'Ear only',
       rounds: 'Rounds',
       countdown: 'Answer time (sec)',
       start: 'Start test'

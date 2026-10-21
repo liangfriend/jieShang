@@ -23,14 +23,14 @@ function createFretboardGrandStaff(notationType: MusicScoreTypeEnum) {
   })
 
   for (let i = 0; i < MEASURES_PER_STAFF; i++) {
-    // 每行单谱表第一小节默认带 TAB 谱号 + 拍号
-    singleStaff.measures.push(
-      createMeasure(
-        i === 0
-          ? { clef: ClefTypeEnum.Tab, timeSignature: TimeSignatureTypeEnum['4_4'] }
-          : {}
-      )
+    // 每行单谱表第一小节默认带 TAB 谱号 + 拍号；不要前置小节线
+    const measure = createMeasure(
+      i === 0
+        ? { clef: ClefTypeEnum.Tab, timeSignature: TimeSignatureTypeEnum['4_4'] }
+        : {}
     )
+    if (i === 0) delete measure.barline_f
+    singleStaff.measures.push(measure)
   }
 
   grandStaff.staves.push(singleStaff)

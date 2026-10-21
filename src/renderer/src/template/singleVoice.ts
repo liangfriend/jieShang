@@ -14,13 +14,13 @@ function createSingleVoiceGrandStaff() {
   const singleStaff = createSingleStaff({ withDefaultMeasure: false })
 
   for (let i = 0; i < MEASURES_PER_STAFF; i++) {
-    singleStaff.measures.push(
-      createMeasure(
-        i === 0
-          ? { clef: ClefTypeEnum.Treble, timeSignature: TimeSignatureTypeEnum['4_4'] }
-          : {}
-      )
+    const measure = createMeasure(
+      i === 0
+        ? { clef: ClefTypeEnum.Treble, timeSignature: TimeSignatureTypeEnum['4_4'] }
+        : {}
     )
+    if (i === 0) delete measure.barline_f
+    singleStaff.measures.push(measure)
   }
 
   grandStaff.staves.push(singleStaff)

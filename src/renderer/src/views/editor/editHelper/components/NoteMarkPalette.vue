@@ -1,22 +1,30 @@
 <script lang="ts" setup>
-import type { MusicScoreTypeEnum, SingleNoteAffiliatedSymbolNameEnum } from '@deciphony/renderer'
+import type { MusicScore, MusicScoreTypeEnum, SingleNoteAffiliatedSymbolNameEnum } from '@deciphony/renderer'
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   hasNoteMark,
-  NOTE_MARK_GROUPS,
+  noteMarkGroupsFor,
   noteMarkSkinKey,
   toggleNoteMark,
   type NoteMarkHost
 } from '../renderEditNoteMarks'
 import NoteMarkGlyph from './NoteMarkGlyph.vue'
 import PanelGroup from './panel/PanelGroup.vue'
+import CustomSymbolSection from './customSymbol/CustomSymbolSection.vue'
 
 const props = defineProps<{
   host: NoteMarkHost
   notationType?: MusicScoreTypeEnum
+  /** 简谱音符：追加古筝指法分组 */
+  showGuzheng?: boolean
+  /** 传入时追加自定义符号栏目 */
+  musicScore?: MusicScore
 }>()
 
 const { t } = useI18n()
+
+const groups = computed(() => noteMarkGroupsFor(props.showGuzheng))
 
 function onToggle(name: SingleNoteAffiliatedSymbolNameEnum) {
   toggleNoteMark(props.host, name)
@@ -26,7 +34,7 @@ function onToggle(name: SingleNoteAffiliatedSymbolNameEnum) {
 <template>
   <div class="note-mark-palette">
     <PanelGroup
-      v-for="group in NOTE_MARK_GROUPS"
+      v-for="group in groups"
       :key="group.category"
       :title="t(`editor.noteMark.category.${group.category}`)"
     >
@@ -51,6 +59,7 @@ function onToggle(name: SingleNoteAffiliatedSymbolNameEnum) {
         </button>
       </div>
     </PanelGroup>
+    <CustomSymbolSection v-if="musicScore" kind="note" :host="host" :music-score="musicScore" />
     <p class="note-mark-palette__hint">{{ t('editor.noteMark.dragHint') }}</p>
   </div>
 </template>

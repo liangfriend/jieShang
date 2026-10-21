@@ -1,5 +1,12 @@
-import type {Measure, MusicScore, NoteNumber, NotesInfo, StaffSlot} from '@deciphony/renderer'
-import {getMeasureSlots, isNoteRest, isNoteSymbol, NoteSymbolTypeEnum, slotSymbol} from '@deciphony/renderer'
+import type {
+  Measure,
+  MeasureNoteSlot,
+  MusicScore,
+  NoteNumber,
+  NotesInfo,
+  StaffSlot
+} from '@deciphony/renderer'
+import {getMeasureSlots, isNoteRest, isNoteSymbol, slotSymbol} from '@deciphony/renderer'
 
 function collectNotesInfoIds(ni: NotesInfo, onId: (id: string) => void) {
   onId(ni.id)
@@ -13,7 +20,7 @@ type HeadLike = {
 }
 
 /** measure.notes 为 MeasureNoteSlot（含 symbol）；兼容旧数据上直接挂记谱体 */
-function noteBodyOf(slot: Measure['notes'][number]): HeadLike | StaffSlot | NoteNumber {
+function noteBodyOf(slot: MeasureNoteSlot): HeadLike | StaffSlot | NoteNumber {
   if (slot && typeof slot === 'object' && 'symbol' in slot && (slot as {symbol?: unknown}).symbol) {
     return slotSymbol(slot as never) as HeadLike | StaffSlot | NoteNumber
   }
@@ -45,9 +52,9 @@ function walkMeasureNoteIds(measure: Measure, onId: (id: string) => void) {
     }
 
     const s = body as StaffSlot
-    if (isNoteRest(s) || s.type === NoteSymbolTypeEnum.Rest) {
+    if (isNoteRest(s)) {
       onId(s.id)
-    } else if (isNoteSymbol(s) || s.type === NoteSymbolTypeEnum.Note) {
+    } else if (isNoteSymbol(s)) {
       walkHeadIds(s as HeadLike, onId)
     }
   }

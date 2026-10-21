@@ -51,6 +51,7 @@ export default {
     deleteWarning: '此操作不可恢复。',
     deleteSuccess: '曲谱已删除',
     deleteAria: '删除曲谱',
+    clSheetBadge: '弹唱',
     templateDialog: {
       title: '选择模版',
       desc: '选好模版后，就可以进入曲谱编辑啦',
@@ -66,7 +67,8 @@ export default {
       bass5: '五弦贝斯谱',
       bass6: '六弦贝斯谱',
       drum: '鼓谱',
-      drumKit: '架子鼓谱'
+      drumKit: '架子鼓谱',
+      clSheet: '和弦弹唱谱'
     }
   }
 } as const

@@ -8,7 +8,7 @@ import {
 
 /** 按住到抬键：ADSR 起音，抬键时再 release */
 export function pianoHoldTriggerOptions(
-  extra?: Pick<TriggerNoteOptions, 'id' | 'volume'>
+  extra?: Pick<TriggerNoteOptions, 'id' | 'volume' | 'absoluteVolume'>
 ): TriggerNoteOptions {
   return {
     holdUntilRelease: true,

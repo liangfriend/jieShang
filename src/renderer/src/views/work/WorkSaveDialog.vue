@@ -8,8 +8,6 @@ const props = defineProps<{
   modelValue: boolean
   name: string
   author: string
-  /** 已有作品：点保存直接确认，仍可改名 */
-  existing?: boolean
 }>()
 
 const emit = defineEmits<{

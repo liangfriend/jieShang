@@ -108,9 +108,20 @@ function replaceSlots(target: MeasureNoteSlot[], next: MeasureNoteSlot[]) {
 export function pasteMeasureNotes(musicScore: MusicScore, measure: Measure): boolean {
   if (!measureNoteClipboard) return false
   if (measureNoteClipboard.notationType !== musicScore.type) return false
+  writeMeasureNotes(musicScore, measure, measureNoteClipboard.notes)
+  return true
+}
 
+/** 把 source 的音符复制到 target（替换原有音符；id 全新），不经过剪贴板 */
+export function duplicateMeasureNotes(musicScore: MusicScore, source: Measure, target: Measure): boolean {
+  if (source.id === target.id) return false
+  writeMeasureNotes(musicScore, target, source.notes)
+  return true
+}
+
+function writeMeasureNotes(musicScore: MusicScore, measure: Measure, notes: MeasureNotes) {
   purgeAffiliatedForMeasureNotes(musicScore, measure)
-  const next = cloneMeasureNotes(measureNoteClipboard.notes)
+  const next = cloneMeasureNotes(notes)
   const current = measure.notes
   if (isMeasureNoteVoices(next) && isMeasureNoteVoices(current)) {
     current.up ??= []
@@ -122,7 +133,6 @@ export function pasteMeasureNotes(musicScore: MusicScore, measure: Measure): boo
   } else {
     measure.notes = next as MeasureNoteSlot[] | MeasureNoteVoices
   }
-  return true
 }
 
 /** 清空小节内音符（同时删除锚定在这些音符上的跨音符附属） */

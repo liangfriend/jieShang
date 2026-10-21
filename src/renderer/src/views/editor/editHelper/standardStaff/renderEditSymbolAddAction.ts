@@ -1,4 +1,4 @@
-import { isNoteRest, isNoteSymbol } from '@deciphony/renderer'
+import { getMeasureNoteList, isNoteRest, isNoteSymbol } from '@deciphony/renderer'
 import type {
   Chronaxie,
   Measure,
@@ -258,8 +258,9 @@ export function collectSlotAnchors(
   measureX: number
 ): SlotAnchor[] {
   const anchors: SlotAnchor[] = []
-  for (let noteIndex = 0; noteIndex < measure.notes.length; noteIndex++) {
-    const slot = asStaffOrNumber(measure.notes[noteIndex]!)
+  const notes = getMeasureNoteList(measure)
+  for (let noteIndex = 0; noteIndex < notes.length; noteIndex++) {
+    const slot = asStaffOrNumber(notes[noteIndex]!)
     let id: string | undefined
     let tag: VDom['tag']
     if (isNoteSymbol(slot)) {
@@ -549,12 +550,13 @@ export function applyMeasureAddAction(
   musicScore: MusicScore
 ): MeasureAddActionResult | null {
   const measure = slot.measure
+  const notes = getMeasureNoteList(measure)
 
   if (preview.snap.kind === 'insert') {
-    const at = Math.max(0, Math.min(preview.snap.insertIndex, measure.notes.length))
+    const at = Math.max(0, Math.min(preview.snap.insertIndex, notes.length))
     if (preview.slotKind === 'rest') {
       const rest = createNoteRest({ chronaxie: preview.chronaxie })
-      measure.notes.splice(at, 0, rest)
+      notes.splice(at, 0, rest)
       return { type: 'inserted' }
     }
     const beamOnset = computeMeasureOnsetBefore(measure, at)
@@ -564,13 +566,13 @@ export function applyMeasureAddAction(
       direction: preview.direction,
       beamOnset
     })
-    measure.notes.splice(at, 0, note)
+    notes.splice(at, 0, note)
     return { type: 'inserted' }
   }
 
   if (preview.slotKind === 'rest') return null
 
-  const raw = measure.notes[preview.snap.noteIndex]
+  const raw = notes[preview.snap.noteIndex]
   if (!raw) return null
   const note = asStaffOrNumber(raw)
   if (!isNoteSymbol(note)) return null

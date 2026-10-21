@@ -13,6 +13,7 @@ import ScoreSemitoneShiftButtons from './ScoreSemitoneShiftButtons.vue'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
 import ScoreToneColorAdjuster from './ScoreToneColorAdjuster.vue'
 import PracticeSettingsDialog from './PracticeSettingsDialog.vue'
+import PcKeyboardShortcut from './PcKeyboardShortcut.vue'
 
 defineProps<{
   notationType: MusicScoreTypeEnum
@@ -151,6 +152,7 @@ function clearPlayData() {
         <el-icon><Delete /></el-icon>
         <span>{{ t('practice.toolbar.clearPlayData') }}</span>
       </button>
+      <PcKeyboardShortcut />
       <button type="button" class="score-toolbar__btn" @click="settings.hideScore = !settings.hideScore">
         <el-icon>
           <View v-if="settings.hideScore" />

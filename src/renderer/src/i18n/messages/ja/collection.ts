@@ -146,12 +146,12 @@ export default {
         howToGet: 'エクストリームモードで150秒生き残る'
       },
       '17': {
-        name: '白黒',
+        name: 'モノクロ',
         description: '立体的に見下ろした白黒鍵盤。上面と前縁の階層がはっきり。',
         howToGet: '7 コンボを達成'
       },
       '18': {
-        name: '木板',
+        name: '木目',
         description: '木目の板と年輪模様の黒鍵。温かみのあるヴィンテージ風。',
         howToGet: '9 コンボを達成'
       },

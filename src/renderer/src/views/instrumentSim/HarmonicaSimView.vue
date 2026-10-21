@@ -58,7 +58,7 @@ const {
 } = useSimScorePlayback(musicScore, musicScoreRef)
 
 async function refreshScores() {
-  const list = await searchScoresFromDatabase('')
+  const list = await searchScoresFromDatabase('', 'music_score')
   scoreOptions.value = list.map((s) => ({ id: s.id, name: s.name }))
 }
 

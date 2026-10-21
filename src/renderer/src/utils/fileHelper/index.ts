@@ -7,6 +7,7 @@ export {
   importMidiFromDisk,
   importMusicXmlFromDisk,
   importSjFromDisk,
+  isClSheetRecord,
   loadScoreFromDatabase,
   parseScoreJson,
   resolveScoreName,
@@ -17,6 +18,7 @@ export {
   type MusicXmlImportResult,
   type ScoreListItem,
   type ScoreRecord,
+  type ScoreType,
   type SjExportResult,
   type SjImportResult
 } from './scoreFile'

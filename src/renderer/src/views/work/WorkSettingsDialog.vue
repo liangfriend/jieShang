@@ -2,13 +2,22 @@
 import { computed, nextTick, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { DEFAULT_PAGE_HEIGHT, DEFAULT_PAGE_WIDTH } from '@deciphony/work'
+import {
+  findStandardSizeId,
+  STANDARD_SIZE_GROUPS,
+  STANDARD_SIZES,
+  type StandardSize
+} from '@renderer/constant/workPageSizes'
 
 defineOptions({ name: 'WorkSettingsDialog' })
 
 export type WorkPageSizePayload = { width: number; height: number }
+export type WorkInfoPayload = { name: string; author: string }
 
 const props = defineProps<{
   modelValue: boolean
+  workName: string
+  workAuthor: string
   /** 默认页（新页）尺寸 */
   defaultWidth: number
   defaultHeight: number
@@ -19,6 +28,8 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:modelValue': [value: boolean]
+  /** 作品名称 / 作者 */
+  'apply-info': [payload: WorkInfoPayload]
   /** 应用默认页：写入新页尺寸 */
   'apply-default': [payload: WorkPageSizePayload]
   /** 用默认页那一行的尺寸，全页应用 */
@@ -29,39 +40,9 @@ const emit = defineEmits<{
   'apply-current-all': [payload: WorkPageSizePayload]
 }>()
 
-type StandardSizeGroup = 'paper' | 'screen'
-
-type StandardSize = {
-  id: string
-  name: string
-  group: StandardSizeGroup
-  orientation?: 'portrait' | 'landscape'
-  width: number
-  height: number
-}
-
-/** 纸张按 96 DPI 由毫米换算为页面像素（A4 = DEFAULT_PAGE_WIDTH × DEFAULT_PAGE_HEIGHT） */
-const PAPER_SIZES: Array<{ name: string; width: number; height: number }> = [
-  { name: 'A3', width: 1123, height: 1587 },
-  { name: 'A4', width: DEFAULT_PAGE_WIDTH, height: DEFAULT_PAGE_HEIGHT },
-  { name: 'A5', width: 559, height: 794 },
-  { name: 'B4', width: 945, height: 1334 },
-  { name: 'B5', width: 665, height: 945 },
-  { name: 'Letter', width: 816, height: 1056 }
-]
-
-const STANDARD_SIZES: StandardSize[] = [
-  ...PAPER_SIZES.flatMap(({ name, width, height }): StandardSize[] => [
-    { id: `${name}-portrait`, name, group: 'paper', orientation: 'portrait', width, height },
-    { id: `${name}-landscape`, name, group: 'paper', orientation: 'landscape', width: height, height: width }
-  ]),
-  { id: 'screen-16-9', name: '16:9', group: 'screen', width: 1280, height: 720 },
-  { id: 'screen-4-3', name: '4:3', group: 'screen', width: 1024, height: 768 }
-]
-
-const STANDARD_SIZE_GROUPS: StandardSizeGroup[] = ['paper', 'screen']
-
 const { t } = useI18n()
+const draftName = ref('')
+const draftAuthor = ref('')
 const draftDefaultWidth = ref(DEFAULT_PAGE_WIDTH)
 const draftDefaultHeight = ref(DEFAULT_PAGE_HEIGHT)
 const draftCurrentWidth = ref(DEFAULT_PAGE_WIDTH)
@@ -79,10 +60,6 @@ function standardSizeLabel(size: StandardSize): string {
   return `${size.name}${orientation} (${size.width} × ${size.height})`
 }
 
-function findStandardSizeId(width: number, height: number): string {
-  return STANDARD_SIZES.find((s) => s.width === width && s.height === height)?.id ?? ''
-}
-
 const visible = computed({
   get: () => props.modelValue,
   set: (v: boolean) => emit('update:modelValue', v)
@@ -92,6 +69,8 @@ watch(
   () => props.modelValue,
   (open) => {
     if (!open) return
+    draftName.value = props.workName
+    draftAuthor.value = props.workAuthor
     draftDefaultWidth.value = Math.round(props.defaultWidth) || DEFAULT_PAGE_WIDTH
     draftDefaultHeight.value = Math.round(props.defaultHeight) || DEFAULT_PAGE_HEIGHT
     draftCurrentWidth.value = Math.round(props.currentWidth) || DEFAULT_PAGE_WIDTH
@@ -116,6 +95,12 @@ async function readPair(
   widthRef.value = width
   heightRef.value = height
   return { width, height }
+}
+
+function onApplyInfo() {
+  const name = draftName.value.trim()
+  if (!name) return
+  emit('apply-info', { name, author: draftAuthor.value.trim() })
 }
 
 async function onApplyDefault() {
@@ -163,6 +148,29 @@ function onApplyStandardAll() {
     align-center
     destroy-on-close
   >
+    <div class="settings-block">
+      <div class="settings-row">
+        <span class="settings-row__label">{{ t('work.settingsDialog.workName') }}</span>
+        <el-input
+          v-model="draftName"
+          class="settings-row__text"
+          :placeholder="t('work.saveDialog.namePlaceholder')"
+        />
+      </div>
+      <div class="settings-row settings-row--gap">
+        <span class="settings-row__label">{{ t('work.settingsDialog.workAuthor') }}</span>
+        <el-input
+          v-model="draftAuthor"
+          class="settings-row__text"
+          :placeholder="t('work.saveDialog.authorPlaceholder')"
+        />
+        <button type="button" class="action-btn" :disabled="!draftName.trim()" @click="onApplyInfo">
+          {{ t('work.settingsDialog.applyCurrent') }}
+        </button>
+      </div>
+      <p class="settings-hint">{{ t('work.settingsDialog.infoHint') }}</p>
+    </div>
+
     <div class="settings-block">
       <div class="settings-row">
         <span class="settings-row__label">{{ t('work.settingsDialog.defaultPageSize') }}</span>
@@ -290,6 +298,14 @@ function onApplyStandardAll() {
 
 .settings-row__input {
   width: 110px;
+}
+
+.settings-row__text {
+  width: 238px;
+}
+
+.settings-row--gap {
+  margin-top: 8px;
 }
 
 .settings-row__times {

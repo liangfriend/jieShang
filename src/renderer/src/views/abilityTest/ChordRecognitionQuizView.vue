@@ -27,6 +27,7 @@ const {
   enabledQualities,
   soundRange,
   showPiano,
+  pureListening,
   totalRounds,
   countdownSec,
   countdownLeft,
@@ -41,6 +42,7 @@ const {
   toggleQuality,
   setSoundRange,
   setShowPiano,
+  setPureListening,
   setTotalRounds,
   setCountdownSec,
   startTest,
@@ -136,6 +138,15 @@ function choiceClass(id: string) {
         <label class="quiz-field">
           <span class="quiz-field__label">{{ t('chordRecognitionQuiz.setup.showPiano') }}</span>
           <el-switch :model-value="showPiano" @update:model-value="setShowPiano" />
+        </label>
+
+        <label class="quiz-field">
+          <span class="quiz-field__label">{{ t('chordRecognitionQuiz.setup.pureListening') }}</span>
+          <el-switch
+            :model-value="pureListening"
+            :disabled="!showPiano"
+            @update:model-value="setPureListening"
+          />
         </label>
 
         <label class="quiz-field">

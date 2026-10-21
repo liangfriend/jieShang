@@ -28,6 +28,16 @@ declare global {
           content: string,
           defaultName?: string
         ): Promise<{ canceled: boolean; filePath?: string }>
+        importClSheet(): Promise<{
+          canceled: boolean
+          filePath?: string
+          fileName?: string
+          content?: string
+        }>
+        exportClSheet(
+          content: string,
+          defaultName?: string
+        ): Promise<{ canceled: boolean; filePath?: string }>
         importMusicXml(): Promise<{
           canceled: boolean
           filePath?: string
@@ -48,18 +58,35 @@ declare global {
           content: Uint8Array,
           defaultName?: string
         ): Promise<{ canceled: boolean; filePath?: string }>
+        exportJson(
+          content: string,
+          defaultName?: string,
+          title?: string
+        ): Promise<{ canceled: boolean; filePath?: string }>
+        importJson(title?: string): Promise<{
+          canceled: boolean
+          filePath?: string
+          fileName?: string
+          content?: string
+        }>
       }
       omr: {
         recognize(image: Uint8Array): Promise<import('@renderer/types/omr').OmrRecognizeResult>
       }
       score: {
-        create(payload: { name: string; data?: string }): Promise<any>
+        create(payload: {
+          name: string
+          data?: string
+          type?: 'music_score' | 'cl_sheet'
+        }): Promise<any>
         delete(id: number | string): Promise<any>
         update(id: number | string, payload: Partial<{ name: string; data: string }>): Promise<any>
         get(id: number | string): Promise<any>
-        query(filters: Partial<{ id: number | string; name: string }>): Promise<any>
-        list(): Promise<any>
-        searchByName(name: string): Promise<any>
+        query(
+          filters: Partial<{ id: number | string; name: string; type: 'music_score' | 'cl_sheet' }>
+        ): Promise<any>
+        list(type?: 'music_score' | 'cl_sheet'): Promise<any>
+        searchByName(name: string, type?: 'music_score' | 'cl_sheet'): Promise<any>
       }
       work: {
         create(payload: {
@@ -173,6 +200,22 @@ declare global {
         ): Promise<any>
         get(id: number | string): Promise<any>
         list(keyword?: string): Promise<any>
+      }
+      customSymbol: {
+        create(payload: {
+          name: string
+          kind: import('@renderer/types/customSymbol').CustomSymbolKind
+          data: import('@renderer/types/customSymbol').CustomSymbolData
+        }): Promise<any>
+        delete(id: number | string): Promise<any>
+        update(
+          id: number | string,
+          payload: Partial<{
+            name: string
+            data: import('@renderer/types/customSymbol').CustomSymbolData
+          }>
+        ): Promise<any>
+        list(kind?: import('@renderer/types/customSymbol').CustomSymbolKind): Promise<any>
       }
       group: {
         create(payload: any): Promise<any>

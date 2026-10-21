@@ -342,6 +342,11 @@ function thumbLayout(page: { width: number; height: number }) {
   gap: 10px;
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-width: none;
+}
+
+.thumb-rail__list::-webkit-scrollbar {
+  display: none;
 }
 
 .thumb-rail__name {

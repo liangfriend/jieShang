@@ -5,6 +5,8 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
   deleteMultiSelected,
+  isMultiSelectedRest,
+  multiSelectedCanShiftPitch,
   multiSelectedDotCount,
   multiSelectedHasStem,
   multiSelectedStemDirection,
@@ -33,7 +35,8 @@ const props = defineProps<{
 const { t } = useI18n()
 const options = useNoteSegmentOptions()
 
-const restCount = computed(() => props.items.filter((item) => item.kind === 'rest').length)
+const restCount = computed(() => props.items.filter(isMultiSelectedRest).length)
+const canShiftPitch = computed(() => multiSelectedCanShiftPitch(props.items))
 const noteCount = computed(() => props.items.length - restCount.value)
 const summary = computed(() => {
   if (!restCount.value) return t('editor.multiNote.summary', { n: noteCount.value })
@@ -102,7 +105,7 @@ function onDelete() {
       {{ summary }}
     </p>
 
-    <PanelGroup :title="t('editor.multiNote.pitch')">
+    <PanelGroup v-if="canShiftPitch" :title="t('editor.multiNote.pitch')">
       <p v-if="restCount" class="multi-note-props__hint">{{ t('editor.multiNote.restsSkipPitch') }}</p>
       <PanelField :label="t('editor.multiNote.lower')">
         <div class="multi-note-props__row">

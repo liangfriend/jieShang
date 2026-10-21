@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { shortcutKey } from '@renderer/utils/shortcutKey'
 import { onBeforeRouteLeave } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
@@ -273,7 +274,7 @@ function isTypingTarget(target: EventTarget | null): boolean {
 }
 
 function onKeydown(event: KeyboardEvent) {
-  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 's') {
+  if ((event.ctrlKey || event.metaKey) && shortcutKey(event).toLowerCase() === 's') {
     event.preventDefault()
     void persist(event.shiftKey)
     return

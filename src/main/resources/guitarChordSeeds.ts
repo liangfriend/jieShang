@@ -113,8 +113,8 @@ export const DEFAULT_GUITAR_CHORD_SEEDS: GuitarChordSeed[] = [
       { finger: 0, text: '1' },
       { finger: 0, text: '1' },
       { finger: 1, text: '2' },
+      { finger: 2, text: '4' },
       { finger: 2, text: '3' },
-      { finger: 3, text: '4' },
       { finger: 0, text: '1' }
     ],
     [

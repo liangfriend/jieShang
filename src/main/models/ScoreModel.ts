@@ -1,11 +1,17 @@
 import { Model, DataTypes, Optional } from 'sequelize'
 import sequelize from '../database/connection'
 
+/** music_score：renderer 打谱；cl_sheet：和弦弹唱谱（@deciphony/cl-sheet） */
+export type ScoreType = 'music_score' | 'cl_sheet'
+
+export const DEFAULT_SCORE_TYPE: ScoreType = 'music_score'
+
 /** 曲谱表：仅存打谱 JSON，可从作品通过 score_id 单独提取 */
 export interface ScoreAttributes {
   id: number
   name: string
-  /** 曲谱渲染插件产出的 JSON 字符串 */
+  type: ScoreType
+  /** 曲谱 JSON 字符串，结构由 type 决定 */
   data: string
   /** 曲谱缩略图（预留，列表卡片展示用） */
   thumbnail?: string | null
@@ -15,7 +21,10 @@ export interface ScoreAttributes {
 }
 
 export interface ScoreCreationAttributes
-  extends Optional<ScoreAttributes, 'id' | 'thumbnail' | 'created_at' | 'updated_at' | 'deleted_at'> {}
+  extends Optional<
+    ScoreAttributes,
+    'id' | 'type' | 'thumbnail' | 'created_at' | 'updated_at' | 'deleted_at'
+  > {}
 
 export class ScoreModel
   extends Model<ScoreAttributes, ScoreCreationAttributes>
@@ -23,6 +32,7 @@ export class ScoreModel
 {
   declare id: number
   declare name: string
+  declare type: ScoreType
   declare data: string
   declare thumbnail: string | null
   declare created_at: Date
@@ -40,6 +50,11 @@ ScoreModel.init(
     name: {
       type: DataTypes.STRING,
       allowNull: false
+    },
+    type: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      defaultValue: DEFAULT_SCORE_TYPE
     },
     data: {
       type: DataTypes.TEXT,

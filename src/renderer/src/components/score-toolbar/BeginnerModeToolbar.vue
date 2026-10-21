@@ -16,6 +16,7 @@ import ScoreSemitoneShiftButtons from './ScoreSemitoneShiftButtons.vue'
 import ScoreToolbarShell from './ScoreToolbarShell.vue'
 import ScoreToneColorAdjuster from './ScoreToneColorAdjuster.vue'
 import BeginnerSettingsDialog from './BeginnerSettingsDialog.vue'
+import PcKeyboardShortcut from './PcKeyboardShortcut.vue'
 
 defineProps<{
   notationType: MusicScoreTypeEnum
@@ -138,6 +139,7 @@ onBeforeUnmount(() => {
         :disabled="transposeDisabled || notationTypeDisabled"
         @shift="emit('semitone-shift', $event)"
       />
+      <PcKeyboardShortcut />
       <button type="button" class="score-toolbar__btn" @click="settings.hideScore = !settings.hideScore">
         <el-icon>
           <View v-if="settings.hideScore" />

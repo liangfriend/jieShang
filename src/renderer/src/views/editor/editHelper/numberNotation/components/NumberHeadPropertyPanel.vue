@@ -27,6 +27,7 @@ import {warnNotEnoughSpanNotes} from '../../renderEditSlotSymbolAdd'
 import NoteGraceSection from '../../components/NoteGraceSection.vue'
 import NoteMarkPalette from '../../components/NoteMarkPalette.vue'
 import NoteSpanSymbolSection from '../../components/NoteSpanSymbolSection.vue'
+import RhythmGroupEndField from '../../components/RhythmGroupEndField.vue'
 import PanelField from '../../components/panel/PanelField.vue'
 import PanelGroup from '../../components/panel/PanelGroup.vue'
 import PanelSegmented from '../../components/panel/PanelSegmented.vue'
@@ -154,6 +155,19 @@ function onAppendSameSlot() {
         </PanelField>
       </PanelGroup>
 
+      <PanelGroup :title="t('editor.panelGroup.rhythm')">
+        <PanelField :label="t('editor.note.duration')" stacked>
+          <PanelSegmented v-model="chronaxie" :options="options.durations(CHRONAXIE_VALUES)" />
+        </PanelField>
+        <PanelField :label="t('editor.note.augmentationDot')">
+          <PanelSegmented v-model="augmentationDot" :options="options.dots(AUGMENTATION_DOT_VALUES)" />
+        </PanelField>
+        <PanelField :label="t('editor.note.beamConnection')">
+          <PanelSegmented v-model="beamType" :options="options.beams(BEAM_TYPE_VALUES)" />
+        </PanelField>
+        <RhythmGroupEndField :measure="editSlot.measure" :symbol="note" />
+      </PanelGroup>
+
       <PanelGroup :title="t('editor.note.addVoiceNote')">
         <PanelField :label="t('editor.note.syllable')" stacked>
           <PanelSegmented
@@ -184,18 +198,6 @@ function onAppendSameSlot() {
         </button>
       </PanelGroup>
 
-      <PanelGroup :title="t('editor.panelGroup.rhythm')">
-        <PanelField :label="t('editor.note.duration')" stacked>
-          <PanelSegmented v-model="chronaxie" :options="options.durations(CHRONAXIE_VALUES)" />
-        </PanelField>
-        <PanelField :label="t('editor.note.augmentationDot')">
-          <PanelSegmented v-model="augmentationDot" :options="options.dots(AUGMENTATION_DOT_VALUES)" />
-        </PanelField>
-        <PanelField :label="t('editor.note.beamConnection')">
-          <PanelSegmented v-model="beamType" :options="options.beams(BEAM_TYPE_VALUES)" />
-        </PanelField>
-      </PanelGroup>
-
       <PanelGroup :title="t('editor.note.relativeX')">
         <RelativeXOffsetControl v-model="relativeX" bare />
       </PanelGroup>
@@ -206,7 +208,12 @@ function onAppendSameSlot() {
     </template>
 
     <template #marks>
-      <NoteMarkPalette :host="note" :notation-type="musicScore.type" />
+      <NoteMarkPalette
+        :host="note"
+        :notation-type="musicScore.type"
+        :music-score="musicScore"
+        show-guzheng
+      />
     </template>
 
     <template #span>
@@ -214,6 +221,7 @@ function onAppendSameSlot() {
         :edit-slot="editSlot"
         :notes-info-id="notesInfo.id"
         :find-slur-end="findSlurEnd"
+        show-guzheng
         @add-slur="onAddSlur"
       />
     </template>

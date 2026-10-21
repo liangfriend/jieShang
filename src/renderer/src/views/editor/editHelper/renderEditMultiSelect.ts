@@ -2,10 +2,15 @@
  * 框选多音符：命中检测 + 批量升降半音 / 时值倍增减半 / 附点 / 符干方向 / 删除。
  * 升降半音借 shiftScoreBySemitones（整谱克隆平移），只把选中音符的音高字段拷回原谱。
  * 休止符也可框选：参与时值与删除，不参与升降半音。
+ * 鼓谱、TAB：时值 / 附点 / 删除（不参与升降半音与符干）。
  */
 import type {
   Chronaxie,
+  DrumNote,
+  DrumNotesInfo,
+  DrumRest,
   Measure,
+  MeasureNoteSymbol,
   MusicScore,
   NoteNumber,
   NoteRest,
@@ -13,11 +18,30 @@ import type {
   NotesInfo,
   NotesNumberInfo,
   SlotData,
+  TabNote,
+  TabNoteInfo,
+  TabRest,
   VDom
 } from '@deciphony/renderer'
-import { getMeasureSlots, slotSymbol } from '@deciphony/renderer'
+import { MusicScoreTypeEnum, getMeasureSlots, slotSymbol } from '@deciphony/renderer'
+import {
+  isDrumNotesInfo,
+  isDrumRestBody,
+  setDrumNoteAugmentationDot,
+  setDrumNoteChronaxie,
+  setDrumRestAugmentationDot,
+  setDrumRestChronaxie
+} from '@deciphony/extensions/dr-edit'
 import { shiftScoreBySemitones } from '@renderer/utils/scoreNotationTransfer'
+import { isTabNotationType } from '@renderer/utils/isTabNotation'
 import { deleteSelectedItem, isNumberRestSelected, isRestSelected } from './renderEditDelete'
+import { isTabInfoSelected } from './tab/renderEditTabSelection'
+import {
+  setTabNoteAugmentationDot,
+  setTabNoteChronaxie,
+  setTabRestAugmentationDot,
+  setTabRestChronaxie
+} from './tab/renderEditTabNoteProperties'
 import { slotDataFromVDom } from './renderEditSelection'
 import { isNoteHeadSelected } from './standardStaff/renderEditNoteHeadDrag'
 import { isNumberHeadSelected } from './numberNotation/renderEditNumberHeadDrag'
@@ -49,20 +73,93 @@ export type MultiSelectedRest = MultiSelectedBase & {
   self: NoteRest | NoteNumber
 }
 
-export type MultiSelectedItem = MultiSelectedNote | MultiSelectedRest
+export type MultiSelectedDrumNote = MultiSelectedBase & {
+  kind: 'drumNote'
+  info: DrumNotesInfo
+  note: DrumNote
+}
+
+export type MultiSelectedDrumRest = MultiSelectedBase & {
+  kind: 'drumRest'
+  self: DrumRest
+}
+
+/** TAB 音符：标准音 / 泛音 / 琶音 / 扫弦 */
+export type MultiSelectedTabNote = MultiSelectedBase & {
+  kind: 'tabNote'
+  info: TabNoteInfo
+  note: TabNote
+}
+
+export type MultiSelectedTabRest = MultiSelectedBase & {
+  kind: 'tabRest'
+  self: TabRest
+}
+
+export type MultiSelectedItem =
+  | MultiSelectedNote
+  | MultiSelectedRest
+  | MultiSelectedDrumNote
+  | MultiSelectedDrumRest
+  | MultiSelectedTabNote
+  | MultiSelectedTabRest
 
 export type SvgRect = { x: number; y: number; w: number; h: number }
 
-export const MULTI_SELECT_TAGS = ['noteHead', 'noteNumber', 'rest'] as const
+export const MULTI_SELECT_TAGS = [
+  'noteHead',
+  'noteNumber',
+  'rest',
+  'tabNoteNumber',
+  'arpeggio',
+  'strumming'
+] as const
 
 const MAX_CHRONAXIE = 256
 const MIN_CHRONAXIE = 2
+/** 鼓谱时值上限为四分音符（dr-edit 会夹到 64） */
+const DRUM_MAX_CHRONAXIE = 64
 
 function intersects(a: SvgRect, b: SvgRect) {
   return a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y + b.h && a.y + a.h > b.y
 }
 
+function slotFromVDom(musicScore: MusicScore, vdom: VDom): SlotData | null {
+  return vdom.slotData ?? (vdom.targetId ? slotDataFromVDom(musicScore, vdom) : null)
+}
+
+function tabItemFromVDom(musicScore: MusicScore, vdom: VDom): MultiSelectedItem | null {
+  const slot = slotFromVDom(musicScore, vdom)
+  if (!slot) return null
+  if (vdom.tag === 'rest') {
+    if (!isRestSelected(slot)) return null
+    return { ...slot, kind: 'tabRest', targetId: vdom.targetId! } as unknown as MultiSelectedTabRest
+  }
+  if (!isTabInfoSelected(slot)) return null
+  const info = slot.info as unknown as TabNoteInfo
+  // 倚音不参与批量时值 / 附点
+  if (!(slot.note as unknown as TabNote).notesInfo.includes(info)) return null
+  return { ...slot, kind: 'tabNote', targetId: info.id } as unknown as MultiSelectedTabNote
+}
+
+function drumItemFromVDom(musicScore: MusicScore, vdom: VDom): MultiSelectedItem | null {
+  const slot = slotFromVDom(musicScore, vdom)
+  if (!slot?.measure) return null
+  if (vdom.tag === 'rest') {
+    if (!isDrumRestBody(slot.self as unknown as MeasureNoteSymbol)) return null
+    return { ...slot, kind: 'drumRest', targetId: vdom.targetId! } as MultiSelectedDrumRest
+  }
+  if (vdom.tag !== 'noteHead' || !isDrumNotesInfo(slot.info) || slot.self !== slot.info) return null
+  const note = slot.note as unknown as DrumNote | null
+  // 倚音不参与批量时值 / 附点
+  if (!note?.notesInfo.includes(slot.info as DrumNotesInfo)) return null
+  return { ...slot, kind: 'drumNote', targetId: slot.info.id } as MultiSelectedDrumNote
+}
+
 function itemFromVDom(musicScore: MusicScore, vdom: VDom): MultiSelectedItem | null {
+  if (isTabNotationType(musicScore.type)) return tabItemFromVDom(musicScore, vdom)
+  if (musicScore.type === MusicScoreTypeEnum.DrumNotation) return drumItemFromVDom(musicScore, vdom)
+  if (vdom.tag !== 'noteHead' && vdom.tag !== 'noteNumber' && vdom.tag !== 'rest') return null
   if (vdom.tag === 'rest') {
     const slot = vdom.targetId ? slotDataFromVDom(musicScore, vdom) : null
     if (!slot || !(isRestSelected(slot) || isNumberRestSelected(slot))) return null
@@ -90,6 +187,15 @@ export function collectNotesInRect(
     out.push(item)
   }
   return out
+}
+
+export function isMultiSelectedRest(item: MultiSelectedItem) {
+  return item.kind === 'rest' || item.kind === 'drumRest' || item.kind === 'tabRest'
+}
+
+/** 仅线谱 / 简谱音符可升降半音 */
+export function multiSelectedCanShiftPitch(items: MultiSelectedItem[]): boolean {
+  return items.some((item) => item.kind === 'note')
 }
 
 type PitchInfo = (NotesInfo | NotesNumberInfo) & { id: string }
@@ -164,8 +270,44 @@ export function scaleMultiSelectedChronaxie(items: MultiSelectedItem[], factor: 
     const next = current * factor
     return next > MAX_CHRONAXIE || next < MIN_CHRONAXIE ? null : (next as Chronaxie)
   }
+  const drumScaled = (current: Chronaxie) => {
+    const next = scaled(current)
+    return next && next <= DRUM_MAX_CHRONAXIE ? next : null
+  }
+  const doneDrumNotes = new Set<DrumNote>()
+  const doneTabNotes = new Set<TabNote>()
   let changed = 0
   for (const item of items) {
+    if (item.kind === 'tabNote') {
+      const next = scaled(item.info.chronaxie)
+      if (!next || doneTabNotes.has(item.note)) continue
+      doneTabNotes.add(item.note)
+      setTabNoteChronaxie(item.note, next)
+      changed++
+      continue
+    }
+    if (item.kind === 'tabRest') {
+      const next = scaled(item.self.chronaxie)
+      if (!next) continue
+      setTabRestChronaxie(item.self, next)
+      changed++
+      continue
+    }
+    if (item.kind === 'drumNote') {
+      const next = drumScaled(item.info.chronaxie)
+      if (!next || doneDrumNotes.has(item.note)) continue
+      doneDrumNotes.add(item.note)
+      setDrumNoteChronaxie(item.note, next)
+      changed++
+      continue
+    }
+    if (item.kind === 'drumRest') {
+      const next = drumScaled(item.self.chronaxie)
+      if (!next) continue
+      setDrumRestChronaxie(item.self, next)
+      changed++
+      continue
+    }
     if (item.kind === 'rest') {
       const rest = item.self
       if (isNoteNumberBody(rest)) {
@@ -182,15 +324,16 @@ export function scaleMultiSelectedChronaxie(items: MultiSelectedItem[], factor: 
       changed++
       continue
     }
-    const next = scaled(item.info.chronaxie)
+    const noteItem = item as MultiSelectedNote
+    const next = scaled(noteItem.info.chronaxie)
     if (!next) continue
-    if (isNumberHeadSelected(item)) {
+    if (isNumberHeadSelected(noteItem)) {
       // 简谱同 slot 各层共用时值，整列改一次
-      if (doneNotes.has(item.note as NoteNumber)) continue
-      doneNotes.add(item.note as NoteNumber)
-      setNotesNumberInfoChronaxie(item.info as NotesNumberInfo, next, item.note as NoteNumber)
+      if (doneNotes.has(noteItem.note as NoteNumber)) continue
+      doneNotes.add(noteItem.note as NoteNumber)
+      setNotesNumberInfoChronaxie(noteItem.info as NotesNumberInfo, next, noteItem.note as NoteNumber)
     } else {
-      item.info.chronaxie = next
+      noteItem.info.chronaxie = next
     }
     changed++
   }
@@ -199,12 +342,15 @@ export function scaleMultiSelectedChronaxie(items: MultiSelectedItem[], factor: 
 
 export type DotCount = 0 | 1 | 2 | 3
 
-/** 附点挂在哪些对象上：简谱一列各层共用时值，整列一起改 */
+/** 附点挂在哪些对象上：简谱 / 鼓谱 / TAB 一列共用时值，整列一起改 */
 function dotHolders(item: MultiSelectedItem): { augmentationDot?: { count: DotCount } }[] {
+  if (item.kind === 'tabNote' || item.kind === 'drumNote') return item.note.notesInfo
+  if (item.kind === 'tabRest' || item.kind === 'drumRest') return [item.self]
   if (item.kind === 'rest') {
     return isNoteNumberBody(item.self) ? item.self.notesInfo : [item.self]
   }
-  return isNumberHeadSelected(item) ? (item.note as NoteNumber).notesInfo : [item.info]
+  const noteItem = item as MultiSelectedNote
+  return isNumberHeadSelected(noteItem) ? (noteItem.note as NoteNumber).notesInfo : [noteItem.info]
 }
 
 /** 选中项附点数一致时返回该值，不一致或为空返回 null */
@@ -226,7 +372,15 @@ export function setMultiSelectedDot(items: MultiSelectedItem[], count: DotCount)
   for (const item of items) {
     const holders = dotHolders(item)
     if (holders.every((holder) => (holder.augmentationDot?.count ?? 0) === count)) continue
-    if (item.kind === 'rest' && !isNoteNumberBody(item.self)) {
+    if (item.kind === 'tabNote') {
+      setTabNoteAugmentationDot(item.note, count)
+    } else if (item.kind === 'tabRest') {
+      setTabRestAugmentationDot(item.self, count)
+    } else if (item.kind === 'drumNote') {
+      setDrumNoteAugmentationDot(item.note, count)
+    } else if (item.kind === 'drumRest') {
+      setDrumRestAugmentationDot(item.self, count)
+    } else if (item.kind === 'rest' && !isNoteNumberBody(item.self)) {
       setNoteRestAugmentationDot(item.self, count)
     } else if (item.kind === 'note' && !isNumberHeadSelected(item)) {
       setNotesInfoAugmentationDot(item.info as NotesInfo, count)

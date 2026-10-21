@@ -23,6 +23,7 @@ import { timeSignatureTypeToPlayer } from '@renderer/utils/scoreTimeSignature'
 import { resolveScoreKeySignature } from '@renderer/utils/scoreNotationTransfer'
 import { resolveSingleLineModeScoreHeight } from '@renderer/utils/singleLineModeScoreLayout'
 import { readScoreSlotHeights } from '@renderer/utils/scoreSpacingDefaults'
+import { SCORE_LYRICS_RESERVE_H } from '@renderer/utils/scoreGdSlotHeight'
 import { resolveTimeSignatureLabel } from '@renderer/i18n/helpers'
 
 defineOptions({ name: 'PianoRecordDrawer' })
@@ -383,8 +384,7 @@ function buildResultScore(recorded: MusicScore): MusicScore {
   ;(next as MusicScore & { data?: unknown }).data = JSON.parse(
     JSON.stringify((current as MusicScore & { data?: unknown }).data ?? {})
   )
-  const { tSlotH, gdSlotH } = readScoreSlotHeights(current)
-  next.height += tSlotH + next.grandStaffs.length * gdSlotH
+  next.height += readScoreSlotHeights(current).tSlotH + SCORE_LYRICS_RESERVE_H
   return next
 }
 

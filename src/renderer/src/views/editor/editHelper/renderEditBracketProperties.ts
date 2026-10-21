@@ -22,7 +22,7 @@ export function isBracketSelected(
 ): selected is BracketEditSlot {
   const self = selected?.self
   const bracket = selected?.grandStaff?.bracket
-  return self != null && bracket != null && bracket === self
+  return self != null && bracket != null && (self as unknown) === bracket
 }
 
 export function setBracketType(bracket: Bracket, type: BracketTypeEnum): void {

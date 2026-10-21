@@ -15,6 +15,7 @@ import {
   fetchOwnedToneColorOptions,
   type ToneColorOption
 } from '@renderer/utils/collection/toneColorUsage'
+import { sameRowStavesFrom } from './staffRow'
 
 defineOptions({ name: 'StaffToneColorDialog' })
 
@@ -82,29 +83,10 @@ watch(
   { immediate: true }
 )
 
-/** 总谱逻辑：目标所在复谱表及其之后各复谱表中同索引的单谱表（同一声部）；找不到目标时仅返回目标本身 */
-function sameIndexStaves(target: SingleStaff): SingleStaff[] {
-  const grandStaffs = props.musicScore.grandStaffs ?? []
-  let index = -1
-  let grandIndex = -1
-  for (let g = 0; g < grandStaffs.length; g++) {
-    index = grandStaffs[g].staves.findIndex((item) => item.id === target.id)
-    if (index >= 0) {
-      grandIndex = g
-      break
-    }
-  }
-  if (index < 0) return [target]
-  return grandStaffs
-    .slice(grandIndex)
-    .map((grandStaff) => grandStaff.staves[index])
-    .filter((item): item is SingleStaff => item != null)
-}
-
 function applyToneColor(option: ToneColorOption | undefined) {
   const target = staff.value
   if (!target) return
-  for (const item of sameIndexStaves(target)) {
+  for (const item of sameRowStavesFrom(props.musicScore, target)) {
     writeStaffInstrumentValue(item, option?.key)
     writeInstrumentName(item, option?.name)
   }

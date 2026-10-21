@@ -22,6 +22,7 @@ import SlurPropertyPanel from './SlurPropertyPanel.vue'
 import VoltaPropertyPanel from './VoltaPropertyPanel.vue'
 import BracketPropertyPanel from './BracketPropertyPanel.vue'
 import NoteMarkPropertyPanel from './NoteMarkPropertyPanel.vue'
+import MeasureMarkPropertyPanel from './MeasureMarkPropertyPanel.vue'
 import LinePropertyPanel from './LinePropertyPanel.vue'
 import PedalPropertyPanel from './PedalPropertyPanel.vue'
 import ArpeggioPropertyPanel from './ArpeggioPropertyPanel.vue'
@@ -59,8 +60,10 @@ const panelTitleKey: Record<Exclude<PropertyPanelKind, null>, string> = {
   bracket: 'editor.propertyPanel.bracket',
   pitch: 'editor.propertyPanel.pitch',
   noteMark: 'editor.propertyPanel.noteMark',
+  measureMark: 'editor.propertyPanel.measureMark',
   trillLine: 'editor.propertyPanel.trillLine',
   hairpin: 'editor.propertyPanel.hairpin',
+  guzhengLian: 'editor.propertyPanel.guzhengLian',
   pedal: 'editor.propertyPanel.pedal',
   arpeggio: 'editor.propertyPanel.arpeggio',
   strumming: 'editor.propertyPanel.strumming',
@@ -96,8 +99,10 @@ const hasContent = computed(() => {
     props.kind === 'bracket' ||
     props.kind === 'pitch' ||
     props.kind === 'noteMark' ||
+    props.kind === 'measureMark' ||
     props.kind === 'trillLine' ||
     props.kind === 'hairpin' ||
+    props.kind === 'guzhengLian' ||
     props.kind === 'pedal' ||
     props.kind === 'arpeggio' ||
     props.kind === 'strumming' ||
@@ -189,8 +194,14 @@ const headerTitle = computed(() => {
         :key="(selected.self as { id?: string }).id"
         :edit-slot="selected"
       />
+      <MeasureMarkPropertyPanel
+        v-else-if="kind === 'measureMark' && selected"
+        :key="(selected.self as { id?: string }).id"
+        :edit-slot="selected"
+      />
       <LinePropertyPanel
-        v-else-if="(kind === 'trillLine' || kind === 'hairpin') && selected"
+        v-else-if="(kind === 'trillLine' || kind === 'hairpin' || kind === 'guzhengLian') && selected"
+        :key="(selected.self as { id?: string }).id"
         :edit-slot="selected"
       />
       <PedalPropertyPanel v-else-if="kind === 'pedal' && selected" :edit-slot="selected" />

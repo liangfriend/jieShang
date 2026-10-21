@@ -1,14 +1,32 @@
 <script lang="ts" setup>
 import type { Chronaxie, DrumRest, SlotData } from '@deciphony/renderer'
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { setDrumRestAugmentationDot, setDrumRestChronaxie, setDrumRestRegion } from '@deciphony/extensions/dr-edit'
-import { DRUM_CHRONAXIE_OPTIONS, DRUM_DOT_OPTIONS } from '../renderEditDrumAddState'
+import { DRUM_CHRONAXIE_VALUES, DRUM_DOT_VALUES } from '../renderEditDrumAddState'
+import NoteMarkPalette from '../../components/NoteMarkPalette.vue'
+import RhythmGroupEndField from '../../components/RhythmGroupEndField.vue'
+import PanelField from '../../components/panel/PanelField.vue'
+import PanelGroup from '../../components/panel/PanelGroup.vue'
+import PanelSegmented from '../../components/panel/PanelSegmented.vue'
+import PanelTabs from '../../components/panel/PanelTabs.vue'
+import { useNoteSegmentOptions } from '../../components/panel/noteOptions'
+import { usePanelTab } from '../../components/panel/usePanelTab'
 
 const props = defineProps<{
   editSlot: SlotData
 }>()
 
+const { t } = useI18n()
+const options = useNoteSegmentOptions()
+const tab = usePanelTab('drumRest', 'basic')
+
 const rest = computed(() => props.editSlot.self as unknown as DrumRest)
+
+const tabs = computed(() => [
+  { name: 'basic', label: t('editor.panelTab.basic') },
+  { name: 'marks', label: t('editor.panelTab.marks'), badge: rest.value.affiliatedSymbols?.length ?? 0 }
+])
 
 const region = computed({
   get: () => rest.value.region,
@@ -30,61 +48,48 @@ const chronaxie = computed({
 })
 
 const dot = computed({
-  get: () => (rest.value.augmentationDot?.count ?? 0) as 0 | 1 | 2,
-  set: (value: 0 | 1 | 2) => setDrumRestAugmentationDot(rest.value, value)
+  get: () => (rest.value.augmentationDot?.count ?? 0) as 0 | 1 | 2 | 3,
+  set: (value: 0 | 1 | 2 | 3) => setDrumRestAugmentationDot(rest.value, value)
 })
 </script>
 
 <template>
-  <div class="drum-rest-props">
-    <section class="drum-rest-props__section">
-      <div class="drum-rest-props__label">时值</div>
-      <el-select v-model="chronaxie" size="small" style="width: 100%">
-        <el-option
-          v-for="opt in DRUM_CHRONAXIE_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
-        />
-      </el-select>
-    </section>
+  <PanelTabs v-model="tab" :tabs="tabs">
+    <template #basic>
+      <PanelGroup :title="t('editor.panelGroup.rhythm')">
+        <PanelField :label="t('editor.note.duration')" stacked>
+          <PanelSegmented v-model="chronaxie" :options="options.durations(DRUM_CHRONAXIE_VALUES, 'rest')" />
+        </PanelField>
+        <PanelField :label="t('editor.note.augmentationDot')">
+          <PanelSegmented v-model="dot" :options="options.dots(DRUM_DOT_VALUES)" />
+        </PanelField>
+        <RhythmGroupEndField :measure="editSlot.measure" :symbol="rest" />
+      </PanelGroup>
 
-    <section class="drum-rest-props__section">
-      <div class="drum-rest-props__label">线位（0 底线 · 8 顶线）</div>
-      <div class="drum-rest-props__row">
-        <el-input-number v-model="region" :max="14" :min="-6" :step="1" size="small" />
-        <el-button size="small" :disabled="region === DRUM_REST_CENTER_REGION" @click="centerRest">
-          居中
-        </el-button>
-      </div>
-    </section>
+      <PanelGroup :title="t('editor.drum.region')">
+        <div class="drum-rest-props__row">
+          <el-input-number v-model="region" :max="14" :min="-6" :step="1" size="small" />
+          <el-button size="small" :disabled="region === DRUM_REST_CENTER_REGION" @click="centerRest">
+            {{ t('editor.drum.center') }}
+          </el-button>
+        </div>
+      </PanelGroup>
+    </template>
 
-    <section class="drum-rest-props__section">
-      <div class="drum-rest-props__label">附点</div>
-      <el-radio-group v-model="dot" size="small">
-        <el-radio-button v-for="opt in DRUM_DOT_OPTIONS" :key="opt.value" :label="opt.value">
-          {{ opt.label }}
-        </el-radio-button>
-      </el-radio-group>
-    </section>
-  </div>
+    <template #marks>
+      <NoteMarkPalette
+        :host="rest"
+        :notation-type="editSlot.musicScore.type"
+        :music-score="editSlot.musicScore"
+      />
+    </template>
+  </PanelTabs>
 </template>
 
 <style scoped>
-.drum-rest-props__section {
-  margin-bottom: 14px;
-}
-
 .drum-rest-props__row {
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.drum-rest-props__label {
-  margin-bottom: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #606266;
 }
 </style>

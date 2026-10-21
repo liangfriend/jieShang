@@ -39,6 +39,7 @@ import {
 import {resolveSpanAnchorHeadIds} from '../renderEditSpanAnchors'
 import {deleteSelectedItem} from '../renderEditDelete'
 import {resolveNeighborMeasureSlot, type MeasureNavDirection} from '../renderEditMeasureNavigate'
+import {runStandardModeAdd} from '../renderEditStandardMode'
 import {resolveInteractionTarget, resolveSvgFromEvent} from '../renderEditPointer'
 import {resolvePropertyPanelKind} from '../renderEditPropertyPanel'
 import {slotDataFromVDom} from '../renderEditSelection'
@@ -55,6 +56,7 @@ import {
 } from '../standardStaff/renderEditSymbolAddAction'
 import {DEFAULT_ADD_TAB_STATE, type AddTabState} from './renderEditTabAddState'
 import {
+    applyTabFretKeyAction,
     applyTabMeasureAddAction,
     resolveGhostTabPreview,
     type GhostTabPreview,
@@ -141,7 +143,7 @@ export function useTabRenderEdit(
         void vDomMirrorEpoch.value
         if (slurHandleOverride.value) return slurHandleOverride.value
         const vdom = selectedSlurVdom.value
-        return vdom ? computeSlurHandlePoints(vdom) : null
+        return vdom ? computeSlurHandlePoints(vdom, scoreData.value.type) : null
     })
 
     const selectedVoltaVdom = computed(() => {
@@ -313,7 +315,8 @@ export function useTabRenderEdit(
         if (session) {
             const vdom = list.find((node) => node.tag === 'tabNoteNumber' && node.targetId === session.notesInfoId)
             if (!vdom) return
-            bindSelectionVdom(vdom)
+            selectedVdomKey.value = vdomSelectionKey(vdom)
+            applySelectionDom(resolveSelectionElement(vdom))
             return
         }
         const key = selectedVdomKey.value
@@ -520,6 +523,35 @@ export function useTabRenderEdit(
         return false
     }
 
+    /**
+     * 字母键录入：工具栏品改为 fret；选中小节且鼠标停在小节内时，在幽灵位置（弦 + 列）写入该品。
+     * 琶音 / 扫弦 / 休止符模式切回标准音。
+     */
+    function addTabFretByKey(fret: number): boolean {
+        const kind = addTabState.value.kind === 'harmonic' ? 'harmonic' : 'normal'
+        addTabState.value = {...addTabState.value, kind, fret}
+        if (!isMeasureSelected.value) return true
+        refreshGhostFromLastPointer()
+        const preview = activeGhostPreview.value
+        const measureSlot = selectedItem.value
+        if (!preview || !measureSlot?.measure) return true
+        runStandardModeAdd(
+            measureSlot,
+            'up',
+            () => {
+                applyTabFretKeyAction(
+                    measureSlot as SlotData & {measure: NonNullable<SlotData['measure']>},
+                    preview,
+                    stringCount.value,
+                    scoreData.value,
+                )
+                return true
+            },
+            selectMeasureSlot,
+        )
+        return true
+    }
+
     function tryMeasureAddAtEvent(event: PointerEvent) {
         const measureId = selectedItem.value?.measure?.id
         if (!measureId) return
@@ -535,11 +567,16 @@ export function useTabRenderEdit(
         const preview = ghostNotePreview.value
         const measureSlot = selectedItem.value
         if (!preview || !measureSlot?.measure) return
-        const result = applyTabMeasureAddAction(
-            measureSlot as SlotData & {measure: NonNullable<SlotData['measure']>},
-            preview,
-            stringCount.value,
-            scoreData.value,
+        const result = runStandardModeAdd(
+            measureSlot,
+            'up',
+            () => applyTabMeasureAddAction(
+                measureSlot as SlotData & {measure: NonNullable<SlotData['measure']>},
+                preview,
+                stringCount.value,
+                scoreData.value,
+            ),
+            selectMeasureSlot,
         )
         if (result?.type === 'select') {
             // 等曲谱 vDom 重算后再选中，避免找不到新符头 DOM
@@ -587,6 +624,7 @@ export function useTabRenderEdit(
     function endTabHeadDrag(event: PointerEvent) {
         if (tabHeadDragSession.value?.pointerId === event.pointerId) {
             tabHeadDragSession.value = null
+            captureScoreVDomBaseline(scoreData.value, vDomList.value)
         }
     }
 
@@ -596,7 +634,7 @@ export function useTabRenderEdit(
         if (!isTabHeadInfo(session.info)) return
         const svg = resolveSvgFromEvent(event)
         if (!svg) return
-        const changed = updateTabHeadDragFromPointer(
+        updateTabHeadDragFromPointer(
             session,
             svg,
             vDomList.value,
@@ -604,9 +642,6 @@ export function useTabRenderEdit(
             event.clientY,
             stringCount.value,
         )
-        if (changed != null) {
-            rebindSelectionAfterRender(vDomList.value)
-        }
     }
 
     function handleDrDown(event: PointerEvent, vdom: VDom) {
@@ -702,7 +737,9 @@ export function useTabRenderEdit(
 
     function handleRenderMusicScore(list: VDom[]) {
         vDomList.value = list
-        captureScoreVDomBaseline(scoreData.value, list)
+        if (!tabHeadDragSession.value) {
+            captureScoreVDomBaseline(scoreData.value, list)
+        }
         rebindSelectionAfterRender(list)
         refreshGhostFromLastPointer()
     }
@@ -757,7 +794,9 @@ export function useTabRenderEdit(
         handleRenderMusicScore,
         deleteSelected,
         navigateSelectedMeasure,
+        selectMeasureSlot,
         addMidiNote,
+        addTabFretByKey,
         clearSelection,
     }
 }

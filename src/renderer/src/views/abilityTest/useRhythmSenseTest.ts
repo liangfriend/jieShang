@@ -212,7 +212,7 @@ export function useRhythmSenseTest() {
     try {
       await Promise.all([
         metronomeStore.waitReady(),
-        playStore.waitReady().then(() => playStore.ensureCollectionToneColorInitialized())
+        playStore.waitReady().then(() => playStore.resetCollectionToneColorToDefault())
       ])
     } catch {
       // 初始化失败时仍进入倒计时；敲击反馈可回退内置 piano

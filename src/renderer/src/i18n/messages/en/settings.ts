@@ -19,7 +19,7 @@ export default {
     gameNotation: {
       label: 'Game notation:',
       staff: 'Staff',
-      jianpu: 'Jianpu'
+      jianpu: 'Number notation'
     },
     noteBlockSound: {
       label: 'Note block sound'

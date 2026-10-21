@@ -85,7 +85,7 @@ export default {
       note_slice_extreme_60s: {
         name: 'なんとか対応',
         description: 'エクストリームモードで 60 秒生き残る',
-        reward: '楽譜スキン - 宇宙'
+        reward: '楽譜スキン - コスモス'
       },
       note_slice_extreme_120s: {
         name: '法則をつかんだ',

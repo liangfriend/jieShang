@@ -1,5 +1,6 @@
 <script lang="ts" setup>
 import type { MusicScore, SingleNoteAffiliatedSymbolNameEnum, SlotData } from '@deciphony/renderer'
+import { findExtraSymbol } from '@deciphony/extensions/dr-edit/score-builder'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { locateNoteAffiliatedById } from '../renderEditNoteAffiliatedDrag'
@@ -13,6 +14,7 @@ import {
 } from '../renderEditNoteMarks'
 import NoteMarkGlyph from './NoteMarkGlyph.vue'
 import PanelGroup from './panel/PanelGroup.vue'
+import CustomSymbolGlyph from './customSymbol/CustomSymbolGlyph.vue'
 
 const props = defineProps<{
   editSlot: SlotData
@@ -30,6 +32,12 @@ const located = computed(() => {
 const symbol = computed(() => located.value?.symbol ?? null)
 const group = computed(() => (symbol.value ? noteMarkGroup(symbol.value.name) : null))
 const hasOffset = computed(() => (symbol.value ? hasNoteMarkOffset(symbol.value) : false))
+/** 曲谱自定义音符符号（name 为 skinKey） */
+const extra = computed(() => {
+  if (!symbol.value) return null
+  const found = findExtraSymbol(musicScore.value, symbol.value.name)
+  return found?.kind === 'note' ? found.symbol : null
+})
 
 function markName(name: string) {
   return t(`editor.noteMark.name.${name}`)
@@ -38,6 +46,14 @@ function markName(name: string) {
 function onReplace(name: SingleNoteAffiliatedSymbolNameEnum) {
   if (!located.value) return
   replaceNoteMark(located.value.host, located.value.symbol, name)
+}
+
+function readOffset(axis: 'relativeX' | 'relativeY') {
+  return Math.round((symbol.value?.[axis] ?? 0) * 10) / 10
+}
+
+function writeOffset(axis: 'relativeX' | 'relativeY', value: number | undefined) {
+  if (symbol.value) symbol.value[axis] = Number.isFinite(value) ? Number(value) : 0
 }
 
 function onResetOffset() {
@@ -55,7 +71,15 @@ function onRemove() {
     <PanelGroup :title="t('editor.noteMark.current')">
       <div class="note-mark-props__current">
         <span class="note-mark-props__preview">
+          <CustomSymbolGlyph
+            v-if="extra"
+            :content="extra.content"
+            :w="extra.w"
+            :h="extra.h"
+            :size="32"
+          />
           <NoteMarkGlyph
+            v-else
             :skin-key="noteMarkSkinKey(symbol.name)"
             :notation-type="musicScore.type"
             :size="32"
@@ -63,11 +87,32 @@ function onRemove() {
           />
         </span>
         <div class="note-mark-props__meta">
-          <span class="note-mark-props__name">{{ markName(symbol.name) }}</span>
-          <span v-if="group" class="note-mark-props__category">
+          <span class="note-mark-props__name">{{ extra ? extra.name : markName(symbol.name) }}</span>
+          <span v-if="extra" class="note-mark-props__category">{{ t('editor.customSymbol.title') }}</span>
+          <span v-else-if="group" class="note-mark-props__category">
             {{ t(`editor.noteMark.category.${group.category}`) }}
           </span>
         </div>
+      </div>
+      <div class="note-mark-props__offset">
+        <span class="note-mark-props__axis">X</span>
+        <el-input-number
+          :model-value="readOffset('relativeX')"
+          :step="1"
+          :precision="1"
+          size="small"
+          controls-position="right"
+          @update:model-value="(v) => writeOffset('relativeX', v)"
+        />
+        <span class="note-mark-props__axis">Y</span>
+        <el-input-number
+          :model-value="readOffset('relativeY')"
+          :step="1"
+          :precision="1"
+          size="small"
+          controls-position="right"
+          @update:model-value="(v) => writeOffset('relativeY', v)"
+        />
       </div>
       <div class="note-mark-props__actions">
         <el-button size="small" :disabled="!hasOffset" @click="onResetOffset">
@@ -136,6 +181,24 @@ function onRemove() {
 
 .note-mark-props__category {
   font-size: 12px;
+  color: #a39ab0;
+}
+
+.note-mark-props__offset {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 4px;
+  margin: 10px 0 8px;
+}
+
+.note-mark-props__offset :deep(.el-input-number) {
+  width: 100%;
+}
+
+.note-mark-props__axis {
+  font-size: 11px;
+  font-weight: 700;
   color: #a39ab0;
 }
 

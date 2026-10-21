@@ -62,7 +62,8 @@ function syncSpawnConfigManager(): void {
 onMounted(async () => {
   syncSpawnConfigManager()
   await playStore.waitReady()
-  await playStore.ensureCollectionToneColorInitialized()
+  // 曲谱页可能把全局音色留在打击乐 / 吉他等，游戏固定用钢琴
+  await playStore.resetCollectionToneColorToDefault()
   playStore.setBpm(PLAY_DEFAULT_BPM)
 })
 

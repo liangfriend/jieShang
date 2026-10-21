@@ -14,16 +14,20 @@ export default {
     modeEdit: 'Edit',
     modeShow: 'Present',
     save: 'Save',
+    undo: 'Undo',
+    redo: 'Redo',
+    undoHint: 'Undo (Ctrl+Z)',
+    redoHint: 'Redo (Ctrl+Y / Ctrl+Shift+Z)',
     settings: 'Settings',
     import: 'Import',
     export: 'Export',
     volume: 'Volume',
     annotate: {
-      start: 'Draw',
+      start: 'Annotate',
       pen: 'Pen',
       eraser: 'Eraser',
       clear: 'Clear marks',
-      hint: 'Temporary presentation marks (not saved to the work). Kept across pages; clear only affects the current page.'
+      hint: 'Temporary presentation marks (not saved to the work). Kept across pages; clear only affects the current page. Strokes drawn with “Start drawing” in edit mode are saved in the work and must be cleared in edit mode.'
     },
     range: {
       title: 'Range',
@@ -39,10 +43,11 @@ export default {
     saveSuccess: 'Saved',
     saveFailed: 'Save failed',
     exportSuccess: 'Exported',
+    scoreToWorkDone: 'Split into {n} pages by grand staff. Remember to save when it looks right.',
     exportFailed: 'Export failed',
     exportProgress: '{text} page {done} / {total}',
     exportFormat: {
-      sjw: 'JieShang work (.sjw)',
+      sjw: 'Decipher work (.sjw)',
       images: 'Images',
       pdf: 'PDF'
     },
@@ -52,6 +57,10 @@ export default {
     applyCurrentPageSizeSuccess: 'Current page size updated',
     settingsDialog: {
       title: 'Work settings',
+      workName: 'Name',
+      workAuthor: 'Author',
+      infoHint: 'After “Apply”, click “Save” in the toolbar to write it to the library.',
+      applyInfoSuccess: 'Work info updated. Save to keep it.',
       defaultPageSize: 'Default page',
       currentPageSize: 'Current page',
       applyDefault: 'Save',
@@ -74,6 +83,9 @@ export default {
       title: 'Properties',
       score: 'Score',
       image: 'Image',
+      text: 'Text',
+      textStyle: 'Text style',
+      textHint: 'Double-click the text on the page to edit it; Ctrl+Enter to finish.',
       frame: 'Position & size',
       width: 'Width',
       height: 'Height',

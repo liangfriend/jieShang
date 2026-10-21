@@ -1,6 +1,7 @@
 <script lang="ts" setup>
 import { ElMessage } from 'element-plus'
-import { onBeforeUnmount, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, shallowRef } from 'vue'
+import type { ClSheetData } from '@deciphony/cl-sheet'
 import { useI18n } from 'vue-i18n'
 import musicScoreVue from '@deciphony/renderer'
 import type { MusicScore, VDom } from '@deciphony/renderer'
@@ -9,9 +10,16 @@ import type {
   MusicScoreHighlightExpose,
   PlayHighlightProgressData
 } from '@deciphony/extensions/dr-play-highlight'
-import { searchScoresFromDatabase, parseScoreJson } from '@renderer/utils/fileHelper/scoreFile'
+import {
+  displayScoreName,
+  searchScoresFromDatabase,
+  parseScoreJson
+} from '@renderer/utils/fileHelper/scoreFile'
+import { loadClSheetFromDatabase } from '@renderer/utils/fileHelper/clSheetFile'
+import ClSheetReader from '@renderer/views/clSheet/ClSheetReader.vue'
 import { usePlayStore } from '@renderer/store/play.store'
 import { useScorePagePlayback } from '@renderer/utils/scorePagePlayback/useScorePagePlayback'
+import type { RenderMusicScoreHandler } from '@renderer/utils/scorePagePlayback/types'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import { applySingleLineModeScoreHeight } from '@renderer/utils/singleLineModeScoreLayout'
 import { useSingleLineScoreCenter } from '@renderer/utils/singleLineScoreCenter'
@@ -26,6 +34,8 @@ import emptyScore from '@renderer/template/empty'
 const props = defineProps<{
   /** 单行模式（与练习模式一致）：合并复谱表、横向铺开，跟随播放横向滚动 */
   singleLine?: boolean
+  /** 可再选一份和弦弹唱谱，显示在曲谱下方（或独占曲谱区），空间不够时滚动查看 */
+  clSheet?: boolean
 }>()
 
 /** 单行模式下每小节宽度 */
@@ -37,6 +47,11 @@ const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin
 
 const scoreOptions = ref<Array<{ id: number; name: string }>>([])
 const selectedScoreId = ref<number | null>(null)
+const clSheetOptions = ref<Array<{ id: number; name: string }>>([])
+const selectedClSheetId = ref<number | null>(null)
+const clSheetData = shallowRef<ClSheetData | null>(null)
+/** 只选了弹唱谱时隐藏空白曲谱，弹唱谱占满 */
+const showMusicScore = computed(() => !clSheetData.value || selectedScoreId.value != null)
 const musicScore = ref<MusicScore>(prepareScore(cloneEmpty()))
 const musicScoreRef = ref<MusicScoreHighlightExpose | null>(null)
 const scoreScrollRef = ref<HTMLElement | null>(null)
@@ -94,9 +109,9 @@ function prepareScore(score: MusicScore): MusicScore {
   return score
 }
 
-function handleRenderMusicScore(list: VDom[]) {
+function handleRenderMusicScore(...[list, info]: Parameters<RenderMusicScoreHandler>) {
   vDomList.value = list
-  playback.handleRenderMusicScore?.(list)
+  playback.handleRenderMusicScore?.(list, info)
   if (props.singleLine) scoreCenter.recenter()
 }
 
@@ -123,17 +138,44 @@ async function onScoreChange(id: number | null) {
   musicScore.value = prepareScore(loaded)
 }
 
+let clSheetEpoch = 0
+
+async function loadClSheetOptions() {
+  const list = await searchScoresFromDatabase('', 'cl_sheet')
+  clSheetOptions.value = list.map((s) => ({ id: s.id, name: displayScoreName(s.name) }))
+}
+
+async function onClSheetChange(id: number | null) {
+  const current = ++clSheetEpoch
+  selectedClSheetId.value = id
+  if (id == null) {
+    clSheetData.value = null
+    return
+  }
+  try {
+    const loaded = await loadClSheetFromDatabase(id)
+    if (current !== clSheetEpoch) return
+    if (!loaded) throw new Error('not a cl sheet')
+    clSheetData.value = loaded
+  } catch {
+    if (current !== clSheetEpoch) return
+    ElMessage.error(t('instrumentSim.score.clSheetLoadFailed'))
+  }
+}
+
 onMounted(async () => {
   progressSubId = playback.subscribeProgressStart((_progress, data) => {
     if (props.singleLine) smoothScroll.handleProgressStart(data as PlayHighlightProgressData)
     else scrollFollow.handleProgressStart(data as PlayHighlightProgressData)
   })
-  const [, list] = await Promise.all([waitScoreSkin(), searchScoresFromDatabase('')])
+  if (props.clSheet) void loadClSheetOptions()
+  const [, list] = await Promise.all([waitScoreSkin(), searchScoresFromDatabase('', 'music_score')])
   scoreOptions.value = list.map((s) => ({ id: s.id, name: s.name }))
 })
 
 onBeforeUnmount(() => {
   loadEpoch++
+  clSheetEpoch++
   if (progressSubId) playback.unsubscribeProgressStart(progressSubId)
 })
 
@@ -142,8 +184,12 @@ defineExpose({ stop: () => playback.handleStop() })
 
 <template>
   <div class="sim-score-panel">
-    <section class="sim-score-panel__score">
+    <section
+      class="sim-score-panel__score"
+      :class="{ 'sim-score-panel__score--with-sheet': clSheetData }"
+    >
       <div
+        v-show="showMusicScore"
         ref="scoreScrollRef"
         class="sim-score-panel__score-scroll hidden-scrollbar"
         :class="{
@@ -162,6 +208,9 @@ defineExpose({ stop: () => playback.handleStop() })
           @renderMusicScore="handleRenderMusicScore"
         />
       </div>
+      <div v-if="clSheetData" class="sim-score-panel__cl-sheet">
+        <ClSheetReader :sheet="clSheetData" class="sim-score-panel__cl-sheet-paper" />
+      </div>
     </section>
 
     <aside class="sim-score-panel__tools">
@@ -177,6 +226,27 @@ defineExpose({ stop: () => playback.handleStop() })
           @update:model-value="onScoreChange"
         >
           <el-option v-for="item in scoreOptions" :key="item.id" :label="item.name" :value="item.id" />
+        </el-select>
+      </div>
+
+      <div v-if="clSheet" class="sim-score-panel__row">
+        <span class="sim-score-panel__label">{{ t('instrumentSim.score.selectClSheet') }}</span>
+        <el-select
+          :model-value="selectedClSheetId"
+          clearable
+          filterable
+          size="small"
+          class="sim-score-panel__select"
+          :placeholder="t('instrumentSim.score.noClSheet')"
+          @visible-change="(visible: boolean) => visible && loadClSheetOptions()"
+          @update:model-value="onClSheetChange"
+        >
+          <el-option
+            v-for="item in clSheetOptions"
+            :key="item.id"
+            :label="item.name"
+            :value="item.id"
+          />
         </el-select>
       </div>
 
@@ -232,6 +302,31 @@ defineExpose({ stop: () => playback.handleStop() })
 
 .sim-score-panel__score {
   overflow: hidden;
+}
+
+/* 曲谱在上（按内容高度），弹唱谱在下占满剩余高度并独立滚动 */
+.sim-score-panel__score--with-sheet {
+  display: flex;
+  flex-direction: column;
+}
+
+.sim-score-panel__score--with-sheet .sim-score-panel__score-scroll {
+  flex: 0 0 auto;
+  height: auto;
+  max-height: 50%;
+  border-bottom: 1px solid rgba(255, 184, 208, 0.35);
+}
+
+.sim-score-panel__cl-sheet {
+  flex: 1 1 0;
+  min-height: 0;
+  overflow: auto;
+  padding: 8px;
+  box-sizing: border-box;
+}
+
+.sim-score-panel__cl-sheet-paper {
+  margin-inline: auto;
 }
 
 .sim-score-panel__score-scroll {

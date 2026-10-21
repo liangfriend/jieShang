@@ -9,6 +9,7 @@ import {
   WHITEBOARD_DEFAULT_KEY_COUNT,
   WHITEBOARD_DEFAULT_KEY_SIGNATURE,
   WHITEBOARD_DEFAULT_PITCH_NOTATION,
+  WHITEBOARD_DEFAULT_STAFF_MODE,
   WHITEBOARD_DEFAULT_WIDTH_TYPE,
   WHITEBOARD_KEY_COUNT_OPTIONS,
   WHITEBOARD_KEY_HEIGHT_DEFAULT,
@@ -19,6 +20,7 @@ import {
   WHITEBOARD_NOTE_BPM_MAX,
   WHITEBOARD_NOTE_BPM_MIN,
   WHITEBOARD_PITCH_NOTATION_OPTIONS,
+  WHITEBOARD_STAFF_MODE_OPTIONS,
   WHITEBOARD_STORAGE_KEY,
   WHITEBOARD_WHITE_KEY_WIDTH_DEFAULT,
   WHITEBOARD_WHITE_KEY_WIDTH_MAX,
@@ -27,6 +29,7 @@ import {
   type WhiteboardClef,
   type WhiteboardKeyCount,
   type WhiteboardPitchNotation,
+  type WhiteboardStaffMode,
   type WhiteboardWidthType
 } from '@renderer/constant/whiteboard'
 
@@ -42,6 +45,7 @@ interface WhiteboardSettings {
   addNoteEnabled: boolean
   autoClearEnabled: boolean
   targetClef: WhiteboardClef
+  staffMode: WhiteboardStaffMode
   noteInputBpm: number
   keySignature: KeySignatureTypeEnum
 }
@@ -58,6 +62,7 @@ const DEFAULT_SETTINGS: WhiteboardSettings = {
   addNoteEnabled: WHITEBOARD_DEFAULT_ADD_NOTE,
   autoClearEnabled: WHITEBOARD_DEFAULT_AUTO_CLEAR,
   targetClef: WHITEBOARD_DEFAULT_CLEF,
+  staffMode: WHITEBOARD_DEFAULT_STAFF_MODE,
   noteInputBpm: WHITEBOARD_NOTE_BPM_DEFAULT,
   keySignature: WHITEBOARD_DEFAULT_KEY_SIGNATURE
 }
@@ -76,6 +81,10 @@ function isWhiteboardPitchNotation(value: unknown): value is WhiteboardPitchNota
 
 function isWhiteboardClef(value: unknown): value is WhiteboardClef {
   return WHITEBOARD_CLEF_OPTIONS.some((item) => item.value === value)
+}
+
+function isWhiteboardStaffMode(value: unknown): value is WhiteboardStaffMode {
+  return WHITEBOARD_STAFF_MODE_OPTIONS.includes(value as WhiteboardStaffMode)
 }
 
 function isWhiteboardKeySignature(value: unknown): value is KeySignatureTypeEnum {
@@ -114,6 +123,9 @@ function loadSettings(): WhiteboardSettings {
       targetClef: isWhiteboardClef(parsed.targetClef)
         ? parsed.targetClef
         : DEFAULT_SETTINGS.targetClef,
+      staffMode: isWhiteboardStaffMode(parsed.staffMode)
+        ? parsed.staffMode
+        : DEFAULT_SETTINGS.staffMode,
       noteInputBpm: clamp(
         parsed.noteInputBpm ?? DEFAULT_SETTINGS.noteInputBpm,
         WHITEBOARD_NOTE_BPM_MIN,
@@ -146,6 +158,7 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
   const addNoteEnabled = ref(initial.addNoteEnabled)
   const autoClearEnabled = ref(initial.autoClearEnabled)
   const targetClef = ref<WhiteboardClef>(initial.targetClef)
+  const staffMode = ref<WhiteboardStaffMode>(initial.staffMode)
   const noteInputBpm = ref(initial.noteInputBpm)
   const keySignature = ref<KeySignatureTypeEnum>(initial.keySignature)
 
@@ -170,6 +183,7 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
       addNoteEnabled: addNoteEnabled.value,
       autoClearEnabled: autoClearEnabled.value,
       targetClef: targetClef.value,
+      staffMode: staffMode.value,
       noteInputBpm: noteInputBpm.value,
       keySignature: keySignature.value
     })
@@ -223,6 +237,10 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     targetClef.value = value
   }
 
+  function setStaffMode(value: WhiteboardStaffMode) {
+    staffMode.value = value
+  }
+
   function setNoteInputBpm(value: number) {
     noteInputBpm.value = clamp(value, WHITEBOARD_NOTE_BPM_MIN, WHITEBOARD_NOTE_BPM_MAX)
   }
@@ -242,7 +260,9 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
       chordBoxEnabled,
       intervalRulerEnabled,
       addNoteEnabled,
+      autoClearEnabled,
       targetClef,
+      staffMode,
       noteInputBpm,
       keySignature
     ],
@@ -261,6 +281,7 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     addNoteEnabled,
     autoClearEnabled,
     targetClef,
+    staffMode,
     noteInputBpm,
     keySignature,
     isCustomWidth,
@@ -279,6 +300,7 @@ export const useWhiteboardStore = defineStore('whiteboard', () => {
     toggleAddNote,
     toggleAutoClear,
     setTargetClef,
+    setStaffMode,
     setNoteInputBpm,
     setKeySignature
   }

@@ -29,7 +29,8 @@ import WorkElementPropertyPanel, {
   type WorkCropPayload,
   type WorkFramePatch,
   type WorkGrandStaffCropPayload,
-  type WorkPropertyTarget
+  type WorkPropertyTarget,
+  type WorkTextStylePatch
 } from '@renderer/views/work/WorkElementPropertyPanel.vue'
 import {
   CUR_SHOW_WORK_TEMP_ID,
@@ -64,7 +65,14 @@ import { loadWorkPageSize, saveWorkPageSize } from '@renderer/utils/workPageSize
 import { saveWorkToDatabase } from '@renderer/utils/fileHelper/workFile'
 import { resolveBoundScoreAudios } from '@renderer/utils/work/resolveBoundScoreAudios'
 import { loadOwnedScoreSkinPack } from '@renderer/utils/collection/scoreSkinUsage'
+import { planScorePages, type ScoreToWorkJob } from '@renderer/utils/work/scoreToWork'
+import { EDIT_NEW_WORK_TEMP_ID } from '@renderer/constant/work'
 import type { AssetPickKind } from '@renderer/views/work/WorkAssetPickerDialog.vue'
+import { applyWorkPages, type WorkHistoryStep } from '@renderer/utils/workEditHistory'
+import {
+  useWorkEditHistory,
+  type WorkHistoryAssetApi
+} from '@renderer/views/work/useWorkEditHistory'
 
 defineOptions({ name: 'WorkStudioView' })
 
@@ -262,7 +270,10 @@ async function bootstrap() {
     pageIndex.value = 0
     ready.value = true
     await hydratePdf(loaded.blob)
+    const scoreToWork = tempId.value === EDIT_NEW_WORK_TEMP_ID ? dataStore.takePendingScoreToWork() : null
+    if (scoreToWork) await layoutScoreIntoWork(scoreToWork)
   } finally {
+    editHistory.reset()
     globalLoading.hide()
   }
 }
@@ -466,6 +477,7 @@ async function handleAddPage() {
     height: newPageHeight.value
   })
   await switchToPage(index)
+  editHistory.checkpoint()
 }
 
 async function handleInsertPage() {
@@ -476,6 +488,7 @@ async function handleInsertPage() {
     height: newPageHeight.value
   })
   await switchToPage(index)
+  editHistory.checkpoint()
 }
 
 /** 复制当前页：插在当前页后面，内容与当前页相同（曲谱 / 元素换新 id） */
@@ -492,6 +505,7 @@ async function handleDuplicatePage() {
     pageIndex.value = insertAt
   })
   if (drawing.value) applyDrawSession()
+  editHistory.checkpoint()
 }
 
 async function handleRemovePage() {
@@ -538,6 +552,7 @@ async function handlePastePage(index: number) {
     pageIndex.value = index
   })
   if (drawing.value) applyDrawSession()
+  editHistory.checkpoint()
 }
 
 async function handleRemovePageAt(index: number) {
@@ -553,6 +568,7 @@ async function handleRemovePageAt(index: number) {
     }
   })
   if (drawing.value) applyDrawSession()
+  editHistory.checkpoint()
 }
 
 function applySizeToAllPages(width: number, height: number) {
@@ -570,6 +586,13 @@ function applySizeToCurrentPage(width: number, height: number) {
   page.width = width
   page.height = height
   ElMessage.success(t('work.applyCurrentPageSizeSuccess'))
+}
+
+function onApplyWorkInfo(payload: { name: string; author: string }) {
+  if (!workData.value) return
+  workData.value.name = payload.name
+  workData.value.author = payload.author
+  ElMessage.success(t('work.settingsDialog.applyInfoSuccess'))
 }
 
 /** 默认页「应用」：写入新页尺寸（加页 / 新建作品） */
@@ -627,23 +650,22 @@ async function onAssetConfirm(payload: {
       file: payload.file,
       name: assetName
     })
-    return
-  }
-  if (payload.kind === 'video') {
+  } else if (payload.kind === 'video') {
     await pdf.addVideoFromFile({
       x: PLACE_X,
       y: PLACE_Y,
       file: payload.file,
       name: assetName
     })
-    return
+  } else {
+    pdf.addAudioFromFile({
+      x: PLACE_X,
+      y: PLACE_Y,
+      file: payload.file,
+      name: assetName
+    })
   }
-  pdf.addAudioFromFile({
-    x: PLACE_X,
-    y: PLACE_Y,
-    file: payload.file,
-    name: assetName
-  })
+  editHistory.checkpoint()
 }
 
 function onBackgroundConfirm(payload: {
@@ -670,30 +692,30 @@ function onAddScore(payload: { musicScore: unknown; scale: number; skinId?: numb
   void addScoreToPage(payload)
 }
 
-async function addScoreToPage(payload: {
-  musicScore: unknown
-  scale: number
-  skinId?: number | null
-}) {
-  const pdf = pdfRef.value
-  const page = workData.value?.pages[pageIndex.value]
-  if (!pdf || !page) return
-  const musicScore = JSON.parse(JSON.stringify(payload.musicScore)) as MusicScore
+/** 往当前页加曲谱：补齐槽位高度，载入皮肤与绑定的范唱 / 伴奏；返回曲谱 id */
+async function addScoreWithAssets(
+  pdf: InstanceType<typeof SJWPDF>,
+  source: unknown,
+  skinId: number | null | undefined,
+  x: number,
+  y: number
+): Promise<string> {
+  const musicScore = JSON.parse(JSON.stringify(source)) as MusicScore
   // 作品读 data.sLSlotW / sRSlotW / showInstrumentName 画左右留白与音色名，旧谱先补齐
   ensureScoreSlotHeights(musicScore)
   const bound = await resolveBoundScoreAudios(musicScore)
 
   let skinPack: Awaited<ReturnType<typeof loadOwnedScoreSkinPack>> = null
-  if (payload.skinId != null) {
-    skinPack = await loadOwnedScoreSkinPack(payload.skinId)
+  if (skinId != null) {
+    skinPack = await loadOwnedScoreSkinPack(skinId)
     if (!skinPack) {
       ElMessage.warning(t('work.toolbar.scoreSkinLoadFailed'))
     }
   }
 
-  const id = pdf.addScore({
-    x: PLACE_X,
-    y: PLACE_Y,
+  return pdf.addScore({
+    x,
+    y,
     musicScore,
     ...(skinPack ? { skin: skinPack.pack } : {}),
     ...(bound.vocalPerformance
@@ -703,12 +725,63 @@ async function addScoreToPage(payload: {
       ? { accompaniment: { file: bound.accompaniment.file, name: bound.accompaniment.name } }
       : {})
   })
+}
+
+async function addScoreToPage(payload: {
+  musicScore: unknown
+  scale: number
+  skinId?: number | null
+}) {
+  const pdf = pdfRef.value
+  const page = workData.value?.pages[pageIndex.value]
+  if (!pdf || !page) return
+  const id = await addScoreWithAssets(pdf, payload.musicScore, payload.skinId, PLACE_X, PLACE_Y)
   const score = page.scores?.find((s) => s.id === id)
   if (score) {
     const scale = payload.scale > 0 ? payload.scale : 0.5
     score.width = score.width * scale
     score.height = score.height * scale
   }
+  editHistory.checkpoint()
+}
+
+/**
+ * 曲谱编辑页「导出为作品」：第一页加曲谱（载入皮肤 / 音频），按复谱表分页，
+ * 每页一份同源曲谱裁出对应复谱表，横向居中、按上边距放置。
+ */
+async function layoutScoreIntoWork(job: ScoreToWorkJob) {
+  const pdf = pdfRef.value
+  const work = workData.value
+  if (!pdf || !work?.pages[0]) return
+  pageIndex.value = 0
+  await nextTick()
+
+  const id = await addScoreWithAssets(pdf, job.musicScore, job.skinId, 0, job.topMargin)
+  const firstPage = work.pages[0]
+  const score = firstPage.scores?.find((s) => s.id === id)
+  if (!score) return
+  const bands = await pdf.getScoreVerticalBands(id)
+  const source = score.musicScore
+  const contentBottom = Math.max(0, ...bands.map((band) => band.y + band.height))
+  // 曲谱 SVG 只画到 musicScore.height，内容更高时裁剪区会被截掉
+  if (contentBottom > source.height) source.height = Math.ceil(contentBottom)
+
+  const slices = planScorePages(bands, job, source.width)
+  const scale = job.scoreWidth / source.width
+  const template = JSON.parse(JSON.stringify(toRaw(score))) as SScore
+  slices.forEach((slice, i) => {
+    const target = i === 0 ? score : ({ ...JSON.parse(JSON.stringify(template)), id: crypto.randomUUID() } as SScore)
+    target.crop = { x: 0, y: slice.cropY, width: source.width, height: slice.cropHeight }
+    target.x = (job.pageWidth - job.scoreWidth) / 2
+    target.y = job.topMargin
+    target.width = job.scoreWidth
+    target.height = slice.cropHeight * scale
+    if (i === 0) return
+    const { index } = pdf.addPage({ width: job.pageWidth, height: job.pageHeight })
+    const page = work.pages[index]!
+    page.scores = [...(page.scores ?? []), target]
+  })
+  ElMessage.success(t('work.scoreToWorkDone', { n: slices.length }))
 }
 
 function openSave() {
@@ -822,11 +895,41 @@ onBeforeUnmount(() => {
   window.removeEventListener('keydown', onWindowKeydown)
 })
 
+/** 应用撤销 / 恢复快照：先停播放、退出选段与裁剪，再换内容并跳到改动所在页 */
+async function applyHistoryStep(step: WorkHistoryStep) {
+  const work = workData.value
+  if (!work) return
+  const pdf = pdfRef.value
+  pdf?.stop()
+  pdf?.endCrop()
+  endScoreRange()
+  const target = Math.min(Math.max(0, step.changedPage), Math.max(0, step.to.length - 1))
+  if (target !== pageIndex.value || step.from.length !== step.to.length) {
+    await withPageLoading(() => {
+      applyWorkPages(work, step.from, step.to)
+      pageIndex.value = target
+    })
+  } else {
+    applyWorkPages(work, step.from, step.to)
+    await nextTick()
+  }
+  if (drawing.value) applyDrawSession()
+}
+
+const editHistory = useWorkEditHistory({
+  getWork: () => workData.value,
+  getAssetApi: () => pdfRef.value as WorkHistoryAssetApi | null,
+  canEdit: () => mode.value === 'edit' && ready.value && !busy.value,
+  applyStep: applyHistoryStep
+})
+
 const propertyTarget = computed<WorkPropertyTarget | null>(() => {
   const s = selection.value
   if (!s || mode.value !== 'edit') return null
   if (s.kind === 'score') return { kind: 'score', item: s.score }
-  return s.element.type === 'image' ? { kind: 'image', item: s.element } : null
+  if (s.element.type === 'image') return { kind: 'image', item: s.element }
+  if (s.element.type === 'text') return { kind: 'text', item: s.element }
+  return null
 })
 
 const propertyAssetName = computed(() => {
@@ -840,6 +943,11 @@ function onPropertyPatch(patch: WorkFramePatch) {
   if (target) Object.assign(target.item, patch)
 }
 
+function onPropertyTextStyle(patch: WorkTextStylePatch) {
+  const target = propertyTarget.value
+  if (target?.kind === 'text') Object.assign(target.item, patch)
+}
+
 async function onPropertyCrop(payload: WorkCropPayload) {
   const pdf = pdfRef.value
   if (!pdf) return
@@ -849,6 +957,7 @@ async function onPropertyCrop(payload: WorkCropPayload) {
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t('work.props.cropFailed'))
   }
+  editHistory.checkpoint()
 }
 
 async function onPropertyCropByGrandStaff(payload: WorkGrandStaffCropPayload) {
@@ -862,6 +971,7 @@ async function onPropertyCropByGrandStaff(payload: WorkGrandStaffCropPayload) {
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t('work.props.cropFailed'))
   }
+  editHistory.checkpoint()
 }
 
 function onPropertyClearCrop(payload: { keepFrame: boolean }) {
@@ -897,6 +1007,7 @@ async function onPropertyToggleCropMode() {
   } catch (error) {
     ElMessage.error(error instanceof Error ? error.message : t('work.props.cropFailed'))
   }
+  editHistory.checkpoint()
 }
 
 type WorkExportCommand = 'sjw' | 'images' | 'pdf'
@@ -944,6 +1055,7 @@ async function onImportFile(event: Event) {
       const loaded = await pdfRef.value!.loadSjw(file)
       applySjwInPlace(workData.value!, loaded)
       pageIndex.value = 0
+      editHistory.reset()
       const blob = await pdfRef.value!.exportSjw()
       dataStore.setTempWorkBlob(tempId.value, blob)
       ElMessage.success(t('work.importSuccess'))
@@ -958,6 +1070,7 @@ async function onImportFile(event: Event) {
 function onLoaded(payload: { data: SJW }) {
   if (!workData.value) return
   applySjwInPlace(workData.value, payload.data)
+  editHistory.reset()
   void ensureToneColor()
 }
 
@@ -1397,6 +1510,26 @@ function onBeforeContextMenu(payload: ElementContextMenuPayload) {
     <header class="work-studio__top">
       <BackButton fallback="/my-works" />
       <div class="work-studio__center">
+        <template v-if="mode === 'edit'">
+          <button
+            type="button"
+            class="top-btn"
+            :title="t('work.undoHint')"
+            :disabled="busy || !editHistory.canUndo.value"
+            @click="editHistory.undo()"
+          >
+            {{ t('work.undo') }}
+          </button>
+          <button
+            type="button"
+            class="top-btn"
+            :title="t('work.redoHint')"
+            :disabled="busy || !editHistory.canRedo.value"
+            @click="editHistory.redo()"
+          >
+            {{ t('work.redo') }}
+          </button>
+        </template>
         <button
           v-if="mode === 'edit'"
           type="button"
@@ -1491,12 +1624,7 @@ function onBeforeContextMenu(payload: ElementContextMenuPayload) {
             controls-position="right"
             @update:model-value="(v) => v != null && onDrawLineWidthChange(Number(v))"
           />
-          <button
-            type="button"
-            class="top-btn top-btn--chip"
-            :disabled="!drawing"
-            @click="onClearDrawings"
-          >
+          <button type="button" class="top-btn top-btn--chip" @click="onClearDrawings">
             {{ t('work.annotate.clear') }}
           </button>
         </div>
@@ -1568,6 +1696,7 @@ function onBeforeContextMenu(payload: ElementContextMenuPayload) {
           :asset-name="propertyAssetName"
           :cropping="propertyCropping"
           @patch="onPropertyPatch"
+          @text-style="onPropertyTextStyle"
           @crop="onPropertyCrop"
           @crop-by-grand-staff="onPropertyCropByGrandStaff"
           @clear-crop="onPropertyClearCrop"
@@ -1610,6 +1739,8 @@ function onBeforeContextMenu(payload: ElementContextMenuPayload) {
     />
     <WorkSettingsDialog
       v-model="settingsDialogOpen"
+      :work-name="workData?.name ?? ''"
+      :work-author="workData?.author ?? ''"
       :default-width="newPageWidth"
       :default-height="newPageHeight"
       :current-width="settingsCurrentWidth"
@@ -1618,12 +1749,12 @@ function onBeforeContextMenu(payload: ElementContextMenuPayload) {
       @apply-default-all="onApplyDefaultPageSizeAll"
       @apply-current="onApplyCurrentPageSize"
       @apply-current-all="onApplyCurrentPageSizeAll"
+      @apply-info="onApplyWorkInfo"
     />
     <WorkSaveDialog
       v-model="saveDialogOpen"
       :name="workData?.name ?? ''"
       :author="workData?.author ?? ''"
-      :existing="isExisting"
       @confirm="onSaveConfirm"
     />
     <WorkMediaPreviewDialog

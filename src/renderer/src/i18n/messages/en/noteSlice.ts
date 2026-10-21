@@ -15,7 +15,7 @@ export default {
       livesAria: 'Lives remaining',
       combo: '{n} combo',
       slowDown: 'Slow',
-      doubleScore: '×2'
+      doubleScore: 'Double'
     },
     countdown: {
       start: 'Go!'

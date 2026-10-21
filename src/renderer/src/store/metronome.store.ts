@@ -6,6 +6,7 @@ import { computed, ref } from 'vue'
 import { normal } from '@renderer/toneColor/metronomeColor'
 import { PLAY_BPM_MAX, PLAY_BPM_MIN, PLAY_DEFAULT_BPM } from '@renderer/constant/play'
 import { timeSignatureTypeToPlayer } from '@renderer/utils/scoreTimeSignature'
+import { startAudioKeepAlive } from '@renderer/utils/audioKeepAlive'
 
 export const METRONOME_COLOR_NAME = 'normal'
 
@@ -36,6 +37,7 @@ export const useMetronomeStore = defineStore('metronome', () => {
 
     initPromise = (async () => {
       startJPlayer()
+      startAudioKeepAlive()
       mplayer = new MPlayer({ checkTime: 50, checkDuration: 500 })
       await mplayer.addMetronomeColor(METRONOME_COLOR_NAME, normal)
       mplayer.metronomeColor = METRONOME_COLOR_NAME

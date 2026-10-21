@@ -47,6 +47,7 @@ function scheduleSearch() {
 }
 
 function openWork(item: WorkListItem) {
+  dataStore.deleteTempWork(CUR_SHOW_WORK_TEMP_ID)
   router.push({
     name: 'workShow',
     query: { workId: String(item.id), tempId: CUR_SHOW_WORK_TEMP_ID }

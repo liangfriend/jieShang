@@ -1,5 +1,5 @@
 <script lang="ts" setup>
-import type {Chronaxie, SlotData} from '@deciphony/renderer'
+import type {AugmentationDot, Chronaxie, SlotData} from '@deciphony/renderer'
 import {BeamTypeEnum} from '@deciphony/renderer'
 import {computed} from 'vue'
 import {useI18n} from 'vue-i18n'
@@ -16,6 +16,7 @@ import {
   STEM_DIRECTION_VALUES,
 } from '../standardStaff/renderEditNoteHeadProperties'
 import {
+  DEFAULT_GRACE_CHRONAXIE,
   resolveGracePlacement,
   setGraceAugmentationDot,
   setGraceBeamType,
@@ -34,7 +35,7 @@ type GraceInfo = {
   chronaxie: Chronaxie
   beamType?: BeamTypeEnum
   direction?: 'up' | 'down'
-  augmentationDot?: {count: 1 | 2 | 3}
+  augmentationDot?: AugmentationDot
 }
 
 const info = computed(() => props.editSlot.info as GraceInfo)
@@ -46,7 +47,7 @@ const placement = computed(() =>
 const showStemDirection = computed(() => 'direction' in (info.value ?? {}))
 
 const chronaxie = computed({
-  get: () => info.value.chronaxie ?? 32,
+  get: () => info.value.chronaxie ?? DEFAULT_GRACE_CHRONAXIE,
   set: (v: Chronaxie) => setGraceChronaxie(info.value, v),
 })
 

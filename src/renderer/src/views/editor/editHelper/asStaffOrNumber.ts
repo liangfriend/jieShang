@@ -6,7 +6,7 @@ import type {
   NoteSymbol,
   StaffSlot,
 } from '@deciphony/renderer'
-import {slotSymbol} from '@deciphony/renderer'
+import {isMeasureNoteVoices, slotSymbol} from '@deciphony/renderer'
 import {isNoteNumberSlot as isNoteNumberSlotRaw} from '@deciphony/extensions/dr-edit/score-builder'
 
 /**
@@ -41,13 +41,41 @@ export function findMeasureNoteIndex(
   note: {id?: string} | null | undefined,
 ): number {
   if (!note) return -1
-  return measure.notes.findIndex((item) => {
+  return findSlotIndex(measureVoiceSlots(measure, null), note)
+}
+
+function findSlotIndex(slots: MeasureNoteSlot[], note: {id?: string}): number {
+  return slots.findIndex((item) => {
     if (item === note) return true
     if (note.id && item.id === note.id) return true
     const body = slotSymbol(item)
     if (body === note) return true
     return Boolean(note.id && 'id' in body && (body as {id?: string}).id === note.id)
   })
+}
+
+/** 鼓谱小节分上下声部；其余谱种 voice 恒为 null */
+export type MeasureVoiceKey = 'up' | 'down' | null
+
+/** 声部内的槽位数组；非声部小节直接返回 notes，声部小节 voice 为 null 时取上声部 */
+export function measureVoiceSlots(measure: Measure, voice: MeasureVoiceKey): MeasureNoteSlot[] {
+  const notes = measure.notes
+  if (!isMeasureNoteVoices(notes)) return notes
+  return (voice ? notes[voice] : notes.up) ?? []
+}
+
+/** 选中 note 所在声部与声部内下标；找不到 index 为 -1 */
+export function locateMeasureNote(
+  measure: Measure,
+  note: {id?: string} | null | undefined,
+): {voice: MeasureVoiceKey; index: number} {
+  if (!note) return {voice: null, index: -1}
+  if (!isMeasureNoteVoices(measure.notes)) return {voice: null, index: findSlotIndex(measure.notes, note)}
+  for (const voice of ['up', 'down'] as const) {
+    const index = findSlotIndex(measureVoiceSlots(measure, voice), note)
+    if (index >= 0) return {voice, index}
+  }
+  return {voice: null, index: -1}
 }
 
 /**

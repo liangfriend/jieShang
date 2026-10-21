@@ -31,6 +31,7 @@ import {warnNotEnoughSpanNotes} from '../../renderEditSlotSymbolAdd'
 import NoteGraceSection from '../../components/NoteGraceSection.vue'
 import NoteMarkPalette from '../../components/NoteMarkPalette.vue'
 import NoteSpanSymbolSection from '../../components/NoteSpanSymbolSection.vue'
+import RhythmGroupEndField from '../../components/RhythmGroupEndField.vue'
 import PanelField from '../../components/panel/PanelField.vue'
 import PanelGroup from '../../components/panel/PanelGroup.vue'
 import PanelSegmented from '../../components/panel/PanelSegmented.vue'
@@ -131,6 +132,7 @@ function findSlurEnd(span: SlurSpan) {
         <PanelField :label="t('editor.note.stemDirection')">
           <PanelSegmented v-model="direction" :options="options.stems(STEM_DIRECTION_VALUES)" />
         </PanelField>
+        <RhythmGroupEndField :measure="editSlot.measure" :symbol="note" />
       </PanelGroup>
 
       <PanelGroup :title="t('editor.panelGroup.pitch')">
@@ -172,7 +174,7 @@ function findSlurEnd(span: SlurSpan) {
     </template>
 
     <template #marks>
-      <NoteMarkPalette :host="notesInfo" :notation-type="musicScore.type" />
+      <NoteMarkPalette :host="notesInfo" :notation-type="musicScore.type" :music-score="musicScore" />
     </template>
 
     <template #span>

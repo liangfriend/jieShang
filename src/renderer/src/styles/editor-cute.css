@@ -1,6 +1,12 @@
-.editor-cute {
+/*
+ * Element Plus 主色已在 styles/element-theme.css 全局换成粉色；这里只放编辑页特有的造型（胶囊按钮等）。
+ * 变量同时挂在 body.editor-cute-theme：el-dialog / el-select 下拉 / ElMessageBox 会 teleport 到 body。
+ */
+.editor-cute,
+body.editor-cute-theme {
   --ec-pink: #ffb8d0;
   --ec-pink-deep: #ff8fb8;
+  --ec-pink-strong: #f0709f;
   --ec-lavender: #c9b8ff;
   --ec-sky: #b8e4ff;
   --ec-mint: #c8f0d0;
@@ -11,7 +17,9 @@
   --ec-radius: 16px;
   --ec-toolbar-h: 52px;
   --ec-bottom-bar-h: 56px;
+}
 
+.editor-cute {
   color: var(--ec-text);
   background: linear-gradient(145deg, #fff5f9 0%, #f3ebff 42%, #e8f4ff 100%);
 }
@@ -36,21 +44,14 @@
   border: 1px solid rgba(255, 255, 255, 0.85);
 }
 
-.editor-cute .el-button {
+/* ---- Element Plus 组件：编辑区 + teleport 出去的弹窗 / 下拉 ---- */
+
+:is(.editor-cute, .editor-cute-theme .el-overlay, .editor-cute-theme .el-popper) .el-button {
   border-radius: 999px;
   font-weight: 600;
 }
 
-.editor-cute .el-button--primary {
-  --el-button-bg-color: #ff8fb8;
-  --el-button-border-color: #ff8fb8;
-  --el-button-hover-bg-color: #ff7aab;
-  --el-button-hover-border-color: #ff7aab;
-  --el-button-active-bg-color: #f06a9a;
-  --el-button-active-border-color: #f06a9a;
-}
-
-.editor-cute .el-radio-button__inner {
+:is(.editor-cute, .editor-cute-theme .el-overlay, .editor-cute-theme .el-popper) .el-radio-button__inner {
   border-radius: 999px !important;
   border: 1px solid rgba(255, 184, 208, 0.45) !important;
   background: rgba(255, 255, 255, 0.75) !important;
@@ -59,18 +60,45 @@
   padding: 6px 12px !important;
 }
 
-.editor-cute .el-radio-button:first-child .el-radio-button__inner {
+:is(.editor-cute, .editor-cute-theme .el-overlay, .editor-cute-theme .el-popper)
+  .el-radio-button:first-child
+  .el-radio-button__inner {
   border-left: 1px solid rgba(255, 184, 208, 0.45) !important;
 }
 
-.editor-cute .el-radio-button__original-radio:checked + .el-radio-button__inner {
+:is(.editor-cute, .editor-cute-theme .el-overlay, .editor-cute-theme .el-popper)
+  .el-radio-button__original-radio:checked
+  + .el-radio-button__inner {
   background: linear-gradient(90deg, var(--ec-pink-deep), var(--ec-lavender)) !important;
   border-color: transparent !important;
   color: #fff !important;
 }
 
-.editor-cute .el-input__wrapper,
-.editor-cute .el-select__wrapper {
+:is(.editor-cute, .editor-cute-theme .el-overlay, .editor-cute-theme .el-popper) .el-radio-button.is-disabled .el-radio-button__inner {
+  opacity: 0.5;
+}
+
+:is(.editor-cute, .editor-cute-theme .el-overlay, .editor-cute-theme .el-popper) :is(.el-input__wrapper, .el-select__wrapper, .el-textarea__inner) {
   border-radius: 12px !important;
-  box-shadow: 0 0 0 1px rgba(255, 184, 208, 0.35) inset !important;
+  box-shadow: 0 0 0 1px rgba(255, 184, 208, 0.45) inset !important;
+}
+
+:is(.editor-cute, .editor-cute-theme .el-overlay, .editor-cute-theme .el-popper)
+  :is(.el-input__wrapper, .el-select__wrapper):hover,
+:is(.editor-cute, .editor-cute-theme .el-overlay, .editor-cute-theme .el-popper) .el-textarea__inner:hover {
+  box-shadow: 0 0 0 1px var(--ec-pink-deep) inset !important;
+}
+
+:is(.editor-cute, .editor-cute-theme .el-overlay, .editor-cute-theme .el-popper)
+  :is(.el-input__wrapper.is-focus, .el-select__wrapper.is-focused),
+:is(.editor-cute, .editor-cute-theme .el-overlay, .editor-cute-theme .el-popper) .el-textarea__inner:focus {
+  box-shadow:
+    0 0 0 1px var(--ec-pink-deep) inset,
+    0 0 0 3px rgba(255, 143, 184, 0.18) !important;
+}
+
+:is(.editor-cute, .editor-cute-theme .el-overlay, .editor-cute-theme .el-popper) .el-input-number__decrease,
+:is(.editor-cute, .editor-cute-theme .el-overlay, .editor-cute-theme .el-popper) .el-input-number__increase {
+  background: rgba(255, 244, 248, 0.9);
+  color: var(--ec-text-soft);
 }

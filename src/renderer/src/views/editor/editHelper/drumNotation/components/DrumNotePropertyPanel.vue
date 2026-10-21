@@ -11,17 +11,40 @@ import {
   setDrumNotesInfoHeadType,
   setDrumNotesInfoRegion
 } from '@deciphony/extensions/dr-edit'
-import { resolveBeamTypeLabel } from '@renderer/i18n/helpers'
 import { BEAM_TYPE_VALUES } from '../../standardStaff/renderEditNoteHeadProperties'
-import { SLUR_SPAN_OPTIONS, tryAddSlurFromNoteHead, type SlurSpan } from '../../standardStaff/renderEditSlurAdd'
-import { DRUM_CHRONAXIE_OPTIONS, DRUM_DOT_OPTIONS, DRUM_HEAD_OPTIONS } from '../renderEditDrumAddState'
+import {
+  findSlurEndFromNoteHead,
+  tryAddSlurFromNoteHead,
+  type SlurSpan
+} from '../../standardStaff/renderEditSlurAdd'
+import { DRUM_CHRONAXIE_VALUES, DRUM_DOT_VALUES, DRUM_HEAD_OPTIONS } from '../renderEditDrumAddState'
+import NoteGraceSection from '../../components/NoteGraceSection.vue'
+import NoteMarkPalette from '../../components/NoteMarkPalette.vue'
+import NoteSpanSymbolSection from '../../components/NoteSpanSymbolSection.vue'
+import RhythmGroupEndField from '../../components/RhythmGroupEndField.vue'
+import PanelField from '../../components/panel/PanelField.vue'
+import PanelGroup from '../../components/panel/PanelGroup.vue'
+import PanelSegmented from '../../components/panel/PanelSegmented.vue'
+import PanelTabs from '../../components/panel/PanelTabs.vue'
+import { useNoteSegmentOptions } from '../../components/panel/noteOptions'
+import { usePanelTab } from '../../components/panel/usePanelTab'
 
 const props = defineProps<{
   editSlot: SlotData
 }>()
 
+const { t } = useI18n()
+const options = useNoteSegmentOptions()
+const tab = usePanelTab('drumNote', 'basic')
+
 const info = computed(() => props.editSlot.info as unknown as DrumNotesInfo)
 const note = computed(() => props.editSlot.note as unknown as DrumNote)
+
+const tabs = computed(() => [
+  { name: 'basic', label: t('editor.panelTab.basic') },
+  { name: 'marks', label: t('editor.panelTab.marks'), badge: info.value.affiliatedSymbols?.length ?? 0 },
+  { name: 'span', label: t('editor.panelTab.span') }
+])
 
 const headType = computed({
   get: () => info.value.headType,
@@ -41,8 +64,8 @@ const chronaxie = computed({
 })
 
 const dot = computed({
-  get: () => (info.value.augmentationDot?.count ?? 0) as 0 | 1 | 2,
-  set: (value: 0 | 1 | 2) => setDrumNoteAugmentationDot(note.value, value)
+  get: () => (info.value.augmentationDot?.count ?? 0) as 0 | 1 | 2 | 3,
+  set: (value: 0 | 1 | 2 | 3) => setDrumNoteAugmentationDot(note.value, value)
 })
 
 const beamType = computed({
@@ -50,82 +73,62 @@ const beamType = computed({
   set: (value: BeamTypeEnum) => setDrumNoteBeamType(note.value, value)
 })
 
-const { t } = useI18n()
+function onAddSlur(span: SlurSpan, endInfoId: string | null) {
+  if (!tryAddSlurFromNoteHead(props.editSlot as never, span, endInfoId)) warnNotEnoughSpanNotes(t)
+}
 
-function onAddSlur(span: SlurSpan) {
-  if (!tryAddSlurFromNoteHead(props.editSlot as never, span)) warnNotEnoughSpanNotes(t)
+function findSlurEnd(span: SlurSpan) {
+  return findSlurEndFromNoteHead(props.editSlot as never, span)?.id ?? null
 }
 </script>
 
 <template>
-  <div class="drum-note-props">
-    <section class="drum-note-props__section">
-      <div class="drum-note-props__label">音符头</div>
-      <el-select v-model="headType" size="small" style="width: 100%">
-        <el-option v-for="opt in DRUM_HEAD_OPTIONS" :key="opt.value" :label="opt.label" :value="opt.value" />
-      </el-select>
-    </section>
+  <PanelTabs v-model="tab" :tabs="tabs">
+    <template #basic>
+      <PanelGroup :title="t('editor.panelGroup.pitch')">
+        <PanelField :label="t('editor.drum.head')">
+          <el-select v-model="headType" size="small">
+            <el-option v-for="opt in DRUM_HEAD_OPTIONS" :key="opt.value" :label="t(opt.labelKey)" :value="opt.value" />
+          </el-select>
+        </PanelField>
+        <PanelField :label="t('editor.drum.region')">
+          <el-input-number v-model="region" :max="14" :min="-6" :step="1" size="small" />
+        </PanelField>
+      </PanelGroup>
 
-    <section class="drum-note-props__section">
-      <div class="drum-note-props__label">线位（0 底线 · 8 顶线）</div>
-      <el-input-number v-model="region" :max="14" :min="-6" :step="1" size="small" />
-    </section>
+      <PanelGroup :title="t('editor.panelGroup.rhythm')">
+        <PanelField :label="t('editor.note.duration')" stacked>
+          <PanelSegmented v-model="chronaxie" :options="options.durations(DRUM_CHRONAXIE_VALUES)" />
+        </PanelField>
+        <PanelField :label="t('editor.note.augmentationDot')">
+          <PanelSegmented v-model="dot" :options="options.dots(DRUM_DOT_VALUES)" />
+        </PanelField>
+        <PanelField :label="t('editor.note.beam')">
+          <PanelSegmented v-model="beamType" :options="options.beams(BEAM_TYPE_VALUES)" />
+        </PanelField>
+        <RhythmGroupEndField :measure="editSlot.measure" :symbol="note" />
+      </PanelGroup>
 
-    <section class="drum-note-props__section">
-      <div class="drum-note-props__label">时值（整个音符）</div>
-      <el-select v-model="chronaxie" size="small" style="width: 100%">
-        <el-option
-          v-for="opt in DRUM_CHRONAXIE_OPTIONS"
-          :key="opt.value"
-          :label="opt.label"
-          :value="opt.value"
-        />
-      </el-select>
-    </section>
+      <PanelGroup :title="t('editor.note.grace')">
+        <NoteGraceSection :edit-slot="editSlot" bare />
+      </PanelGroup>
+    </template>
 
-    <section class="drum-note-props__section">
-      <div class="drum-note-props__label">附点</div>
-      <el-radio-group v-model="dot" size="small">
-        <el-radio-button v-for="opt in DRUM_DOT_OPTIONS" :key="opt.value" :label="opt.value">
-          {{ opt.label }}
-        </el-radio-button>
-      </el-radio-group>
-    </section>
+    <template #marks>
+      <NoteMarkPalette
+        :host="info"
+        :notation-type="editSlot.musicScore.type"
+        :music-score="editSlot.musicScore"
+      />
+    </template>
 
-    <section class="drum-note-props__section">
-      <div class="drum-note-props__label">符杠</div>
-      <el-radio-group v-model="beamType" size="small">
-        <el-radio-button v-for="value in BEAM_TYPE_VALUES" :key="value" :label="value">
-          {{ resolveBeamTypeLabel(value) }}
-        </el-radio-button>
-      </el-radio-group>
-    </section>
-
-    <section class="drum-note-props__section">
-      <div class="drum-note-props__label">连音线</div>
-      <div class="drum-note-props__row">
-        <el-button v-for="span in SLUR_SPAN_OPTIONS" :key="span" size="small" @click="onAddSlur(span)">
-          {{ span }}
-        </el-button>
-      </div>
-    </section>
-  </div>
+    <template #span>
+      <NoteSpanSymbolSection
+        :edit-slot="editSlot"
+        :notes-info-id="info.id"
+        :find-slur-end="findSlurEnd"
+        @add-slur="onAddSlur"
+      />
+    </template>
+  </PanelTabs>
 </template>
-
-<style scoped>
-.drum-note-props__section {
-  margin-bottom: 14px;
-}
-
-.drum-note-props__label {
-  margin-bottom: 6px;
-  font-size: 12px;
-  font-weight: 600;
-  color: #606266;
-}
-
-.drum-note-props__row {
-  display: flex;
-  gap: 8px;
-}
-</style>

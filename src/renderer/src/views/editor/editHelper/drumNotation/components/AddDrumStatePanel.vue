@@ -1,6 +1,8 @@
 <script lang="ts" setup>
 import type { Chronaxie, DrumHeadTypeEnum } from '@deciphony/renderer'
 import type { DrumVoice } from '@deciphony/extensions/dr-edit'
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import {
   DRUM_ADD_KIND_OPTIONS,
   DRUM_CHRONAXIE_OPTIONS,
@@ -11,8 +13,13 @@ import {
   type AddDrumState,
   type DrumAddKind
 } from '../renderEditDrumAddState'
+import ChronaxieGlyph from '../../components/ChronaxieGlyph.vue'
+import '../../addToolButtons.css'
 
 const model = defineModel<AddDrumState>({ required: true })
+const { t } = useI18n()
+
+const glyphKind = computed(() => (model.value.kind === 'rest' ? 'rest' : 'note'))
 
 function patch(next: Partial<AddDrumState>) {
   model.value = normalizeAddDrumState({ ...model.value, ...next })
@@ -41,45 +48,72 @@ function setDot(dot: 0 | 1 | 2) {
 
 <template>
   <div class="add-drum-state">
-    <div class="add-drum-state__row">
-      <span class="add-drum-state__label">声部</span>
-      <el-radio-group :model-value="model.voice" size="small" @change="setVoice">
-        <el-radio-button v-for="opt in DRUM_VOICE_OPTIONS" :key="opt.value" :label="opt.value">
-          {{ opt.label }}
-        </el-radio-button>
-      </el-radio-group>
-      <span class="add-drum-state__label">添加</span>
-      <el-radio-group :model-value="model.kind" size="small" @change="setKind">
-        <el-radio-button v-for="opt in DRUM_ADD_KIND_OPTIONS" :key="opt.value" :label="opt.value">
-          {{ opt.label }}
-        </el-radio-button>
-      </el-radio-group>
+    <div class="add-tool-row">
+      <div class="add-tool-group" :aria-label="t('editor.drum.voice')">
+        <button
+          v-for="opt in DRUM_VOICE_OPTIONS"
+          :key="opt.value"
+          type="button"
+          class="add-tool-btn"
+          :class="{ 'is-active': model.voice === opt.value }"
+          @click="setVoice(opt.value)"
+        >
+          {{ t(opt.labelKey) }}
+        </button>
+      </div>
+      <div class="add-tool-group" :aria-label="t('editor.addNote.add')">
+        <button
+          v-for="opt in DRUM_ADD_KIND_OPTIONS"
+          :key="opt.value"
+          type="button"
+          class="add-tool-btn"
+          :class="{ 'is-active': model.kind === opt.value }"
+          @click="setKind(opt.value)"
+        >
+          {{ t(opt.labelKey) }}
+        </button>
+      </div>
     </div>
-    <div class="add-drum-state__row">
-      <span class="add-drum-state__label">音符头</span>
-      <el-radio-group
-        :model-value="model.kind === 'note' ? model.headType : undefined"
-        size="small"
-        @change="setHeadType"
-      >
-        <el-radio-button v-for="opt in DRUM_HEAD_OPTIONS" :key="opt.value" :label="opt.value">
-          {{ opt.label }}
-        </el-radio-button>
-      </el-radio-group>
+    <div class="add-tool-row">
+      <div class="add-tool-group" :aria-label="t('editor.drum.head')">
+        <button
+          v-for="opt in DRUM_HEAD_OPTIONS"
+          :key="opt.value"
+          type="button"
+          class="add-tool-btn"
+          :class="{ 'is-active': model.kind === 'note' && model.headType === opt.value }"
+          @click="setHeadType(opt.value)"
+        >
+          {{ t(opt.labelKey) }}
+        </button>
+      </div>
     </div>
-    <div class="add-drum-state__row">
-      <span class="add-drum-state__label">时值</span>
-      <el-radio-group :model-value="model.chronaxie" size="small" @change="setChronaxie">
-        <el-radio-button v-for="opt in DRUM_CHRONAXIE_OPTIONS" :key="opt.value" :label="opt.value">
-          {{ opt.label }}
-        </el-radio-button>
-      </el-radio-group>
-      <span class="add-drum-state__label">附点</span>
-      <el-radio-group :model-value="model.dot" size="small" @change="setDot">
-        <el-radio-button v-for="opt in DRUM_DOT_OPTIONS" :key="opt.value" :label="opt.value">
-          {{ opt.label }}
-        </el-radio-button>
-      </el-radio-group>
+    <div class="add-tool-row">
+      <div class="add-tool-group" :aria-label="t('editor.note.duration')">
+        <button
+          v-for="opt in DRUM_CHRONAXIE_OPTIONS"
+          :key="opt.value"
+          type="button"
+          class="add-tool-btn add-tool-btn--glyph"
+          :class="{ 'is-active': model.chronaxie === opt.value }"
+          :title="t(opt.labelKey)"
+          @click="setChronaxie(opt.value)"
+        >
+          <ChronaxieGlyph :chronaxie="opt.value" :kind="glyphKind" />
+        </button>
+      </div>
+      <div class="add-tool-group" :aria-label="t('editor.note.augmentationDot')">
+        <button
+          v-for="opt in DRUM_DOT_OPTIONS"
+          :key="opt.value"
+          type="button"
+          class="add-tool-btn"
+          :class="{ 'is-active': model.dot === opt.value }"
+          @click="setDot(opt.value)"
+        >
+          {{ t(opt.labelKey) }}
+        </button>
+      </div>
     </div>
   </div>
 </template>
@@ -88,20 +122,7 @@ function setDot(dot: 0 | 1 | 2) {
 .add-drum-state {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 8px;
-}
-
-.add-drum-state__row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.add-drum-state__label {
-  flex: 0 0 auto;
-  font-size: 12px;
-  color: #606266;
+  gap: 6px;
+  padding: 0;
 }
 </style>

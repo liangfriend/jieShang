@@ -320,10 +320,10 @@ function isWhiteKey(midi: number) {
 }
 
 type PianoGroupKey =
-  | 'great4'
   | 'great3'
   | 'great2'
   | 'great1'
+  | 'great'
   | 'small'
   | 'small1'
   | 'small2'
@@ -335,10 +335,10 @@ type PianoGroupKey =
   | 'small8'
 
 const GROUP_COLOR_BY_KEY: Record<PianoGroupKey, string> = {
-  great4: 'rgba(120, 144, 156, 0.2)',
-  great3: 'rgba(255, 99, 132, 0.2)',
-  great2: 'rgba(54, 162, 235, 0.2)',
-  great1: 'rgba(255, 206, 86, 0.2)',
+  great3: 'rgba(120, 144, 156, 0.2)',
+  great2: 'rgba(255, 99, 132, 0.2)',
+  great1: 'rgba(54, 162, 235, 0.2)',
+  great: 'rgba(255, 206, 86, 0.2)',
   small: 'rgba(75, 192, 192, 0.2)',
   small1: 'rgba(153, 102, 255, 0.2)',
   small2: 'rgba(255, 159, 64, 0.2)',
@@ -350,16 +350,17 @@ const GROUP_COLOR_BY_KEY: Record<PianoGroupKey, string> = {
   small8: 'rgba(139, 195, 74, 0.2)'
 }
 
+/** octave = floor(midi / 12)：3 → C2–B2 大字组，4 → C3 小字组，5 → C4 小字一组 */
 function octaveToGroupKey(octave: number): PianoGroupKey | null {
   switch (octave) {
     case 0:
-      return 'great4'
-    case 1:
       return 'great3'
-    case 2:
+    case 1:
       return 'great2'
-    case 3:
+    case 2:
       return 'great1'
+    case 3:
+      return 'great'
     case 4:
       return 'small'
     case 5:

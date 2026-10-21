@@ -29,7 +29,7 @@ export default {
       notationTypeSwitchFailed: '曲谱类型切换失败',
       noPlayableContent: '当前曲谱没有可播放的内容',
       rangeNoPlayableContent: '选段内没有可播放的音符',
-      grandStaffMismatch: '各复谱表的单谱表行数须一致，无法进入练习/新手模式',
+      grandStaffMismatch: '各复谱表的单谱表行数不一致，无法合并成单行，暂不能进入练习/新手/演唱模式',
       tabModeUnavailable: '吉他谱 / 尤克里里谱暂不支持练习、新手与演唱模式',
       playOnlyModeUnavailable: '吉他谱 / 尤克里里谱 / 贝斯谱 / 鼓谱暂不支持练习、新手与演唱模式',
       boundAudioMissing: '未找到绑定音频',

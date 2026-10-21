@@ -1,18 +1,21 @@
 <script lang="ts" setup>
 import type { MusicScore, SlotData } from '@deciphony/renderer'
-import { HairpinTypeEnum, TrillTypeEnum } from '@deciphony/renderer'
+import { GuzhengLianTypeEnum, HairpinTypeEnum, TrillTypeEnum } from '@deciphony/renderer'
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { lineKeyOfSymbol } from '../renderEditLineDrag'
 import {
+  getGuzhengLianType,
   getHairpinHeight,
   getHairpinType,
   getTrillType,
+  GUZHENG_LIAN_TYPE_OPTIONS,
   HAIRPIN_HEIGHT_MAX,
   HAIRPIN_HEIGHT_MIN,
   HAIRPIN_TYPE_OPTIONS,
   isWedgeHairpin,
   resolveLineSymbol,
+  setGuzhengLianType,
   setHairpinHeight,
   setHairpinType,
   setTrillType,
@@ -48,6 +51,13 @@ const hairpinOptions = computed(() =>
   }))
 )
 
+const guzhengLianOptions = computed(() =>
+  GUZHENG_LIAN_TYPE_OPTIONS.map((value) => ({
+    value,
+    label: t(`editor.line.guzhengLianTypeOption.${value}`)
+  }))
+)
+
 const trillType = computed({
   get: () => (symbol.value ? getTrillType(symbol.value) : TrillTypeEnum.Trill),
   set: (value: TrillTypeEnum) => {
@@ -59,6 +69,13 @@ const hairpinType = computed({
   get: () => (symbol.value ? getHairpinType(symbol.value) : HairpinTypeEnum.Crescendo_hairpin),
   set: (value: HairpinTypeEnum) => {
     if (symbol.value) setHairpinType(symbol.value, value)
+  }
+})
+
+const guzhengLianType = computed({
+  get: () => (symbol.value ? getGuzhengLianType(symbol.value) : GuzhengLianTypeEnum.Tuo),
+  set: (value: GuzhengLianTypeEnum) => {
+    if (symbol.value) setGuzhengLianType(symbol.value, value)
   }
 })
 
@@ -80,6 +97,12 @@ function onRemove() {
     <PanelGroup v-if="kind === 'trill'">
       <PanelField :label="t('editor.line.trillType')" stacked>
         <PanelSegmented v-model="trillType" :options="trillOptions" :columns="2" />
+      </PanelField>
+    </PanelGroup>
+
+    <PanelGroup v-else-if="kind === 'guzhengLian'">
+      <PanelField :label="t('editor.line.guzhengLianType')" stacked>
+        <PanelSegmented v-model="guzhengLianType" :options="guzhengLianOptions" :columns="4" />
       </PanelField>
     </PanelGroup>
 

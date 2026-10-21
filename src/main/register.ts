@@ -13,6 +13,7 @@ export async function registerController() {
   container.resolve('videoController').register()
   container.resolve('guitarChordController').register()
   container.resolve('drumMachineController').register()
+  container.resolve('customSymbolController').register()
   container.resolve('fileController').register()
   container.resolve('omrController').register()
   container.resolve('windowController').register()

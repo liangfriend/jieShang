@@ -159,6 +159,20 @@ export function setSlotBarlineB(slot: MeasureEditSlot, type: BarlineTypeEnum | n
 export function setSlotBarlineF(slot: MeasureEditSlot, type: BarlineTypeEnum | null): void {
   for (const m of barlineTargetMeasures(slot)) setMeasureBarlineF(m, type)
 }
+
+/**
+ * 快捷键 { / }：前置在 无 → 前置类型… 间循环；后置在 BARLINE_B_VALUES 间循环，没有后置小节线时按单小节线算
+ */
+export function cycleSlotBarline(slot: MeasureEditSlot, side: 'f' | 'b'): void {
+  if (side === 'f') {
+    const cycle: (BarlineTypeEnum | null)[] = [null, ...BARLINE_F_VALUES]
+    const current = cycle.indexOf(slot.measure.barline_f?.type ?? null)
+    setSlotBarlineF(slot, cycle[(current + 1) % cycle.length] ?? null)
+    return
+  }
+  const current = BARLINE_B_VALUES.indexOf(slot.measure.barline_b?.type ?? BarlineTypeEnum.Single_barline)
+  setSlotBarlineB(slot, BARLINE_B_VALUES[(current + 1) % BARLINE_B_VALUES.length]!)
+}
 export function setMeasureClefF(measure: Measure, type: ClefTypeEnum | null): void {
   if (type == null) {
     delete measure.clef_f

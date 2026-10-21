@@ -9,6 +9,8 @@ const MUSICXML_FILTER: Electron.FileFilter[] = [
   { name: 'MusicXML', extensions: ['xml', 'musicxml'] }
 ]
 const MIDI_FILTER: Electron.FileFilter[] = [{ name: 'MIDI', extensions: ['mid', 'midi'] }]
+const CL_SHEET_FILTER: Electron.FileFilter[] = [{ name: '和弦弹唱谱 JSON', extensions: ['json'] }]
+const JSON_FILTER: Electron.FileFilter[] = [{ name: 'JSON', extensions: ['json'] }]
 function getDialogParent(window?: BrowserWindow | null): BrowserWindow | null {
   return window ?? BrowserWindow.getFocusedWindow()
 }
@@ -111,6 +113,56 @@ export class FileService {
     }
   }
 
+  /** 通过系统对话框导入和弦弹唱谱 .json 文件 */
+  async importClSheet(window?: BrowserWindow | null) {
+    const { canceled, filePaths } = await showOpenDialog(
+      {
+        title: '导入和弦弹唱谱',
+        filters: CL_SHEET_FILTER,
+        properties: ['openFile']
+      },
+      window
+    )
+
+    if (canceled || !filePaths[0]) {
+      return { canceled: true as const }
+    }
+
+    const filePath = filePaths[0]
+    const content = fs.readFileSync(filePath, 'utf-8')
+
+    return {
+      canceled: false as const,
+      filePath,
+      fileName: path.basename(filePath),
+      content
+    }
+  }
+
+  /** 通过系统对话框导出和弦弹唱谱 .json 文件 */
+  async exportClSheet(content: string, defaultName = '未命名弹唱谱', window?: BrowserWindow | null) {
+    const safeName = defaultName.replace(/[<>:"/\\|?*]/g, '_').trim() || '未命名弹唱谱'
+    const { canceled, filePath } = await showSaveDialog(
+      {
+        title: '导出和弦弹唱谱',
+        defaultPath: `${safeName}.json`,
+        filters: [...CL_SHEET_FILTER]
+      },
+      window
+    )
+
+    if (canceled || !filePath) {
+      return { canceled: true as const }
+    }
+
+    fs.writeFileSync(filePath, content, 'utf-8')
+
+    return {
+      canceled: false as const,
+      filePath
+    }
+  }
+
   /** 通过系统对话框导入 MusicXML 文件 */
   async importMusicXml(window?: BrowserWindow | null) {
     const { canceled, filePaths } = await showOpenDialog(
@@ -184,6 +236,56 @@ export class FileService {
       filePath,
       fileName: path.basename(filePath),
       content: new Uint8Array(buffer.buffer, buffer.byteOffset, buffer.byteLength)
+    }
+  }
+
+  /** 通过系统对话框导入 JSON 文本文件 */
+  async importJson(title = '导入 JSON', window?: BrowserWindow | null) {
+    const { canceled, filePaths } = await showOpenDialog(
+      {
+        title,
+        filters: [...JSON_FILTER],
+        properties: ['openFile']
+      },
+      window
+    )
+
+    if (canceled || !filePaths[0]) {
+      return { canceled: true as const }
+    }
+
+    const filePath = filePaths[0]
+    const content = fs.readFileSync(filePath, 'utf-8')
+
+    return {
+      canceled: false as const,
+      filePath,
+      fileName: path.basename(filePath),
+      content
+    }
+  }
+
+  /** 通过系统对话框导出 JSON 文本文件 */
+  async exportJson(content: string, defaultName = 'export', title = '导出 JSON', window?: BrowserWindow | null) {
+    const safeName = defaultName.replace(/[<>:"/\\|?*]/g, '_').trim() || 'export'
+    const { canceled, filePath } = await showSaveDialog(
+      {
+        title,
+        defaultPath: `${safeName}.json`,
+        filters: [...JSON_FILTER]
+      },
+      window
+    )
+
+    if (canceled || !filePath) {
+      return { canceled: true as const }
+    }
+
+    fs.writeFileSync(filePath, content, 'utf-8')
+
+    return {
+      canceled: false as const,
+      filePath
     }
   }
 

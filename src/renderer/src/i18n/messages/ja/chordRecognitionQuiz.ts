@@ -17,6 +17,7 @@ export default {
         full: '全音域（21–108）'
       },
       showPiano: '鍵盤を表示',
+      pureListening: '耳だけで判断',
       rounds: '出題数',
       countdown: '制限時間（秒）',
       start: 'テスト開始'

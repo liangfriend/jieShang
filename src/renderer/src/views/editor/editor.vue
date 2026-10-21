@@ -1,13 +1,9 @@
 <script lang="ts" setup>
 import { ElMessage } from 'element-plus'
-import { ArrowDown } from '@element-plus/icons-vue'
 import { MusicScoreTypeEnum } from '@deciphony/renderer'
-import { computed, onMounted, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
-import ScoreNotationTypeSelector from '@renderer/components/score-toolbar/ScoreNotationTypeSelector.vue'
-import ScoreTransposeControl from '@renderer/components/score-toolbar/ScoreTransposeControl.vue'
-import ScoreSemitoneShiftButtons from '@renderer/components/score-toolbar/ScoreSemitoneShiftButtons.vue'
 import {
   exportMidiToDisk,
   exportMusicXmlToDisk,
@@ -15,14 +11,41 @@ import {
   importMidiFromDisk,
   importMusicXmlFromDisk,
   importSjFromDisk,
+  resolveScoreName,
   saveScoreToDatabase
 } from '@renderer/utils/fileHelper'
-import { DrumLegalNotesDialog, EditModeToolbar, EditorNoticeDialog, InstrumentNameSwitch, LinkedStaffModeSwitch, NotationTypeConvertDialog, PianoRecordDrawer, QuickNumberNotationDrawer, ScoreImageImportDialog, ScoreLayoutControl, ScoreTimeOffsetDrawer, StructureEditSwitch } from '@renderer/components/score-toolbar'
+import { createEmptyWork } from '@renderer/utils/fileHelper/workFile'
+import { EDIT_NEW_WORK_TEMP_ID } from '@renderer/constant/work'
+import type { ScoreToWorkSettings } from '@renderer/utils/work/scoreToWork'
+import ScoreToWorkDialog from '@renderer/views/editor/ScoreToWorkDialog.vue'
+import LyricsMatchPanel from '@renderer/views/editor/LyricsMatchPanel.vue'
+import {
+  DrumLegalNotesDialog,
+  EditModeToolbar,
+  EditorMenuBar,
+  EditorNoticeDialog,
+  NotationTypeConvertDialog,
+  PianoRecordDrawer,
+  QuickNumberNotationDrawer,
+  ScoreImageImportDialog,
+  ScoreLayoutControl,
+  ScoreTimeOffsetDrawer
+} from '@renderer/components/score-toolbar'
+import {
+  applyScoreSlurStyle,
+  readScoreSlurStyle,
+  type SlurStylePreference
+} from '@renderer/views/editor/editHelper/renderEditSlurProperties'
+import {
+  applyShowInstrumentName,
+  readShowInstrumentName
+} from '@renderer/utils/scoreSpacingDefaults'
 import { useMidiStore } from '@renderer/store/midi.store'
 import {
   applyMusicScoreInPlace,
   initEditorScoreFromRoute,
   loadScoreFromRoute,
+  resolveEditorTempId,
   resolveScoreId
 } from '@renderer/utils/scoreRoute'
 import { CUR_PLAY_SCORE_TEMP_ID } from '@renderer/constant'
@@ -35,6 +58,12 @@ import {
 } from '@renderer/utils/scoreNotationTransfer'
 import type { KeySignatureTypeEnum, MusicScore } from '@deciphony/renderer'
 import EditorScoreWorkspace from '@renderer/views/editor/EditorScoreWorkspace.vue'
+import { standardModeEnabled } from '@renderer/views/editor/editHelper/renderEditStandardMode'
+import {
+  loadRhythmPatternMode,
+  saveRhythmPatternMode,
+  type RhythmPatternMode
+} from '@renderer/views/editor/editHelper/renderEditRhythmPattern'
 import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
 import { usePlayStore } from '@renderer/store/play.store'
 import { BUILTIN_COLLECTION_SEED_IDS } from '@renderer/constant/collectionSeedIds'
@@ -58,8 +87,20 @@ const timeOffsetVisible = ref(false)
 const quickInputVisible = ref(false)
 const pianoRecordVisible = ref(false)
 const scoreImageVisible = ref(false)
-/** 结构按钮开关：小节/谱表结构按钮 + 歌词区 */
+const scoreToWorkVisible = ref(false)
+/** 结构按钮开关：小节/谱表结构按钮 */
 const structureEditEnabled = ref(true)
+/** 歌词开关：歌词区 */
+const lyricsEditEnabled = ref(true)
+const lyricsMatchVisible = ref(false)
+const menuBarAnchorRef = ref<HTMLElement | null>(null)
+const scoreLayoutControlRef = ref<InstanceType<typeof ScoreLayoutControl> | null>(null)
+function toggleLyricsMatch() {
+  lyricsMatchVisible.value = !lyricsMatchVisible.value
+  if (lyricsMatchVisible.value) lyricsEditEnabled.value = true
+}
+const rhythmPatternMode = ref<RhythmPatternMode>(loadRhythmPatternMode())
+watch(rhythmPatternMode, saveRhythmPatternMode)
 const notationConvertDialogRef = ref<InstanceType<typeof NotationTypeConvertDialog> | null>(null)
 const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin()
 const globalLoading = useGlobalLoadingStore()
@@ -87,6 +128,40 @@ const isStandardStaffScore = computed(
   () => musicScoreData.value.type === MusicScoreTypeEnum.StandardStaff
 )
 const midiStore = useMidiStore()
+
+const linkedStaffMode = computed({
+  get: () =>
+    musicScoreData.value.grandStaffs.length > 0 &&
+    musicScoreData.value.grandStaffs.every((grandStaff) => grandStaff.linkedStaff === true),
+  set: (enabled: boolean) => {
+    for (const grandStaff of musicScoreData.value.grandStaffs) {
+      if (enabled) grandStaff.linkedStaff = true
+      else delete grandStaff.linkedStaff
+    }
+  }
+})
+
+const showInstrumentName = computed({
+  get: () => readShowInstrumentName(musicScoreData.value),
+  set: (enabled: boolean) => applyShowInstrumentName(musicScoreData.value, enabled)
+})
+
+const slurStyle = computed({
+  get: () => readScoreSlurStyle(musicScoreData.value),
+  set: (value: SlurStylePreference) => applyScoreSlurStyle(musicScoreData.value, value)
+})
+
+function openLayoutDialog() {
+  scoreLayoutControlRef.value?.openDialog()
+}
+
+function toggleLinkedStaffMode() {
+  linkedStaffMode.value = !linkedStaffMode.value
+}
+
+function toggleInstrumentName() {
+  showInstrumentName.value = !showInstrumentName.value
+}
 
 async function openPianoRecord() {
   if (fileBusy.value) return
@@ -341,8 +416,27 @@ async function handleExportSj() {
   }
 }
 
+/** 导出为作品：按设置建一个新作品，进作品编辑页后由它按复谱表分页铺曲谱 */
+function handleExportWork(settings: ScoreToWorkSettings) {
+  const dataStore = useDataStore()
+  const score = musicScoreData.value
+  dataStore.setTempScore(resolveEditorTempId(route), score)
+  const work = createEmptyWork({ name: resolveScoreName(score) })
+  work.pages[0]!.width = settings.pageWidth
+  work.pages[0]!.height = settings.pageHeight
+  dataStore.deleteTempWork(EDIT_NEW_WORK_TEMP_ID)
+  dataStore.setTempWork(EDIT_NEW_WORK_TEMP_ID, work)
+  const skinId = Number(scoreSkinName.value)
+  dataStore.setPendingScoreToWork({
+    ...settings,
+    musicScore: JSON.parse(JSON.stringify(score)) as MusicScore,
+    skinId: Number.isFinite(skinId) && skinId > 0 ? skinId : null
+  })
+  void router.push({ name: 'workEdit', query: { tempId: EDIT_NEW_WORK_TEMP_ID } })
+}
+
 type ImportCommand = 'sj' | 'musicXml' | 'midi' | 'scoreImage'
-type ExportCommand = 'sj' | 'musicXmlMs4' | 'musicXmlMs3' | 'midi'
+type ExportCommand = 'sj' | 'musicXmlMs4' | 'musicXmlMs3' | 'midi' | 'work'
 
 function handleImportCommand(command: ImportCommand) {
   if (command === 'sj') void handleImportSj()
@@ -355,6 +449,7 @@ function handleExportCommand(command: ExportCommand) {
   if (command === 'sj') void handleExportSj()
   else if (command === 'musicXmlMs4') void handleExportMusicXml('ms4')
   else if (command === 'musicXmlMs3') void handleExportMusicXml('ms3')
+  else if (command === 'work') scoreToWorkVisible.value = true
   else void handleExportMidi()
 }
 
@@ -384,7 +479,12 @@ async function handleSaveScore() {
   }
 }
 
+// 弹窗 / 下拉 / 消息框 teleport 到 body，脱离 .editor-cute，靠 body 类名带上主题色
+const EDITOR_THEME_BODY_CLASS = 'editor-cute-theme'
+onBeforeUnmount(() => document.body.classList.remove(EDITOR_THEME_BODY_CLASS))
+
 onMounted(async () => {
+  document.body.classList.add(EDITOR_THEME_BODY_CLASS)
   globalLoading.show(t('common.loading'))
   try {
     const [, loaded] = await Promise.all([waitScoreSkin(), loadScoreFromRoute(route)])
@@ -405,125 +505,55 @@ onMounted(async () => {
       ref="workspaceRef"
       :key="notationWorkspaceKey"
       v-model="musicScoreData"
+      v-model:rhythm-pattern-mode="rhythmPatternMode"
       :structure-edit-enabled="structureEditEnabled"
+      :lyrics-edit-enabled="lyricsEditEnabled"
     >
       <template #top-actions>
-        <div class="editor-top-bar__files">
-          <div class="editor-top-bar__files-group">
-            <ScoreLayoutControl :music-score="musicScoreData" :disabled="fileBusy" />
-            <StructureEditSwitch v-model="structureEditEnabled" :disabled="fileBusy" />
-            <LinkedStaffModeSwitch v-model="musicScoreData" :disabled="fileBusy" />
-            <InstrumentNameSwitch
-              v-if="!isFixedToneColor"
-              v-model="musicScoreData"
-              :disabled="fileBusy"
-            />
-            <ScoreNotationTypeSelector
-              v-if="!isPlayOnlyScore"
-              :model-value="musicScoreData.type"
-              variant="inline"
-              :disabled="fileBusy"
-              @change="handleNotationTypeChange"
-            />
-            <ScoreTransposeControl
-              v-if="!isPlayOnlyScore"
-              :current-key="currentScoreKey"
-              variant="inline"
-              :disabled="fileBusy"
-              @transpose="handleTranspose"
-            />
-            <ScoreSemitoneShiftButtons
-              v-if="!isPlayOnlyScore"
-              variant="inline"
-              :disabled="fileBusy"
-              @shift="handleSemitoneShift"
-            />
-          </div>
-          <div class="editor-top-bar__files-group">
-            <el-button
-              v-if="isNumberNotationScore"
-              class="toolbar-btn"
-              :disabled="fileBusy"
-              size="small"
-              @click="quickInputVisible = true"
-            >
-              {{ t('editor.toolbar.quickInput') }}
-            </el-button>
-            <el-button
-              v-if="isStandardStaffScore"
-              class="toolbar-btn"
-              :disabled="fileBusy"
-              size="small"
-              @click="openPianoRecord"
-            >
-              {{ t('editor.toolbar.pianoRecord') }}
-            </el-button>
-            <el-button
-              v-if="isDrumNotationScore"
-              class="toolbar-btn"
-              size="small"
-              :disabled="fileBusy"
-              @click="openDrumLegalNotes"
-            >
-              {{ t('editor.toolbar.legalNotes') }}
-            </el-button>
-            <el-button class="toolbar-btn" size="small" @click="editorNoticeVisible = true">
-              {{ t('editor.toolbar.notice') }}
-            </el-button>
-            <el-dropdown
-              trigger="click"
-              :disabled="fileBusy"
-              @command="handleImportCommand"
-            >
-              <el-button class="toolbar-btn" :disabled="fileBusy" size="small">
-                {{ t('editor.toolbar.import') }}
-                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="sj">{{ t('editor.toolbar.formatSj') }}</el-dropdown-item>
-                  <el-dropdown-item command="musicXml">
-                    {{ t('editor.toolbar.formatMusicXml') }}
-                  </el-dropdown-item>
-                  <el-dropdown-item command="midi">{{ t('editor.toolbar.formatMidi') }}</el-dropdown-item>
-                  <el-dropdown-item command="scoreImage" divided>
-                    {{ t('editor.toolbar.scoreImage') }}
-                  </el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-            <el-dropdown
-              trigger="click"
-              :disabled="fileBusy"
-              @command="handleExportCommand"
-            >
-              <el-button class="toolbar-btn" :disabled="fileBusy" size="small">
-                {{ t('editor.toolbar.export') }}
-                <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-              </el-button>
-              <template #dropdown>
-                <el-dropdown-menu>
-                  <el-dropdown-item command="sj">{{ t('editor.toolbar.formatSj') }}</el-dropdown-item>
-                  <el-dropdown-item command="musicXmlMs4">
-                    {{ t('editor.toolbar.formatMusicXmlMs4') }}
-                  </el-dropdown-item>
-                  <el-dropdown-item command="musicXmlMs3">
-                    {{ t('editor.toolbar.formatMusicXmlMs3') }}
-                  </el-dropdown-item>
-                  <el-dropdown-item command="midi">{{ t('editor.toolbar.formatMidi') }}</el-dropdown-item>
-                </el-dropdown-menu>
-              </template>
-            </el-dropdown>
-            <el-button
-              class="toolbar-btn toolbar-btn--save"
-              :disabled="fileBusy"
-              size="small"
-              type="primary"
-              @click="handleSaveScore"
-            >
-              {{ t('editor.toolbar.save') }}
-            </el-button>
-          </div>
+        <div ref="menuBarAnchorRef" class="editor-menu-host">
+          <EditorMenuBar
+            :disabled="fileBusy"
+            :structure-edit-enabled="structureEditEnabled"
+            :lyrics-edit-enabled="lyricsEditEnabled"
+            :standard-mode-enabled="standardModeEnabled"
+            :linked-staff-mode="linkedStaffMode"
+            :show-instrument-name="showInstrumentName"
+            :hide-instrument-name="isFixedToneColor"
+            :rhythm-pattern-mode="rhythmPatternMode"
+            :slur-style="slurStyle"
+            :notation-type="musicScoreData.type"
+            :current-key="currentScoreKey"
+            :hide-notation-tools="isPlayOnlyScore"
+            :show-quick-input="isNumberNotationScore"
+            :show-piano-record="isStandardStaffScore"
+            :show-legal-notes="isDrumNotationScore"
+            @save="handleSaveScore"
+            @import="handleImportCommand"
+            @export="handleExportCommand"
+            @notice="editorNoticeVisible = true"
+            @layout="openLayoutDialog"
+            @toggle-structure="structureEditEnabled = !structureEditEnabled"
+            @toggle-lyrics="lyricsEditEnabled = !lyricsEditEnabled"
+            @toggle-standard-mode="standardModeEnabled = !standardModeEnabled"
+            @toggle-linked-staff="toggleLinkedStaffMode"
+            @toggle-instrument-name="toggleInstrumentName"
+            @lyrics-match="toggleLyricsMatch"
+            @quick-input="quickInputVisible = true"
+            @piano-record="openPianoRecord"
+            @legal-notes="openDrumLegalNotes"
+            @set-rhythm-mode="rhythmPatternMode = $event"
+            @set-slur-style="slurStyle = $event"
+            @set-notation-type="handleNotationTypeChange"
+            @transpose="handleTranspose"
+            @semitone-shift="handleSemitoneShift"
+          />
+          <!-- 布局对话框仍由原组件承载，菜单项只负责打开 -->
+          <ScoreLayoutControl
+            ref="scoreLayoutControlRef"
+            hide-trigger
+            :music-score="musicScoreData"
+            :disabled="fileBusy"
+          />
         </div>
       </template>
     </EditorScoreWorkspace>
@@ -549,11 +579,18 @@ onMounted(async () => {
     />
 
     <ScoreImageImportDialog v-model="scoreImageVisible" @generated="handleScoreImageGenerated" />
+    <ScoreToWorkDialog v-model="scoreToWorkVisible" @confirm="handleExportWork" />
 
     <EditorNoticeDialog v-model="editorNoticeVisible" />
     <DrumLegalNotesDialog v-model="drumLegalNotesVisible" />
 
     <NotationTypeConvertDialog ref="notationConvertDialogRef" />
+    <LyricsMatchPanel
+      v-if="lyricsMatchVisible"
+      :music-score="musicScoreData"
+      :anchor="menuBarAnchorRef"
+      @close="lyricsMatchVisible = false"
+    />
   </div>
 </template>
 
@@ -566,50 +603,8 @@ onMounted(async () => {
   box-sizing: border-box;
 }
 
-.editor-top-bar__files {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
+.editor-menu-host {
+  position: relative;
   width: 100%;
-}
-
-.editor-top-bar__files-group {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 6px;
-}
-
-.toolbar-btn {
-  --el-button-bg-color: rgba(255, 255, 255, 0.85);
-  --el-button-border-color: rgba(255, 184, 208, 0.5);
-  --el-button-text-color: var(--ec-text);
-  --el-button-hover-bg-color: rgba(255, 214, 232, 0.85);
-  --el-button-hover-border-color: var(--ec-pink-deep);
-  --el-button-disabled-bg-color: rgba(255, 255, 255, 0.5);
-  --el-button-disabled-border-color: rgba(255, 184, 208, 0.28);
-  --el-button-disabled-text-color: var(--ec-text-soft);
-}
-
-.toolbar-btn--save {
-  --el-button-bg-color: var(--ec-pink-deep);
-  --el-button-border-color: var(--ec-pink-deep);
-  --el-button-text-color: #fff;
-  --el-button-hover-bg-color: #ff7aab;
-  --el-button-hover-border-color: #ff7aab;
-  --el-button-disabled-bg-color: rgba(255, 143, 184, 0.42);
-  --el-button-disabled-border-color: rgba(255, 143, 184, 0.42);
-  --el-button-disabled-text-color: rgba(255, 255, 255, 0.82);
-}
-
-.toolbar-btn.is-disabled,
-.toolbar-btn.is-disabled:hover,
-.toolbar-btn--save.is-disabled,
-.toolbar-btn--save.is-disabled:hover {
-  background-color: var(--el-button-disabled-bg-color);
-  border-color: var(--el-button-disabled-border-color);
-  color: var(--el-button-disabled-text-color);
 }
 </style>

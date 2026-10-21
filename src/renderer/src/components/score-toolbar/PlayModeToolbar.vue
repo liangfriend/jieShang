@@ -138,11 +138,13 @@ const accompanimentId = computed(() => readBoundAudioId('accompanimentId'))
 const vocalEnabled = computed(() => vocalPerformanceId.value != null)
 const accompanimentEnabled = computed(() => accompanimentId.value != null)
 
+const scorePlaybackActive = computed(
+  () => playback.playbackState.value !== 'stopped' || playback.countingIn.value
+)
+
 const sourceSelectDisabled = computed(() => {
   if (audioLoading.value) return true
-  if (isScoreSource.value) {
-    return playback.playbackState.value !== 'stopped' || playback.countingIn.value
-  }
+  if (isScoreSource.value) return scorePlaybackActive.value
   return audioStore.playbackState !== 'stopped'
 })
 
@@ -447,7 +449,11 @@ function goSinging() {
           />
         </div>
       </div>
-      <ScoreToneColorAdjuster v-if="isScoreSource && !isFixedToneColor" score-option />
+      <ScoreToneColorAdjuster
+        v-if="isScoreSource && !isFixedToneColor"
+        score-option
+        :disabled="scorePlaybackActive"
+      />
       <ScoreNotationTypeSelector
         v-if="!isPlayOnlyScore"
         :model-value="notationType"

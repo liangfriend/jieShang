@@ -61,7 +61,7 @@ let searchTimer: ReturnType<typeof setTimeout> | null = null
 async function fetchScores() {
   scoreLoading.value = true
   try {
-    scores.value = await searchScoresFromDatabase(scoreKeyword.value)
+    scores.value = await searchScoresFromDatabase(scoreKeyword.value, 'music_score')
   } finally {
     scoreLoading.value = false
   }

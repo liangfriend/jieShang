@@ -1,11 +1,13 @@
 <script lang="ts" setup>
-import type {DoubleNoteAffiliatedSymbol, MusicScore, SlotData} from '@deciphony/renderer'
-import {SlurTypeEnum} from '@deciphony/renderer'
+import type {DoubleNoteAffiliatedSymbol, SlotData} from '@deciphony/renderer'
+import type {SlurTypeEnum} from '@deciphony/renderer'
 import {computed} from 'vue'
+import {useI18n} from 'vue-i18n'
 import {setSlurType} from '@deciphony/extensions/dr-edit'
-import SpanResizeSection from '../../components/SpanResizeSection.vue'
-import EndpointOffsetSection from '../../components/EndpointOffsetSection.vue'
+import {TAB_SLUR_TYPE_OPTIONS} from '../renderEditTabAddState'
+import SlurPropertyPanel from '../../components/SlurPropertyPanel.vue'
 
+/** TAB 连音线：多一个技巧类型（击弦 / 勾弦 / 滑音 …），其余与五线谱连音线一致 */
 const props = defineProps<{
   editSlot: SlotData
 }>()
@@ -19,30 +21,23 @@ const slurType = computed({
   },
 })
 
-const options: {value: SlurTypeEnum | ''; label: string}[] = [
-  {value: '', label: '无'},
-  {value: SlurTypeEnum.H, label: '击弦 H'},
-  {value: SlurTypeEnum.S, label: '滑弦 S'},
-  {value: SlurTypeEnum.P, label: '勾弦 P'},
-  {value: SlurTypeEnum.HP, label: '击勾弦 HP'},
-]
+const {t} = useI18n()
 </script>
 
 <template>
   <div>
     <section class="tab-slur-props">
-      <div class="tab-slur-props__label">类型</div>
+      <div class="tab-slur-props__label">{{ t('editor.tabNote.slurType') }}</div>
       <el-select v-model="slurType" size="small" style="width: 100%">
         <el-option
-          v-for="opt in options"
+          v-for="opt in TAB_SLUR_TYPE_OPTIONS"
           :key="opt.value || 'none'"
-          :label="opt.label"
+          :label="t(opt.labelKey)"
           :value="opt.value"
         />
       </el-select>
     </section>
-    <SpanResizeSection :music-score="editSlot.musicScore as MusicScore" :symbol="slur" />
-    <EndpointOffsetSection :symbol="slur" />
+    <SlurPropertyPanel :edit-slot="editSlot" />
   </div>
 </template>
 

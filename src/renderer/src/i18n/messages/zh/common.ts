@@ -2,6 +2,7 @@ export default {
   common: {
     back: '返回',
     cancel: '取消',
+    close: '关闭',
     confirm: '确定',
     delete: '删除',
     gotIt: '知道了',

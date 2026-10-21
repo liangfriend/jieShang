@@ -1,16 +1,20 @@
 <script lang="ts" setup>
-import {MusicScoreTypeEnum, type SlotData} from '@deciphony/renderer'
+import {isNumberNotationSlur, type SlotData} from '@deciphony/renderer'
 import {ElMessage} from 'element-plus'
 import {computed} from 'vue'
 import {useI18n} from 'vue-i18n'
 import {
   applySlurRelativeToScope,
   centerSlurControlPoint,
+  getSlurStyle,
   getSlurThickness,
+  setSlurStyle,
   setSlurThickness,
   SLUR_APPLY_SCOPES,
+  SLUR_STYLE_PREFERENCE_VALUES,
   type SlurApplyScope,
   type SlurEditSlot,
+  type SlurStylePreference,
 } from '../renderEditSlurProperties'
 import {slurColumnOptions} from '../renderEditSlurEndpoints'
 import EndpointOffsetSection from './EndpointOffsetSection.vue'
@@ -29,13 +33,31 @@ const {t} = useI18n()
 const slurEditSlot = computed(() => props.editSlot as SlurEditSlot)
 const musicScore = computed(() => slurEditSlot.value.musicScore)
 const slur = computed(() => slurEditSlot.value.self)
-/** 简谱连音线不用控制点 */
-const showControlCenter = computed(() => musicScore.value.type !== MusicScoreTypeEnum.NumberNotation)
+/** 尖锐造型才有 controlPoint；圆润（含未指定时的简谱默认）不展示居中控制点 */
+const showControlCenter = computed(() => {
+  const preference = getSlurStyle(slur.value)
+  return !isNumberNotationSlur(
+    musicScore.value.type,
+    preference === 'default' ? undefined : preference
+  )
+})
 
 const thickness = computed({
   get: () => getSlurThickness(slur.value),
   set: (v: number) => setSlurThickness(slur.value, v),
 })
+
+const style = computed({
+  get: () => getSlurStyle(slur.value),
+  set: (v: string) => setSlurStyle(slur.value, v as SlurStylePreference),
+})
+
+const styleOptions = computed(() =>
+  SLUR_STYLE_PREFERENCE_VALUES.map((value) => ({
+    value,
+    label: t(`editor.slur.styleValue.${value}`),
+  })),
+)
 
 /** 起止音可换成同一列（叠音 / 和弦）里的其它音 */
 const startOptions = computed(() => slurColumnOptions(musicScore.value, slur.value.startId, t))
@@ -58,6 +80,9 @@ function applyTo(scope: SlurApplyScope) {
 
 <template>
   <div class="slur-props">
+    <PanelGroup :title="t('editor.slur.style')">
+      <PanelSegmented v-model="style" :options="styleOptions" :columns="3" />
+    </PanelGroup>
     <section class="slur-props__section">
       <SlurThicknessControl v-model="thickness" />
     </section>

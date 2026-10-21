@@ -7,6 +7,7 @@ import {MusicScoreTypeEnum} from '@deciphony/renderer'
 import {
   listGraceNotes,
   removeGraceById,
+  tryAddDrumGrace,
   tryAddNumberGrace,
   tryAddStaffGrace,
   tryAddTabGrace,
@@ -34,6 +35,10 @@ function add(placement: GracePlacement) {
   }
   if (score.type === MusicScoreTypeEnum.NumberNotation) {
     tryAddNumberGrace(props.editSlot, placement)
+    return
+  }
+  if (score.type === MusicScoreTypeEnum.DrumNotation) {
+    tryAddDrumGrace(props.editSlot, placement)
     return
   }
   tryAddStaffGrace(props.editSlot, placement)

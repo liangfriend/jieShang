@@ -5,32 +5,9 @@ import {
   SCORE_EDIT_HISTORY_MAX,
   type ScoreEditHistory
 } from '@renderer/utils/scoreEditHistory'
+import { isEditableTarget, shortcutKey } from '@renderer/utils/shortcutKey'
 
 const COMMIT_DEBOUNCE_MS = 220
-
-/** 仅真正的文本输入吞快捷键；radio/checkbox/button 等工具栏控件不吞 */
-function isEditableTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false
-  if (target.isContentEditable || target.closest('[contenteditable="true"]')) return true
-  if (target instanceof HTMLTextAreaElement) return true
-  if (target instanceof HTMLSelectElement) return true
-  if (target instanceof HTMLInputElement) {
-    const type = (target.type || 'text').toLowerCase()
-    return ![
-      'radio',
-      'checkbox',
-      'button',
-      'submit',
-      'reset',
-      'file',
-      'image',
-      'hidden',
-      'range',
-      'color'
-    ].includes(type)
-  }
-  return false
-}
 
 /**
  * 编辑页全量快照：深监听防抖入栈；Ctrl/Cmd+Z 撤销、Ctrl/Cmd+Y 恢复；离页清空。
@@ -73,7 +50,7 @@ export function useScoreEditHistory(
     if (!(event.ctrlKey || event.metaKey) || event.altKey) return
     if (isEditableTarget(event.target)) return
 
-    const key = event.key.toLowerCase()
+    const key = shortcutKey(event).toLowerCase()
     if (key === 'z' && !event.shiftKey) {
       event.preventDefault()
       restore('undo')

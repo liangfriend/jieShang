@@ -10,10 +10,10 @@ import {
   WHITEBOARD_KEY_COUNT_OPTIONS,
   WHITEBOARD_KEY_HEIGHT_MAX,
   WHITEBOARD_KEY_HEIGHT_MIN,
-  WHITEBOARD_KEY_SIGNATURE_OPTIONS,
   WHITEBOARD_NOTE_BPM_MAX,
   WHITEBOARD_NOTE_BPM_MIN,
   WHITEBOARD_PITCH_NOTATION_OPTIONS,
+  WHITEBOARD_STAFF_MODE_OPTIONS,
   WHITEBOARD_WHITE_KEY_WIDTH_MAX,
   WHITEBOARD_WHITE_KEY_WIDTH_MIN,
   WHITEBOARD_WIDTH_TYPE_OPTIONS,
@@ -21,10 +21,12 @@ import {
   resolveWhiteboardKeyCountLabel,
   resolveWhiteboardKeySignatureLabel,
   resolveWhiteboardPitchNotationLabel,
+  resolveWhiteboardStaffModeLabel,
   resolveWhiteboardWidthTypeLabel,
   type WhiteboardClef,
   type WhiteboardKeyCount,
   type WhiteboardPitchNotation,
+  type WhiteboardStaffMode,
   type WhiteboardWidthType
 } from '@renderer/constant/whiteboard'
 import {
@@ -34,6 +36,8 @@ import {
 import { usePlayStore } from '@renderer/store/play.store'
 import { useWhiteboardStore } from '@renderer/store/whiteboard.store'
 import ScoreToneColorAdjuster from '@renderer/components/score-toolbar/ScoreToneColorAdjuster.vue'
+import CircleOfFifthsPanel from './CircleOfFifthsPanel.vue'
+import PcKeyboardShortcut from '../score-toolbar/PcKeyboardShortcut.vue'
 import '../score-toolbar/score-toolbar.css'
 
 type ActivePanel =
@@ -43,9 +47,9 @@ type ActivePanel =
   | 'whiteKeyWidth'
   | 'pitchNotation'
   | 'volume'
+  | 'staffMode'
   | 'targetClef'
   | 'noteBpm'
-  | 'keySignature'
   | null
 
 const emit = defineEmits<{
@@ -70,6 +74,7 @@ const {
   addNoteEnabled,
   autoClearEnabled,
   targetClef,
+  staffMode,
   noteInputBpm,
   keySignature,
   isCustomWidth
@@ -78,12 +83,15 @@ const {
 const { volume } = storeToRefs(playStore)
 
 const activePanel = ref<ActivePanel>(null)
+const circleOfFifthsOpen = ref(false)
+const keySignatureBtnRef = ref<HTMLButtonElement | null>(null)
 
 const keyCountLabel = computed(() => resolveWhiteboardKeyCountLabel(keyCount.value))
 const widthTypeLabel = computed(() => resolveWhiteboardWidthTypeLabel(widthType.value))
 const pitchNotationLabel = computed(() => resolveWhiteboardPitchNotationLabel(pitchNotation.value))
 const volumeLabel = computed(() => `${Math.round(volume.value * 100)}%`)
 const targetClefLabel = computed(() => resolveWhiteboardClefLabel(targetClef.value))
+const staffModeLabel = computed(() => resolveWhiteboardStaffModeLabel(staffMode.value))
 const keySignatureLabel = computed(() => resolveWhiteboardKeySignatureLabel(keySignature.value))
 
 function togglePanel(panel: Exclude<ActivePanel, null>) {
@@ -125,8 +133,13 @@ function onTargetClefChange(event: Event) {
   whiteboardStore.setTargetClef(value)
 }
 
-function onKeySignatureChange(event: Event) {
-  const value = (event.target as HTMLSelectElement).value as KeySignatureTypeEnum
+function onStaffModeChange(event: Event) {
+  const value = (event.target as HTMLSelectElement).value as WhiteboardStaffMode
+  whiteboardStore.setStaffMode(value)
+}
+
+function onKeySignatureSelect(value: KeySignatureTypeEnum) {
+  if (value === keySignature.value) return
   whiteboardStore.setKeySignature(value)
   emit('changeKeySignature', value)
 }
@@ -328,6 +341,27 @@ function formatBpm(value: number) {
         <button
           type="button"
           class="score-toolbar__btn whiteboard-toolbar__btn--stable"
+          @click="togglePanel('staffMode')"
+        >
+          {{ t('whiteboard.toolbar.staffMode') }} {{ staffModeLabel }}
+        </button>
+        <div v-if="activePanel === 'staffMode'" class="score-toolbar__popup" @pointerdown.stop>
+          <div class="whiteboard-toolbar__field">
+            <span class="whiteboard-toolbar__field-label">{{ t('whiteboard.toolbar.staffMode') }}</span>
+            <select class="whiteboard-toolbar__select" :value="staffMode" @change="onStaffModeChange">
+              <option v-for="mode in WHITEBOARD_STAFF_MODE_OPTIONS" :key="mode" :value="mode">
+                {{ resolveWhiteboardStaffModeLabel(mode) }}
+              </option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="score-toolbar__adjuster">
+        <button
+          type="button"
+          class="score-toolbar__btn whiteboard-toolbar__btn--stable"
+          :disabled="staffMode !== 'triple'"
           @click="togglePanel('targetClef')"
         >
           {{ t('whiteboard.toolbar.clef') }} {{ targetClefLabel }}
@@ -365,33 +399,23 @@ function formatBpm(value: number) {
         </div>
       </div>
 
-      <div class="score-toolbar__adjuster">
-        <button
-          type="button"
-          class="score-toolbar__btn whiteboard-toolbar__btn--stable"
-          @click="togglePanel('keySignature')"
-        >
-          {{ t('whiteboard.toolbar.keySignature') }} {{ keySignatureLabel }}
-        </button>
-        <div v-if="activePanel === 'keySignature'" class="score-toolbar__popup" @pointerdown.stop>
-          <div class="whiteboard-toolbar__field">
-            <span class="whiteboard-toolbar__field-label">{{ t('whiteboard.toolbar.keySignature') }}</span>
-            <select
-              class="whiteboard-toolbar__select"
-              :value="keySignature"
-              @change="onKeySignatureChange"
-            >
-              <option
-                v-for="item in WHITEBOARD_KEY_SIGNATURE_OPTIONS"
-                :key="item.value"
-                :value="item.value"
-              >
-                {{ resolveWhiteboardKeySignatureLabel(item.value) }}
-              </option>
-            </select>
-          </div>
-        </div>
-      </div>
+      <button
+        ref="keySignatureBtnRef"
+        type="button"
+        class="score-toolbar__btn whiteboard-toolbar__btn--stable"
+        :class="{ 'score-toolbar__btn--active': circleOfFifthsOpen }"
+        @click="circleOfFifthsOpen = !circleOfFifthsOpen"
+      >
+        {{ t('whiteboard.toolbar.keySignature') }} {{ keySignatureLabel }}
+      </button>
+      <CircleOfFifthsPanel
+        v-if="circleOfFifthsOpen"
+        :anchor="keySignatureBtnRef"
+        :model-value="keySignature"
+        @update:model-value="onKeySignatureSelect"
+        @close="circleOfFifthsOpen = false"
+      />
+      <PcKeyboardShortcut />
 
       <button type="button" class="score-toolbar__btn" @click="onClearNotes">
         {{ t('whiteboard.toolbar.clearNotes') }}
@@ -439,11 +463,6 @@ function formatBpm(value: number) {
   background: rgba(255, 248, 251, 0.98);
   box-shadow: 0 8px 28px rgba(200, 140, 180, 0.22);
   transform: translateX(-50%);
-}
-
-.score-toolbar__btn--active {
-  border-color: rgba(123, 201, 150, 0.75);
-  background: linear-gradient(90deg, rgba(200, 240, 208, 0.65), rgba(167, 224, 186, 0.55));
 }
 
 .whiteboard-toolbar__btn--stable {

@@ -1,7 +1,9 @@
-import type { VDom } from '@deciphony/renderer'
 import type { PlaySequence } from '@deciphony/player'
 import type { ComputedRef, InjectionKey, Ref } from 'vue'
-import type { MusicScoreHighlightExpose } from '@deciphony/extensions/dr-play-highlight'
+import type {
+  MusicScoreHighlightExpose,
+  usePlayHighlight
+} from '@deciphony/extensions/dr-play-highlight'
 import type { EndListener, PlaybackState, ProgressListener } from '@renderer/store/play.store'
 import type { ScoreScrollFollowApi } from '@renderer/utils/scoreScrollToPlayingNote'
 
@@ -10,6 +12,11 @@ import type { WaterfallScoreStats } from '@renderer/types/types'
 import type { PlayRange, PlayRangeSelect } from './usePlayRangeSelect'
 
 export type { PlaybackState }
+
+/** 与 music-score 的 renderMusicScore(list, info) 同签名 */
+export type RenderMusicScoreHandler = NonNullable<
+  NonNullable<ReturnType<typeof usePlayHighlight>['on']>['renderMusicScore']
+>
 
 export type UseScorePagePlaybackOptions = {
   musicScoreRef?: Ref<MusicScoreHighlightExpose | null>
@@ -36,6 +43,9 @@ export type PianoWaterfallPlaybackExpose = {
   pause: () => void
   stop: () => void
   clearActiveParts: () => void
+  /** 演示播放：按 noteId 强制 perfect 并点亮水柱 */
+  perfectHitNote?: (noteId: string) => void
+  perfectReleaseNote?: (midi: number, endMs?: number) => void
   stats: WaterfallScoreStats
 }
 
@@ -51,7 +61,7 @@ export type ScorePagePlaybackController = {
   handleStop: () => void
   /** 清空瀑布流激活样式与评分（不停止播放） */
   handleClearPlayData?: () => void
-  handleRenderMusicScore?: (list: VDom[]) => void
+  handleRenderMusicScore?: RenderMusicScoreHandler
   setHighlightBpm?: (bpm: number) => void
   /** 按音符 id 高亮（范唱/伴奏 APlayer 进度对齐用） */
   addNoteHighlight?: (noteId: string) => void

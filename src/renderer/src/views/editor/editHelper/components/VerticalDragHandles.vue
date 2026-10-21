@@ -58,7 +58,7 @@ function onHandleDown(handle: VerticalHandleKind, event: PointerEvent) {
 <style scoped>
 .vertical-drag-handles__end {
   fill: #fff;
-  stroke: #409eff;
+  stroke: var(--ec-pink-strong, #f0709f);
   stroke-width: 1.5;
   cursor: ns-resize;
 }

@@ -32,6 +32,7 @@ const shortcutGroups = computed(() => {
   const groups = tm('editor.noticeDialog.shortcutGroups') as Record<string, ShortcutGroup>
   return SHORTCUT_GROUP_KEYS.map((key) => ({ key, ...groups[key]! }))
 })
+const standardModeItems = computed(() => tm('editor.noticeDialog.standardModeItems') as string[])
 const midiItems = computed(() => tm('editor.noticeDialog.midiItems') as string[])
 const tabItems = computed(() => tm('editor.noticeDialog.tabItems') as string[])
 </script>
@@ -71,6 +72,13 @@ const tabItems = computed(() => tm('editor.noticeDialog.tabItems') as string[])
           </div>
         </dl>
         <p class="editor-notice-dialog__note">{{ t('editor.noticeDialog.commonShortcutNote') }}</p>
+      </section>
+
+      <section class="editor-notice-dialog__section">
+        <h3 class="editor-notice-dialog__title">{{ t('editor.noticeDialog.standardModeTitle') }}</h3>
+        <ul class="editor-notice-dialog__list">
+          <li v-for="(item, index) in standardModeItems" :key="index">{{ item }}</li>
+        </ul>
       </section>
 
       <section class="editor-notice-dialog__section">

@@ -5,9 +5,6 @@ import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { readInstrumentName } from '@deciphony/extensions/dr-instrument-name'
 import {
-  SCORE_GD_SLOT_H_MAX,
-  SCORE_GD_SLOT_H_MIN,
-  SCORE_GD_SLOT_H_STEP,
   SCORE_LYRICS_FONT_SIZE_MAX,
   SCORE_LYRICS_FONT_SIZE_MIN,
   SCORE_LYRICS_FONT_SIZE_STEP,
@@ -31,7 +28,6 @@ import {
   SCORE_WIDTH_MAX,
   SCORE_WIDTH_MIN,
   SCORE_WIDTH_STEP,
-  applyGdSlotHeight,
   applyLyricsFontFamily,
   applyLyricsFontSize,
   applySLSlotWidth,
@@ -40,6 +36,7 @@ import {
   applyScoreLayoutDefaults,
   applyScoreStaffSpacing,
   applyScoreWidth,
+  applyInstrumentNameFontFamily,
   applyTitleFontFamily,
   applyTSlotHeight,
   loadScoreLayoutDefaults,
@@ -58,9 +55,12 @@ const props = withDefaults(
   defineProps<{
     musicScore: MusicScore
     disabled?: boolean
+    /** 仅保留对话框（由菜单栏等外部触发 openDialog） */
+    hideTrigger?: boolean
   }>(),
   {
-    disabled: false
+    disabled: false,
+    hideTrigger: false
   }
 )
 
@@ -106,17 +106,6 @@ function onDefaultFieldChange(key: keyof ScoreStaffSpacing, value: number | unde
   persistDefaults({ ...defaultsDraft.value, [key]: value })
 }
 
-function onGdSlotChange(value: number | undefined) {
-  if (value == null || !Number.isFinite(value)) return
-  draft.value = { ...draft.value, gdSlotH: value }
-  applyGdSlotHeight(props.musicScore, value)
-}
-
-function onDefaultGdSlotChange(value: number | undefined) {
-  if (value == null || !Number.isFinite(value)) return
-  persistDefaults({ ...defaultsDraft.value, gdSlotH: value })
-}
-
 function onLyricsFontSizeChange(value: number | undefined) {
   if (value == null || !Number.isFinite(value)) return
   draft.value = { ...draft.value, lyricsFontSize: value }
@@ -146,6 +135,16 @@ function onTitleFontFamilyChange(value: string | undefined) {
 
 function onDefaultTitleFontFamilyChange(value: string | undefined) {
   persistDefaults({ ...defaultsDraft.value, titleFontFamily: value ?? '' })
+}
+
+function onInstrumentNameFontFamilyChange(value: string | undefined) {
+  const next = value ?? ''
+  draft.value = { ...draft.value, instrumentNameFontFamily: next }
+  applyInstrumentNameFontFamily(props.musicScore, next)
+}
+
+function onDefaultInstrumentNameFontFamilyChange(value: string | undefined) {
+  persistDefaults({ ...defaultsDraft.value, instrumentNameFontFamily: value ?? '' })
 }
 
 function onHeightChange(value: number | undefined) {
@@ -208,6 +207,9 @@ function openDialog() {
   visible.value = true
 }
 
+defineExpose({ openDialog })
+
+
 /** 把当前曲谱布局写入软件默认 */
 function setAsDefault() {
   defaultsDraft.value = saveScoreLayoutDefaults(draft.value)
@@ -222,7 +224,13 @@ function applyDefault() {
 </script>
 
 <template>
-  <el-button class="toolbar-btn" size="small" :disabled="disabled" @click="openDialog">
+  <el-button
+    v-if="!hideTrigger"
+    class="toolbar-btn"
+    size="small"
+    :disabled="disabled"
+    @click="openDialog"
+  >
     {{ t('editor.toolbar.layout') }}
   </el-button>
 
@@ -276,6 +284,22 @@ function applyDefault() {
               <p class="score-layout-dialog__hint score-layout-dialog__hint--inline">
                 {{ t('editor.layoutDialog.sLSlotWHint') }}
               </p>
+              <div class="score-layout-dialog__row">
+                <span class="score-layout-dialog__label">{{ t('editor.layoutDialog.instrumentNameFont') }}</span>
+                <el-select
+                  class="score-layout-dialog__font"
+                  :model-value="draft.instrumentNameFontFamily"
+                  size="small"
+                  @update:model-value="onInstrumentNameFontFamilyChange"
+                >
+                  <el-option
+                    v-for="opt in fontOptions"
+                    :key="`cur-instrument-${opt.value || 'default'}`"
+                    :label="opt.value ? opt.label : t('editor.layoutDialog.fontDefault')"
+                    :value="opt.value"
+                  />
+                </el-select>
+              </div>
               <div class="score-layout-dialog__row">
                 <span class="score-layout-dialog__label">{{ t('editor.layoutDialog.sRSlotW') }}</span>
                 <el-input-number
@@ -342,18 +366,6 @@ function applyDefault() {
 
             <section class="score-layout-dialog__section">
               <h3 class="score-layout-dialog__title">{{ t('editor.layoutDialog.lyricsArea') }}</h3>
-              <div class="score-layout-dialog__row">
-                <span class="score-layout-dialog__label">{{ t('editor.layoutDialog.gdSlotH') }}</span>
-                <el-input-number
-                  :model-value="draft.gdSlotH"
-                  :min="SCORE_GD_SLOT_H_MIN"
-                  :max="SCORE_GD_SLOT_H_MAX"
-                  :step="SCORE_GD_SLOT_H_STEP"
-                  controls-position="right"
-                  size="small"
-                  @update:model-value="onGdSlotChange"
-                />
-              </div>
               <div class="score-layout-dialog__row">
                 <span class="score-layout-dialog__label">{{ t('editor.layoutDialog.lyricsFont') }}</span>
                 <el-select
@@ -438,6 +450,7 @@ function applyDefault() {
               :s-l-slot-w="draft.sLSlotW"
               :s-r-slot-w="draft.sRSlotW"
               :instrument-name="previewInstrumentName"
+              :instrument-name-font-family="draft.instrumentNameFontFamily || undefined"
             />
           </aside>
         </div>
@@ -479,6 +492,22 @@ function applyDefault() {
             <p class="score-layout-dialog__hint score-layout-dialog__hint--inline">
               {{ t('editor.layoutDialog.sLSlotWHint') }}
             </p>
+            <div class="score-layout-dialog__row">
+              <span class="score-layout-dialog__label">{{ t('editor.layoutDialog.instrumentNameFont') }}</span>
+              <el-select
+                class="score-layout-dialog__font"
+                :model-value="defaultsDraft.instrumentNameFontFamily"
+                size="small"
+                @update:model-value="onDefaultInstrumentNameFontFamilyChange"
+              >
+                <el-option
+                  v-for="opt in fontOptions"
+                  :key="`def-instrument-${opt.value || 'default'}`"
+                  :label="opt.value ? opt.label : t('editor.layoutDialog.fontDefault')"
+                  :value="opt.value"
+                />
+              </el-select>
+            </div>
             <div class="score-layout-dialog__row">
               <span class="score-layout-dialog__label">{{ t('editor.layoutDialog.sRSlotW') }}</span>
               <el-input-number
@@ -533,18 +562,6 @@ function applyDefault() {
 
           <section class="score-layout-dialog__section">
             <h3 class="score-layout-dialog__title">{{ t('editor.layoutDialog.lyricsArea') }}</h3>
-            <div class="score-layout-dialog__row">
-              <span class="score-layout-dialog__label">{{ t('editor.layoutDialog.gdSlotH') }}</span>
-              <el-input-number
-                :model-value="defaultsDraft.gdSlotH"
-                :min="SCORE_GD_SLOT_H_MIN"
-                :max="SCORE_GD_SLOT_H_MAX"
-                :step="SCORE_GD_SLOT_H_STEP"
-                controls-position="right"
-                size="small"
-                @update:model-value="onDefaultGdSlotChange"
-              />
-            </div>
             <div class="score-layout-dialog__row">
               <span class="score-layout-dialog__label">{{ t('editor.layoutDialog.lyricsFont') }}</span>
               <el-select
@@ -776,9 +793,10 @@ function applyDefault() {
 }
 
 .score-layout-dialog__label {
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   font-size: 13px;
   color: #6a5a78;
+  white-space: nowrap;
 }
 
 .score-layout-dialog__row :deep(.el-input-number) {
@@ -786,6 +804,8 @@ function applyDefault() {
 }
 
 .score-layout-dialog__font {
+  flex: 0 1 168px;
+  min-width: 0;
   width: 168px;
 }
 

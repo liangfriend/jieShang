@@ -1,0 +1,546 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>解熵 - 免费简谱软件 · 五线谱打谱软件 | 简谱五线谱编辑、互转、播放与练习</title>
+  <meta name="description" content="解熵是一款免费的电脑打谱软件，支持简谱编辑、五线谱编辑、简谱转五线谱、五线谱转简谱、图片转简谱、MIDI 与 MusicXML 导入导出，还能播放曲谱、配歌词、练钢琴。加 QQ 群 202732106 免费获取安装包。" />
+  <meta name="keywords" content="简谱软件,五线谱软件,打谱软件,简谱编辑器,五线谱编辑器,简谱转五线谱,五线谱转简谱,图片转简谱,简谱制作,五线谱制作,免费打谱软件,电脑打谱,MIDI转五线谱,MusicXML,吉他谱,尤克里里谱,鼓谱,钢琴练习,解熵" />
+  <meta name="robots" content="index,follow" />
+  <meta name="applicable-device" content="pc,mobile" />
+  <meta http-equiv="Cache-Control" content="no-transform" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="解熵 - 免费简谱 / 五线谱打谱软件" />
+  <meta property="og:description" content="简谱、五线谱编辑与一键互转，图片转简谱，播放、歌词、钢琴练习。加 QQ 群 202732106 免费获取安装包。" />
+  <meta property="og:image" content="img/jianpu-editor.jpg" />
+  <link rel="icon" href="icon.png" />
+  <link rel="apple-touch-icon" href="icon.png" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "解熵",
+    "alternateName": ["解熵简谱软件", "解熵五线谱软件", "解熵打谱软件"],
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Windows 10, Windows 11",
+    "description": "免费的简谱 / 五线谱打谱软件：简谱编辑、五线谱编辑、简谱五线谱互转、图片转简谱、MIDI 与 MusicXML 导入导出、曲谱播放、歌词、钢琴练习。",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "CNY" },
+    "inLanguage": ["zh-CN", "en", "ja"]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "解熵简谱软件收费吗？",
+        "acceptedAnswer": { "@type": "Answer", "text": "完全免费。加入 QQ 群 202732106，在群文件里下载安装包即可。" }
+      },
+      {
+        "@type": "Question",
+        "name": "能把简谱转成五线谱吗？",
+        "acceptedAnswer": { "@type": "Answer", "text": "可以。解熵支持简谱转五线谱、五线谱转简谱，一键切换曲谱类型，音高与节奏保持一致。" }
+      },
+      {
+        "@type": "Question",
+        "name": "可以用图片生成简谱吗？",
+        "acceptedAnswer": { "@type": "Answer", "text": "可以。导入简谱图片（PNG / JPG / WebP / BMP，支持多张），软件自动识别生成可编辑的简谱。" }
+      },
+      {
+        "@type": "Question",
+        "name": "支持哪些系统？",
+        "acceptedAnswer": { "@type": "Answer", "text": "目前支持 Windows 10 / Windows 11 电脑。" }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    :root {
+      --pink: #ff7eb6;
+      --purple: #9b7bff;
+      --ink: #3d2e4f;
+      --muted: #7a6a8a;
+      --card: rgba(255, 255, 255, 0.82);
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      font-family: "PingFang SC", "Microsoft YaHei", "Hiragino Sans GB", system-ui, sans-serif;
+      color: var(--ink);
+      background: #fff7fb;
+      line-height: 1.7;
+    }
+    a { color: inherit; }
+
+    /* ---------- 首屏 ---------- */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 96px 20px 72px;
+      overflow: hidden;
+      text-align: center;
+      /* 把宣传图命名为 bg.jpg 放在同目录即可显示；没有时只显示渐变 */
+      background:
+        linear-gradient(160deg, rgba(255, 238, 247, 0.88), rgba(236, 228, 255, 0.82)),
+        url("bg.jpg") center / cover no-repeat,
+        linear-gradient(160deg, #ffeef7, #ece4ff);
+    }
+    .hero::before {
+      /* 五线谱装饰 */
+      content: "";
+      position: absolute;
+      inset: 18% -10% auto;
+      height: 120px;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(155, 123, 255, 0.22) 0 2px,
+        transparent 2px 26px
+      );
+      transform: rotate(-6deg);
+      pointer-events: none;
+    }
+    .hero__inner {
+      position: relative;
+      width: 100%;
+      max-width: 1240px;
+      display: grid;
+      gap: 48px;
+      align-items: center;
+    }
+    .hero__shot { margin: 0; }
+    @media (min-width: 1080px) {
+      .hero { text-align: left; }
+      .hero__inner { grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); }
+      .hero .tags { justify-content: flex-start; }
+      .hero .get { align-items: flex-start; }
+      .hero__sub { margin-left: 0; }
+      .hero .hero__h1-sub { font-size: 34px; white-space: nowrap; }
+      .hero__shot { transform: perspective(1600px) rotateY(-8deg) rotateX(2deg); }
+    }
+
+    /* ---------- 软件截图 ---------- */
+    .shot {
+      margin: 0 auto 40px;
+      max-width: 1000px;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #fff;
+      border: 1px solid rgba(155, 123, 255, 0.25);
+      box-shadow: 0 24px 60px rgba(120, 80, 160, 0.22);
+    }
+    .shot__bar {
+      display: flex;
+      gap: 6px;
+      padding: 10px 14px;
+      background: linear-gradient(90deg, #ffe3f0, #ebe3ff);
+    }
+    .shot__bar i {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ff9cc4;
+    }
+    .shot__bar i:nth-child(2) { background: #ffd27a; }
+    .shot__bar i:nth-child(3) { background: #9ee6b5; }
+    .shot img { display: block; width: 100%; height: auto; }
+    .shot figcaption {
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--muted);
+      text-align: center;
+      border-top: 1px solid rgba(155, 123, 255, 0.15);
+    }
+    .hero__logo {
+      width: 96px;
+      height: 96px;
+      border-radius: 24px;
+      box-shadow: 0 12px 32px rgba(155, 123, 255, 0.35);
+    }
+    .hero h1 {
+      margin: 20px 0 8px;
+      font-size: clamp(32px, 6vw, 56px);
+      line-height: 1.2;
+      letter-spacing: 2px;
+    }
+    .hero h1 .brand {
+      background: linear-gradient(90deg, var(--pink), var(--purple));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero h1 .brand,
+    .hero__h1-sub { display: block; }
+    .hero__h1-sub {
+      margin-top: 4px;
+      font-size: clamp(24px, 4.4vw, 42px);
+      letter-spacing: 1px;
+    }
+    .hero__sub {
+      margin: 0 auto 28px;
+      max-width: 640px;
+      font-size: clamp(16px, 2.4vw, 20px);
+      color: var(--muted);
+    }
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 10px;
+      margin: 0 0 32px;
+      padding: 0;
+      list-style: none;
+    }
+    .tags li {
+      padding: 6px 14px;
+      border-radius: 999px;
+      background: var(--card);
+      border: 1px solid rgba(155, 123, 255, 0.3);
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    /* ---------- 获取安装包 ---------- */
+    .get {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 24px 32px;
+      border-radius: 24px;
+      background: var(--card);
+      box-shadow: 0 16px 40px rgba(200, 140, 180, 0.25);
+      backdrop-filter: blur(6px);
+    }
+    .get__title { margin: 0; font-size: 15px; color: var(--muted); }
+    .get__qq {
+      margin: 0;
+      font-size: clamp(30px, 5vw, 40px);
+      font-weight: 800;
+      letter-spacing: 3px;
+      font-variant-numeric: tabular-nums;
+    }
+    .get__btn {
+      cursor: pointer;
+      border: none;
+      padding: 14px 40px;
+      border-radius: 999px;
+      font-size: 18px;
+      font-weight: 700;
+      color: #fff;
+      background: linear-gradient(90deg, var(--pink), var(--purple));
+      box-shadow: 0 10px 24px rgba(255, 126, 182, 0.4);
+      transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .get__btn:hover { transform: translateY(-2px); box-shadow: 0 14px 28px rgba(255, 126, 182, 0.5); }
+    .get__note { margin: 0; font-size: 13px; color: var(--muted); }
+
+    /* ---------- 内容区 ---------- */
+    section.block { padding: 72px 20px; }
+    section.block:nth-of-type(even) { background: #fff; }
+    .wrap { max-width: 1080px; margin: 0 auto; }
+    .block h2 {
+      margin: 0 0 8px;
+      text-align: center;
+      font-size: clamp(24px, 4vw, 34px);
+    }
+    .block .lead {
+      margin: 0 auto 40px;
+      max-width: 720px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+    }
+    .grid--3 { grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+    .card {
+      padding: 24px;
+      border-radius: 20px;
+      background: #fff;
+      border: 1px solid rgba(155, 123, 255, 0.18);
+      box-shadow: 0 6px 18px rgba(200, 140, 180, 0.12);
+    }
+    section.block:nth-of-type(even) .card { background: #fff7fb; }
+    .card__icon { font-size: 30px; line-height: 1; }
+    .card h3 { margin: 12px 0 6px; font-size: 18px; }
+    .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+    .faq { max-width: 760px; margin: 0 auto; }
+    .faq details {
+      margin-bottom: 12px;
+      padding: 16px 20px;
+      border-radius: 16px;
+      background: #fff;
+      border: 1px solid rgba(155, 123, 255, 0.2);
+    }
+    .faq summary { cursor: pointer; font-weight: 700; }
+    .faq p { margin: 10px 0 0; color: var(--muted); }
+
+    .cta { text-align: center; }
+
+    footer {
+      padding: 32px 20px;
+      text-align: center;
+      font-size: 13px;
+      color: var(--muted);
+      background: #fff;
+    }
+
+    .toast {
+      position: fixed;
+      left: 50%;
+      bottom: 40px;
+      transform: translate(-50%, 20px);
+      padding: 10px 20px;
+      border-radius: 999px;
+      background: rgba(61, 46, 79, 0.9);
+      color: #fff;
+      font-size: 14px;
+      opacity: 0;
+      transition: opacity 0.2s ease, transform 0.2s ease;
+      pointer-events: none;
+    }
+    .toast.show { opacity: 1; transform: translate(-50%, 0); }
+  </style>
+</head>
+<body>
+  <header class="hero">
+    <div class="hero__inner">
+      <div class="hero__text">
+        <img class="hero__logo" src="icon.png" alt="解熵简谱五线谱软件图标" width="96" height="96" />
+        <h1><span class="brand">解熵</span><span class="hero__h1-sub">免费简谱 / 五线谱打谱软件</span></h1>
+        <p class="hero__sub">
+          简谱编辑、五线谱编辑、简谱五线谱一键互转，图片转简谱，打完就能播放、配歌词、练钢琴。
+        </p>
+        <ul class="tags" aria-label="主要功能">
+          <li>简谱编辑</li>
+          <li>五线谱编辑</li>
+          <li>简谱转五线谱</li>
+          <li>图片转简谱</li>
+          <li>MIDI / MusicXML</li>
+          <li>钢琴练习</li>
+        </ul>
+
+        <div class="get" id="get">
+          <p class="get__title">加入 QQ 群，在群文件免费下载安装包</p>
+          <p class="get__qq">QQ 群 202732106</p>
+          <button class="get__btn" type="button" data-copy="202732106">复制群号，免费获取</button>
+          <p class="get__note">Windows 10 / 11 · 完全免费</p>
+        </div>
+      </div>
+      <figure class="shot hero__shot">
+        <div class="shot__bar" aria-hidden="true"><i></i><i></i><i></i></div>
+        <img src="img/jianpu-editor.jpg" width="1440" height="900" alt="解熵简谱编辑器界面：编辑简谱《夜曲》，右侧为音符属性面板" />
+      </figure>
+    </div>
+  </header>
+
+  <main>
+    <section class="block" id="number-notation">
+      <div class="wrap">
+        <h2>简谱软件：打简谱又快又顺手</h2>
+        <p class="lead">
+          专门为简谱设计的录入方式，不用拖鼠标点来点去，键盘敲数字就能把一首歌的简谱打完。
+        </p>
+        <figure class="shot">
+          <div class="shot__bar" aria-hidden="true"><i></i><i></i><i></i></div>
+          <img src="img/quick-input.jpg" width="1440" height="660" loading="lazy" alt="简谱快速录入：左边输入简谱文本，右边实时预览简谱" />
+          <figcaption>简谱快速录入：左边写文本，右边实时出谱</figcaption>
+        </figure>
+        <div class="grid">
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">⌨️</div>
+            <h3>键盘直接打简谱</h3>
+            <p>选中小节，按 1–7 输入 do re mi，字母三排对应高音、中音、低音，0 是休止符，时值用小键盘切换。</p>
+          </article>
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">📝</div>
+            <h3>文本快速录入</h3>
+            <p>像写字一样用文本写简谱，右侧实时预览，一键同步成正式曲谱。</p>
+          </article>
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">📷</div>
+            <h3>图片转简谱</h3>
+            <p>把简谱照片或截图拖进来，支持多张按顺序拼接，自动识别成可编辑的简谱。</p>
+          </article>
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">🎵</div>
+            <h3>节奏型一键套用</h3>
+            <p>按空格弹出节奏型卡片，二八、前十六、后十六、切分、附点一按就换好。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="staff">
+      <div class="wrap">
+        <h2>五线谱软件：从打谱到排版</h2>
+        <p class="lead">
+          五线谱也能用键盘按唱名录入，接上 MIDI 键盘还能边弹边记谱。
+        </p>
+        <figure class="shot">
+          <div class="shot__bar" aria-hidden="true"><i></i><i></i><i></i></div>
+          <img src="img/staff.jpg" width="1440" height="900" loading="lazy" alt="简谱一键转五线谱：《红色高跟鞋》钢琴五线谱" />
+          <figcaption>简谱一键转成五线谱，播放、转调、换音色都在下方工具栏</figcaption>
+        </figure>
+        <div class="grid">
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">🎼</div>
+            <h3>五线谱编辑器</h3>
+            <p>鼠标点在哪就是哪个音；也可以键盘按唱名输入，自动按调号换算音高。谱号、调号、拍号、反复记号、反复房子都能设置。</p>
+          </article>
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">🎹</div>
+            <h3>MIDI 键盘录谱</h3>
+            <p>插上 MIDI 键盘，按一个键记一个音，或者直接弹一段实时录成钢琴谱。</p>
+          </article>
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">🔁</div>
+            <h3>简谱 ⇄ 五线谱互转</h3>
+            <p>简谱转五线谱、五线谱转简谱一键切换，音高和节奏保持一致，还能整首转调。</p>
+          </article>
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">📂</div>
+            <h3>MIDI / MusicXML 导入导出</h3>
+            <p>导入 MIDI 自动生成五线谱，MusicXML 与其它打谱软件互通，也能导出 MIDI。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="more">
+      <div class="wrap">
+        <h2>不只是打谱</h2>
+        <p class="lead">打好的谱子马上就能听、能唱、能练。</p>
+        <figure class="shot">
+          <div class="shot__bar" aria-hidden="true"><i></i><i></i><i></i></div>
+          <img src="img/practice.jpg" width="1440" height="900" loading="lazy" alt="钢琴练习模式：简谱跟随高亮，瀑布流音符落到虚拟钢琴键盘上" />
+          <figcaption>练习模式：谱子跟着高亮，音符瀑布落到琴键上，弹完给分</figcaption>
+        </figure>
+        <div class="grid grid--3">
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">🔊</div>
+            <h3>曲谱播放</h3>
+            <p>多种乐器音色播放，播放时音符跟着高亮；还能在每个音下面显示箫、笛子的指法图。</p>
+          </article>
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">🎤</div>
+            <h3>歌词与演唱</h3>
+            <p>每个音下面写歌词，支持多段；整段歌词粘进来自动对齐到音符。演唱模式实时评测音准。</p>
+          </article>
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">🎹</div>
+            <h3>钢琴练习</h3>
+            <p>瀑布流 + 虚拟钢琴，连上 MIDI 钢琴自动判定弹得对不对，给出分数；新手模式一步一步跟着弹。</p>
+          </article>
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">🎸</div>
+            <h3>吉他谱 · 尤克里里 · 鼓谱</h3>
+            <p>六线谱、四线谱、贝斯谱和架子鼓谱都能写，还有和弦图管理和电子鼓机。</p>
+          </article>
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">👂</div>
+            <h3>乐理与音感训练</h3>
+            <p>绝对音感、节奏感、和弦识别、琴键音名小测验，边玩边练耳朵。</p>
+          </article>
+          <article class="card">
+            <div class="card__icon" aria-hidden="true">🖍️</div>
+            <h3>教学白板</h3>
+            <p>上课用的五线谱白板，点虚拟钢琴就能把音写上去，五度圈随手打开。</p>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="block" id="faq">
+      <div class="wrap">
+        <h2>常见问题</h2>
+        <p class="lead">关于解熵简谱 / 五线谱软件</p>
+        <div class="faq">
+          <details open>
+            <summary>解熵简谱软件收费吗？</summary>
+            <p>完全免费。加入 QQ 群 202732106，在群文件里下载安装包即可。</p>
+          </details>
+          <details>
+            <summary>能把简谱转成五线谱吗？</summary>
+            <p>可以。曲谱类型一键切换，简谱转五线谱、五线谱转简谱都支持，音高与节奏保持一致。</p>
+          </details>
+          <details>
+            <summary>可以用图片生成简谱吗？</summary>
+            <p>可以。导入简谱图片（PNG / JPG / WebP / BMP，支持多张），软件自动识别生成可编辑的简谱。</p>
+          </details>
+          <details>
+            <summary>支持哪些系统？</summary>
+            <p>目前支持 Windows 10 / Windows 11 电脑。</p>
+          </details>
+          <details>
+            <summary>遇到问题去哪里反馈？</summary>
+            <p>在 QQ 群 202732106 里直接提，新版本也会第一时间发在群文件。</p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="block cta">
+      <div class="wrap">
+        <h2>免费获取解熵简谱 / 五线谱软件</h2>
+        <p class="lead">加入 QQ 群 <strong>202732106</strong>，群文件里就是最新安装包。</p>
+        <button class="get__btn" type="button" data-copy="202732106">复制群号 202732106</button>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>解熵 · 免费简谱软件 / 五线谱打谱软件 · QQ 群 202732106</p>
+  </footer>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    (function () {
+      var toast = document.getElementById('toast')
+      var timer = 0
+      function show(text) {
+        toast.textContent = text
+        toast.classList.add('show')
+        clearTimeout(timer)
+        timer = setTimeout(function () { toast.classList.remove('show') }, 2200)
+      }
+      function fallbackCopy(text) {
+        var input = document.createElement('textarea')
+        input.value = text
+        input.style.position = 'fixed'
+        input.style.opacity = '0'
+        document.body.appendChild(input)
+        input.select()
+        var ok = false
+        try { ok = document.execCommand('copy') } catch (e) {}
+        document.body.removeChild(input)
+        return ok
+      }
+      document.querySelectorAll('[data-copy]').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          var text = btn.getAttribute('data-copy')
+          var done = function () { show('已复制群号 ' + text + '，打开 QQ 搜索加入即可') }
+          var fail = function () { show(fallbackCopy(text) ? '已复制群号 ' + text : '群号：' + text) }
+          if (navigator.clipboard && window.isSecureContext) {
+            navigator.clipboard.writeText(text).then(done, fail)
+          } else {
+            fail()
+          }
+        })
+      })
+    })()
+  </script>
+</body>
+</html>
