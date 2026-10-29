@@ -260,14 +260,14 @@ export async function guardSingleLineModeEnter(
 
   if (isPlayOnlyMusicScore(score)) {
     ElMessage.warning(i18n.global.t('play.messages.playOnlyModeUnavailable'))
-    if (from.name === 'play') return false
-    return { name: 'play', query: buildScoreRouteQuery(to) }
+    if (from.name === 'play' || from.name === 'edit') return false
+    return { name: 'edit', query: buildScoreRouteQuery(to) }
   }
 
   if (hasGrandStaffSingleStaffMismatch(score)) {
     ElMessage.warning(i18n.global.t('play.messages.grandStaffMismatch'))
-    if (from.name === 'play') return false
-    return { name: 'play', query: buildScoreRouteQuery(to) }
+    if (from.name === 'play' || from.name === 'edit') return false
+    return { name: 'edit', query: buildScoreRouteQuery(to) }
   }
 
   return true

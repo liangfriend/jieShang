@@ -94,3 +94,23 @@ textarea,
   :is(path, rect, circle, ellipse, polygon, text):not([fill='none']) {
   fill: #e53935;
 }
+
+/**
+ * 编辑选中：与播放高亮同一套 fill 策略（全局样式，盖住皮肤 fill="black"）。
+ * 类加在外层 g（dr-<tag>_<id>_）上，只给音符本体着色。
+ */
+.dr-selected-highlight:is(
+    [id^='dr-noteHead_'],
+    [id^='dr-noteStem_'],
+    [id^='dr-noteTail_'],
+    [id^='dr-rest_'],
+    [id^='dr-noteNumber_'],
+    [id^='dr-tabNoteNumber_'],
+    [id^='dr-longRest_'],
+    [id^='dr-longRestNumber_'],
+    [id^='dr-arpeggio_'],
+    [id^='dr-strumming_']
+  )
+  :is(path, rect, circle, ellipse, polygon, text):not([fill='none']) {
+  fill: #e53935;
+}

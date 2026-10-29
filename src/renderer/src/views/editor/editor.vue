@@ -1,7 +1,9 @@
 <script lang="ts" setup>
 import { ElMessage } from 'element-plus'
-import { MusicScoreTypeEnum } from '@deciphony/renderer'
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import type { MusicScoreHighlightExpose } from '@deciphony/extensions/dr-play-highlight'
+import type { PlayHighlightProgressData } from '@deciphony/extensions/dr-play-highlight'
+import { MusicScoreTypeEnum, type VDom } from '@deciphony/renderer'
+import { computed, nextTick, onBeforeUnmount, onMounted, onUnmounted, provide, ref, shallowRef, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useRoute, useRouter } from 'vue-router'
 import {
@@ -21,7 +23,6 @@ import ScoreToWorkDialog from '@renderer/views/editor/ScoreToWorkDialog.vue'
 import LyricsMatchPanel from '@renderer/views/editor/LyricsMatchPanel.vue'
 import {
   DrumLegalNotesDialog,
-  EditModeToolbar,
   EditorMenuBar,
   EditorNoticeDialog,
   NotationTypeConvertDialog,
@@ -66,10 +67,26 @@ import {
 } from '@renderer/views/editor/editHelper/renderEditRhythmPattern'
 import { useGlobalLoadingStore } from '@renderer/store/globalLoading.store'
 import { usePlayStore } from '@renderer/store/play.store'
+import { useAudioPlayerStore } from '@renderer/store/audioPlayer.store'
 import { BUILTIN_COLLECTION_SEED_IDS } from '@renderer/constant/collectionSeedIds'
 import { useScoreSkin } from '@renderer/utils/collection/useScoreSkin'
 import { useScoreEditHistory } from '@renderer/utils/useScoreEditHistory'
 import { isFixedToneColorScore, isPlayOnlyMusicScore } from '@renderer/utils/isTabNotation'
+import {
+  scorePlaybackKey,
+  scorePlayRangeKey,
+  scoreScrollFollowKey,
+  usePlayRangeSelect,
+  useScorePagePlayback
+} from '@renderer/utils/scorePagePlayback'
+import type { RenderMusicScoreHandler } from '@renderer/utils/scorePagePlayback/types'
+import { createScoreScrollToPlayingNote } from '@renderer/utils/scoreScrollToPlayingNote'
+import {
+  createScoreMarkExtension,
+  SCORE_MARK_NONE,
+  scoreMarkExtraHeight,
+  type ScoreMarkValue
+} from '@renderer/utils/scoreMark'
 import '@renderer/styles/editor-cute.css'
 
 const { t } = useI18n()
@@ -88,11 +105,114 @@ const quickInputVisible = ref(false)
 const pianoRecordVisible = ref(false)
 const scoreImageVisible = ref(false)
 const scoreToWorkVisible = ref(false)
-/** 结构按钮开关：小节/谱表结构按钮 */
+/** 结构按钮开关：小节/谱表结构按钮（播放模式只遮罩显示，不改此偏好） */
 const structureEditEnabled = ref(true)
 /** 歌词开关：歌词区 */
 const lyricsEditEnabled = ref(true)
+/** 编辑页内播放模式（仅菜单切换；进入曲谱默认编辑，无 mode=play） */
+const isPlayMode = ref(route.query.mode === 'play')
+const scoreMark = ref<ScoreMarkValue>(SCORE_MARK_NONE)
 const lyricsMatchVisible = ref(false)
+const playMusicScoreRef = shallowRef<MusicScoreHighlightExpose | null>(null)
+const playScoreRootRef = shallowRef<HTMLElement | null>(null)
+const playVDomList = shallowRef<VDom[]>([])
+const audioPlayerStore = useAudioPlayerStore()
+const playStore = usePlayStore()
+
+const scrollToPlayingNote = createScoreScrollToPlayingNote({
+  getScrollContainer: () => playScoreRootRef.value,
+  getVDomList: () => playVDomList.value,
+  findElementByVDom: (node) => playMusicScoreRef.value?.findElementByVDom(node) ?? null,
+  getMusicScore: () => musicScoreData.value
+})
+
+const rangeSelect = usePlayRangeSelect({ musicScoreRef: playMusicScoreRef })
+const playback = useScorePagePlayback(musicScoreData, {
+  musicScoreRef: playMusicScoreRef,
+  onPlaybackStopped: () => scrollToPlayingNote.resetScroll(),
+  getPlayRange: () => rangeSelect.getRange()
+})
+
+provide(scorePlaybackKey, playback)
+provide(scorePlayRangeKey, rangeSelect)
+provide(scoreScrollFollowKey, scrollToPlayingNote)
+
+const markUnavailable = computed(() => isPlayOnlyMusicScore(musicScoreData.value))
+const markExtension = computed(() =>
+  markUnavailable.value ? null : createScoreMarkExtension(scoreMark.value)
+)
+const playExtensions = computed(() => [
+  ...(markExtension.value ? [markExtension.value] : []),
+  rangeSelect.extension
+])
+const playRenderScore = computed(() => {
+  if (!isPlayMode.value) return null
+  const score = musicScoreData.value
+  const extra = scoreMarkExtraHeight(score, markExtension.value)
+  return extra ? { ...score, height: score.height + extra } : score
+})
+
+const rangeHint = computed(() => {
+  if (!rangeSelect.startNoteId.value) return t('play.range.pickStart')
+  if (!rangeSelect.endNoteId.value) return t('play.range.pickEnd')
+  return t('play.range.ready')
+})
+
+function syncPlayRefs() {
+  playMusicScoreRef.value =
+    (workspaceRef.value?.getMusicScoreRef?.() as MusicScoreHighlightExpose | null) ?? null
+  playScoreRootRef.value = workspaceRef.value?.getScoreRootEl?.() ?? null
+}
+
+async function setPlayMode(next: boolean) {
+  if (isPlayMode.value === next) return
+  if (next) {
+    workspaceRef.value?.clearSelection()
+    lyricsMatchVisible.value = false
+    rangeSelect.end()
+    isPlayMode.value = true
+    await nextTick()
+    syncPlayRefs()
+    await playStore.restorePlaybackDefaults(musicScoreData.value, { preferScoreToneColor: true })
+  } else {
+    playback.handleStop()
+    rangeSelect.end()
+    scoreMark.value = SCORE_MARK_NONE
+    isPlayMode.value = false
+    void playStore.resetCollectionToneColorToDefault()
+  }
+  const query = { ...route.query } as Record<string, string | string[]>
+  if (next) query.mode = 'play'
+  else delete query.mode
+  await router.replace({ name: 'edit', query })
+}
+
+function onWorkspaceScoreRendered(list: VDom[], info?: unknown) {
+  playVDomList.value = list
+  const handler = playback.handleRenderMusicScore
+  if (!handler || info === undefined) return
+  handler(list, info as Parameters<RenderMusicScoreHandler>[1])
+}
+
+function togglePlayMode() {
+  void setPlayMode(!isPlayMode.value)
+}
+
+watch(
+  () => route.query.mode,
+  (mode) => {
+    const wantPlay = mode === 'play'
+    if (wantPlay !== isPlayMode.value) void setPlayMode(wantPlay)
+  }
+)
+
+watch(notationWorkspaceKey, () => {
+  void nextTick(syncPlayRefs)
+})
+
+watch(isPlayMode, () => {
+  void nextTick(syncPlayRefs)
+})
 const menuBarAnchorRef = ref<HTMLElement | null>(null)
 const scoreLayoutControlRef = ref<InstanceType<typeof ScoreLayoutControl> | null>(null)
 function toggleLyricsMatch() {
@@ -104,7 +224,6 @@ watch(rhythmPatternMode, saveRhythmPatternMode)
 const notationConvertDialogRef = ref<InstanceType<typeof NotationTypeConvertDialog> | null>(null)
 const { skin: scoreSkin, skinName: scoreSkinName, waitScoreSkin } = useScoreSkin()
 const globalLoading = useGlobalLoadingStore()
-const playStore = usePlayStore()
 
 function clearSelection() {
   workspaceRef.value?.clearSelection()
@@ -483,6 +602,8 @@ async function handleSaveScore() {
 const EDITOR_THEME_BODY_CLASS = 'editor-cute-theme'
 onBeforeUnmount(() => document.body.classList.remove(EDITOR_THEME_BODY_CLASS))
 
+let scrollProgressSubId: string | null = null
+
 onMounted(async () => {
   document.body.classList.add(EDITOR_THEME_BODY_CLASS)
   globalLoading.show(t('common.loading'))
@@ -493,26 +614,64 @@ onMounted(async () => {
       notationWorkspaceKey.value += 1
       scoreEditHistory.reset(loaded)
     }
+    await nextTick()
+    syncPlayRefs()
+    if (isPlayMode.value) {
+      await playStore.restorePlaybackDefaults(musicScoreData.value, { preferScoreToneColor: true })
+    }
+    scrollProgressSubId = playback.subscribeProgressStart((_progress, data) => {
+      if (!isPlayMode.value) return
+      scrollToPlayingNote.handleProgressStart(data as PlayHighlightProgressData)
+    })
   } finally {
     globalLoading.hide()
   }
+})
+
+onUnmounted(() => {
+  if (scrollProgressSubId) playback.unsubscribeProgressStart(scrollProgressSubId)
+  playback.handleStop()
+  audioPlayerStore.stop()
+  void playStore.resetCollectionToneColorToDefault()
 })
 </script>
 
 <template>
   <div class="score-page editor-cute">
+    <div v-if="isPlayMode && rangeSelect.active.value" class="score-range-bar">
+      <span class="score-range-bar__label">{{ t('play.range.title') }}</span>
+      <span class="score-range-bar__hint">{{ rangeHint }}</span>
+      <button
+        type="button"
+        class="score-range-bar__btn"
+        :disabled="!rangeSelect.startNoteId.value"
+        @click="rangeSelect.clear()"
+      >
+        {{ t('play.range.clear') }}
+      </button>
+      <button type="button" class="score-range-bar__btn" @click="rangeSelect.end()">
+        {{ t('play.range.end') }}
+      </button>
+    </div>
     <EditorScoreWorkspace
       ref="workspaceRef"
       :key="notationWorkspaceKey"
       v-model="musicScoreData"
       v-model:rhythm-pattern-mode="rhythmPatternMode"
+      :play-mode="isPlayMode"
       :structure-edit-enabled="structureEditEnabled"
       :lyrics-edit-enabled="lyricsEditEnabled"
+      :play-extensions="playExtensions"
+      :play-render-score="playRenderScore"
+      @score-rendered="onWorkspaceScoreRendered"
     >
       <template #top-actions>
         <div ref="menuBarAnchorRef" class="editor-menu-host">
           <EditorMenuBar
             :disabled="fileBusy"
+            :play-mode="isPlayMode"
+            :music-score="musicScoreData"
+            :score-mark="scoreMark"
             :structure-edit-enabled="structureEditEnabled"
             :lyrics-edit-enabled="lyricsEditEnabled"
             :standard-mode-enabled="standardModeEnabled"
@@ -532,6 +691,8 @@ onMounted(async () => {
             @export="handleExportCommand"
             @notice="editorNoticeVisible = true"
             @layout="openLayoutDialog"
+            @toggle-play-mode="togglePlayMode"
+            @update:score-mark="scoreMark = $event"
             @toggle-structure="structureEditEnabled = !structureEditEnabled"
             @toggle-lyrics="lyricsEditEnabled = !lyricsEditEnabled"
             @toggle-standard-mode="standardModeEnabled = !standardModeEnabled"
@@ -541,6 +702,7 @@ onMounted(async () => {
             @quick-input="quickInputVisible = true"
             @piano-record="openPianoRecord"
             @legal-notes="openDrumLegalNotes"
+            @time-offset="timeOffsetVisible = true"
             @set-rhythm-mode="rhythmPatternMode = $event"
             @set-slur-style="slurStyle = $event"
             @set-notation-type="handleNotationTypeChange"
@@ -552,13 +714,11 @@ onMounted(async () => {
             ref="scoreLayoutControlRef"
             hide-trigger
             :music-score="musicScoreData"
-            :disabled="fileBusy"
+            :disabled="fileBusy || isPlayMode"
           />
         </div>
       </template>
     </EditorScoreWorkspace>
-
-    <EditModeToolbar @open-time-offset="timeOffsetVisible = true" />
 
     <ScoreTimeOffsetDrawer v-model="timeOffsetVisible" :music-score="musicScoreData" />
 
@@ -606,5 +766,56 @@ onMounted(async () => {
 .editor-menu-host {
   position: relative;
   width: 100%;
+}
+
+.score-range-bar {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  z-index: 30;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: max-content;
+  max-width: calc(100% - 32px);
+  padding: 6px 8px 6px 12px;
+  border: 1px solid rgba(255, 184, 208, 0.6);
+  border-radius: 999px;
+  background: rgba(255, 248, 251, 0.96);
+  box-shadow: 0 6px 18px rgba(200, 140, 180, 0.18);
+  box-sizing: border-box;
+}
+
+.score-range-bar__label {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(90deg, #ff8fb8, #c9b8ff);
+}
+
+.score-range-bar__hint {
+  font-size: 13px;
+  font-weight: 700;
+  color: #6b4f8a;
+}
+
+.score-range-bar__btn {
+  min-height: 30px;
+  padding: 0 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 184, 208, 0.55);
+  background: rgba(255, 255, 255, 0.9);
+  font-size: 12px;
+  font-weight: 700;
+  color: #5c4a6a;
+  cursor: pointer;
+}
+
+.score-range-bar__btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 </style>

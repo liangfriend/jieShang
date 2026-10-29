@@ -1,23 +1,47 @@
 <script setup lang="ts">
-import type { KeySignatureTypeEnum, MusicScoreTypeEnum } from '@deciphony/renderer'
+import type { KeySignatureTypeEnum, MusicScore, MusicScoreTypeEnum } from '@deciphony/renderer'
+import { hasGrandStaffSingleStaffMismatch } from '@deciphony/extensions/score-util'
+import { ElMessage } from 'element-plus'
+import { storeToRefs } from 'pinia'
 import { computed, onBeforeUnmount, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useRoute, useRouter } from 'vue-router'
+import VerticalDragSlider from '@renderer/components/VerticalDragSlider.vue'
+import {
+  PLAY_BPM_MAX,
+  PLAY_BPM_MIN,
+  PLAY_VOLUME_MAX,
+  PLAY_VOLUME_MIN
+} from '@renderer/constant/play'
 import { SCORE_NOTATION_TYPE_OPTIONS, resolveScoreNotationTypeLabel } from '@renderer/constant/scoreNotationType'
 import { resolveKeySignatureLabel } from '@renderer/i18n/helpers'
+import { usePlayStore } from '@renderer/store/play.store'
+import { isFixedToneColorScore, isPlayOnlyMusicScore } from '@renderer/utils/isTabNotation'
 import { SCORE_KEY_SIGNATURE_OPTIONS } from '@renderer/utils/scoreNotationTransfer'
+import { buildScoreRouteQuery } from '@renderer/utils/scoreRoute'
+import type { ScoreMarkValue } from '@renderer/utils/scoreMark'
 import {
   SLUR_STYLE_PREFERENCE_VALUES,
   type SlurStylePreference
 } from '@renderer/views/editor/editHelper/renderEditSlurProperties'
 import type { RhythmPatternMode } from '@renderer/views/editor/editHelper/renderEditRhythmPattern'
+import ScoreMarkSelector from './ScoreMarkSelector.vue'
+import ScoreToneColorAdjuster from './ScoreToneColorAdjuster.vue'
 
 defineOptions({ name: 'EditorMenuBar' })
 
 const { t } = useI18n()
+const route = useRoute()
+const router = useRouter()
+const playStore = usePlayStore()
+const { volume, bpm } = storeToRefs(playStore)
 
 const props = withDefaults(
   defineProps<{
     disabled?: boolean
+    playMode: boolean
+    musicScore: MusicScore
+    scoreMark: ScoreMarkValue
     structureEditEnabled: boolean
     lyricsEditEnabled: boolean
     standardModeEnabled: boolean
@@ -52,6 +76,8 @@ const emit = defineEmits<{
   export: [command: EditorMenuExportCommand]
   notice: []
   layout: []
+  'toggle-play-mode': []
+  'update:scoreMark': [value: ScoreMarkValue]
   'toggle-structure': []
   'toggle-lyrics': []
   'toggle-standard-mode': []
@@ -61,6 +87,7 @@ const emit = defineEmits<{
   'quick-input': []
   'piano-record': []
   'legal-notes': []
+  'time-offset': []
   'set-rhythm-mode': [mode: RhythmPatternMode]
   'set-slur-style': [style: SlurStylePreference]
   'set-notation-type': [type: MusicScoreTypeEnum]
@@ -68,8 +95,16 @@ const emit = defineEmits<{
   'semitone-shift': [semitones: 1 | -1]
 }>()
 
-type MenuId = 'file' | 'edit' | 'view' | 'score' | 'help' | null
-type FlyoutId = 'import' | 'export' | 'notation' | 'transpose' | 'rhythm' | 'slur' | null
+type MenuId = 'file' | 'edit' | 'view' | 'score' | 'play' | 'help' | null
+type FlyoutId =
+  | 'import'
+  | 'export'
+  | 'notation'
+  | 'transpose'
+  | 'rhythm'
+  | 'slur'
+  | 'playSettings'
+  | null
 
 const openMenu = ref<MenuId>(null)
 const openFlyout = ref<FlyoutId>(null)
@@ -77,6 +112,35 @@ const rootRef = ref<HTMLElement | null>(null)
 
 const notationOptions = SCORE_NOTATION_TYPE_OPTIONS
 const keyOptions = SCORE_KEY_SIGNATURE_OPTIONS
+const isPlayOnlyScore = computed(() => isPlayOnlyMusicScore(props.musicScore))
+const isFixedToneColor = computed(() => isFixedToneColorScore(props.musicScore))
+const singleLineModeDisabled = computed(() => isPlayOnlyScore.value)
+const volumeLabel = computed(() => `${Math.round(volume.value * 100)}%`)
+const bpmLabel = computed(() => `${Math.round(bpm.value)}`)
+
+function formatVolume(value: number) {
+  return `${Math.round(value * 100)}%`
+}
+
+function formatBpm(value: number) {
+  return `${Math.round(value)}`
+}
+
+function goSingleLineMode(name: 'practice' | 'forBeginner' | 'singing') {
+  if (isPlayOnlyMusicScore(props.musicScore)) {
+    ElMessage.warning(t('play.messages.playOnlyModeUnavailable'))
+    return
+  }
+  if (hasGrandStaffSingleStaffMismatch(props.musicScore)) {
+    ElMessage.warning(t('play.messages.grandStaffMismatch'))
+    return
+  }
+  closeAll()
+  void router.push({
+    name,
+    query: buildScoreRouteQuery(route)
+  })
+}
 
 function closeAll() {
   openMenu.value = null
@@ -141,6 +205,7 @@ const menuTitle = computed(() => ({
   edit: t('editor.menu.edit'),
   view: t('editor.menu.view'),
   score: t('editor.menu.score'),
+  play: t('editor.menu.play'),
   help: t('editor.menu.help')
 }))
 </script>
@@ -251,33 +316,69 @@ const menuTitle = computed(() => ({
       </button>
       <ul v-if="openMenu === 'edit'" class="editor-menu-bar__dropdown" role="menu">
         <li role="none">
-          <button type="button" class="editor-menu-bar__option" @click="run(() => emit('toggle-standard-mode'))">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="playMode"
+            @click="run(() => emit('toggle-standard-mode'))"
+          >
             <span class="editor-menu-bar__check">{{ check(standardModeEnabled) }}</span>
             {{ t('editor.standardMode.label') }}
           </button>
         </li>
         <li v-if="showQuickInput" role="none">
-          <button type="button" class="editor-menu-bar__option" @click="run(() => emit('quick-input'))">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="playMode"
+            @click="run(() => emit('quick-input'))"
+          >
             <span class="editor-menu-bar__check" />
             {{ t('editor.toolbar.quickInput') }}
           </button>
         </li>
         <li v-if="showPianoRecord" role="none">
-          <button type="button" class="editor-menu-bar__option" @click="run(() => emit('piano-record'))">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="playMode"
+            @click="run(() => emit('piano-record'))"
+          >
             <span class="editor-menu-bar__check" />
             {{ t('editor.toolbar.pianoRecord') }}
           </button>
         </li>
         <li v-if="showLegalNotes" role="none">
-          <button type="button" class="editor-menu-bar__option" @click="run(() => emit('legal-notes'))">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="playMode"
+            @click="run(() => emit('legal-notes'))"
+          >
             <span class="editor-menu-bar__check" />
             {{ t('editor.toolbar.legalNotes') }}
           </button>
         </li>
         <li role="none">
-          <button type="button" class="editor-menu-bar__option" @click="run(() => emit('lyrics-match'))">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="playMode"
+            @click="run(() => emit('lyrics-match'))"
+          >
             <span class="editor-menu-bar__check" />
             {{ t('editor.lyricsMatch.button') }}
+          </button>
+        </li>
+        <li role="none">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="playMode"
+            @click="run(() => emit('time-offset'))"
+          >
+            <span class="editor-menu-bar__check" />
+            {{ t('editor.toolbar.timeOffset') }}
           </button>
         </li>
       </ul>
@@ -296,32 +397,57 @@ const menuTitle = computed(() => ({
       </button>
       <ul v-if="openMenu === 'view'" class="editor-menu-bar__dropdown" role="menu">
         <li role="none">
-          <button type="button" class="editor-menu-bar__option" @click="run(() => emit('toggle-structure'))">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="playMode"
+            @click="run(() => emit('toggle-structure'))"
+          >
             <span class="editor-menu-bar__check">{{ check(structureEditEnabled) }}</span>
             {{ t('editor.toolbar.structureEdit') }}
           </button>
         </li>
         <li role="none">
-          <button type="button" class="editor-menu-bar__option" @click="run(() => emit('toggle-lyrics'))">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="playMode"
+            @click="run(() => emit('toggle-lyrics'))"
+          >
             <span class="editor-menu-bar__check">{{ check(lyricsEditEnabled) }}</span>
             {{ t('editor.toolbar.lyricsEdit') }}
           </button>
         </li>
         <li v-if="!hideInstrumentName" role="none">
-          <button type="button" class="editor-menu-bar__option" @click="run(() => emit('toggle-instrument-name'))">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="playMode"
+            @click="run(() => emit('toggle-instrument-name'))"
+          >
             <span class="editor-menu-bar__check">{{ check(showInstrumentName) }}</span>
             {{ t('editor.toolbar.showInstrumentName') }}
           </button>
         </li>
         <li role="none">
-          <button type="button" class="editor-menu-bar__option" @click="run(() => emit('toggle-linked-staff'))">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="playMode"
+            @click="run(() => emit('toggle-linked-staff'))"
+          >
             <span class="editor-menu-bar__check">{{ check(linkedStaffMode) }}</span>
             {{ t('editor.toolbar.linkedStaffMode') }}
           </button>
         </li>
         <li class="editor-menu-bar__sep" role="separator" />
         <li role="none">
-          <button type="button" class="editor-menu-bar__option" @click="run(() => emit('layout'))">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="playMode"
+            @click="run(() => emit('layout'))"
+          >
             <span class="editor-menu-bar__check" />
             {{ t('editor.toolbar.layout') }}
           </button>
@@ -348,11 +474,16 @@ const menuTitle = computed(() => ({
           @pointerenter="showFlyout('notation')"
           @pointerleave="hideFlyout('notation')"
         >
-          <button type="button" class="editor-menu-bar__option editor-menu-bar__option--flyout" role="menuitem">
+          <button
+            type="button"
+            class="editor-menu-bar__option editor-menu-bar__option--flyout"
+            role="menuitem"
+            :disabled="playMode"
+          >
             {{ t('editor.toolbar.notationType') }}
             <span class="editor-menu-bar__chevron">›</span>
           </button>
-          <ul v-if="openFlyout === 'notation'" class="editor-menu-bar__flyout" role="menu">
+          <ul v-if="openFlyout === 'notation' && !playMode" class="editor-menu-bar__flyout" role="menu">
             <li v-for="opt in notationOptions" :key="opt.value" role="none">
               <button
                 type="button"
@@ -372,12 +503,17 @@ const menuTitle = computed(() => ({
           @pointerenter="showFlyout('transpose')"
           @pointerleave="hideFlyout('transpose')"
         >
-          <button type="button" class="editor-menu-bar__option editor-menu-bar__option--flyout" role="menuitem">
+          <button
+            type="button"
+            class="editor-menu-bar__option editor-menu-bar__option--flyout"
+            role="menuitem"
+            :disabled="playMode"
+          >
             {{ t('editor.toolbar.transpose') }}
             <span class="editor-menu-bar__chevron">›</span>
           </button>
           <ul
-            v-if="openFlyout === 'transpose'"
+            v-if="openFlyout === 'transpose' && !playMode"
             class="editor-menu-bar__flyout editor-menu-bar__flyout--scroll"
             role="menu"
           >
@@ -395,13 +531,23 @@ const menuTitle = computed(() => ({
           </ul>
         </li>
         <li v-if="!hideNotationTools" role="none">
-          <button type="button" class="editor-menu-bar__option" @click="run(() => emit('semitone-shift', 1))">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="playMode"
+            @click="run(() => emit('semitone-shift', 1))"
+          >
             <span class="editor-menu-bar__check" />
             {{ t('editor.toolbar.raiseSemitone') }}
           </button>
         </li>
         <li v-if="!hideNotationTools" role="none">
-          <button type="button" class="editor-menu-bar__option" @click="run(() => emit('semitone-shift', -1))">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="playMode"
+            @click="run(() => emit('semitone-shift', -1))"
+          >
             <span class="editor-menu-bar__check" />
             {{ t('editor.toolbar.lowerSemitone') }}
           </button>
@@ -413,11 +559,16 @@ const menuTitle = computed(() => ({
           @pointerenter="showFlyout('rhythm')"
           @pointerleave="hideFlyout('rhythm')"
         >
-          <button type="button" class="editor-menu-bar__option editor-menu-bar__option--flyout" role="menuitem">
+          <button
+            type="button"
+            class="editor-menu-bar__option editor-menu-bar__option--flyout"
+            role="menuitem"
+            :disabled="playMode"
+          >
             {{ t('editor.toolbar.rhythmPatternMode') }}
             <span class="editor-menu-bar__chevron">›</span>
           </button>
-          <ul v-if="openFlyout === 'rhythm'" class="editor-menu-bar__flyout" role="menu">
+          <ul v-if="openFlyout === 'rhythm' && !playMode" class="editor-menu-bar__flyout" role="menu">
             <li role="none">
               <button
                 type="button"
@@ -446,11 +597,16 @@ const menuTitle = computed(() => ({
           @pointerenter="showFlyout('slur')"
           @pointerleave="hideFlyout('slur')"
         >
-          <button type="button" class="editor-menu-bar__option editor-menu-bar__option--flyout" role="menuitem">
+          <button
+            type="button"
+            class="editor-menu-bar__option editor-menu-bar__option--flyout"
+            role="menuitem"
+            :disabled="playMode"
+          >
             {{ t('editor.toolbar.slurStyle') }}
             <span class="editor-menu-bar__chevron">›</span>
           </button>
-          <ul v-if="openFlyout === 'slur'" class="editor-menu-bar__flyout" role="menu">
+          <ul v-if="openFlyout === 'slur' && !playMode" class="editor-menu-bar__flyout" role="menu">
             <li v-for="value in SLUR_STYLE_PREFERENCE_VALUES" :key="value" role="none">
               <button
                 type="button"
@@ -462,6 +618,115 @@ const menuTitle = computed(() => ({
               </button>
             </li>
           </ul>
+        </li>
+      </ul>
+    </div>
+
+    <!-- 播放 -->
+    <div class="editor-menu-bar__item" @pointerenter="onMenuEnter('play')">
+      <button
+        type="button"
+        class="editor-menu-bar__trigger"
+        :class="{ 'is-open': openMenu === 'play' }"
+        :disabled="disabled"
+        @click="toggleMenu('play')"
+      >
+        {{ menuTitle.play }}
+      </button>
+      <ul v-if="openMenu === 'play'" class="editor-menu-bar__dropdown" role="menu">
+        <li role="none">
+          <button type="button" class="editor-menu-bar__option" @click="run(() => emit('toggle-play-mode'))">
+            <span class="editor-menu-bar__check">{{ check(playMode) }}</span>
+            {{ t('editor.toolbar.playMode') }}
+          </button>
+        </li>
+        <li
+          class="editor-menu-bar__option-wrap"
+          role="none"
+          @pointerenter="showFlyout('playSettings')"
+          @pointerleave="hideFlyout('playSettings')"
+        >
+          <button type="button" class="editor-menu-bar__option editor-menu-bar__option--flyout" role="menuitem">
+            {{ t('editor.toolbar.playSettings') }}
+            <span class="editor-menu-bar__chevron">›</span>
+          </button>
+          <div
+            v-if="openFlyout === 'playSettings'"
+            class="editor-menu-bar__flyout editor-menu-bar__flyout--settings"
+            @pointerdown.stop
+          >
+            <div class="editor-menu-bar__setting">
+              <span class="editor-menu-bar__setting-label">
+                {{ t('play.toolbar.volume') }} {{ volumeLabel }}
+              </span>
+              <VerticalDragSlider
+                :format="formatVolume"
+                :label="t('play.toolbar.volume')"
+                :max="PLAY_VOLUME_MAX"
+                :min="PLAY_VOLUME_MIN"
+                :model-value="volume"
+                :step="0.01"
+                @update:model-value="playStore.setVolume"
+              />
+            </div>
+            <div class="editor-menu-bar__setting">
+              <span class="editor-menu-bar__setting-label">
+                {{ t('play.toolbar.bpm') }} {{ bpmLabel }}
+              </span>
+              <VerticalDragSlider
+                :format="formatBpm"
+                :label="t('play.toolbar.bpm')"
+                :max="PLAY_BPM_MAX"
+                :min="PLAY_BPM_MIN"
+                :model-value="bpm"
+                :step="1"
+                @update:model-value="playStore.setBpm"
+              />
+            </div>
+            <div v-if="!isFixedToneColor" class="editor-menu-bar__setting editor-menu-bar__setting--row">
+              <ScoreToneColorAdjuster score-option />
+            </div>
+            <div v-if="!isPlayOnlyScore" class="editor-menu-bar__setting editor-menu-bar__setting--row">
+              <ScoreMarkSelector
+                :model-value="scoreMark"
+                @update:model-value="emit('update:scoreMark', $event)"
+              />
+            </div>
+          </div>
+        </li>
+        <li class="editor-menu-bar__sep" role="separator" />
+        <li role="none">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="singleLineModeDisabled"
+            @click="goSingleLineMode('practice')"
+          >
+            <span class="editor-menu-bar__check" />
+            {{ t('play.toolbar.practiceMode') }}
+          </button>
+        </li>
+        <li role="none">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="singleLineModeDisabled"
+            @click="goSingleLineMode('forBeginner')"
+          >
+            <span class="editor-menu-bar__check" />
+            {{ t('play.toolbar.beginnerMode') }}
+          </button>
+        </li>
+        <li role="none">
+          <button
+            type="button"
+            class="editor-menu-bar__option"
+            :disabled="singleLineModeDisabled"
+            @click="goSingleLineMode('singing')"
+          >
+            <span class="editor-menu-bar__check" />
+            {{ t('play.toolbar.singingMode') }}
+          </button>
         </li>
       </ul>
     </div>
@@ -554,6 +819,31 @@ const menuTitle = computed(() => ({
 .editor-menu-bar__flyout--scroll {
   max-height: 320px;
   overflow-y: auto;
+}
+
+.editor-menu-bar__flyout--settings {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 180px;
+  padding: 12px;
+}
+
+.editor-menu-bar__setting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.editor-menu-bar__setting--row {
+  align-items: stretch;
+}
+
+.editor-menu-bar__setting-label {
+  font-size: 12px;
+  color: #1a1a1a;
+  white-space: nowrap;
 }
 
 .editor-menu-bar__option-wrap {

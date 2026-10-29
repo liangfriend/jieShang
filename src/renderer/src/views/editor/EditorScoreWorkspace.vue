@@ -1,8 +1,18 @@
 <script lang="ts" setup>
 import musicScoreVue from '@deciphony/renderer'
-import { isNumberNotationSlur, MusicScoreTypeEnum, type MusicScore, type VDom } from '@deciphony/renderer'
+import {
+  isNumberNotationSlur,
+  MusicScoreTypeEnum,
+  type DrExtension,
+  type MusicScore,
+  type VDom
+} from '@deciphony/renderer'
+import type { LyricsMode } from '@deciphony/extensions/dr-lyrics'
 import { isSlurSelected } from '@renderer/views/editor/editHelper/renderEditSlurDrag'
-import { computed, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import { computed, inject, onBeforeUnmount, onMounted, ref, shallowRef, watch } from 'vue'
+import BackButton from '@renderer/components/BackButton.vue'
+import { EditorPlayTransportBar } from '@renderer/components/score-toolbar'
+import { scorePlayRangeKey } from '@renderer/utils/scorePagePlayback'
 import { useBoxSelect } from '@renderer/views/editor/editHelper/useBoxSelect'
 import { useLyricsFocusHighlight } from '@renderer/views/editor/editHelper/useLyricsFocusHighlight'
 import { deleteMultiSelected } from '@renderer/views/editor/editHelper/renderEditMultiSelect'
@@ -91,18 +101,37 @@ const musicScoreData = defineModel<MusicScore>({ required: true })
 /** 音值组合模式：工具栏切换，浮窗内按 Tab 也会改 */
 const rhythmPatternMode = defineModel<RhythmPatternMode>('rhythmPatternMode', { default: 'beat' })
 
-withDefaults(
+const props = withDefaults(
   defineProps<{
-    /** 显示小节/谱表结构按钮；关闭后隐藏按钮，插槽高度保留 */
+    /** 播放模式：隐藏结构、展示标题/歌词、禁止编辑，工具条切为播放控件 */
+    playMode?: boolean
+    /** 显示小节/谱表结构按钮；关闭后隐藏按钮，插槽高度保留（播放模式不改此偏好） */
     structureEditEnabled?: boolean
     /** 显示歌词区；关闭后隐藏，插槽高度保留 */
     lyricsEditEnabled?: boolean
+    /** 播放模式额外扩展（选段 / 标记等） */
+    playExtensions?: DrExtension[]
+    /** 播放模式渲染用曲谱（如指法图撑高），缺省用 v-model */
+    playRenderScore?: MusicScore | null
   }>(),
   {
+    playMode: false,
     structureEditEnabled: true,
-    lyricsEditEnabled: true
+    lyricsEditEnabled: true,
+    playExtensions: () => [],
+    playRenderScore: null
   }
 )
+
+/** 结构按钮：播放模式强制隐藏，但不改用户偏好 structureEditEnabled */
+const showStructureButtons = computed(
+  () => !props.playMode && props.structureEditEnabled
+)
+/** 歌词：播放模式始终展示；编辑模式跟 lyricsEditEnabled */
+const showLyricsSlot = computed(() => props.playMode || props.lyricsEditEnabled)
+const lyricsMode = computed<LyricsMode>(() => (props.playMode ? 'show' : 'edit'))
+const titleMode = computed<LyricsMode>(() => (props.playMode ? 'show' : 'edit'))
+const renderScoreData = computed(() => props.playRenderScore ?? musicScoreData.value)
 
 const musicScoreRef = ref<MusicScoreComponentExpose | null>(null)
 const isNumberNotation = computed(
@@ -118,12 +147,22 @@ provideEditorSkinPack(() =>
   scoreSkinName.value ? scoreSkin.value?.[scoreSkinName.value] : undefined
 )
 const {
-  extensions: scoreExtensions,
+  extensions: scoreLyricsExtensions,
   slotProps: lyricsSlotProps,
   slotConfig: scoreSlotConfig,
   titlePadding,
   titleFontFamily
-} = createScoreLyricsExtension('edit', musicScoreData)
+} = createScoreLyricsExtension(lyricsMode, musicScoreData)
+
+const scoreExtensions = computed(() => {
+  if (!props.playMode) return scoreLyricsExtensions.value
+  return [...scoreLyricsExtensions.value, ...props.playExtensions]
+})
+
+const rangeSelect = inject(scorePlayRangeKey, null)
+const scoreMainRangeClass = computed(
+  () => props.playMode && !!rangeSelect?.active.value
+)
 
 const {
   scoreRootRef,
@@ -177,7 +216,7 @@ const {
 const boxSelect = useBoxSelect({
   musicScore: musicScoreData,
   scoreRootRef,
-  enabled: () => true,
+  enabled: () => !props.playMode,
   clearSelection
 })
 const { multiSelected, boxRect } = boxSelect
@@ -200,20 +239,62 @@ const slurUsesRoundedDragHandles = computed(() => {
 const { onLyricsCellFocus, onLyricsCellBlur, refreshLyricsFocusHighlight } =
   useLyricsFocusHighlight(scoreRootRef)
 
-function onRenderMusicScore(list: VDom[]) {
-  handleRenderMusicScore(list)
+const emit = defineEmits<{
+  'score-rendered': [list: VDom[], info?: unknown]
+}>()
+
+function onRenderMusicScore(list: VDom[], info?: unknown) {
+  if (!props.playMode) handleRenderMusicScore(list)
   boxSelect.handleRender(list)
   refreshLyricsFocusHighlight()
+  emit('score-rendered', list, info)
 }
 
 function onTopUp(event: PointerEvent, vDom: VDom | null) {
+  if (props.playMode) return
   if (boxSelect.isPointerUpSuppressed()) return
   handleTopUp(event, vDom)
 }
 
 function onDrClick(event: MouseEvent, vDom: VDom) {
+  if (props.playMode) return
   if (boxSelect.isPointerUpSuppressed()) return
   handleDrClick(event, vDom)
+}
+
+function onDrDown(event: PointerEvent, vDom: VDom) {
+  if (props.playMode) return
+  handleDrDown(event, vDom)
+}
+
+function onDrEnter(event: PointerEvent, vDom: VDom) {
+  if (props.playMode) return
+  handleDrEnter(event, vDom)
+}
+
+function onDrLeave(event: PointerEvent, vDom: VDom) {
+  if (props.playMode) return
+  handleDrLeave(event, vDom)
+}
+
+function onDrUp(event: PointerEvent) {
+  if (props.playMode) return
+  handleDrUp(event)
+}
+
+function onDrContextMenu(event: MouseEvent, vDom: VDom) {
+  if (props.playMode) return
+  handleDrContextMenu(event, vDom)
+}
+
+function onTopContextMenu(event: MouseEvent, vDom: VDom | null) {
+  if (props.playMode) return
+  handleTopContextMenu(event, vDom)
+}
+
+function onTopMove(event: PointerEvent, vDom: VDom | null) {
+  if (props.playMode) return
+  handleTopMove(event, vDom)
 }
 
 const midiStore = useMidiStore()
@@ -507,6 +588,7 @@ function handleRhythmPatternKey(event: KeyboardEvent, key: string) {
 
 function onKeyDown(event: KeyboardEvent) {
   if (event.defaultPrevented) return
+  if (props.playMode) return
   if (isEditableTarget(event.target)) {
     const target = event.target as HTMLElement
     const leave =
@@ -593,6 +675,7 @@ function onKeyDown(event: KeyboardEvent) {
 }
 
 function onMidiMessage(event: MIDIMessageEvent) {
+  if (props.playMode) return
   const data = event.data
   if (!data || data.length < 2) return
   const command = data[0]! & 0xf0
@@ -616,6 +699,7 @@ onBeforeUnmount(() => {
 })
 
 const hasAffiliatedHandles = computed(() =>
+  !props.playMode &&
   Boolean(
     slurHandlePoints.value ||
       voltaHandlePoints.value ||
@@ -650,7 +734,12 @@ const addDrumStateModel = computed<any>({
   }
 })
 
-defineExpose({ clearSelection, clearMultiSelected: boxSelect.clearMultiSelected })
+defineExpose({
+  clearSelection,
+  clearMultiSelected: boxSelect.clearMultiSelected,
+  getMusicScoreRef: () => musicScoreRef.value,
+  getScoreRootEl: () => scoreRootRef.value
+})
 </script>
 
 <template>
@@ -659,20 +748,26 @@ defineExpose({ clearSelection, clearMultiSelected: boxSelect.clearMultiSelected 
       <slot name="top-actions" />
     </div>
     <div class="editor-chrome__tools">
-      <AddTabStatePanel
-        v-if="isTabNotation"
-        v-model="addTabStateModel"
-        :string-count="tabStrings"
-      />
-      <AddDrumStatePanel
-        v-else-if="isDrumNotation"
-        v-model="addDrumStateModel"
-      />
-      <AddNumberStatePanel
-        v-else-if="isNumberNotation"
-        v-model="addNoteStateModel"
-      />
-      <AddNoteStatePanel v-else v-model="addNoteStateModel" />
+      <BackButton class="editor-chrome__back" fallback="/" />
+      <div class="editor-chrome__tools-main">
+        <EditorPlayTransportBar v-if="playMode" />
+        <template v-else>
+          <AddTabStatePanel
+            v-if="isTabNotation"
+            v-model="addTabStateModel"
+            :string-count="tabStrings"
+          />
+          <AddDrumStatePanel
+            v-else-if="isDrumNotation"
+            v-model="addDrumStateModel"
+          />
+          <AddNumberStatePanel
+            v-else-if="isNumberNotation"
+            v-model="addNoteStateModel"
+          />
+          <AddNoteStatePanel v-else v-model="addNoteStateModel" />
+        </template>
+      </div>
     </div>
   </header>
 
@@ -680,6 +775,7 @@ defineExpose({ clearSelection, clearMultiSelected: boxSelect.clearMultiSelected 
     <div
       ref="scoreRootRef"
       class="score-page__main"
+      :class="{ 'score-page__main--range': scoreMainRangeClass }"
       @pointerdown.capture="releaseEditableFocus"
       @pointerdown="boxSelect.handleAreaDown"
     >
@@ -689,26 +785,26 @@ defineExpose({ clearSelection, clearMultiSelected: boxSelect.clearMultiSelected 
           :key="scoreSkinName"
           ref="musicScoreRef"
           class="score-page__svg"
-          :data="musicScoreData"
+          :data="renderScoreData"
           :slot-config="scoreSlotConfig"
           :extensions="scoreExtensions"
           :skin="scoreSkin"
           :skin-name="scoreSkinName"
           @renderMusicScore="onRenderMusicScore"
           @dr-click="onDrClick"
-          @dr-down="handleDrDown"
-          @dr-enter="handleDrEnter"
-          @dr-leave="handleDrLeave"
-          @dr-up="handleDrUp"
-          @dr-contextmenu="handleDrContextMenu"
+          @dr-down="onDrDown"
+          @dr-enter="onDrEnter"
+          @dr-leave="onDrLeave"
+          @dr-up="onDrUp"
+          @dr-contextmenu="onDrContextMenu"
           @top-down="boxSelect.handleTopDown"
-          @top-move="handleTopMove"
+          @top-move="onTopMove"
           @top-up="onTopUp"
-          @top-contextmenu="handleTopContextMenu"
+          @top-contextmenu="onTopContextMenu"
         >
           <template #t="{ node }">
             <TitleSlot
-              mode="edit"
+              :mode="titleMode"
               :music-score="musicScoreData"
               :node="node"
               :padding-left="titlePadding.left"
@@ -717,12 +813,12 @@ defineExpose({ clearSelection, clearMultiSelected: boxSelect.clearMultiSelected 
             />
           </template>
           <template #g-d="{ node }">
-            <EditSlotGdButtons v-if="structureEditEnabled" :node="node" />
+            <EditSlotGdButtons v-if="showStructureButtons" :node="node" />
           </template>
           <template #s-d="{ node }">
             <!-- 宿主 #s-d 会覆盖扩展默认槽，需手动挂 LyricsSlot，扩展仍负责 slotConfig / vDom -->
             <LyricsSlot
-              v-if="lyricsEditEnabled"
+              v-if="showLyricsSlot"
               :music-score="musicScoreData"
               :node="node"
               v-bind="lyricsSlotProps"
@@ -730,56 +826,63 @@ defineExpose({ clearSelection, clearMultiSelected: boxSelect.clearMultiSelected 
               @cell-blur="onLyricsCellBlur"
             />
             <EditSlotSdButtons
-              v-if="structureEditEnabled"
+              v-if="showStructureButtons"
               :disabled="isMeasureSelected"
               :node="node"
             />
           </template>
           <template #m="{ node }">
+            <!-- 仅「选中小节」时铺底；选中音符时不铺，避免盖住音符的 dr-selected-highlight -->
             <rect
-              v-if="selectedItem?.measure?.id === node.slotData?.measure?.id"
-              class="measure-selection-frame dr-selected-highlight"
+              v-if="
+                !playMode
+                  && isMeasureSelected
+                  && selectedItem?.measure?.id === node.slotData?.measure?.id
+              "
+              class="measure-selection-frame"
               :height="node.h"
               :width="node.w"
-              fill="white"
-              fill-opacity="0.01"
+              fill="rgba(255, 140, 0, 0.36)"
               pointer-events="none"
             />
             <rect
               v-else-if="
-                node.slotData?.measure?.id
+                !playMode
+                  && node.slotData?.measure?.id
                   && relatedMeasureIds.includes(node.slotData.measure.id)
               "
-              class="measure-related-frame dr-related-highlight"
+              class="measure-related-frame"
               :height="node.h"
               :width="node.w"
-              fill="rgba(103, 194, 58, 0.18)"
+              fill="rgba(46, 160, 67, 0.28)"
               pointer-events="none"
             />
-            <GhostTabPreview
-              v-if="isTabNotation"
-              :measure-id="selectedItem?.measure?.id"
-              :node="node"
-              :preview="activeGhostPreview as any"
-            />
-            <GhostDrumPreview
-              v-else-if="isDrumNotation"
-              :measure-id="selectedItem?.measure?.id"
-              :node="node"
-              :preview="activeGhostPreview as any"
-            />
-            <GhostNumberPreview
-              v-else-if="isNumberNotation"
-              :measure-id="selectedItem?.measure?.id"
-              :node="node"
-              :preview="activeGhostPreview as any"
-            />
-            <GhostNotePreview
-              v-else
-              :measure-id="selectedItem?.measure?.id"
-              :node="node"
-              :preview="activeGhostPreview as any"
-            />
+            <template v-if="!playMode">
+              <GhostTabPreview
+                v-if="isTabNotation"
+                :measure-id="selectedItem?.measure?.id"
+                :node="node"
+                :preview="activeGhostPreview as any"
+              />
+              <GhostDrumPreview
+                v-else-if="isDrumNotation"
+                :measure-id="selectedItem?.measure?.id"
+                :node="node"
+                :preview="activeGhostPreview as any"
+              />
+              <GhostNumberPreview
+                v-else-if="isNumberNotation"
+                :measure-id="selectedItem?.measure?.id"
+                :node="node"
+                :preview="activeGhostPreview as any"
+              />
+              <GhostNotePreview
+                v-else
+                :measure-id="selectedItem?.measure?.id"
+                :node="node"
+                :preview="activeGhostPreview as any"
+              />
+            </template>
           </template>
         </musicScoreVue>
         <svg
@@ -854,6 +957,7 @@ defineExpose({ clearSelection, clearMultiSelected: boxSelect.clearMultiSelected 
     </div>
 
     <PropertyPanel
+      v-if="!playMode"
       :kind="propertyPanelKind"
       :selected="selectedItem"
       :multi-notes="multiSelected"
@@ -861,18 +965,18 @@ defineExpose({ clearSelection, clearMultiSelected: boxSelect.clearMultiSelected 
     />
 
     <EditContextMenu
-      v-if="contextMenuState.open && contextMenuState.items.length"
+      v-if="!playMode && contextMenuState.open && contextMenuState.items.length"
       :x="contextMenuState.x"
       :y="contextMenuState.y"
       :items="contextMenuState.items"
       @close="closeContextMenu"
     />
 
-    <StaffToneColorDialog v-model="toneColorStaff" :music-score="musicScoreData" />
-    <StaffVolumeDialog v-model="volumeStaff" :music-score="musicScoreData" />
+    <StaffToneColorDialog v-if="!playMode" v-model="toneColorStaff" :music-score="musicScoreData" />
+    <StaffVolumeDialog v-if="!playMode" v-model="volumeStaff" :music-score="musicScoreData" />
 
     <RhythmPatternPopup
-      v-if="rhythmPatternSession"
+      v-if="!playMode && rhythmPatternSession"
       ref="rhythmPatternPopupRef"
       :options="rhythmPatternSession.options"
       :active-index="rhythmPatternActive"
@@ -904,10 +1008,26 @@ defineExpose({ clearSelection, clearMultiSelected: boxSelect.clearMultiSelected 
 }
 
 .editor-chrome__tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
   min-width: 0;
   padding: 6px 10px 8px;
   background: rgba(255, 255, 255, 0.35);
   border-top: 1px solid rgba(255, 184, 208, 0.22);
+}
+
+.editor-chrome__back {
+  flex-shrink: 0;
+}
+
+.editor-chrome__tools-main {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
 }
 
 .editor-chrome :deep(.add-note-state),
@@ -934,6 +1054,37 @@ defineExpose({ clearSelection, clearMultiSelected: boxSelect.clearMultiSelected 
   align-items: center;
   padding-top: 100px;
   box-sizing: border-box;
+}
+
+.score-page__main--range :deep([data-tag='noteHead']),
+.score-page__main--range :deep([data-tag='noteNumber']),
+.score-page__main--range :deep([data-tag='tabNoteNumber']),
+.score-page__main--range :deep([data-tag='rest']) {
+  cursor: pointer;
+}
+
+.score-page__main :deep(.score-range-start:not(.dr-play-highlight)) {
+  filter: drop-shadow(0 0 3px rgba(32, 160, 64, 0.95)) drop-shadow(0 0 1px rgba(32, 160, 64, 1));
+}
+
+.score-page__main :deep(.score-range-end:not(.dr-play-highlight)) {
+  filter: drop-shadow(0 0 3px rgba(64, 128, 255, 0.95)) drop-shadow(0 0 1px rgba(64, 128, 255, 1));
+}
+
+.score-page__main
+  :deep(
+    .score-range-start:not(.dr-play-highlight)
+      :is(path, rect, circle, ellipse, polygon, text):not([fill='none'])
+  ) {
+  fill: #18a058;
+}
+
+.score-page__main
+  :deep(
+    .score-range-end:not(.dr-play-highlight)
+      :is(path, rect, circle, ellipse, polygon, text):not([fill='none'])
+  ) {
+  fill: #2f6bff;
 }
 
 .score-page__stack {
@@ -965,10 +1116,7 @@ defineExpose({ clearSelection, clearMultiSelected: boxSelect.clearMultiSelected 
   filter: drop-shadow(0 0 3px rgba(240, 112, 159, 0.9)) brightness(1.12);
 }
 
-:deep(.dr-selected-highlight) {
-  filter: drop-shadow(0 0 4px rgba(255, 152, 0, 0.95)) brightness(1.14);
-}
-
+/* 选中 fill 见全局 base.css（与 .dr-play-highlight 同策略） */
 :deep(.dr-selected-highlight[data-tag='noteHead']),
 :deep(.dr-selected-highlight[data-tag='noteNumber']),
 :deep(.dr-selected-highlight[data-tag='tabNoteNumber']),

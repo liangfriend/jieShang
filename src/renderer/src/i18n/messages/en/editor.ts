@@ -5,10 +5,12 @@ export default {
       edit: 'Edit',
       view: 'View',
       score: 'Score',
+      play: 'Play',
       help: 'Help'
     },
     toolbar: {
       playMode: 'Play mode',
+      playSettings: 'Playback settings',
       timeOffset: 'Score-audio sync',
       linkedStaffMode: 'Linked staves',
       rhythmPatternMode: 'Rhythm patterns',

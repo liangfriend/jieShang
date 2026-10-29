@@ -83,7 +83,7 @@ onBeforeUnmount(() => {
 <template>
   <ScoreToolbarShell>
     <template #left>
-      <BackButton fallback="/play" />
+      <BackButton fallback="/edit" />
     </template>
     <template #center>
       <button

@@ -18,10 +18,14 @@ const routes: RouteRecordRaw[] = [
     meta: { title: '曲谱编辑' }
   },
   {
+    // 旧播放页入口并入编辑页；进入曲谱默认编辑模式（播放模式仅由页内菜单切换）
     path: '/play',
     name: 'play',
-    component: () => import('./views/play/play.vue'),
-    meta: { title: '曲谱播放' }
+    redirect: (to) => {
+      const query = { ...to.query }
+      delete query.mode
+      return { name: 'edit', query }
+    }
   },
   {
     path: '/practice',

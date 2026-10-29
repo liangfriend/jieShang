@@ -5,10 +5,12 @@ export default {
       edit: '編集',
       view: '表示',
       score: '楽譜',
+      play: '再生',
       help: 'ヘルプ'
     },
     toolbar: {
       playMode: '再生モード',
+      playSettings: '再生設定',
       timeOffset: '譜面と音声の同期',
       linkedStaffMode: '連結譜表モード',
       rhythmPatternMode: 'リズムパターン',

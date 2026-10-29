@@ -47,7 +47,7 @@ const playSourceModel = computed({
 <template>
   <ScoreToolbarShell>
     <template #left>
-      <BackButton fallback="/play" />
+      <BackButton fallback="/edit" />
     </template>
     <template #center>
       <el-select

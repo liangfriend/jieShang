@@ -1,6 +1,6 @@
-import type {Ref} from 'vue'
-import type {SlotData} from '@deciphony/renderer'
-import {HIGHLIGHT_CLASS} from './constants'
+import type { Ref } from 'vue'
+import type { SlotData } from '@deciphony/renderer'
+import { HIGHLIGHT_CLASS } from './constants'
 
 export type EditHighlightRefs = {
   highlightedEl: Ref<SVGElement | null>
@@ -9,7 +9,7 @@ export type EditHighlightRefs = {
 }
 
 export function createEditHighlight(refs: EditHighlightRefs) {
-  const {highlightedEl, selectedEl, selectedItem} = refs
+  const { highlightedEl, selectedEl, selectedItem } = refs
 
   function clearHoverHighlight() {
     if (highlightedEl.value && highlightedEl.value !== selectedEl.value) {
@@ -25,7 +25,6 @@ export function createEditHighlight(refs: EditHighlightRefs) {
   }
 
   function applySelectedHighlight(el: SVGElement) {
-    el.style.transition = 'filter 0.2s ease'
     el.classList.add(HIGHLIGHT_CLASS.selected)
   }
 
@@ -38,6 +37,6 @@ export function createEditHighlight(refs: EditHighlightRefs) {
     clearHoverHighlight,
     clearSelectedHighlight,
     applySelectedHighlight,
-    applyHoverHighlight,
+    applyHoverHighlight
   }
 }

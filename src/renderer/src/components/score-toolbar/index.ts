@@ -5,6 +5,7 @@ export { default as RhythmPatternModeSwitch } from './RhythmPatternModeSwitch.vu
 export { default as SlurStyleSwitch } from './SlurStyleSwitch.vue'
 export { default as ScoreLayoutControl } from './ScoreLayoutControl.vue'
 export { default as EditorMenuBar } from './EditorMenuBar.vue'
+export { default as EditorPlayTransportBar } from './EditorPlayTransportBar.vue'
 export { default as EditorNoticeDialog } from './EditorNoticeDialog.vue'
 export { default as DrumLegalNotesDialog } from './DrumLegalNotesDialog.vue'
 export { default as NotationTypeConvertDialog } from './NotationTypeConvertDialog.vue'

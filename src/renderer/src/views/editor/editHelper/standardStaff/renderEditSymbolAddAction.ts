@@ -381,7 +381,10 @@ export function measureBoundsFromVDom(vDomList: VDom[], measureId: string): Meas
 
 /**
  * 小节在谱面上的范围。优先用选中 g 的 getBBox（局部→getCTM→用户坐标）；
- * 与 vDom 布局一致时二者等价，DOM 不可用时回退 vDom。
+ * 与 vDom 布局一致时二者等价，DOM 不可用或空槽 getBBox 为 0 时回退 vDom。
+ *
+ * 选中音符（非小节）时 #m 插槽常无子节点，空 `<g>` 的 getBBox 宽高为 0 且不抛错；
+ * 简谱上下拖唱名用 bounds.h/6 作步长，若不回退则 stepHeight=0，音名拖不动。
  */
 export function resolveMeasureBounds(
   root: ParentNode,
@@ -396,7 +399,8 @@ export function resolveMeasureBounds(
   for (const el of candidates) {
     if (!el) continue
     try {
-      return getGraphicsBoundsInSvg(el)
+      const bounds = getGraphicsBoundsInSvg(el)
+      if (bounds.w > 0 && bounds.h > 0) return bounds
     } catch {
       /* 未挂载时回退 vDom */
     }

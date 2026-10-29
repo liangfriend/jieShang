@@ -139,5 +139,15 @@ export const migrations: Migrations[] = [
     async down() {
       // 旧皮肤内容未保留，无法回滚
     }
+  },
+  {
+    // 内置乐谱皮肤资源再次更新；全新安装时行由启动 syncBuiltinCollections 插入，此处 update 影响 0 行即可
+    id: '007-update-builtin-score-skins',
+    async up() {
+      await overwriteBuiltinScoreSkins()
+    },
+    async down() {
+      // 旧皮肤内容未保留，无法回滚
+    }
   }
 ]

@@ -5,10 +5,12 @@ export default {
       edit: '编辑',
       view: '视图',
       score: '谱面',
+      play: '播放',
       help: '帮助'
     },
     toolbar: {
       playMode: '播放模式',
+      playSettings: '播放设置',
       timeOffset: '谱音同步',
       linkedStaffMode: '连谱模式',
       structureEdit: '结构按钮',

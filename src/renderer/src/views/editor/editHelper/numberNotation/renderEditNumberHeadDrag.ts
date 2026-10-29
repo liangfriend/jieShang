@@ -1,7 +1,7 @@
 import type { Measure, NoteNumber, NotesNumberInfo, SlotData, VDom } from '@deciphony/renderer'
 import {
+  measureBoundsFromVDom,
   pointerToSvg,
-  resolveMeasureBounds,
   type MeasureBounds
 } from './renderEditNumberAddAction'
 
@@ -105,12 +105,13 @@ export function updateNumberHeadSyllableByPointerY(
 export function updateNumberHeadDragFromPointer(
   session: NumberHeadDragSession,
   svg: SVGSVGElement,
-  root: ParentNode,
+  _root: ParentNode,
   vDomList: VDom[],
   clientX: number,
   clientY: number
 ): DiatonicSyllable | null {
-  const bounds = resolveMeasureBounds(root, session.measureId, vDomList)
+  // 与 ghost 预览一致：用 vDom 小节高，避免空 #m 槽 getBBox.h=0 导致步长失效
+  const bounds = measureBoundsFromVDom(vDomList, session.measureId)
   if (!bounds) return null
   const { y } = pointerToSvg(svg, clientX, clientY)
   return updateNumberHeadSyllableByPointerY(session, bounds, y)
